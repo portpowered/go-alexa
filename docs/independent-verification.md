@@ -1,5 +1,25 @@
 # Independent standards review: go-alexa
 
+## Fourth pass: paired replay at `12d713d0a1e8a159c8d1957ce79dbb66943257d3`
+
+An independent reviewer who did not implement the new replay suite inspected
+all three checked-in synthetic pair files, their REST, GraphQL, and event
+callers, the strict matcher, inventory gate, and negative tests. [The
+paired-replay review](paired-replay-review.md) records a separate disposition
+for each prior item-15 finding. **Item 15 is verified**: 26 REST pairs cover
+18 dispatched routes, seven GraphQL pairs cover the generated documents, and
+two ordered HTTP/2 event pairs cover the directive frame and ping. Fresh race
+tests, `make lint`, `make check`, the route gate and its negative tests passed;
+non-generated coverage was 81.5% (2,100/2,576).
+
+This pass does not renew item 14. Items 1–3 and 5–12 retain their prior
+source verdicts; item 6's 80% floor was remeasured above. Item 4 still needs
+published generation/gate verification and an exact-tag release run. Item 13
+still needs the final rendered-site copy and link audit. Item 14 requires a
+fresh full 15-item review of the final commit after those gates, including
+release, site, badge and consumer evidence. The repository checklist keeps
+those items open.
+
 ## Third pass: `af155791cc2ec4b80d25bf4883ffbfc861c398b7`
 
 The previously reported path-reassignment and `Header.Add` bypasses are fixed.

@@ -1,6 +1,7 @@
 # Independent paired-replay review
 
-Reviewed commit: `46ce820044aa17ff5adb0f9f2e8eb891e886e8a6`.
+Initial reviewed commit: `46ce820044aa17ff5adb0f9f2e8eb891e886e8a6`.
+Re-audited implementation commit: `12d713d0a1e8a159c8d1957ce79dbb66943257d3`.
 Standard: item 15 of `go-third-party-template/docs/library-standards.md`
 and the paired-fixture detail in its `docs/verification.md`. This review is
 independent of the Alexa implementation. The earlier itemized verification
@@ -8,10 +9,10 @@ report predates item 15.
 
 | Item | Verdict | Evidence |
 | --- | --- | --- |
-| 15. Paired replay | **Open** | The replay helper works on temporary pairs in its own unit test, but no supported Alexa operation is tested from a checked-in request/response pair or ordered directive transcript. |
-| 14. Independent verification | **Open** | Item 15 and the existing release/schema/site gates remain open. Recheck every checklist item after the fixes at the final commit. |
+| 15. Paired replay | **Verified at `12d713d`** | Checked-in synthetic pairs cover every dispatched REST route, seven GraphQL documents, and the directive stream plus ping. The strict replay transport validates each request before its response and asserts ordered exhaustion. See the re-audit below. |
+| 14. Independent verification | **Open** | Checklist items 4 and 13 and the exact-tag release gate remain open. The full 15-item final-commit signoff must follow those checks. |
 
-## Findings
+## Initial findings at `46ce820`
 
 1. **The capture replay helper is not used by the operation tests.**
    `pkg/testing/replay_capture.go` loads ordered `CapturePair` files, checks
@@ -58,5 +59,28 @@ Fresh `go test -count=1 -race ./pkg/testing ./pkg/alexa
 commit. This confirms the current unit tests, not paired replay across the
 wire inventory.
 
-**Signoff:** neither item 15 nor renewed item 14 can be checked at this
-commit.
+## Re-audit at `12d713d`
+
+| Initial finding | Disposition and independent evidence |
+| --- | --- |
+| Helper not used by operation tests | **Resolved.** `pkg/testing.SyntheticReplay` is loaded directly by the REST, GraphQL, and event operation suites from three checked-in files. Each suite calls `AssertConsumed`; the capture helper remains separate for possible future captured exchanges. |
+| HTTP operation inventory | **Resolved.** `alexa-rest.json` contains 26 pairs for all 18 dispatched REST routes, including two registration modes and eight media commands. `alexa-graphql.json` contains seven pairs, one per generated GraphQL document. `tests/replay/inventory_test.go` cross-checks OpenAPI operation IDs and the seven GraphQL documents. The 22nd OpenAPI operation, `openAuthorizationPage`, yields a browser URL for caller navigation and is not dispatched by the library. The six `pkg/alexa/testdata` files remain labeled response-only model inputs and are excluded from replay claims. |
+| Directive stream | **Resolved for the built-in HTTP/2 edge.** `alexa-events.json` stores an ordered GET for the stream, a multipart response carrying the synthetic directive frame, and the keepalive `/ping` request/response. The event suite checks the parsed public event, ping, order, exhaustion, duplicate, and out-of-order rejection. |
+| Volatile matching and provenance | **Resolved for these synthetic pairs.** All IDs, timestamps, and credential placeholders in these suites are fixed synthetic values and are compared exactly, including complete request headers and body. The fixture README states the exact-match rule and requires a constrained matcher if future dynamic fields are introduced. Every pair has `source: synthetic`; no live capture is claimed. |
+
+`SyntheticReplay.RoundTrip` matches method, origin, escaped path, complete
+repeated query values, full request headers, and body before serving the
+paired status, headers, and body. Its negative test mutates every request
+field and verifies failure before response; the operation suites use ordered
+consumption and reject duplicate calls. I independently counted 26 REST,
+seven GraphQL, and two event pairs, all with synthetic provenance and
+response headers. Fresh `-count=1 -race` tests of `pkg/testing`, REST,
+GraphQL, `pkg/alexa`, and `tests/replay` passed. `make lint`, `make check`,
+`go run ./tools/apiroutes --check`, and its negative tests passed. A fresh
+non-generated race profile passed the 80% floor at 81.5% (2,100/2,576).
+
+**Item 15 verdict: verified at `12d713d`.** The broader 15-item review
+cannot be signed yet: the repository checklist still leaves item 4 pending
+published regeneration/gate and exact-tag checks, and item 13 pending a
+fresh rendered-site copy/link audit. Item 14 remains open until those gates
+pass and every item is rechecked at the final release commit.
