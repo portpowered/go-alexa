@@ -13,10 +13,10 @@
 ## Install
 
 ```sh
-go get github.com/portpowered/go-alexa@main
+go get github.com/portpowered/go-alexa@v0.1.0
 ```
 
-Use `@main` until a new release tag is published after the history cleanup.
+`v0.1.0` is the first release from the cleaned history.
 
 ## Quick start
 
