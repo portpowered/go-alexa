@@ -12,7 +12,7 @@ Source checklist: `go-third-party-template/docs/library-standards.md`, `docs/ver
 
 - [x] Inspect the exported API and compile a separate temporary consumer module against the public module path. `go get github.com/portpowered/go-alexa@main`, `go mod tidy`, and `go test ./...` passed against the rewritten remote history and updated REST/directive commit.
 - [x] Run `make lint` and `make check`; both passed after the REST and directive model changes. `make generate` was byte-stable locally, and remote CI passed its regeneration and drift checks.
-- [x] Review the working tree: token-marker scan found no token-shaped values, and no capture/config data files remain. This checks the current tree only; old remote history still requires the parent task rewrite.
+- [x] Review the working tree: token-marker scan found no token-shaped values, and no capture/config data files remain. This checks the current tree only; the `main` rewrite and old-tag deletion are recorded below. GitHub's cached views of old commit IDs require a separate Support request.
 - [x] Replace `main` history and remove old tags that retain the old commits. **Signed off:** a new root commit replaced `main`; v1.0.0 through v1.0.7 were deleted. A remote ref check found only the rewritten `main`, and its CI and documentation runs passed.
 
 Unfinished items remain unchecked until verified. No new release tag has been published from the cleaned history.
