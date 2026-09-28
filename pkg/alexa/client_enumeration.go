@@ -16,7 +16,7 @@ import (
 // The query parameter can specify filters and which optional fields to include
 // (states, capabilities, features). When States is true in IncludeFields,
 // the function will retrieve endpoints with detailed property states.
-func (c *Client) ListEndpoints(ctx context.Context, q alexaapimodels.EndpointQuery) (*alexaapimodels.UnifiedEndpointListResponse, error) {
+func (c *Session) ListEndpoints(ctx context.Context, q alexaapimodels.EndpointQuery) (*alexaapimodels.UnifiedEndpointListResponse, error) {
 
 	// Determine what optional fields to include
 	includeStates := false
@@ -107,7 +107,7 @@ func (c *Client) ListEndpoints(ctx context.Context, q alexaapimodels.EndpointQue
 	}, nil
 }
 
-func (c *Client) listAirQualityMonitorEndpoints(
+func (c *Session) listAirQualityMonitorEndpoints(
 	ctx context.Context,
 	baseInput graphql.ListEndpointsInput,
 	includeStates bool,
@@ -193,7 +193,7 @@ type endpointMergeData struct {
 
 // mergeEndpoints performs a left outer join of GraphQL endpoints with DeviceV2 and REST data
 // It handles both endpoints with and without states based on which list is provided
-func (c *Client) mergeEndpoints(
+func (c *Session) mergeEndpoints(
 	graphqlEndpointsWithoutStates []graphql.EndpointsEndpointsEndpointsResponseItemsEndpoint,
 	graphqlEndpointsWithStates []graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpoint,
 	mergeData endpointMergeData,
@@ -219,7 +219,7 @@ func (c *Client) mergeEndpoints(
 }
 
 // mergeEndpointWithStates merges a single GraphQL endpoint (with states) with DeviceV2 and REST data
-func (c *Client) mergeEndpointWithStates(
+func (c *Session) mergeEndpointWithStates(
 	gqlEndpoint graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpoint,
 	mergeData endpointMergeData,
 ) *alexaapimodels.Endpoint {
@@ -312,7 +312,7 @@ func (c *Client) mergeEndpointWithStates(
 }
 
 // mergeEndpointWithoutStates merges a single GraphQL endpoint (without states) with DeviceV2 and REST data
-func (c *Client) mergeEndpointWithoutStates(
+func (c *Session) mergeEndpointWithoutStates(
 	gqlEndpoint graphql.EndpointsEndpointsEndpointsResponseItemsEndpoint,
 	mergeData endpointMergeData,
 ) *alexaapimodels.Endpoint {
@@ -386,7 +386,7 @@ func (c *Client) mergeEndpointWithoutStates(
 	return unified
 }
 
-func (c *Client) convertListEndpoint(
+func (c *Session) convertListEndpoint(
 	gqlEndpoint graphql.ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpoint,
 ) *alexaapimodels.Endpoint {
 	unified := &alexaapimodels.Endpoint{
@@ -593,7 +593,7 @@ func mapCategory(input string) alexaapimodels.EndpointDisplayCategory {
 }
 
 // extractTimeOfSample extracts timeOfSample from a property using map conversion
-func (c *Client) extractTimeOfSample(prop graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty) string {
+func (c *Session) extractTimeOfSample(prop graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty) string {
 	data, err := json.Marshal(prop)
 	if err != nil {
 		return ""
@@ -609,7 +609,7 @@ func (c *Client) extractTimeOfSample(prop graphql.ListEndpointsWithStatesListEnd
 }
 
 // extractTimeOfLastChange extracts timeOfLastChange from a property using map conversion
-func (c *Client) extractTimeOfLastChange(prop graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty) string {
+func (c *Session) extractTimeOfLastChange(prop graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty) string {
 	data, err := json.Marshal(prop)
 	if err != nil {
 		return ""
@@ -625,7 +625,7 @@ func (c *Client) extractTimeOfLastChange(prop graphql.ListEndpointsWithStatesLis
 }
 
 // extractStateValue extracts the state value from a property using type assertion
-func (c *Client) extractStateValue(prop graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty) interface{} {
+func (c *Session) extractStateValue(prop graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty) interface{} {
 	// Extract state values based on property type
 	switch p := prop.(type) {
 	case *graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolume:
@@ -724,7 +724,7 @@ func extractRangeStateValue(
 }
 
 // extractError extracts error information from a property using type assertion
-func (c *Client) extractError(prop graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty) *alexaapimodels.PropertyError {
+func (c *Session) extractError(prop graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty) *alexaapimodels.PropertyError {
 	switch p := prop.(type) {
 	case *graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolume:
 		if p.Error.Type != "" {
@@ -858,7 +858,7 @@ func (c *Client) extractError(prop graphql.ListEndpointsWithStatesListEndpointsL
 
 // determineSupportedFeatures merges GraphQL features, REST capabilities, and device family
 // to determine which features this endpoint supports
-func (c *Client) determineSupportedFeatures(graphqlFeatures []string, restCapabilities []string, deviceFamily string) []alexaapimodels.Feature {
+func (c *Session) determineSupportedFeatures(graphqlFeatures []string, restCapabilities []string, deviceFamily string) []alexaapimodels.Feature {
 	supported := make(map[string]bool)
 
 	// Create sets for fast lookup

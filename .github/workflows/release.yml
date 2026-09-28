@@ -70,10 +70,12 @@ jobs:
 
           var _ interface {
               ListEndpoints(context.Context, alexaapimodels.EndpointQuery) (*alexaapimodels.UnifiedEndpointListResponse, error)
-          } = (*alexa.Client)(nil)
+          } = (*alexa.Session)(nil)
 
           func main() {
-              _, _ = alexa.NewClient(alexa.WithBearerToken("release-check"))
+              client, _ := alexa.NewClient()
+              session, _ := client.NewSession(alexa.WithBearerToken("release-check"))
+              defer session.Close()
           }
           EOF
           go mod tidy

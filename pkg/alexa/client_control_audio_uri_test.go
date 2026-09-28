@@ -35,7 +35,7 @@ func TestControlAudioPlayerURI(t *testing.T) {
 	transport := &captureTransport{}
 	httpClient := &http.Client{Transport: transport}
 
-	client, _ := NewClient(WithHttpClient(httpClient), WithBearerToken("test-token"))
+	client := newTestSession(t, httpClient, WithBearerToken("test-token"))
 
 	endpoint := &alexaapimodels.Endpoint{
 		DeviceType:         "synthetic-device-type",
@@ -128,7 +128,7 @@ func TestControlAudioPlayerURI_InvalidPayload(t *testing.T) {
 	transport := &captureTransport{}
 	httpClient := &http.Client{Transport: transport}
 
-	client, _ := NewClient(WithHttpClient(httpClient))
+	client := newTestSession(t, httpClient)
 
 	endpoint := &alexaapimodels.Endpoint{
 		DeviceType:         "synthetic-device-type",
@@ -151,7 +151,7 @@ func TestControlAudioPlayerURI_NilTarget(t *testing.T) {
 	transport := &captureTransport{}
 	httpClient := &http.Client{Transport: transport}
 
-	client, _ := NewClient(WithHttpClient(httpClient))
+	client := newTestSession(t, httpClient)
 
 	_, err := client.Control(context.Background(), alexaapimodels.ControlRequest{
 		Target:    nil,

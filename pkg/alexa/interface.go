@@ -4,6 +4,7 @@ package alexa
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 )
@@ -14,8 +15,8 @@ type Connection interface {
 	Close() error
 }
 
-// ClientInterface defines the interface for the Alexa client.
-type ClientInterface interface {
+// SessionInterface defines the account-scoped Alexa API operations.
+type SessionInterface interface {
 	// ListEndpoints retrieves all endpoints by joining GraphQL endpoint data
 	// with endpointV2 data using a left outer join on DMSIdentifier.
 	// The query parameter can specify filters and which optional fields to include
@@ -41,16 +42,12 @@ type ClientInterface interface {
 	// the events will be published to the connection object you create via the connect events method.
 	Subscribe(ctx context.Context, req alexaapimodels.SubscribeRequest) (*alexaapimodels.SubscribeResponse, error)
 
-	// GenerateCodePair generates a code pair for code-based linking (CBL) authentication.
-	// The user must enter the public code on https://amazon.com/code before calling RegisterWithCodePair.
-	GenerateCodePair(ctx context.Context, config alexaapimodels.DeviceRegistrationConfig) (*alexaapimodels.CodePairResponse, error)
-
-	// RegisterWithCodePair registers a device using code-based linking (CBL).
-	// This should be called after GenerateCodePair and after the user has entered the public code on Amazon's website.
-	RegisterWithCodePair(ctx context.Context, publicCode, privateCode string, config alexaapimodels.DeviceRegistrationConfig) (*alexaapimodels.RegistrationResponse, error)
-
-	// RefreshAccessToken refreshes an access token using a refresh token.
-	RefreshAccessToken(ctx context.Context, req alexaapimodels.TokenRefreshRequest) (*alexaapimodels.TokenRefreshResponse, error)
+	// RefreshAccessToken explicitly refreshes a token and returns it without replacing session credentials.
+	RefreshAccessToken(ctx context.Context, config alexaapimodels.DeviceRegistrationConfig) (*alexaapimodels.TokenRefreshResponse, error)
+	// ExchangeRefreshTokenForCookies explicitly exchanges a token and returns cookies for caller storage.
+	ExchangeRefreshTokenForCookies(ctx context.Context, domain string) (map[string]*http.Cookie, error)
+	// GetCSRFToken explicitly retrieves and returns a CSRF token.
+	GetCSRFToken(ctx context.Context) (string, error)
 
 	// GetUserInfo retrieves user information from the /api/users/me endpoint.
 	// The request parameter can specify optional platform, version, and CSRF token.
@@ -65,5 +62,9 @@ type ClientInterface interface {
 	Close() error
 }
 
-// Ensure Client implements ClientInterface at compile time
-var _ ClientInterface = (*Client)(nil)
+// ClientInterface is retained as an alias for existing consumers.
+// Deprecated: use SessionInterface; API operations now belong to an account session.
+type ClientInterface = SessionInterface
+
+// Ensure Session implements SessionInterface at compile time.
+var _ SessionInterface = (*Session)(nil)

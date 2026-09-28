@@ -1,50 +1,51 @@
 # Authentication
 
-The client does not contain credentials. Supply a token obtained by your application, and keep it in a secret store or environment variable. Never commit access tokens, refresh tokens, private code-pair values, cookies, or customer identifiers.
+`Client` contains service and transport configuration. `Session` contains account credentials and can be closed independently. Supply credentials obtained by your application, keep them in a secret store, and never commit or log access tokens, refresh tokens, private code-pair values, cookies, or customer identifiers.
 
 ## Access token
 
 ```go
-client, err := alexa.NewClient(
-    alexa.WithBearerToken(os.Getenv("ALEXA_BEARER_TOKEN")),
-    alexa.WithRegion(alexaapimodels.RegionUS),
-)
+client, err := alexa.NewClient(alexa.WithRegion(alexaapimodels.RegionUS))
 if err != nil {
     return err
 }
-defer client.Close()
+session, err := client.NewSession(alexa.WithBearerToken(os.Getenv("ALEXA_BEARER_TOKEN")))
+if err != nil {
+    return err
+}
+defer session.Close()
 ```
 
-`WithBearerToken` accepts an access token. It configures REST and GraphQL calls and is also used to authenticate the event stream.
+`WithBearerToken` accepts an access token. The session uses it for REST, GraphQL, and event-stream requests. `session.Credentials()` returns a copy of the currently configured credentials.
 
 ## Refresh token
 
-`WithRefreshToken` configures the cookie-backed REST requests that exchange a refresh token for session cookies. For an access token, call `RefreshAccessToken` with a refresh token and a registration configuration, then create a client with the returned access token:
+Store a refresh token on the session, then call the explicit refresh method. It returns new credentials without replacing session state; store the result in your own credential store and install the access token with `SetAccessToken`:
 
 ```go
 refreshClient, err := alexa.NewClient()
 if err != nil {
     return err
 }
-defer refreshClient.Close()
+refreshSession, err := refreshClient.NewSession(alexa.WithRefreshToken(os.Getenv("ALEXA_REFRESH_TOKEN")))
+if err != nil {
+    return err
+}
+defer refreshSession.Close()
 
 config := alexaapimodels.DefaultDeviceRegistrationConfig("your-device-serial", "your-device-name")
-result, err := refreshClient.RefreshAccessToken(ctx, alexaapimodels.TokenRefreshRequest{
-    RefreshToken: os.Getenv("ALEXA_REFRESH_TOKEN"),
-    Config:       config,
-})
+result, err := refreshSession.RefreshAccessToken(ctx, config)
 if err != nil {
     return err
 }
-
-apiClient, err := alexa.NewClient(alexa.WithBearerToken(result.AccessToken))
-if err != nil {
+if err := refreshSession.SetAccessToken(result.AccessToken); err != nil {
     return err
 }
-defer apiClient.Close()
 ```
 
 The configuration fields identify the client device session. Use values appropriate to your integration and protect the returned tokens like passwords.
+
+For cookie authentication, call `ExchangeRefreshTokenForCookies` explicitly, store its result, and create a session with `WithCookies`. If a CSRF token is needed, retrieve it explicitly with `GetCSRFToken`; requests never exchange refresh tokens or fetch missing CSRF material implicitly.
 
 ## Code-based linking
 

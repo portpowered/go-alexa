@@ -32,9 +32,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
-	defer func() {
-		_ = client.Close()
-	}()
 
 	// Generate device identifiers
 	deviceSerial := generateRandomString(13)
@@ -95,12 +92,11 @@ func main() {
 
 	// Step 5: Demonstrate using the token with the Alexa client
 	fmt.Println("Step 5: Using the access token to list endpoints...")
-	authenticatedClient, err := alexa.NewClient(
+	authenticatedClient, err := client.NewSession(
 		alexa.WithBearerToken(newAccessToken),
-		alexa.WithRegion(alexaapimodels.RegionUS),
 	)
 	if err != nil {
-		log.Fatalf("Failed to create authenticated client: %v", err)
+		log.Fatalf("Failed to create authenticated session: %v", err)
 	}
 	defer func() {
 		_ = authenticatedClient.Close()

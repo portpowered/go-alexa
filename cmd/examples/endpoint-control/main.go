@@ -21,24 +21,50 @@ func main() {
 		log.Fatal("Set ALEXA_BEARER_TOKEN or ALEXA_REFRESH_TOKEN")
 	}
 
-	options := make([]alexa.Option, 0, 3)
-	if bearerToken != "" {
-		options = append(options, alexa.WithBearerToken(bearerToken))
-	}
-	if refreshToken != "" {
-		options = append(options, alexa.WithRefreshToken(refreshToken))
-	}
-	if customerID := os.Getenv("ALEXA_CUSTOMER_ID"); customerID != "" {
-		options = append(options, alexa.WithCustomerID(customerID))
-	}
-
-	client, err := alexa.NewClient(options...)
+	client, err := alexa.NewClient()
 	if err != nil {
 		log.Fatalf("Create Alexa client: %v", err)
 	}
-	defer func() { _ = client.Close() }()
 
-	response, err := client.ListEndpoints(ctx, alexaapimodels.EndpointQuery{
+	sessionOptions := make([]alexa.SessionOption, 0, 3)
+	if bearerToken != "" {
+		sessionOptions = append(sessionOptions, alexa.WithBearerToken(bearerToken))
+	}
+	if refreshToken != "" {
+		sessionOptions = append(sessionOptions, alexa.WithRefreshToken(refreshToken))
+	}
+	if customerID := os.Getenv("ALEXA_CUSTOMER_ID"); customerID != "" {
+		sessionOptions = append(sessionOptions, alexa.WithCustomerID(customerID))
+	}
+
+	session, err := client.NewSession(sessionOptions...)
+	if err != nil {
+		log.Fatalf("Create Alexa session: %v", err)
+	}
+	if bearerToken == "" {
+		if refreshToken == "" {
+			log.Fatal("Set ALEXA_BEARER_TOKEN or ALEXA_REFRESH_TOKEN")
+		}
+		cookies, err := session.ExchangeRefreshTokenForCookies(ctx, "amazon.com")
+		if err != nil {
+			log.Fatalf("Exchange refresh token for cookies: %v", err)
+		}
+		cookieOptions := []alexa.SessionOption{alexa.WithCookies(cookies), alexa.WithRefreshToken(refreshToken)}
+		if customerID := os.Getenv("ALEXA_CUSTOMER_ID"); customerID != "" {
+			cookieOptions = append(cookieOptions, alexa.WithCustomerID(customerID))
+		}
+		_ = session.Close()
+		session, err = client.NewSession(cookieOptions...)
+		if err != nil {
+			log.Fatalf("Create cookie session: %v", err)
+		}
+		if _, err := session.GetCSRFToken(ctx); err != nil {
+			log.Fatalf("Retrieve CSRF token: %v", err)
+		}
+	}
+	defer func() { _ = session.Close() }()
+
+	response, err := session.ListEndpoints(ctx, alexaapimodels.EndpointQuery{
 		IncludeFields: &alexaapimodels.EndpointIncludeFields{
 			Properties: true,
 			Features:   true,
@@ -66,7 +92,7 @@ func main() {
 		return
 	}
 
-	_, err = client.Control(ctx, alexaapimodels.ControlRequest{
+	_, err = session.Control(ctx, alexaapimodels.ControlRequest{
 		Target:    endpoint,
 		Namespace: alexaapimodels.FeatureNamePower,
 		Name:      alexaapimodels.FeatureOperationNameTurnOff,

@@ -36,7 +36,7 @@ jobs:
           cache: true
       - name: Test with coverage
         if: github.event_name != 'pull_request'
-        run: go test -race -coverprofile=coverage.out ./...
+        run: go test -race -coverpkg=./pkg/... -coverprofile=coverage.out ./pkg/...
       - name: Build API documentation site
         uses: portpowered/api-docs-website-github-action@v0.3.0
         with:
@@ -52,9 +52,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p site
-          go tool cover -html=coverage.out -o site/coverage.html
-          coverage="$(go tool cover -func=coverage.out | awk '$1 == "total:" {print $3}')"
-          coverage="${coverage%\%}"
+          coverage="$(go run ./tools/coverage -profile coverage.out -min 0 -percent-only -filtered-profile coverage.filtered.out)"
+          go tool cover -html=coverage.filtered.out -o site/coverage.html
           if awk -v value="$coverage" 'BEGIN {exit !(value >= 90)}'; then
             color=brightgreen
           elif awk -v value="$coverage" 'BEGIN {exit !(value >= 75)}'; then

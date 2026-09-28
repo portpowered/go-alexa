@@ -29,6 +29,9 @@ type HTTP2Connection struct {
 	transport      *http2.Transport
 	ctx            context.Context
 	cancel         context.CancelFunc
+	requestCancel  context.CancelFunc
+	stopCloseHook  func() bool
+	stopParentHook func() bool
 	wg             sync.WaitGroup
 	mu             sync.RWMutex
 	response       *http.Response
@@ -89,6 +92,17 @@ func http2Connection(opts ...HTTP2ConnectionOption) *HTTP2Connection {
 	return conn
 }
 
+// newSessionHTTP2Connection creates an account-owned event stream and uses an
+// injected HTTP client when the caller configured one.
+func newSessionHTTP2Connection(authority string, tokenGetter func(context.Context) (string, error), client *http.Client) *HTTP2Connection {
+	connection := http2Connection(WithAuthority(authority), WithTokenGetter(tokenGetter))
+	if client != nil {
+		connection.client = client
+		connection.transport = nil
+	}
+	return connection
+}
+
 // getToken retrieves the bearer token
 func (c *HTTP2Connection) getToken(ctx context.Context) (string, error) {
 	if c.bearerToken != "" {
@@ -111,9 +125,15 @@ func (c *HTTP2Connection) Connect(ctx context.Context) error {
 		c.mu.Unlock()
 		return alexaapimodels.NewClosedError("cannot connect: connection is already closed")
 	}
+	requestCtx, requestCancel := context.WithCancel(ctx)
+	stopCloseHook := context.AfterFunc(c.ctx, requestCancel)
+	stopParentHook := context.AfterFunc(requestCtx, c.cancel)
+	c.requestCancel = requestCancel
+	c.stopCloseHook = stopCloseHook
+	c.stopParentHook = stopParentHook
 	c.mu.Unlock()
 
-	token, err := c.getToken(ctx)
+	token, err := c.getToken(requestCtx)
 	if err != nil {
 		return err
 	}
@@ -122,7 +142,7 @@ func (c *HTTP2Connection) Connect(ctx context.Context) error {
 	url := fmt.Sprintf("https://%s/v20160207/directives", c.authority)
 
 	// Create a request for the HTTP/2 connection
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(requestCtx, "GET", url, nil)
 	if err != nil {
 		return alexaapimodels.NewConnectionError("failed to create request", err)
 	}
@@ -149,16 +169,17 @@ func (c *HTTP2Connection) Connect(ctx context.Context) error {
 	}
 
 	c.mu.Lock()
+	if c.closed {
+		c.mu.Unlock()
+		_ = resp.Body.Close()
+		return alexaapimodels.NewClosedError("connection closed while connecting")
+	}
 	c.response = resp
 	c.responseReader = bufio.NewReader(resp.Body)
-	c.mu.Unlock()
-
-	// Start goroutines for message processing and pinging
-	c.wg.Add(1)
+	c.wg.Add(2)
 	go c.processMessages()
-
-	c.wg.Add(1)
-	go c.managePings(ctx, token)
+	go c.managePings(requestCtx, token)
+	c.mu.Unlock()
 
 	return nil
 }
@@ -380,9 +401,25 @@ func (c *HTTP2Connection) Close() error {
 		return nil
 	}
 	c.closed = true
+	response := c.response
+	requestCancel := c.requestCancel
+	stopCloseHook := c.stopCloseHook
+	stopParentHook := c.stopParentHook
 	c.mu.Unlock()
 
 	c.cancel()
+	if requestCancel != nil {
+		requestCancel()
+	}
+	if stopCloseHook != nil {
+		stopCloseHook()
+	}
+	if stopParentHook != nil {
+		stopParentHook()
+	}
+	if response != nil {
+		_ = response.Body.Close()
+	}
 	c.wg.Wait()
 
 	c.mu.Lock()

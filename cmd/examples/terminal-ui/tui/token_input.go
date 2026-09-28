@@ -120,13 +120,19 @@ func (m tokenInputModel) View() string {
 
 func validateToken(accessToken, refreshToken, customerID string) tea.Cmd {
 	return func() tea.Msg {
-		// Create client with access token, refresh token, and customer ID
-		// This allows CSRF tokens to be attached automatically
-		client, err := alexa.NewClient(
+		// Keep account credentials in a session so a service client can be shared.
+		client, err := alexa.NewClient()
+		if err != nil {
+			return tokenValidationErrorMsg{err: err}
+		}
+		sessionOptions := []alexa.SessionOption{
 			alexa.WithBearerToken(accessToken),
 			alexa.WithRefreshToken(refreshToken),
-			alexa.WithCustomerID(customerID),
-		)
+		}
+		if customerID != "" {
+			sessionOptions = append(sessionOptions, alexa.WithCustomerID(customerID))
+		}
+		session, err := client.NewSession(sessionOptions...)
 		if err != nil {
 			return tokenValidationErrorMsg{err: err}
 		}
@@ -134,7 +140,7 @@ func validateToken(accessToken, refreshToken, customerID string) tea.Cmd {
 		// Test the connection by trying to list endpoints (this will fail if token is invalid)
 		// Actually, we'll just return success if client creation works
 		// The real validation happens when we try to use it
-		return tokenValidatedMsg{client: client}
+		return tokenValidatedMsg{client: session}
 	}
 }
 

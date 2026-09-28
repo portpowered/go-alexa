@@ -136,10 +136,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			if m.currentView == viewTokenInput {
+				m.closeSession()
 				return m, tea.Quit
 			}
 			// Allow quitting from main views too
 			if msg.String() == "ctrl+c" {
+				m.closeSession()
 				return m, tea.Quit
 			}
 		}
@@ -245,6 +247,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *model) closeSession() {
+	m.cancel()
+	if m.client != nil {
+		_ = m.client.Close()
+	}
 }
 
 func (m *model) View() string {

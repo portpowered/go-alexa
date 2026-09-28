@@ -1,6 +1,6 @@
 # Client architecture
 
-`pkg/alexa` is the public orchestration layer. It exposes the client, options, and event connection. `pkg/dependencies/rest` and `pkg/dependencies/graphql` own their corresponding HTTP request work. `pkg/alexaapimodels` contains public request, response, event, and endpoint models; `pkg/dependencymodels` contains provider wire models.
+`pkg/alexa` is the public orchestration layer. `Client` holds validated region, endpoint, timeout, and network configuration. `Session` holds one account's credentials and account operations. `pkg/dependencies/rest` and `pkg/dependencies/graphql` own their corresponding HTTP request work. `pkg/alexaapimodels` contains public request, response, event, and endpoint models; `pkg/dependencymodels` contains provider wire models.
 
 ## Endpoint enumeration
 
@@ -12,11 +12,11 @@ The checked-in GraphQL schema in `pkg/schemas/graphql/endpoints-schema.graphql` 
 
 `Client.Control` maps a feature namespace and operation to the provider control request. A successful request means the API accepted or dispatched the request; it does not confirm the physical endpoint reached the requested state. Responses may include operation-level errors.
 
-For events, call `Subscribe` before `ConnectEvents`. `ConnectEvents` returns an HTTP/2 connection whose `Receive` method reads events until an error or closure. The caller owns the returned connection and should close it when the stream is no longer needed.
+For events, call `Session.Subscribe` before `Session.ConnectEvents`. The returned HTTP/2 connection has a caller-owned lifecycle. Close the connection when the stream is no longer needed; closing its session also closes any streams still open.
 
 ## Authentication and transport
 
-The client supports access-token and refresh-token options, code-based linking, region selection, and an injected `*http.Client` for REST and GraphQL requests. The event stream establishes a separate HTTP/2 connection. Keep tokens and account data in the consuming application's credential store; do not put them in fixtures, logs, or source control.
+Create clients with functional options such as `WithRegion`, base URL overrides, `WithTimeout`, and independent REST, GraphQL, and event HTTP clients or transports. Create a session with `WithBearerToken`, `WithRefreshToken`, cookies, and other account data. Refresh and cookie exchange methods run only when called, return the resulting credentials, and leave storage and token rotation to the caller. Missing CSRF material is returned as an error; call `Session.GetCSRFToken` explicitly to fetch it. Keep credentials in the consuming application's credential store; do not put them in fixtures, logs, or source control.
 
 ## Evidence limits
 

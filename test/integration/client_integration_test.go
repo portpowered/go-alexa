@@ -31,9 +31,6 @@ func TestTokenRefresh(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
-	defer func() {
-		_ = client.Close()
-	}()
 
 	// Create device registration config
 	config := alexaapimodels.DefaultDeviceRegistrationConfig("test-serial", "test-device")
@@ -71,9 +68,6 @@ func TestEnumeration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
-	defer func() {
-		_ = client.Close()
-	}()
 
 	config := alexaapimodels.DefaultDeviceRegistrationConfig("test-serial", "test-device")
 	refreshReq := alexaapimodels.TokenRefreshRequest{
@@ -87,7 +81,7 @@ func TestEnumeration(t *testing.T) {
 	}
 
 	// Create a new client with the access token
-	clientWithToken, err := alexa.NewClientWithToken(tokenResp.AccessToken)
+	clientWithToken, err := client.NewSession(alexa.WithBearerToken(tokenResp.AccessToken))
 	if err != nil {
 		t.Fatalf("Failed to create client with token: %v", err)
 	}
@@ -139,9 +133,6 @@ func TestControlPowerStateChange(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
-	defer func() {
-		_ = client.Close()
-	}()
 
 	config := alexaapimodels.DefaultDeviceRegistrationConfig("test-serial", "test-device")
 	refreshReq := alexaapimodels.TokenRefreshRequest{
@@ -155,7 +146,7 @@ func TestControlPowerStateChange(t *testing.T) {
 	}
 
 	// Create client with token
-	clientWithToken, err := alexa.NewClientWithToken(tokenResp.AccessToken)
+	clientWithToken, err := client.NewSession(alexa.WithBearerToken(tokenResp.AccessToken))
 	if err != nil {
 		t.Fatalf("Failed to create client with token: %v", err)
 	}
@@ -267,9 +258,6 @@ func TestControlAndEvents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
-	defer func() {
-		_ = client.Close()
-	}()
 
 	config := alexaapimodels.DefaultDeviceRegistrationConfig("test-serial", "test-device")
 	refreshReq := alexaapimodels.TokenRefreshRequest{
@@ -283,7 +271,7 @@ func TestControlAndEvents(t *testing.T) {
 	}
 
 	// Create client with token
-	clientWithToken, err := alexa.NewClientWithToken(tokenResp.AccessToken)
+	clientWithToken, err := client.NewSession(alexa.WithBearerToken(tokenResp.AccessToken))
 	if err != nil {
 		t.Fatalf("Failed to create client with token: %v", err)
 	}

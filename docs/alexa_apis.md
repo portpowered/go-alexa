@@ -1,6 +1,6 @@
 # Alexa API coverage
 
-This library implements a subset of provider-specific account and endpoint operations through the public `alexa.ClientInterface`:
+This library implements a subset of provider-specific account and endpoint operations through the public `alexa.SessionInterface`. Stateless code-based linking and token exchange methods are available on `alexa.Client`:
 
 - code-based linking and access-token refresh;
 - endpoint enumeration and feature-state conversion;

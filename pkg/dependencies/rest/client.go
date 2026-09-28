@@ -238,6 +238,23 @@ func (c *Client) GetCSRFToken(ctx context.Context) (string, error) {
 	}
 }
 
+// cachedCSRFToken returns already configured CSRF material without making an
+// HTTP request. Request methods use this helper so credential setup stays explicit.
+func (c *Client) cachedCSRFToken() (string, error) {
+	if c.csrfToken != "" {
+		return c.csrfToken, nil
+	}
+	for key, cookie := range c.cookies {
+		if cookie == nil {
+			continue
+		}
+		if cookie.Name == "csrf" || key == "alexa.amazon.com:csrf" || key == ".alexa.amazon.com:csrf" {
+			return cookie.Value, nil
+		}
+	}
+	return "", &alexaapimodels.TokenError{Message: "no CSRF token available; call GetCSRFToken explicitly or configure one"}
+}
+
 // InitializeCookieAuth exchanges refresh token for cookies and retrieves CSRF token
 // This should be called before making requests if using cookie-based authentication
 func (c *Client) InitializeCookieAuth(ctx context.Context) error {
@@ -418,13 +435,6 @@ func (c *Client) doJSONRequest(ctx context.Context, method, path string, body in
 // This is used for endpoints that don't use the standard base URI
 // useCookieAuth controls whether cookie-based authentication should be used for this request
 func (c *Client) doRequestWithFullURL(ctx context.Context, method, fullURL string, body interface{}, customHeaders map[string]string, useCookieAuth bool) (*http.Response, error) {
-	// Initialize cookie auth if needed and requested
-	if useCookieAuth && c.useCookieAuth && c.refreshToken != "" && len(c.cookies) == 0 {
-		if err := c.InitializeCookieAuth(ctx); err != nil {
-			return nil, err
-		}
-	}
-
 	var bodyReader io.Reader
 	if body != nil {
 		bodyBytes, err := json.Marshal(body)
@@ -457,7 +467,7 @@ func (c *Client) doRequestWithFullURL(ctx context.Context, method, fullURL strin
 			req.Header.Set("Cookie", strings.Join(cookiePairs, "; "))
 		}
 		// Ensure CSRF token cookie is present
-		csrfToken, err := c.GetCSRFToken(ctx)
+		csrfToken, err := c.cachedCSRFToken()
 		if err != nil {
 			return nil, err
 		}

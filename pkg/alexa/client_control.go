@@ -10,7 +10,7 @@ import (
 
 // Control provides a unified interface for all control operations.
 // It dispatches to the appropriate control method based on the namespace and name in the request.
-func (c *Client) Control(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) Control(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 
 	if req.Target == nil {
 		return nil, &alexaapimodels.BadRequestError{
@@ -76,7 +76,7 @@ func (c *Client) Control(ctx context.Context, req alexaapimodels.ControlRequest)
 
 // Helper methods to convert ControlRequest to specific request types
 
-func (c *Client) controlNotification(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlNotification(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	payload, err := parseAndValidate[alexaapimodels.ControlNotificationPayload](ctx, req, alexaapimodels.FeatureOperationNameSend)
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func parseAndValidate[T any](ctx context.Context, req alexaapimodels.ControlRequ
 	}
 	return &payload, nil
 }
-func (c *Client) controlAnnouncement(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlAnnouncement(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	payload, err := parseAndValidate[alexaapimodels.ControlAnnouncementPayload](ctx, req, alexaapimodels.FeatureOperationNameSend)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (c *Client) controlAnnouncement(ctx context.Context, req alexaapimodels.Con
 	return &alexaapimodels.ControlResponse{}, nil
 }
 
-func (c *Client) controlTTS(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlTTS(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	payload, err := parseAndValidate[alexaapimodels.ControlSpeechSynthesizerPayload](ctx, req, alexaapimodels.FeatureOperationNameSpeak)
 	if err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func (c *Client) controlTTS(ctx context.Context, req alexaapimodels.ControlReque
 	return &alexaapimodels.ControlResponse{}, nil
 }
 
-func (c *Client) controlMusic(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlMusic(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	payload, err := parseAndValidate[alexaapimodels.ControlAudioPlayerPayload](ctx, req, alexaapimodels.FeatureOperationNamePlay)
 	if err != nil {
 		return nil, err
@@ -166,7 +166,7 @@ func (c *Client) controlMusic(ctx context.Context, req alexaapimodels.ControlReq
 	return &alexaapimodels.ControlResponse{}, nil
 }
 
-func (c *Client) controlAudioPlayerURI(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlAudioPlayerURI(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	payload, err := parseAndValidate[alexaapimodels.ControlAudioPlayerURIPayload](ctx, req, alexaapimodels.FeatureOperationNamePlayURI)
 	if err != nil {
 		return nil, err
@@ -186,7 +186,7 @@ func (c *Client) controlAudioPlayerURI(ctx context.Context, req alexaapimodels.C
 	return &alexaapimodels.ControlResponse{}, nil
 }
 
-func (c *Client) controlNavigateHome(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlNavigateHome(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	_, err := parseAndValidate[alexaapimodels.ControlNavigationPayload](ctx, req, alexaapimodels.FeatureOperationNameNavigateHome)
 	if err != nil {
 		return nil, err
@@ -203,7 +203,7 @@ func (c *Client) controlNavigateHome(ctx context.Context, req alexaapimodels.Con
 	return &alexaapimodels.ControlResponse{}, nil
 }
 
-func (c *Client) controlBrightness(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlBrightness(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	brightnessReq := &alexamodels.BrightnessControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
@@ -234,7 +234,7 @@ func (c *Client) controlBrightness(ctx context.Context, req alexaapimodels.Contr
 	return c.graphqlClient.ControlBrightnessFeature(ctx, brightnessReq)
 }
 
-func (c *Client) controlColor(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlColor(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	payload, err := parseAndValidate[alexaapimodels.ControlColorPayload](ctx, req, alexaapimodels.FeatureOperationNameSetColor)
 	if err != nil {
 		return nil, err
@@ -267,7 +267,7 @@ func cast[T any](req alexaapimodels.ControlRequest) (T, error) {
 	}
 }
 
-func (c *Client) controlColorTemperature(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlColorTemperature(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	colorTempReq := &alexamodels.ColorTemperatureControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
@@ -305,7 +305,7 @@ func (c *Client) controlColorTemperature(ctx context.Context, req alexaapimodels
 	return c.graphqlClient.ControlColorTemperatureFeature(ctx, colorTempReq)
 }
 
-func (c *Client) controlLock(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlLock(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	payload, err := parseAndValidate[alexaapimodels.ControlLockPayload](ctx, req, alexaapimodels.FeatureOperationNameSetLockState)
 	if err != nil {
 		return nil, err
@@ -321,7 +321,7 @@ func (c *Client) controlLock(ctx context.Context, req alexaapimodels.ControlRequ
 	return c.graphqlClient.ControlLockFeature(ctx, lockReq)
 }
 
-func (c *Client) controlMode(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlMode(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	modeReq := &alexamodels.ModeControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
@@ -353,7 +353,7 @@ func (c *Client) controlMode(ctx context.Context, req alexaapimodels.ControlRequ
 	return c.graphqlClient.ControlModeFeature(ctx, modeReq)
 }
 
-func (c *Client) controlRange(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlRange(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	rangeReq := &alexamodels.RangeControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
@@ -385,7 +385,7 @@ func (c *Client) controlRange(ctx context.Context, req alexaapimodels.ControlReq
 	return c.graphqlClient.ControlRangeFeature(ctx, rangeReq)
 }
 
-func (c *Client) controlToggle(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlToggle(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	payload, err := parseAndValidate[alexaapimodels.ControlTogglePayload](ctx, req, alexaapimodels.FeatureOperationNameSetToggleState)
 	if err != nil {
 		return nil, err
@@ -402,7 +402,7 @@ func (c *Client) controlToggle(ctx context.Context, req alexaapimodels.ControlRe
 	return c.graphqlClient.ControlToggleFeature(ctx, toggleReq)
 }
 
-func (c *Client) controlPercentage(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlPercentage(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	percentageReq := &alexamodels.PercentageControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
@@ -433,7 +433,7 @@ func (c *Client) controlPercentage(ctx context.Context, req alexaapimodels.Contr
 	return c.graphqlClient.ControlPercentageFeature(ctx, percentageReq)
 }
 
-func (c *Client) controlPowerLevel(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlPowerLevel(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	powerLevelReq := &alexamodels.PowerLevelControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
@@ -464,7 +464,7 @@ func (c *Client) controlPowerLevel(ctx context.Context, req alexaapimodels.Contr
 	return c.graphqlClient.ControlPowerLevelFeature(ctx, powerLevelReq)
 }
 
-func (c *Client) controlAction(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlAction(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	payload, err := parseAndValidate[alexaapimodels.ControlActionPayload](ctx, req, alexaapimodels.FeatureOperationNamePerformAction)
 	if err != nil {
 		return nil, err
@@ -481,7 +481,7 @@ func (c *Client) controlAction(ctx context.Context, req alexaapimodels.ControlRe
 	return c.graphqlClient.ControlActionFeature(ctx, actionReq)
 }
 
-func (c *Client) controlPlayback(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlPlayback(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	validOps := map[alexaapimodels.FeatureOperationName]bool{
 		alexaapimodels.FeatureOperationNamePlay:     true,
 		alexaapimodels.FeatureOperationNamePause:    true,
@@ -632,7 +632,7 @@ func (c *Client) controlPlayback(ctx context.Context, req alexaapimodels.Control
 	}
 }
 
-func (c *Client) controlPower(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlPower(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	// Type assert payload to ControlPowerPayload (can be empty)
 	if req.Payload != nil {
 		_, err := cast[alexaapimodels.ControlPowerPayload](req)
@@ -695,7 +695,7 @@ func (c *Client) controlPower(ctx context.Context, req alexaapimodels.ControlReq
 	}
 }
 
-func (c *Client) controlVolume(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlVolume(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	volumeReq := &alexamodels.VolumeControlRequest{
 		Endpoint: req.Target,
 	}
@@ -797,7 +797,7 @@ func (c *Client) controlVolume(ctx context.Context, req alexaapimodels.ControlRe
 	}
 }
 
-func (c *Client) controlThermostat(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
+func (c *Session) controlThermostat(ctx context.Context, req alexaapimodels.ControlRequest) (*alexaapimodels.ControlResponse, error) {
 	// Check if this is a mode operation or temperature operation
 	switch req.Name {
 	case alexaapimodels.FeatureOperationNameSetThermostatMode:

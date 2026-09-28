@@ -42,3 +42,7 @@ jobs:
           fi
       - name: Lint, build, and race tests
         run: make check
+      - name: Check non-generated library coverage
+        run: |
+          go test -race -coverpkg=./pkg/... -coverprofile=coverage.out ./pkg/...
+          go run ./tools/coverage -profile coverage.out -min 80

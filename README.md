@@ -13,10 +13,12 @@
 ## Install
 
 ```sh
-go get github.com/portpowered/go-alexa@v0.1.0
+go get github.com/portpowered/go-alexa@v0.2.0
 ```
 
-`v0.1.0` is the first release from the cleaned history.
+`v0.1.0` was the first release from the cleaned history. The v0.2.0 API moves
+account operations from `Client` to `Session`; see the [authentication guide](docs/guides/authentication.md)
+for the migration pattern.
 
 ## Quick start
 
@@ -41,16 +43,20 @@ func main() {
 		log.Fatal("set ALEXA_BEARER_TOKEN")
 	}
 
-	client, err := alexa.NewClient(alexa.WithBearerToken(token))
+	client, err := alexa.NewClient(alexa.WithRegion(alexaapimodels.RegionUS))
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Close()
+	session, err := client.NewSession(alexa.WithBearerToken(token))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer session.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	response, err := client.ListEndpoints(ctx, alexaapimodels.EndpointQuery{
+	response, err := session.ListEndpoints(ctx, alexaapimodels.EndpointQuery{
 		IncludeFields: &alexaapimodels.EndpointIncludeFields{
 			Properties: true,
 			Features:   true,
@@ -63,11 +69,11 @@ func main() {
 }
 ```
 
-`NewClient` accepts options, and every network operation accepts a context. Call `Close` when finished. See [Authentication](docs/guides/authentication.md) for token refresh and code-based linking.
+`Client` holds reusable endpoint and transport configuration. Create an account `Session` with credentials before calling API methods, then close the session when finished. Every network operation accepts a context. See [Authentication](docs/guides/authentication.md) for token refresh and code-based linking.
 
 ## Supported operations
 
-| Operation | Client method | Notes |
+| Operation | Method | Notes |
 |---|---|---|
 | Code-based linking | `GenerateCodePair`, `RegisterWithCodePair` | User approval is required to complete linking. Treat the private code and returned tokens as credentials. |
 | Token refresh | `RefreshAccessToken` | Uses a refresh token and device registration configuration. |
@@ -82,7 +88,7 @@ The package also exposes endpoint, feature, event, request, response, and error 
 
 ## Authentication, errors, and transports
 
-Use `WithBearerToken` with an access token, or `WithRefreshToken` for the cookie-backed REST flows supported by the client. `WithRegion` selects the configured US, EU, or JP service endpoints. `WithHttpClient` injects an `*http.Client` for REST and GraphQL requests. The HTTP/2 event connection has its own transport setup.
+Create a reusable client with `WithRegion`, `WithTimeout`, endpoint overrides, and network options. Put account credentials on `client.NewSession(alexa.WithBearerToken(...))`. `WithRefreshToken` only stores a caller-managed token: refresh it explicitly and install the returned access token with `Session.SetAccessToken`, or explicitly exchange it for cookies. `WithRESTHTTPClient`, `WithGraphQLHTTPClient`, and `WithEventHTTPClient` inject separate network edges; `WithEventTransport` accepts an event-stream `RoundTripper` such as an HTTP/2 transport.
 
 Errors use typed values such as `AuthenticationError`, `NetworkError`, `TokenError`, `BadRequestError`, and `HTTPError` in `alexaapimodels`; many wrapped errors preserve their cause with `Unwrap`. `ControlResponse`, `SubscribeResponse`, and `QualityOfServiceResponse` can also contain operation-level errors even when the HTTP request succeeded.
 

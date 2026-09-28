@@ -18,16 +18,20 @@ func main() {
 		log.Fatal("Set ALEXA_BEARER_TOKEN")
 	}
 
-	client, err := alexa.NewClient(alexa.WithBearerToken(bearerToken))
+	client, err := alexa.NewClient()
 	if err != nil {
 		log.Fatalf("Create Alexa client: %v", err)
 	}
-	defer func() { _ = client.Close() }()
+	session, err := client.NewSession(alexa.WithBearerToken(bearerToken))
+	if err != nil {
+		log.Fatalf("Create Alexa session: %v", err)
+	}
+	defer func() { _ = session.Close() }()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	_, err = client.Subscribe(ctx, alexaapimodels.SubscribeRequest{
+	_, err = session.Subscribe(ctx, alexaapimodels.SubscribeRequest{
 		Entities: []alexaapimodels.SubscribeEntity{{
 			EntityType: alexaapimodels.EntityTypeEndpoint,
 		}},
@@ -38,7 +42,7 @@ func main() {
 	}
 
 	fmt.Println("Connecting to event stream...")
-	conn, err := client.ConnectEvents(ctx)
+	conn, err := session.ConnectEvents(ctx)
 	if err != nil {
 		log.Fatalf("Connect to event stream: %v", err)
 	}

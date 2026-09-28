@@ -77,7 +77,7 @@ func TestGetFeatureDefaults_UnknownFeature(t *testing.T) {
 }
 
 func TestDetermineSupportedFeatures_PopulatesPropertiesAndOperations(t *testing.T) {
-	c := &Client{}
+	c := &Session{}
 	features := c.determineSupportedFeatures(
 		[]string{"connectivity", "speaker", "playback"},
 		[]string{},
@@ -144,7 +144,7 @@ func TestDetermineSupportedFeatures_PopulatesPropertiesAndOperations(t *testing.
 }
 
 func TestMergeEndpointWithoutStates_IncludesProperties(t *testing.T) {
-	c := &Client{}
+	c := &Session{}
 
 	// Build a GraphQL endpoint with a feature that has properties via operations
 	gqlEndpoint := graphql.EndpointsEndpointsEndpointsResponseItemsEndpoint{
@@ -188,7 +188,7 @@ func TestMergeEndpointWithoutStates_IncludesProperties(t *testing.T) {
 }
 
 func TestMergeEndpointWithoutStates_DefaultPropertiesWhenNoGraphQL(t *testing.T) {
-	c := &Client{}
+	c := &Session{}
 
 	// Endpoint with power feature but no GraphQL metadata for it
 	// Power is inferred from device family (FireTV)

@@ -13,7 +13,7 @@ import (
 )
 
 func TestDetermineSupportedFeatures(t *testing.T) {
-	c := &Client{}
+	c := &Session{}
 
 	// helper to check if a feature is present in the result
 	hasFeature := func(features []alexaapimodels.Feature, name alexaapimodels.FeatureName) bool {
@@ -128,13 +128,7 @@ func TestListEndpoints_IncludesAirQualityMonitorAbsentFromGenericEndpointList(t 
 		t:                     t,
 		airQualityMonitorPath: "testdata/synthetic_list_endpoints_air_quality_monitor.json",
 	}
-	client, err := NewClient(
-		WithHttpClient(&http.Client{Transport: transport}),
-		WithBearerToken("test-token"),
-	)
-	if err != nil {
-		t.Fatalf("failed to create client: %v", err)
-	}
+	client := newTestSession(t, &http.Client{Transport: transport}, WithBearerToken("test-token"))
 
 	response, err := client.ListEndpoints(context.Background(), alexaapimodels.EndpointQuery{})
 	if err != nil {
@@ -183,13 +177,7 @@ func TestListEndpoints_EmptyAirQualityMonitorResultDoesNotFailGenericEnumeration
 		t:                     t,
 		airQualityMonitorPath: "testdata/synthetic_list_endpoints_air_quality_monitor_empty.json",
 	}
-	client, err := NewClient(
-		WithHttpClient(&http.Client{Transport: transport}),
-		WithBearerToken("test-token"),
-	)
-	if err != nil {
-		t.Fatalf("failed to create client: %v", err)
-	}
+	client := newTestSession(t, &http.Client{Transport: transport}, WithBearerToken("test-token"))
 
 	response, err := client.ListEndpoints(context.Background(), alexaapimodels.EndpointQuery{})
 	if err != nil {
@@ -208,13 +196,7 @@ func TestListEndpointsWithStates_PreservesAirQualityMonitorRangeInstancesAndValu
 		t:                     t,
 		airQualityMonitorPath: "testdata/synthetic_list_endpoints_air_quality_monitor_with_states.json",
 	}
-	client, err := NewClient(
-		WithHttpClient(&http.Client{Transport: transport}),
-		WithBearerToken("test-token"),
-	)
-	if err != nil {
-		t.Fatalf("failed to create client: %v", err)
-	}
+	client := newTestSession(t, &http.Client{Transport: transport}, WithBearerToken("test-token"))
 
 	response, err := client.ListEndpoints(context.Background(), alexaapimodels.EndpointQuery{
 		IncludeFields: &alexaapimodels.EndpointIncludeFields{

@@ -41,13 +41,7 @@ func (transport playerStateTransport) RoundTrip(request *http.Request) (*http.Re
 }
 
 func TestGetPlayerStateUsesEndpointIdentityAndConvertsResponse(t *testing.T) {
-	client, err := NewClient(
-		WithHttpClient(&http.Client{Transport: playerStateTransport{t: t}}),
-		WithBearerToken("synthetic-token"),
-	)
-	if err != nil {
-		t.Fatalf("create client: %v", err)
-	}
+	client := newTestSession(t, &http.Client{Transport: playerStateTransport{t: t}}, WithBearerToken("synthetic-token"))
 
 	response, err := client.GetPlayerState(context.Background(), alexaapimodels.PlayerStateRequest{
 		Target: &alexaapimodels.Endpoint{
