@@ -17,6 +17,13 @@ make generate
 
 Files under `pkg/alexa/testdata/` are synthetic inputs for offline conversion tests. They are not captured traffic and are not evidence of current service behavior. The request and response transports used by tests also return synthetic data. Keep synthetic inputs in that directory and mark their synthetic status in the neighboring README.
 
+`pkg/testing.ReplayCaptureRoundTripper` now matches each recorded request's
+method, full URL, headers, and body in order before returning its paired
+response. Tests must call `AssertConsumed` to detect missing requests. The
+synthetic response-only inputs used by client enumeration are still unit test
+data, not paired replay evidence. A full operation-level replay inventory
+remains open under library standard 15.
+
 The maintainer reports that the APIs covered by this library worked when tested with their own real Alexa accounts. Those tests were not recorded here with an operation list, dates, results, or sanitized request/response captures. Treat this as maintainer-reported history; it does not provide reproducible or independently auditable evidence of current provider behavior. There are no real captured request/response fixtures in this repository. If sanitized captures are added later, keep them in an explicitly named `captured` directory, record the operation, UTC capture date, source category, redactions, and supported behavior in a neighboring provenance note, and remove tokens, cookies, personal data, customer IDs, and device IDs before adding them. Do not use a capture as proof of current behavior if its source or collection date is unknown.
 
 The live integration tests in `test/integration` run only when `ALEXA_REFRESH_TOKEN` is set; otherwise they skip. They are not part of credential-free CI. Use a disposable account for live testing and do not commit its credentials or output.

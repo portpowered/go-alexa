@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sort"
+	"reflect"
 	"strings"
 	"sync"
 )
@@ -16,11 +16,10 @@ import (
 // ReplayCaptureRoundTripper is an http.RoundTripper that replays captured request/response pairs
 // from a directory of capture files.
 type ReplayCaptureRoundTripper struct {
-	dirPath    string
-	captures   []CapturePair
-	capturesMu sync.RWMutex
-	counter    int
-	counterMu  sync.Mutex
+	dirPath  string
+	captures []CapturePair
+	mu       sync.Mutex
+	next     int
 }
 
 var _ http.RoundTripper = (*ReplayCaptureRoundTripper)(nil)
@@ -72,64 +71,45 @@ func (t *ReplayCaptureRoundTripper) loadCaptures() error {
 		captures = append(captures, pair)
 	}
 
-	// Sort captures by filename to maintain order (capture_0001.json, capture_0002.json, etc.)
-	sort.Slice(captures, func(i, j int) bool {
-		// Extract numbers from filenames for sorting
-		// This is a simple approach - if filenames follow the pattern, they'll sort correctly
-		return i < j
-	})
-
-	t.capturesMu.Lock()
+	t.mu.Lock()
 	t.captures = captures
-	t.capturesMu.Unlock()
+	t.mu.Unlock()
 
 	return nil
 }
 
-// RoundTrip matches the incoming request to a captured request and returns the corresponding
-// captured response. It uses sequential matching by default (returns the next capture in order).
+// RoundTrip returns only the response paired with the next exact captured request.
 func (t *ReplayCaptureRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	t.capturesMu.RLock()
-	captures := t.captures
-	t.capturesMu.RUnlock()
-
-	if len(captures) == 0 {
-		return nil, fmt.Errorf("no captures available for replay")
-	}
-
-	// Try to match by URL and method first (smart matching)
-	capturedResp := t.findMatchingCapture(req, captures)
-
-	// If no match found, use sequential matching
-	if capturedResp == nil {
-		t.counterMu.Lock()
-		if t.counter >= len(captures) {
-			t.counterMu.Unlock()
-			return nil, fmt.Errorf("no more captures available for replay (used %d of %d)", t.counter, len(captures))
+	var body []byte
+	if req.Body != nil {
+		var err error
+		body, err = io.ReadAll(req.Body)
+		if err != nil {
+			return nil, fmt.Errorf("read replay request: %w", err)
 		}
-		idx := t.counter
-		t.counter++
-		t.counterMu.Unlock()
-
-		capturedResp = &captures[idx].Response
 	}
 
-	// Build HTTP response from captured response
-	return t.buildResponse(req, capturedResp), nil
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.next >= len(t.captures) {
+		return nil, fmt.Errorf("unexpected replay request: all %d captures consumed", len(t.captures))
+	}
+	pair := &t.captures[t.next]
+	if req.Method != pair.Request.Method || req.URL.String() != pair.Request.URL ||
+		!reflect.DeepEqual(req.Header, pair.Request.Headers) || !bytes.Equal(body, pair.Request.Body) {
+		return nil, fmt.Errorf("replay request %d mismatch in method, URL, headers, or body", t.next+1)
+	}
+	t.next++
+	return t.buildResponse(req, &pair.Response), nil
 }
 
-// findMatchingCapture attempts to find a matching capture by URL and method
-func (t *ReplayCaptureRoundTripper) findMatchingCapture(req *http.Request, captures []CapturePair) *CapturedResponse {
-	reqURL := req.URL.String()
-	reqMethod := req.Method
-
-	for i := range captures {
-		capturedReq := captures[i].Request
-		if capturedReq.Method == reqMethod && capturedReq.URL == reqURL {
-			return &captures[i].Response
-		}
+// AssertConsumed reports unconsumed request/response pairs.
+func (t *ReplayCaptureRoundTripper) AssertConsumed() error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.next != len(t.captures) {
+		return fmt.Errorf("replay consumed %d of %d request/response pairs", t.next, len(t.captures))
 	}
-
 	return nil
 }
 
