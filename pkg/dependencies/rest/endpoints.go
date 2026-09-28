@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
@@ -273,6 +275,9 @@ func (c *Client) GetDevicesV2(ctx context.Context, opts *GetDevicesV2Options) (*
 // POST {alexaAmazonBaseUri}/api/behaviors/preview
 // This is the base function for creating behavior operations
 func (c *Client) RunBehavior(ctx context.Context, sequenceJSON string) error {
+	if err := validateBehaviorSequence(sequenceJSON); err != nil {
+		return &alexaapimodels.BadRequestError{Message: "sequence is not schema-backed", Err: err}
+	}
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathBehaviorsPreview
 
 	request := wire.WireBehaviorPreviewRequest{
@@ -283,6 +288,82 @@ func (c *Client) RunBehavior(ctx context.Context, sequenceJSON string) error {
 
 	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSubmitBehaviorPreview, baseURL, request, nil, nil, true); err != nil {
 		return err
+	}
+	return nil
+}
+
+func validateBehaviorSequence(sequenceJSON string) error {
+	var sequence alexamodels.Sequence
+	decoder := json.NewDecoder(strings.NewReader(sequenceJSON))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&sequence); err != nil {
+		return err
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		return fmt.Errorf("sequence contains trailing JSON")
+	}
+	if !sequence.Type.Valid() || sequence.StartNode == nil {
+		return fmt.Errorf("sequence type or start node is missing")
+	}
+	return validateBehaviorNode(sequence.StartNode, 0)
+}
+
+func validateBehaviorNode(value any, depth int) error {
+	if depth > 16 {
+		return fmt.Errorf("behavior node nesting exceeds 16")
+	}
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	var kind struct {
+		Type string `json:"@type"`
+	}
+	if err := json.Unmarshal(data, &kind); err != nil {
+		return err
+	}
+	decode := func(target any) error {
+		decoder := json.NewDecoder(strings.NewReader(string(data)))
+		decoder.DisallowUnknownFields()
+		return decoder.Decode(target)
+	}
+	switch kind.Type {
+	case string(alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode):
+		var node alexamodels.OpaquePayloadOperationNode
+		if err := decode(&node); err != nil {
+			return err
+		}
+		if !node.Type.Valid() || node.OperationType == "" || node.OperationPayload == nil {
+			return fmt.Errorf("opaque operation node is incomplete")
+		}
+	case string(alexamodels.ComAmazonAlexaBehaviorsModelSerialNode):
+		var node alexamodels.SerialNode
+		if err := decode(&node); err != nil {
+			return err
+		}
+		if !node.Type.Valid() || len(node.NodesToExecute) == 0 {
+			return fmt.Errorf("serial node has no children")
+		}
+		for _, child := range node.NodesToExecute {
+			if err := validateBehaviorNode(child, depth+1); err != nil {
+				return err
+			}
+		}
+	case string(alexamodels.ComAmazonAlexaBehaviorsModelParallelNode):
+		var node alexamodels.ParallelNode
+		if err := decode(&node); err != nil {
+			return err
+		}
+		if !node.Type.Valid() || len(node.NodesToExecute) == 0 {
+			return fmt.Errorf("parallel node has no children")
+		}
+		for _, child := range node.NodesToExecute {
+			if err := validateBehaviorNode(child, depth+1); err != nil {
+				return err
+			}
+		}
+	default:
+		return fmt.Errorf("unsupported behavior node type %q", kind.Type)
 	}
 	return nil
 }

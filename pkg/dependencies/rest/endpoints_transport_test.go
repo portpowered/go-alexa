@@ -476,9 +476,25 @@ func TestMediaAndBehaviorErrorsPreserveSyntheticHTTPFailure(t *testing.T) {
 	if !alexaapimodels.IsNetworkError(err) {
 		t.Fatalf("expected media wrapper NetworkError, got %T: %v", err, err)
 	}
-	err = client.RunBehavior(context.Background(), `{}`)
+	err = client.RunBehavior(context.Background(), `{"@type":"com.amazon.alexa.behaviors.model.Sequence","startNode":{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","type":"synthetic.Operation","operationPayload":{}}}`)
 	if !alexaapimodels.IsInternalServerError(err) {
 		t.Fatalf("expected behavior InternalServerError, got %T: %v", err, err)
+	}
+}
+
+func TestRunBehaviorRejectsUnschematizedSequenceBeforeTransport(t *testing.T) {
+	client := NewClient(WithHTTPClient(&http.Client{Transport: syntheticRoundTripper(func(*http.Request) (*http.Response, error) {
+		t.Fatal("unschematized sequence reached transport")
+		return nil, nil
+	})}))
+	for _, sequence := range []string{
+		`{}`,
+		`{"@type":"com.amazon.alexa.behaviors.model.Sequence","startNode":{"@type":"unknown"}}`,
+		`{"@type":"com.amazon.alexa.behaviors.model.Sequence","startNode":{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","type":"","operationPayload":{}}}`,
+	} {
+		if err := client.RunBehavior(context.Background(), sequence); !alexaapimodels.IsBadRequestError(err) {
+			t.Fatalf("expected schema rejection for %s, got %v", sequence, err)
+		}
 	}
 }
 

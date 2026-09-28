@@ -38,7 +38,7 @@ func TestExecuteSendsBearerGraphQLRequestAndDecodesData(t *testing.T) {
 			if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 				t.Fatalf("decode GraphQL request: %v", err)
 			}
-			if body.Query != "query SyntheticEndpoint($id: ID!) { endpoint(id: $id) { id name } }" || body.Variables["id"] != "endpoint-11" {
+			if body.Query != GetEndpoint_Operation || body.Variables["id"] != "endpoint-11" {
 				t.Errorf("unexpected GraphQL operation: %#v", body)
 			}
 			return graphqlSyntheticResponse(request, http.StatusOK, `{"data":{"endpoint":{"id":"endpoint-11","name":"Synthetic lamp"}}}`), nil
@@ -46,7 +46,7 @@ func TestExecuteSendsBearerGraphQLRequestAndDecodesData(t *testing.T) {
 	)
 
 	var result resultShape
-	err := client.Execute(context.Background(), "query SyntheticEndpoint($id: ID!) { endpoint(id: $id) { id name } }", map[string]any{"id": "endpoint-11"}, &result)
+	err := client.Execute(context.Background(), GetEndpoint_Operation, map[string]any{"id": "endpoint-11"}, &result)
 	if err != nil {
 		t.Fatalf("Execute returned an error: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestQueryAndMutateDelegateToExecute(t *testing.T) {
 			var result struct {
 				Accepted bool `json:"accepted"`
 			}
-			if err := operation.run(context.Background(), "query Synthetic { accepted }", nil, &result); err != nil {
+			if err := operation.run(context.Background(), GetEndpoint_Operation, nil, &result); err != nil {
 				t.Fatalf("%s returned an error: %v", operation.name, err)
 			}
 			if !result.Accepted {
@@ -123,7 +123,7 @@ func TestExecuteReportsHTTPGraphQLDecodeAndTokenErrors(t *testing.T) {
 			var result struct {
 				Count int `json:"count"`
 			}
-			err := client.Execute(context.Background(), "query Synthetic { count }", nil, &result)
+			err := client.Execute(context.Background(), GetEndpoint_Operation, nil, &result)
 			if err == nil || !strings.Contains(err.Error(), testCase.wantText) {
 				t.Fatalf("expected error containing %q, got %v", testCase.wantText, err)
 			}
@@ -134,6 +134,19 @@ func TestExecuteReportsHTTPGraphQLDecodeAndTokenErrors(t *testing.T) {
 				t.Fatalf("expected TokenError, got %T: %v", err, err)
 			}
 		})
+	}
+}
+
+func TestExecuteRejectsUnschematizedGraphQLOperationBeforeTransport(t *testing.T) {
+	client := NewClient(WithBearerToken("synthetic-token"), WithHTTPClient(&http.Client{
+		Transport: graphqlRoundTripper(func(*http.Request) (*http.Response, error) {
+			t.Fatal("unschematized operation reached transport")
+			return nil, nil
+		}),
+	}))
+	err := client.Execute(context.Background(), "query Unlisted { unknownField }", nil, nil)
+	if err == nil || !strings.Contains(err.Error(), "not in the generated schema set") {
+		t.Fatalf("expected schema gate error, got %v", err)
 	}
 }
 

@@ -1,0 +1,6 @@
+package: alexamodels
+generate:
+  models: true
+output: pkg/dependencymodels/embedded_wire.gen.go
+output-options:
+  skip-prune: true

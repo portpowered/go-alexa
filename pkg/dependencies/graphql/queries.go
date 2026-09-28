@@ -188,7 +188,7 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 	}
 
 	// Create HTTP request
-	httpReq, err := http.NewRequestWithContext(ctx, apiroutes.MethodExecuteNexusGraphQL, a.baseURL+NexusGraphqlEndpoint, bytes.NewReader(bodyBytes))
+	httpReq, err := http.NewRequestWithContext(ctx, apiroutes.MethodExecuteNexusGraphQL, a.baseURL+apiroutes.PathExecuteNexusGraphQL, bytes.NewReader(bodyBytes))
 	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to create request",

@@ -280,7 +280,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-amzn-identity-auth-domain", "api."+domain)
+	httpReq.Header.Set(apiroutes.HeaderXAmznIdentityAuthDomain, "api."+domain)
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {

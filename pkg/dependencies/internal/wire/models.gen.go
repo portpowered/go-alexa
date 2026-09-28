@@ -84,7 +84,7 @@ type WireBearerTokens struct {
 type WireBehaviorPreviewRequest struct {
 	BehaviorId string `json:"behaviorId"`
 
-	// SequenceJson JSON-encoded sequence serialized as a string by the client.
+	// SequenceJson JSON-encoded sequence serialized as a string by the client; the embedded object is modeled in api/embedded-wire.yaml.
 	SequenceJson string `json:"sequenceJson"`
 	Status       string `json:"status"`
 }

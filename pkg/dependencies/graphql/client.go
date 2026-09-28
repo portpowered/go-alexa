@@ -119,6 +119,9 @@ type Location struct {
 
 // Execute executes a GraphQL query or mutation
 func (c *Client) Execute(ctx context.Context, query string, variables map[string]interface{}, result interface{}) error {
+	if !schemaBackedGraphQLOperation(query) {
+		return &alexaapimodels.BadRequestError{Message: "GraphQL operation is not in the generated schema set"}
+	}
 	wireRequest := wire.WireGraphQLRequest{
 		Query: query,
 	}

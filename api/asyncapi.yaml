@@ -159,7 +159,8 @@ components:
       additionalProperties: true
     ResourceFeature:
       type: object
-      description: Feature property content is metric-specific and may be extended by the provider.
+      description: Feature property content is metric-specific and may be extended by the provider. Known parser property shapes are modeled in api/embedded-wire.yaml.
+      x-go-alexa-known-property-schema: embedded-wire.yaml#/components/schemas
       properties:
         name: {type: string}
         __typename: {type: string}

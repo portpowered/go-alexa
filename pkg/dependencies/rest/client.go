@@ -477,7 +477,7 @@ func (c *Client) doRequestWithFullURL(ctx context.Context, method, fullURL strin
 		}
 		if csrfToken != "" {
 			// cookiePairs = append(cookiePairs, fmt.Sprintf("csrf=%s", csrfToken))
-			req.Header.Set("csrf", csrfToken)
+			req.Header.Set(apiroutes.HeaderCsrf, csrfToken)
 		}
 
 		// Set standard headers for cookie-based auth

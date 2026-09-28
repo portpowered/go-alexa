@@ -28,10 +28,10 @@ func (c *Client) GetUserInfo(ctx context.Context, opts *GetUserInfoOptions) (*al
 	baseURL := c.alexaAmazonBaseUri + apiroutes.PathGetUserInfo
 	params := url.Values{}
 	if opts.Platform != "" {
-		params.Set("platform", opts.Platform)
+		params.Set(apiroutes.QueryParamPlatform, opts.Platform)
 	}
 	if opts.Version != "" {
-		params.Set("version", opts.Version)
+		params.Set(apiroutes.QueryParamVersion, opts.Version)
 	}
 	if len(params) > 0 {
 		baseURL += "?" + params.Encode()

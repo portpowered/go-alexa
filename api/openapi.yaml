@@ -546,8 +546,9 @@ paths:
       operationId: executeNexusGraphQL
       summary: Execute a GraphQL operation
       description: |
-        The generic GraphQL client posts a query, optional operation name, and
-        optional variables to this route. This shape is derived from the
+        The generic GraphQL client posts one of the seven generated operation
+        documents with optional variables to this route. Other documents are
+        rejected before network I/O. This shape is derived from the
         current client serializer and GraphQL schema, not from an Amazon-issued
         HTTP contract or a sanitized live capture.
       servers:
@@ -1049,7 +1050,9 @@ components:
         behaviorId: {type: string}
         sequenceJson:
           type: string
-          description: JSON-encoded sequence serialized as a string by the client.
+          description: JSON-encoded sequence serialized as a string by the client; the embedded object is modeled in api/embedded-wire.yaml.
+          contentMediaType: application/json
+          x-go-alexa-embedded-schema: embedded-wire.yaml#/components/schemas/Sequence
         status: {type: string}
       required: [behaviorId, sequenceJson, status]
     WireMediaCommand:

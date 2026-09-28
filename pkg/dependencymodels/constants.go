@@ -19,13 +19,13 @@ const (
 
 // Query Parameters
 const (
-	QueryParamOwner              = "owner"
-	QueryParamExpand             = "expand"
-	QueryParamMaxResults         = "maxResults"
-	QueryParamNextToken          = "nextToken"
-	QueryParamDeviceSerialNumber = "deviceSerialNumber"
-	QueryParamDeviceType         = "deviceType"
-	QueryParamCSRF               = "csrf"
+	QueryParamOwner              = apiroutes.QueryParamOwner
+	QueryParamExpand             = apiroutes.QueryParamExpand
+	QueryParamMaxResults         = apiroutes.QueryParamMaxResults
+	QueryParamNextToken          = apiroutes.QueryParamNextToken
+	QueryParamDeviceSerialNumber = apiroutes.QueryParamDeviceSerialNumber
+	QueryParamDeviceType         = apiroutes.QueryParamDeviceType
+	QueryParamCSRF               = apiroutes.HeaderCsrf
 )
 
 // Default Values
