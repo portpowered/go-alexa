@@ -13,7 +13,7 @@
 ## Install
 
 ```sh
-go get github.com/portpowered/go-alexa@v0.2.0
+go get github.com/portpowered/go-alexa@latest
 ```
 
 `v0.1.0` was the first release from the cleaned history. The v0.2.0 API moves
