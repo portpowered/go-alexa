@@ -442,6 +442,10 @@ func checkProductionRouteLiterals(root string, routes []route) error {
 		if entry.IsDir() {
 			return nil
 		}
+		// pkg/testing replays inbound response headers; it does not send provider requests.
+		if strings.HasPrefix(path, filepath.Join(base, "testing")+string(filepath.Separator)) {
+			return nil
+		}
 		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") || strings.HasSuffix(path, ".gen.go") {
 			return nil
 		}
@@ -506,7 +510,7 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 		if !ok || decl.Body == nil {
 			return true
 		}
-		assignments := make(map[string]ast.Expr)
+		assignments := make(map[string][]routeAssignment)
 		queryValues := make(map[string]bool)
 		ast.Inspect(decl.Body, func(node ast.Node) bool {
 			assignment, ok := node.(*ast.AssignStmt)
@@ -518,9 +522,7 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 					continue
 				}
 				if name, ok := assignment.Lhs[i].(*ast.Ident); ok {
-					if _, exists := assignments[name.Name]; !exists {
-						assignments[name.Name] = right
-					}
+					assignments[name.Name] = append(assignments[name.Name], routeAssignment{value: right, position: assignment.Pos(), op: assignment.Tok})
 					if isQueryValuesExpression(right) {
 						queryValues[name.Name] = true
 					}
@@ -543,7 +545,7 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 				if operation == "" || !methods[operation] {
 					*violations = append(*violations, fmt.Sprintf("%s: outbound request method must be a generated OpenAPI operation", fset.Position(call.Pos())))
 				} else {
-					found := routeNames(target, assignments, aliases)
+					found := routeNames(target, assignments, aliases, call.Pos())
 					expected := operation
 					if operation == "OpenDirectiveStream" {
 						expected = "channel:directives"
@@ -562,7 +564,7 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 					*violations = append(*violations, fmt.Sprintf("%s: query parameter key must use a schema-generated QueryParam constant", fset.Position(call.Pos())))
 				}
 			}
-			if header, ok := selector.X.(*ast.SelectorExpr); ok && header.Sel.Name == "Header" && selector.Sel.Name == "Set" {
+			if header, ok := selector.X.(*ast.SelectorExpr); ok && header.Sel.Name == "Header" {
 				if !generatedParameter(call.Args[0], "Header") && !(decl.Name.Name == "doRequestWithFullURL" && isIdentifier(call.Args[0], "key")) {
 					*violations = append(*violations, fmt.Sprintf("%s: request header name must use a schema-generated Header constant", fset.Position(call.Pos())))
 				}
@@ -626,19 +628,31 @@ func requestTarget(call *ast.CallExpr) (ast.Expr, ast.Expr, bool) {
 	return nil, nil, false
 }
 
-func routeNames(expr ast.Expr, assignments map[string]ast.Expr, aliases map[string]string) map[string]bool {
+type routeAssignment struct {
+	value    ast.Expr
+	position token.Pos
+	op       token.Token
+}
+
+func routeNames(expr ast.Expr, assignments map[string][]routeAssignment, aliases map[string]string, before token.Pos) map[string]bool {
 	found := make(map[string]bool)
-	visited := make(map[string]bool)
-	var scan func(ast.Expr)
-	scan = func(value ast.Expr) {
+	var scan func(ast.Expr, token.Pos)
+	scan = func(value ast.Expr, cutoff token.Pos) {
 		ast.Inspect(value, func(node ast.Node) bool {
 			switch part := node.(type) {
 			case *ast.Ident:
-				if !visited[part.Name] {
-					visited[part.Name] = true
-					if assigned, ok := assignments[part.Name]; ok {
-						scan(assigned)
+				var latest *routeAssignment
+				for i := range assignments[part.Name] {
+					candidate := &assignments[part.Name][i]
+					if candidate.position < cutoff && (latest == nil || candidate.position > latest.position) {
+						latest = candidate
 					}
+				}
+				if latest != nil {
+					if latest.op == token.ADD_ASSIGN {
+						scan(part, latest.position)
+					}
+					scan(latest.value, latest.position)
 				}
 			case *ast.SelectorExpr:
 				qualifier, ok := part.X.(*ast.Ident)
@@ -660,7 +674,7 @@ func routeNames(expr ast.Expr, assignments map[string]ast.Expr, aliases map[stri
 			return true
 		})
 	}
-	scan(expr)
+	scan(expr, before)
 	return found
 }
 

@@ -51,6 +51,12 @@ func TestWireCallsiteGate(t *testing.T) {
 			want: "not paired with its generated route",
 		},
 		{
+			name: "reassigned path after matching declaration",
+			source: `package rest
+			func send() { path := apiroutes.PathListRestEndpoints; path = apiroutes.PathGetRestEndpoint; c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil) }`,
+			want: "not paired with its generated route",
+		},
+		{
 			name: "generated directive channel",
 			source: `package alexa
 			func send() { http.NewRequestWithContext(ctx, apiroutes.MethodOpenDirectiveStream, base+apiroutes.ChannelDirectivesAddress, nil) }`,
@@ -71,6 +77,12 @@ func TestWireCallsiteGate(t *testing.T) {
 			name: "handwritten request header",
 			source: `package rest
 			func send() { req.Header.Set("X-Undeclared", "value") }`,
+			want: "request header name must use a schema-generated Header constant",
+		},
+		{
+			name: "handwritten added request header",
+			source: `package rest
+			func send() { req.Header.Add("X-Undeclared", "value") }`,
 			want: "request header name must use a schema-generated Header constant",
 		},
 		{
