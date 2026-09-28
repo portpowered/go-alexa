@@ -169,3 +169,30 @@ func TestSyntheticEventStreamCloseUnblocksLiveRead(t *testing.T) {
 		t.Fatal("Close did not unblock an idle event stream")
 	}
 }
+
+func TestEventErrorsApplyBackpressureWithoutDroppingTerminalFailure(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	conn := &HTTP2Connection{ctx: ctx, errChan: make(chan error, 1)}
+	conn.errChan <- errors.New("synthetic prior error")
+	terminal := errors.New("synthetic terminal error")
+	done := make(chan struct{})
+	go func() {
+		conn.reportStreamError(terminal)
+		close(done)
+	}()
+	select {
+	case <-done:
+		t.Fatal("terminal failure was dropped when the error queue was full")
+	case <-time.After(20 * time.Millisecond):
+	}
+	<-conn.errChan
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("terminal failure did not enter the queue after backpressure cleared")
+	}
+	if got := <-conn.errChan; !errors.Is(got, terminal) {
+		t.Fatalf("got %v, want terminal failure", got)
+	}
+}

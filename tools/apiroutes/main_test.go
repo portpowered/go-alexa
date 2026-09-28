@@ -17,20 +17,67 @@ func TestWireCallsiteGate(t *testing.T) {
 			func send() {
 				query := url.Values{}
 				query.Set(alexamodels.QueryParamOwner, "caller")
-				request(apiroutes.MethodListRestEndpoints, apiroutes.PathListRestEndpoints)
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, apiroutes.PathListRestEndpoints, nil, nil)
 			}`,
 		},
 		{
 			name: "mismatched method and path",
 			source: `package rest
-			func send() { request(apiroutes.MethodListRestEndpoints, apiroutes.PathGetRestEndpoint) }`,
-			want: "not paired with its generated path",
+			func send() { c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, apiroutes.PathGetRestEndpoint, nil, nil) }`,
+			want: "not paired with its generated route",
 		},
 		{
 			name: "handwritten query key",
 			source: `package rest
 			func send() { query := url.Values{}; query.Set("owner", "caller") }`,
 			want: "schema-generated QueryParam constant",
+		},
+		{
+			name: "unschematized endpoint",
+			source: `package rest
+			func send() { c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, "/unlisted", nil, nil) }`,
+			want: "not paired with its generated route",
+		},
+		{
+			name: "handwritten method",
+			source: `package rest
+			func send() { c.doJSONRequest(ctx, "POST", apiroutes.PathListRestEndpoints, nil, nil) }`,
+			want: "method must be a generated OpenAPI operation",
+		},
+		{
+			name: "decoy matching path",
+			source: `package rest
+			func send() { _ = apiroutes.PathListRestEndpoints; c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, apiroutes.PathGetRestEndpoint, nil, nil) }`,
+			want: "not paired with its generated route",
+		},
+		{
+			name: "generated directive channel",
+			source: `package alexa
+			func send() { http.NewRequestWithContext(ctx, apiroutes.MethodOpenDirectiveStream, base+apiroutes.ChannelDirectivesAddress, nil) }`,
+		},
+		{
+			name: "unschematized channel",
+			source: `package alexa
+			func send() { http.NewRequestWithContext(ctx, apiroutes.MethodOpenDirectiveStream, base+"/other-channel", nil) }`,
+			want: "not paired with its generated route or channel",
+		},
+		{
+			name: "OpenAPI path cannot stand in for AsyncAPI channel",
+			source: `package alexa
+			func send() { http.NewRequestWithContext(ctx, apiroutes.MethodOpenDirectiveStream, base+apiroutes.PathOpenDirectiveStream, nil) }`,
+			want: "not paired with its generated route or channel",
+		},
+		{
+			name: "handwritten request header",
+			source: `package rest
+			func send() { req.Header.Set("X-Undeclared", "value") }`,
+			want: "request header name must use a schema-generated Header constant",
+		},
+		{
+			name: "handwritten custom request header",
+			source: `package rest
+			func send() { customHeaders["X-Undeclared"] = "value" }`,
+			want: "custom request header name must use a schema-generated Header constant",
 		},
 	}
 	for _, test := range tests {
@@ -41,7 +88,7 @@ func TestWireCallsiteGate(t *testing.T) {
 				t.Fatal(err)
 			}
 			var violations []string
-			checkWireCallsites(file, fset, nil, map[string]bool{"ListRestEndpoints": true}, &violations)
+			checkWireCallsites(file, fset, nil, map[string]bool{"ListRestEndpoints": true, "OpenDirectiveStream": true}, &violations)
 			got := strings.Join(violations, "\n")
 			if test.want == "" && got != "" || test.want != "" && !strings.Contains(got, test.want) {
 				t.Fatalf("gate result %q, want %q", got, test.want)

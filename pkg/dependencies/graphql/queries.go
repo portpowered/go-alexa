@@ -196,9 +196,9 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 		}
 	}
 
-	httpReq.Header.Set("Authorization", "Bearer "+token)
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Accept", "application/json")
+	httpReq.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
+	httpReq.Header.Set(apiroutes.HeaderContentType, "application/json")
+	httpReq.Header.Set(apiroutes.HeaderAccept, "application/json")
 
 	// Execute request
 	httpResp, err := a.httpClient.Do(httpReq)

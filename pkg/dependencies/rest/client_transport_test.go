@@ -11,7 +11,23 @@ import (
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
+	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
+
+func TestCustomHeaderMustBeDeclaredInSchema(t *testing.T) {
+	client := NewClient(WithBearerToken("synthetic-token"), WithHTTPClient(&http.Client{
+		Transport: syntheticRoundTripper(func(*http.Request) (*http.Response, error) {
+			t.Fatal("undeclared request header reached transport")
+			return nil, nil
+		}),
+	}))
+	_, err := client.doRequestWithFullURL(context.Background(), apiroutes.MethodGetUserInfo,
+		"https://alexa.synthetic.test"+apiroutes.PathGetUserInfo, nil,
+		map[string]string{"X-Undeclared": "synthetic"}, false)
+	if !alexaapimodels.IsBadRequestError(err) {
+		t.Fatalf("expected undeclared header error, got %v", err)
+	}
+}
 
 type syntheticEndpoint struct {
 	id      string

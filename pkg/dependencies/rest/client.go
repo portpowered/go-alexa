@@ -295,52 +295,40 @@ func (c *Client) InitializeCookieAuth(ctx context.Context) error {
 
 // fetchCSRFTokenFromAPI fetches CSRF token by visiting Alexa API endpoints
 func (c *Client) fetchCSRFTokenFromAPI(ctx context.Context) (string, error) {
-	// Try multiple endpoints to get CSRF token
-	endpoints := []struct {
-		method string
-		url    string
-	}{
-		{method: apiroutes.MethodFetchCsrfCookie, url: c.alexaAmazonBaseUri + apiroutes.PathFetchCsrfCookie},
+	req, err := http.NewRequestWithContext(ctx, apiroutes.MethodFetchCsrfCookie, c.alexaAmazonBaseUri+apiroutes.PathFetchCsrfCookie, nil)
+	if err != nil {
+		return "", err
 	}
 
-	for _, endpoint := range endpoints {
-		req, err := http.NewRequestWithContext(ctx, endpoint.method, endpoint.url, nil)
-		if err != nil {
-			continue
-		}
-
-		// Add cookies to request
-		// Use cookie-based authentication
-		cookiePairs := make([]string, 0, len(c.cookies)+1)
-		for _, cookie := range c.cookies {
-			cookiePairs = append(cookiePairs, fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-		}
-		// Set the combined cookie header directly to preserve original bytes
-		if len(cookiePairs) > 0 {
-			req.Header.Set("Cookie", strings.Join(cookiePairs, "; "))
-		}
-
-		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0")
-		req.Header.Set("DNT", "1")
-		req.Header.Set("Referer", "https://alexa.amazon.com/spa/index.html")
-		req.Header.Set("Origin", "https://alexa.amazon.com")
-
-		resp, err := c.httpClient.Do(req)
-		if err != nil {
-			continue
-		}
-
-		// Check response cookies for CSRF token
-		for _, cookie := range resp.Cookies() {
-			if cookie.Name == "csrf" {
-				_ = resp.Body.Close()
-				return cookie.Value, nil
-			}
-		}
-		_ = resp.Body.Close()
+	// Add cookies to request, preserving their stored bytes.
+	cookiePairs := make([]string, 0, len(c.cookies)+1)
+	for _, cookie := range c.cookies {
+		cookiePairs = append(cookiePairs, fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
+	}
+	if len(cookiePairs) > 0 {
+		req.Header.Set(apiroutes.HeaderCookie, strings.Join(cookiePairs, "; "))
 	}
 
-	return "", errors.New("failed to retrieve CSRF token from any endpoint")
+	req.Header.Set(apiroutes.HeaderUserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0")
+	req.Header.Set(apiroutes.HeaderDNT, "1")
+	req.Header.Set(apiroutes.HeaderReferer, "https://alexa.amazon.com/spa/index.html")
+	req.Header.Set(apiroutes.HeaderOrigin, "https://alexa.amazon.com")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	// Check response cookies for CSRF token
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == apiroutes.HeaderCsrf {
+			_ = resp.Body.Close()
+			return cookie.Value, nil
+		}
+	}
+	_ = resp.Body.Close()
+
+	return "", errors.New("failed to retrieve CSRF token")
 }
 
 // doRequest performs an HTTP request with retry logic
@@ -374,9 +362,9 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 			Err:     err,
 		}
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
+	req.Header.Set(apiroutes.HeaderContentType, "application/json")
+	req.Header.Set(apiroutes.HeaderAccept, "application/json")
 
 	// Retry logic
 	maxRetries := 3
@@ -468,7 +456,7 @@ func (c *Client) doRequestWithFullURL(ctx context.Context, method, fullURL strin
 		}
 		// Set the combined cookie header directly to preserve original bytes
 		if len(cookiePairs) > 0 {
-			req.Header.Set("Cookie", strings.Join(cookiePairs, "; "))
+			req.Header.Set(apiroutes.HeaderCookie, strings.Join(cookiePairs, "; "))
 		}
 		// Ensure CSRF token cookie is present
 		csrfToken, err := c.cachedCSRFToken()
@@ -481,10 +469,10 @@ func (c *Client) doRequestWithFullURL(ctx context.Context, method, fullURL strin
 		}
 
 		// Set standard headers for cookie-based auth
-		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0")
-		req.Header.Set("DNT", "1")
-		req.Header.Set("Referer", "https://alexa.amazon.com/spa/index.html")
-		req.Header.Set("Origin", "https://alexa.amazon.com")
+		req.Header.Set(apiroutes.HeaderUserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0")
+		req.Header.Set(apiroutes.HeaderDNT, "1")
+		req.Header.Set(apiroutes.HeaderReferer, "https://alexa.amazon.com/spa/index.html")
+		req.Header.Set(apiroutes.HeaderOrigin, "https://alexa.amazon.com")
 
 	} else {
 		// Use bearer token authentication
@@ -495,16 +483,19 @@ func (c *Client) doRequestWithFullURL(ctx context.Context, method, fullURL strin
 				Err:     err,
 			}
 		}
-		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
 	}
 
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set(apiroutes.HeaderAccept, "application/json")
 	if body != nil {
-		req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+		req.Header.Set(apiroutes.HeaderContentType, "application/json; charset=UTF-8")
 	}
 
 	// Set custom headers if provided (these override defaults)
 	for key, value := range customHeaders {
+		if !apiroutes.IsKnownRequestHeader(key) {
+			return nil, &alexaapimodels.BadRequestError{Message: "request header is not declared in the schema"}
+		}
 		req.Header.Set(key, value)
 	}
 
@@ -513,16 +504,14 @@ func (c *Client) doRequestWithFullURL(ctx context.Context, method, fullURL strin
 	var resp *http.Response
 	for i := 0; i < maxRetries; i++ {
 		resp, err = c.httpClient.Do(req)
-
-		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			return resp, nil
-		}
-
 		if err != nil {
 			return nil, &alexaapimodels.NetworkError{
 				Message: "request failed",
 				Err:     err,
 			}
+		}
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			return resp, nil
 		}
 
 		if resp.StatusCode == 401 {
@@ -634,8 +623,8 @@ func (c *Client) doUnauthenticatedRequest(ctx context.Context, method, url strin
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set(apiroutes.HeaderContentType, "application/json")
+	req.Header.Set(apiroutes.HeaderAccept, "application/json")
 
 	// Retry logic
 	maxRetries := 3

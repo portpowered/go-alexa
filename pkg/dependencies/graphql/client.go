@@ -152,9 +152,9 @@ func (c *Client) Execute(ctx context.Context, query string, variables map[string
 			Err:     err,
 		}
 	}
-	httpReq.Header.Set("Authorization", "Bearer "+token)
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Accept", "application/json")
+	httpReq.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
+	httpReq.Header.Set(apiroutes.HeaderContentType, "application/json")
+	httpReq.Header.Set(apiroutes.HeaderAccept, "application/json")
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {

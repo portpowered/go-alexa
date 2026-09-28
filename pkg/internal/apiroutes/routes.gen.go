@@ -47,7 +47,15 @@ const (
 	PathSubmitBehaviorPreview            = "/api/behaviors/preview"
 	MethodUpdateEndpointFriendlyName     = "POST"
 	PathUpdateEndpointFriendlyName       = "/v2/endpoints/%s/friendlyName"
+	HeaderAccept                         = "Accept"
+	HeaderAuthorization                  = "Authorization"
+	HeaderContentType                    = "Content-Type"
+	HeaderCookie                         = "Cookie"
 	HeaderCsrf                           = "csrf"
+	HeaderDNT                            = "DNT"
+	HeaderOrigin                         = "Origin"
+	HeaderReferer                        = "Referer"
+	HeaderUserAgent                      = "User-Agent"
 	HeaderXAmznIdentityAuthDomain        = "x-amzn-identity-auth-domain"
 	PathEndpointId                       = "endpointId"
 	PathFeature                          = "feature"
@@ -74,6 +82,16 @@ const (
 	ServerEventAuthorityJp               = "alexa.fe.gateway.devices.a2z.com"
 	ServerExchangeRefreshTokenForCookies = "https://api.%s"
 )
+
+// IsKnownRequestHeader reports whether a request header is declared in api/openapi.yaml.
+func IsKnownRequestHeader(name string) bool {
+	switch name {
+	case HeaderAccept, HeaderAuthorization, HeaderContentType, HeaderCookie, HeaderCsrf, HeaderDNT, HeaderOrigin, HeaderReferer, HeaderUserAgent, HeaderXAmznIdentityAuthDomain:
+		return true
+	default:
+		return false
+	}
+}
 
 // ChannelDirectivesAddress and DirectiveStreamFraming are generated from api/asyncapi.yaml.
 const ChannelDirectivesAddress = "/v20160207/directives"

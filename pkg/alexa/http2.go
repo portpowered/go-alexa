@@ -148,8 +148,8 @@ func (c *HTTP2Connection) Connect(ctx context.Context) error {
 		return alexaapimodels.NewConnectionError("failed to create request", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Accept", "*/*")
+	req.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
+	req.Header.Set(apiroutes.HeaderAccept, "*/*")
 
 	// Perform the request
 	resp, err := c.client.Do(req)
@@ -215,16 +215,10 @@ func (c *HTTP2Connection) processMessages() {
 			if err != nil {
 				if err == io.EOF {
 					// Connection closed by server
-					select {
-					case c.errChan <- alexaapimodels.NewConnectionError("connection closed by server", err):
-					default:
-					}
+					c.reportStreamError(alexaapimodels.NewConnectionError("connection closed by server", err))
 					return
 				}
-				select {
-				case c.errChan <- alexaapimodels.NewNetworkError("failed to read message", err):
-				default:
-				}
+				c.reportStreamError(alexaapimodels.NewNetworkError("failed to read message", err))
 				return
 			}
 
@@ -242,10 +236,7 @@ func (c *HTTP2Connection) processMessages() {
 
 			// Handle reauth errors
 			if strings.Contains(line, framing.AuthenticationFailureMarker) {
-				select {
-				case c.errChan <- alexaapimodels.NewAuthenticationError(line, http.StatusUnauthorized):
-				default:
-				}
+				c.reportStreamError(alexaapimodels.NewAuthenticationError(line, http.StatusUnauthorized))
 				return
 			}
 
@@ -280,6 +271,15 @@ func (c *HTTP2Connection) processMessages() {
 	}
 }
 
+// reportStreamError applies backpressure when the error queue is full. Close
+// cancels the context and unblocks this send if the caller stops receiving.
+func (c *HTTP2Connection) reportStreamError(err error) {
+	select {
+	case c.errChan <- err:
+	case <-c.ctx.Done():
+	}
+}
+
 // managePings sends periodic ping requests to keep the connection alive
 func (c *HTTP2Connection) managePings(ctx context.Context, token string) {
 	defer c.wg.Done()
@@ -289,10 +289,7 @@ func (c *HTTP2Connection) managePings(ctx context.Context, token string) {
 
 	// Send initial ping
 	if err := c.ping(ctx, token); err != nil {
-		select {
-		case c.errChan <- err:
-		default:
-		}
+		c.reportStreamError(err)
 	}
 
 	for {
@@ -301,10 +298,7 @@ func (c *HTTP2Connection) managePings(ctx context.Context, token string) {
 			return
 		case <-ticker.C:
 			if err := c.ping(ctx, token); err != nil {
-				select {
-				case c.errChan <- err:
-				default:
-				}
+				c.reportStreamError(err)
 				// If ping fails with 403, it might be an auth error
 				if alexaapimodels.IsHTTPStatusCode(err, http.StatusForbidden) || alexaapimodels.IsAuthenticationError(err) {
 					return
@@ -323,7 +317,7 @@ func (c *HTTP2Connection) ping(ctx context.Context, token string) error {
 		return alexaapimodels.NewPingError(0, "failed to create ping request", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
 
 	resp, err := c.client.Do(req)
 	if err != nil {

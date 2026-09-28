@@ -257,7 +257,7 @@ func (c *Client) GetDevicesV2(ctx context.Context, opts *GetDevicesV2Options) (*
 	// Build custom headers
 	customHeaders := make(map[string]string)
 	if opts != nil && opts.CSRFToken != "" {
-		customHeaders[alexamodels.CookieHeaderName] = fmt.Sprintf(alexamodels.CookieCSRFFormat, opts.CSRFToken)
+		customHeaders[apiroutes.HeaderCookie] = fmt.Sprintf(alexamodels.CookieCSRFFormat, opts.CSRFToken)
 	}
 
 	// Use the client's helper method to perform the request
@@ -472,8 +472,8 @@ func (c *Client) PausePlayback(ctx context.Context, req *alexamodels.MediaContro
 
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
 
-	command := alexamodels.MediaCommand{
-		Type: alexamodels.MediaCommandTypePause,
+	command := wire.WireMediaCommand{
+		Type: wire.PauseCommand,
 	}
 
 	params := url.Values{}
@@ -504,8 +504,8 @@ func (c *Client) ResumePlayback(ctx context.Context, req *alexamodels.MediaContr
 
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
 
-	command := alexamodels.MediaCommand{
-		Type: alexamodels.MediaCommandTypePlay,
+	command := wire.WireMediaCommand{
+		Type: wire.PlayCommand,
 	}
 
 	params := url.Values{}
@@ -536,8 +536,8 @@ func (c *Client) NextTrack(ctx context.Context, req *alexamodels.MediaControlReq
 
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
 
-	command := alexamodels.MediaCommand{
-		Type: alexamodels.MediaCommandTypeNext,
+	command := wire.WireMediaCommand{
+		Type: wire.NextCommand,
 	}
 
 	params := url.Values{}
@@ -568,8 +568,8 @@ func (c *Client) PreviousTrack(ctx context.Context, req *alexamodels.MediaContro
 
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
 
-	command := alexamodels.MediaCommand{
-		Type: alexamodels.MediaCommandTypePrevious,
+	command := wire.WireMediaCommand{
+		Type: wire.PreviousCommand,
 	}
 
 	params := url.Values{}
@@ -629,8 +629,8 @@ func (c *Client) ForwardMedia(ctx context.Context, req *alexamodels.MediaControl
 
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
 
-	command := alexamodels.MediaCommand{
-		Type: alexamodels.MediaCommandTypeForward,
+	command := wire.WireMediaCommand{
+		Type: wire.ForwardCommand,
 	}
 
 	params := url.Values{}
@@ -661,8 +661,8 @@ func (c *Client) RewindMedia(ctx context.Context, req *alexamodels.MediaControlR
 
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
 
-	command := alexamodels.MediaCommand{
-		Type: alexamodels.MediaCommandTypeRewind,
+	command := wire.WireMediaCommand{
+		Type: wire.RewindCommand,
 	}
 
 	params := url.Values{}
@@ -693,8 +693,8 @@ func (c *Client) SetShuffle(ctx context.Context, req *alexamodels.MediaControlRe
 
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
 
-	command := alexamodels.MediaCommand{
-		Type:    alexamodels.MediaCommandTypeShuffle,
+	command := wire.WireMediaCommand{
+		Type:    wire.ShuffleCommand,
 		Shuffle: &shuffle,
 	}
 
@@ -726,8 +726,8 @@ func (c *Client) SetRepeat(ctx context.Context, req *alexamodels.MediaControlReq
 
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
 
-	command := alexamodels.MediaCommand{
-		Type:   alexamodels.MediaCommandTypeRepeat,
+	command := wire.WireMediaCommand{
+		Type:   wire.RepeatCommand,
 		Repeat: &repeat,
 	}
 
@@ -1022,9 +1022,9 @@ func (c *Client) SendFireTVSequence(ctx context.Context, deviceAccountID, operat
 
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathBehaviorsPreview
 
-	request := alexamodels.BehaviorPreviewRequest{
-		BehaviorID:   alexamodels.DefaultBehaviorID,
-		SequenceJSON: string(sequenceJSON),
+	request := wire.WireBehaviorPreviewRequest{
+		BehaviorId:   alexamodels.DefaultBehaviorID,
+		SequenceJson: string(sequenceJSON),
 		Status:       alexamodels.DefaultBehaviorStatus,
 	}
 

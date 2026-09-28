@@ -36,6 +36,17 @@ tags:
     description: Long-lived HTTP/2 connection and keepalive operations.
 security:
   - BearerToken: []
+x-go-alexa-request-headers:
+  - Accept
+  - Authorization
+  - Content-Type
+  - Cookie
+  - DNT
+  - Origin
+  - Referer
+  - User-Agent
+  - csrf
+  - x-amzn-identity-auth-domain
 paths:
   /ap/oa:
     get:

@@ -22,8 +22,9 @@ import (
 )
 
 type openAPIDocument struct {
-	Servers []regionalServer `yaml:"servers"`
-	Paths   map[string]map[string]struct {
+	Servers        []regionalServer `yaml:"servers"`
+	RequestHeaders []string         `yaml:"x-go-alexa-request-headers"`
+	Paths          map[string]map[string]struct {
 		OperationID string           `yaml:"operationId"`
 		Servers     []regionalServer `yaml:"servers"`
 		Parameters  []apiParameter   `yaml:"parameters"`
@@ -224,6 +225,11 @@ func collectParameters(doc openAPIDocument) ([]namedParameter, error) {
 			}
 		}
 	}
+	for _, header := range doc.RequestHeaders {
+		if err := add(apiParameter{Name: header, In: "header"}); err != nil {
+			return nil, err
+		}
+	}
 	parameters := make([]namedParameter, 0, len(seen))
 	for name, value := range seen {
 		parameters = append(parameters, namedParameter{name: name, value: value})
@@ -379,6 +385,16 @@ func render(routes []route, parameters []namedParameter, channel string, framing
 	out.WriteString("\tServerEventAuthorityJp = " + strconv.Quote(endpoints.Event["jp"]) + "\n")
 	out.WriteString("\tServerExchangeRefreshTokenForCookies = " + strconv.Quote(endpoints.ExchangeURLTemplate) + "\n")
 	out.WriteString(")\n\n")
+	out.WriteString("// IsKnownRequestHeader reports whether a request header is declared in api/openapi.yaml.\n")
+	out.WriteString("func IsKnownRequestHeader(name string) bool {\n\tswitch name {\n\tcase ")
+	var headerNames []string
+	for _, parameter := range parameters {
+		if strings.HasPrefix(parameter.name, "Header") {
+			headerNames = append(headerNames, parameter.name)
+		}
+	}
+	out.WriteString(strings.Join(headerNames, ", "))
+	out.WriteString(":\n\t\treturn true\n\tdefault:\n\t\treturn false\n\t}\n}\n\n")
 	out.WriteString("// ChannelDirectivesAddress and DirectiveStreamFraming are generated from api/asyncapi.yaml.\n")
 	fmt.Fprintf(&out, "const ChannelDirectivesAddress = %s\n\n", strconv.Quote(channel))
 	out.WriteString("type DirectiveStreamFraming struct {\n")
@@ -490,8 +506,7 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 		if !ok || decl.Body == nil {
 			return true
 		}
-		usedMethods := make(map[string]token.Pos)
-		usedPaths := make(map[string]bool)
+		assignments := make(map[string]ast.Expr)
 		queryValues := make(map[string]bool)
 		ast.Inspect(decl.Body, func(node ast.Node) bool {
 			assignment, ok := node.(*ast.AssignStmt)
@@ -499,60 +514,154 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 				return true
 			}
 			for i, right := range assignment.Rhs {
-				if i >= len(assignment.Lhs) || !isQueryValuesExpression(right) {
+				if i >= len(assignment.Lhs) {
 					continue
 				}
 				if name, ok := assignment.Lhs[i].(*ast.Ident); ok {
-					queryValues[name.Name] = true
+					if _, exists := assignments[name.Name]; !exists {
+						assignments[name.Name] = right
+					}
+					if isQueryValuesExpression(right) {
+						queryValues[name.Name] = true
+					}
 				}
 			}
 			return true
 		})
 		ast.Inspect(decl.Body, func(node ast.Node) bool {
-			switch call := node.(type) {
-			case *ast.SelectorExpr:
-				prefix, ok := call.X.(*ast.Ident)
-				if !ok {
-					break
+			if index, ok := node.(*ast.IndexExpr); ok {
+				if isIdentifier(index.X, "customHeaders") && !generatedParameter(index.Index, "Header") {
+					*violations = append(*violations, fmt.Sprintf("%s: custom request header name must use a schema-generated Header constant", fset.Position(index.Pos())))
 				}
-				if prefix.Name == "apiroutes" {
-					if strings.HasPrefix(call.Sel.Name, "Method") {
-						usedMethods[strings.TrimPrefix(call.Sel.Name, "Method")] = call.Pos()
-					} else if strings.HasPrefix(call.Sel.Name, "Path") {
-						usedPaths[strings.TrimPrefix(call.Sel.Name, "Path")] = true
-					} else if call.Sel.Name == "ChannelDirectivesAddress" {
-						usedPaths["OpenDirectiveStream"] = true
+			}
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			if method, target, isRequest := requestTarget(call); isRequest && !isTransportHelper(decl.Name.Name) {
+				operation := generatedMethod(method)
+				if operation == "" || !methods[operation] {
+					*violations = append(*violations, fmt.Sprintf("%s: outbound request method must be a generated OpenAPI operation", fset.Position(call.Pos())))
+				} else {
+					found := routeNames(target, assignments, aliases)
+					expected := operation
+					if operation == "OpenDirectiveStream" {
+						expected = "channel:directives"
 					}
-				} else if prefix.Name == "alexamodels" {
-					if routeName, exists := aliases[call.Sel.Name]; exists {
-						usedPaths[routeName] = true
+					if len(found) != 1 || !found[expected] {
+						*violations = append(*violations, fmt.Sprintf("%s: method %s is not paired with its generated route or channel at this request call", fset.Position(call.Pos()), operation))
 					}
 				}
-			case *ast.CallExpr:
-				selector, ok := call.Fun.(*ast.SelectorExpr)
-				if !ok || len(call.Args) == 0 || (selector.Sel.Name != "Set" && selector.Sel.Name != "Add") {
-					break
-				}
-				receiver, ok := selector.X.(*ast.Ident)
-				if !ok || !queryValues[receiver.Name] {
-					break
-				}
-				key, ok := call.Args[0].(*ast.SelectorExpr)
-				if !ok || !strings.HasPrefix(key.Sel.Name, "QueryParam") {
+			}
+			selector, ok := call.Fun.(*ast.SelectorExpr)
+			if !ok || len(call.Args) == 0 || (selector.Sel.Name != "Set" && selector.Sel.Name != "Add") {
+				return true
+			}
+			if receiver, ok := selector.X.(*ast.Ident); ok && queryValues[receiver.Name] {
+				if !generatedParameter(call.Args[0], "QueryParam") {
 					*violations = append(*violations, fmt.Sprintf("%s: query parameter key must use a schema-generated QueryParam constant", fset.Position(call.Pos())))
+				}
+			}
+			if header, ok := selector.X.(*ast.SelectorExpr); ok && header.Sel.Name == "Header" && selector.Sel.Name == "Set" {
+				if !generatedParameter(call.Args[0], "Header") && !(decl.Name.Name == "doRequestWithFullURL" && isIdentifier(call.Args[0], "key")) {
+					*violations = append(*violations, fmt.Sprintf("%s: request header name must use a schema-generated Header constant", fset.Position(call.Pos())))
 				}
 			}
 			return true
 		})
-		for name, pos := range usedMethods {
-			if !methods[name] {
-				*violations = append(*violations, fmt.Sprintf("%s: method %s is not an OpenAPI operation", fset.Position(pos), name))
-			} else if !usedPaths[name] {
-				*violations = append(*violations, fmt.Sprintf("%s: method %s is not paired with its generated path in %s", fset.Position(pos), name, decl.Name.Name))
-			}
-		}
 		return false
 	})
+}
+
+func isTransportHelper(name string) bool {
+	switch name {
+	case "doRequest", "doRequestWithFullURL", "doUnauthenticatedRequest", "doUnauthenticatedJSONRequest":
+		return true
+	default:
+		return false
+	}
+}
+
+func isIdentifier(expr ast.Expr, name string) bool {
+	identifier, ok := expr.(*ast.Ident)
+	return ok && identifier.Name == name
+}
+
+func generatedParameter(expr ast.Expr, prefix string) bool {
+	selector, ok := expr.(*ast.SelectorExpr)
+	if !ok || !strings.HasPrefix(selector.Sel.Name, prefix) {
+		return false
+	}
+	qualifier, ok := selector.X.(*ast.Ident)
+	return ok && (qualifier.Name == "apiroutes" || qualifier.Name == "alexamodels")
+}
+
+func generatedMethod(expr ast.Expr) string {
+	selector, ok := expr.(*ast.SelectorExpr)
+	if !ok || !strings.HasPrefix(selector.Sel.Name, "Method") {
+		return ""
+	}
+	qualifier, ok := selector.X.(*ast.Ident)
+	if !ok || qualifier.Name != "apiroutes" {
+		return ""
+	}
+	return strings.TrimPrefix(selector.Sel.Name, "Method")
+}
+
+func requestTarget(call *ast.CallExpr) (ast.Expr, ast.Expr, bool) {
+	selector, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return nil, nil, false
+	}
+	switch selector.Sel.Name {
+	case "NewRequestWithContext", "doJSONRequest", "doJSONRequestWithFullURL", "doUnauthenticatedJSONRequest":
+		if len(call.Args) >= 3 {
+			return call.Args[1], call.Args[2], true
+		}
+	case "NewRequest":
+		if len(call.Args) >= 2 {
+			return call.Args[0], call.Args[1], true
+		}
+	}
+	return nil, nil, false
+}
+
+func routeNames(expr ast.Expr, assignments map[string]ast.Expr, aliases map[string]string) map[string]bool {
+	found := make(map[string]bool)
+	visited := make(map[string]bool)
+	var scan func(ast.Expr)
+	scan = func(value ast.Expr) {
+		ast.Inspect(value, func(node ast.Node) bool {
+			switch part := node.(type) {
+			case *ast.Ident:
+				if !visited[part.Name] {
+					visited[part.Name] = true
+					if assigned, ok := assignments[part.Name]; ok {
+						scan(assigned)
+					}
+				}
+			case *ast.SelectorExpr:
+				qualifier, ok := part.X.(*ast.Ident)
+				if !ok {
+					break
+				}
+				if qualifier.Name == "apiroutes" {
+					if strings.HasPrefix(part.Sel.Name, "Path") {
+						found[strings.TrimPrefix(part.Sel.Name, "Path")] = true
+					} else if part.Sel.Name == "ChannelDirectivesAddress" {
+						found["channel:directives"] = true
+					}
+				} else if qualifier.Name == "alexamodels" {
+					if routeName, ok := aliases[part.Sel.Name]; ok {
+						found[routeName] = true
+					}
+				}
+			}
+			return true
+		})
+	}
+	scan(expr)
+	return found
 }
 
 func isQueryValuesExpression(value ast.Expr) bool {
@@ -582,12 +691,7 @@ func nonRouteURLLiterals(file *ast.File) map[token.Pos]bool {
 		if !ok || selector.Sel.Name != "Set" {
 			return true
 		}
-		key, ok := call.Args[0].(*ast.BasicLit)
-		if !ok || key.Kind != token.STRING {
-			return true
-		}
-		name, err := strconv.Unquote(key.Value)
-		if err != nil || !strings.EqualFold(name, "Referer") {
+		if !generatedParameter(call.Args[0], "HeaderReferer") {
 			return true
 		}
 		value, ok := call.Args[1].(*ast.BasicLit)

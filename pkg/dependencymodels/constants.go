@@ -122,7 +122,7 @@ const (
 
 // Cookie Header
 const (
-	CookieHeaderName = "Cookie"
+	CookieHeaderName = apiroutes.HeaderCookie
 	CookieCSRFFormat = "csrf=%s"
 )
 
