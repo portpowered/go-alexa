@@ -45,7 +45,11 @@ func TestEventPairedSyntheticReplay(t *testing.T) {
 				return nil, fmt.Errorf("unexpected event request after %d exchanges", len(recorded))
 			}
 			current := responses[len(recorded)]
-			pair, err := replay.RecordSyntheticExchange(current.operation, req, current.status, nil, current.body)
+			responseHeaders := make(http.Header)
+			if current.operation == "openDirectiveStream" {
+				responseHeaders.Set("Content-Type", "multipart/mixed; boundary=--synthetic-boundary")
+			}
+			pair, err := replay.RecordSyntheticExchange(current.operation, req, current.status, responseHeaders, current.body)
 			if err != nil {
 				return nil, err
 			}
@@ -53,7 +57,9 @@ func TestEventPairedSyntheticReplay(t *testing.T) {
 			if current.operation == "pingDirectiveStream" {
 				pinged <- struct{}{}
 			}
-			return eventResponse(current.status, current.body), nil
+			response := eventResponse(current.status, current.body)
+			response.Header = responseHeaders
+			return response, nil
 		})
 	} else {
 		var err error

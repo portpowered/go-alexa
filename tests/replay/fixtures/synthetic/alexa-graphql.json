@@ -22,7 +22,11 @@
     },
     "response": {
       "status": 200,
-      "headers": null,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
       "body": "{\"data\":{\"endpoint\":{\"endpointId\":\"synthetic-endpoint\"}}}"
     }
   },
@@ -49,7 +53,11 @@
     },
     "response": {
       "status": 200,
-      "headers": null,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
       "body": "{\"data\":{\"listEndpoints\":{\"endpoints\":[],\"paginationInfo\":{\"totalCount\":0,\"nextToken\":\"\"},\"completeResult\":true}}}"
     }
   },
@@ -76,7 +84,11 @@
     },
     "response": {
       "status": 200,
-      "headers": null,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
       "body": "{\"data\":{\"endpoints\":{\"items\":[]}}}"
     }
   },
@@ -103,7 +115,11 @@
     },
     "response": {
       "status": 200,
-      "headers": null,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
       "body": "{\"data\":{\"listEndpoints\":{\"completeResult\":true,\"endpoints\":[]}}}"
     }
   },
@@ -130,7 +146,11 @@
     },
     "response": {
       "status": 200,
-      "headers": null,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
       "body": "{\"data\":{\"setEndpointFeatures\":{\"featureControlResponses\":[],\"errors\":[]}}}"
     }
   },
@@ -157,7 +177,11 @@
     },
     "response": {
       "status": 200,
-      "headers": null,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
       "body": "{\"data\":{\"requestEndpointQualityOfService\":{\"durationInSeconds\":45,\"errors\":[]}}}"
     }
   },
@@ -184,7 +208,11 @@
     },
     "response": {
       "status": 200,
-      "headers": null,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
       "body": "{\"data\":{\"subscribe\":{\"entities\":[\"synthetic-endpoint\"],\"durationInMinutes\":5,\"errors\":[]}}}"
     }
   }

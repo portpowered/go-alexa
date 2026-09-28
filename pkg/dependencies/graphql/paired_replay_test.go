@@ -53,12 +53,15 @@ func TestGraphQLPairedSyntheticReplay(t *testing.T) {
 				return nil, fmt.Errorf("unexpected GraphQL request after %d operations", len(recorded))
 			}
 			current := cases[len(recorded)]
-			pair, err := replay.RecordSyntheticExchange(current.operation, req, 200, nil, current.response)
+			responseHeaders := http.Header{"Content-Type": []string{"application/json"}}
+			pair, err := replay.RecordSyntheticExchange(current.operation, req, 200, responseHeaders, current.response)
 			if err != nil {
 				return nil, err
 			}
 			recorded = append(recorded, pair)
-			return graphqlSyntheticResponse(req, 200, current.response), nil
+			response := graphqlSyntheticResponse(req, 200, current.response)
+			response.Header = responseHeaders
+			return response, nil
 		})
 	} else {
 		var err error

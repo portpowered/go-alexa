@@ -95,13 +95,18 @@ func TestRESTPairedSyntheticReplay(t *testing.T) {
 				return nil, fmt.Errorf("unexpected request after %d operations", len(recorded))
 			}
 			expected := responses[len(recorded)]
-			pair, err := replay.RecordSyntheticExchange(expected.operation, req, expected.status, expected.headers, expected.body)
+			responseHeaders := expected.headers.Clone()
+			if responseHeaders == nil {
+				responseHeaders = make(http.Header)
+			}
+			responseHeaders.Set("Content-Type", "application/json")
+			pair, err := replay.RecordSyntheticExchange(expected.operation, req, expected.status, responseHeaders, expected.body)
 			if err != nil {
 				return nil, err
 			}
 			recorded = append(recorded, pair)
 			response := syntheticResponse(req, expected.status, expected.body)
-			response.Header = expected.headers.Clone()
+			response.Header = responseHeaders
 			return response, nil
 		})
 	} else {

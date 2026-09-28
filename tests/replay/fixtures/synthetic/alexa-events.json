@@ -19,7 +19,11 @@
     },
     "response": {
       "status": 200,
-      "headers": null,
+      "headers": {
+        "Content-Type": [
+          "multipart/mixed; boundary=--synthetic-boundary"
+        ]
+      },
       "body": "------synthetic-boundary\nContent-Type: application/json\n\n{\"directive\":{\"header\":{\"messageId\":\"synthetic-message\",\"name\":\"RenderUpdate\",\"namespace\":\"Alexa.Mobile.Push\"},\"payload\":{\"renderingUpdates\":[{\"resourceMetadata\":\"{\\\"metricName\\\":\\\"EndpointPower\\\",\\\"payload\\\":{\\\"data\\\":{\\\"features\\\":[{\\\"name\\\":\\\"power\\\",\\\"properties\\\":[{\\\"name\\\":\\\"powerState\\\",\\\"powerStateValue\\\":\\\"OFF\\\"}]}]},\\\"entity\\\":{\\\"id\\\":\\\"synthetic-endpoint\\\"}}}\"}]}}}\n"
     }
   },
@@ -40,7 +44,7 @@
     },
     "response": {
       "status": 204,
-      "headers": null,
+      "headers": {},
       "body": ""
     }
   }
