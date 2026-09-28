@@ -456,6 +456,7 @@ func checkProductionRouteLiterals(root string, routes []route) error {
 		}
 		exemptLiterals := nonRouteURLLiterals(file)
 		checkWireCallsites(file, fset, aliases, knownMethods, &violations)
+		checkNetworkInventory(file, fset, filepath.ToSlash(strings.TrimPrefix(path, root+string(filepath.Separator))), &violations)
 		ast.Inspect(file, func(node ast.Node) bool {
 			literal, ok := node.(*ast.BasicLit)
 			if !ok || literal.Kind != token.STRING {
@@ -512,7 +513,15 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 		}
 		assignments := make(map[string][]routeAssignment)
 		queryValues := make(map[string]bool)
+		headerAliases := make(map[string]bool)
 		ast.Inspect(decl.Body, func(node ast.Node) bool {
+			if declaration, ok := node.(*ast.ValueSpec); ok {
+				for i, value := range declaration.Values {
+					if i < len(declaration.Names) && isHeaderExpression(value, headerAliases) {
+						headerAliases[declaration.Names[i].Name] = true
+					}
+				}
+			}
 			assignment, ok := node.(*ast.AssignStmt)
 			if !ok {
 				return true
@@ -523,6 +532,9 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 				}
 				if name, ok := assignment.Lhs[i].(*ast.Ident); ok {
 					assignments[name.Name] = append(assignments[name.Name], routeAssignment{value: right, position: assignment.Pos(), op: assignment.Tok})
+					if isHeaderExpression(right, headerAliases) {
+						headerAliases[name.Name] = true
+					}
 					if isQueryValuesExpression(right) {
 						queryValues[name.Name] = true
 					}
@@ -534,6 +546,9 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 			if index, ok := node.(*ast.IndexExpr); ok {
 				if isIdentifier(index.X, "customHeaders") && !generatedParameter(index.Index, "Header") {
 					*violations = append(*violations, fmt.Sprintf("%s: custom request header name must use a schema-generated Header constant", fset.Position(index.Pos())))
+				}
+				if isHeaderExpression(index.X, headerAliases) && !generatedParameter(index.Index, "Header") {
+					*violations = append(*violations, fmt.Sprintf("%s: request header map key must use a schema-generated Header constant", fset.Position(index.Pos())))
 				}
 			}
 			call, ok := node.(*ast.CallExpr)
@@ -569,10 +584,179 @@ func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]
 					*violations = append(*violations, fmt.Sprintf("%s: request header name must use a schema-generated Header constant", fset.Position(call.Pos())))
 				}
 			}
+			if receiver, ok := selector.X.(*ast.Ident); ok && headerAliases[receiver.Name] && !generatedParameter(call.Args[0], "Header") {
+				*violations = append(*violations, fmt.Sprintf("%s: request header name must use a schema-generated Header constant", fset.Position(call.Pos())))
+			}
 			return true
 		})
 		return false
 	})
+}
+
+func isHeaderExpression(expr ast.Expr, aliases map[string]bool) bool {
+	if selector, ok := expr.(*ast.SelectorExpr); ok {
+		return selector.Sel.Name == "Header"
+	}
+	if ident, ok := expr.(*ast.Ident); ok {
+		return aliases[ident.Name]
+	}
+	return false
+}
+
+// The only outbound send sites are these request constructors followed by an
+// injected Client.Do in the same function. Adding another network edge requires
+// an explicit inventory update and a schema-bound method/route check above.
+var allowedNetworkFunctions = map[string]bool{
+	"pkg/alexa/http2.go#Connect":                                   true,
+	"pkg/alexa/http2.go#ping":                                      true,
+	"pkg/dependencies/graphql/client.go#Execute":                   true,
+	"pkg/dependencies/graphql/queries.go#MakeRequest":              true,
+	"pkg/dependencies/rest/auth.go#ExchangeRefreshTokenForCookies": true,
+	"pkg/dependencies/rest/client.go#fetchCSRFTokenFromAPI":        true,
+	"pkg/dependencies/rest/client.go#doRequest":                    true,
+	"pkg/dependencies/rest/client.go#doRequestWithFullURL":         true,
+	"pkg/dependencies/rest/client.go#doUnauthenticatedRequest":     true,
+}
+
+var injectedClientReceivers = map[string]string{
+	"pkg/alexa/http2.go#Connect":                                   "c.client",
+	"pkg/alexa/http2.go#ping":                                      "c.client",
+	"pkg/dependencies/graphql/client.go#Execute":                   "c.httpClient",
+	"pkg/dependencies/graphql/queries.go#MakeRequest":              "a.httpClient",
+	"pkg/dependencies/rest/auth.go#ExchangeRefreshTokenForCookies": "c.httpClient",
+	"pkg/dependencies/rest/client.go#fetchCSRFTokenFromAPI":        "c.httpClient",
+	"pkg/dependencies/rest/client.go#doRequest":                    "c.httpClient",
+	"pkg/dependencies/rest/client.go#doRequestWithFullURL":         "c.httpClient",
+	"pkg/dependencies/rest/client.go#doUnauthenticatedRequest":     "c.httpClient",
+}
+
+var allowedNetworkImports = map[string]map[string]bool{
+	"pkg/alexa/client.go":                 {"net/http": true},
+	"pkg/alexa/interface.go":              {"net/http": true},
+	"pkg/alexa/http2.go":                  {"net/http": true, "golang.org/x/net/http2": true},
+	"pkg/alexaapimodels/errors.go":        {"net/http": true},
+	"pkg/dependencies/graphql/client.go":  {"net/http": true},
+	"pkg/dependencies/graphql/queries.go": {"net/http": true},
+	"pkg/dependencies/rest/auth.go":       {"net/http": true},
+	"pkg/dependencies/rest/client.go":     {"net/http": true, "net/http/cookiejar": true},
+}
+
+func isNetworkImport(path string) bool {
+	lower := strings.ToLower(path)
+	return (strings.HasPrefix(path, "net/") && path != "net/url") || path == "net" ||
+		strings.HasPrefix(path, "golang.org/x/net/") || strings.Contains(lower, "websocket") ||
+		strings.Contains(lower, "mqtt") || strings.Contains(lower, "grpc") || strings.Contains(lower, "quic")
+}
+
+func networkPrimitive(call *ast.CallExpr) string {
+	selector, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return ""
+	}
+	switch selector.Sel.Name {
+	case "Get", "Post", "PostForm", "Head", "Do", "RoundTrip", "Dial", "DialContext", "DialTLS", "Upgrade", "NewRequest", "NewRequestWithContext":
+		return selector.Sel.Name
+	default:
+		return ""
+	}
+}
+
+func checkNetworkInventory(file *ast.File, fset *token.FileSet, path string, violations *[]string) {
+	for _, spec := range file.Imports {
+		importPath, err := strconv.Unquote(spec.Path.Value)
+		if err == nil && isNetworkImport(importPath) && !allowedNetworkImports[path][importPath] {
+			*violations = append(*violations, fmt.Sprintf("%s: unregistered network import %q", fset.Position(spec.Pos()), importPath))
+		}
+	}
+	for _, declaration := range file.Decls {
+		decl, ok := declaration.(*ast.FuncDecl)
+		if !ok || decl.Body == nil {
+			continue
+		}
+		key := path + "#" + decl.Name.Name
+		constructors := make(map[string]token.Pos)
+		requestAssignments := make(map[string][]token.Pos)
+		var sends []struct {
+			variable string
+			position token.Pos
+		}
+		seen := make(map[string]int)
+		ast.Inspect(decl.Body, func(node ast.Node) bool {
+			assignment, ok := node.(*ast.AssignStmt)
+			if ok {
+				for _, target := range assignment.Lhs {
+					if variable, isIdent := target.(*ast.Ident); isIdent {
+						requestAssignments[variable.Name] = append(requestAssignments[variable.Name], assignment.Pos())
+					}
+				}
+				for i, value := range assignment.Rhs {
+					call, isCall := value.(*ast.CallExpr)
+					if isCall && networkPrimitive(call) == "NewRequestWithContext" && i < len(assignment.Lhs) {
+						if variable, isIdent := assignment.Lhs[i].(*ast.Ident); isIdent {
+							constructors[variable.Name] = call.Pos()
+						}
+					}
+				}
+			}
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			primitive := networkPrimitive(call)
+			if primitive == "" {
+				return true
+			}
+			seen[primitive]++
+			if !allowedNetworkFunctions[key] || (primitive != "NewRequestWithContext" && primitive != "Do") || seen[primitive] > 1 {
+				*violations = append(*violations, fmt.Sprintf("%s: unregistered outbound network primitive %s", fset.Position(call.Pos()), primitive))
+			}
+			if primitive == "NewRequestWithContext" {
+				selector := call.Fun.(*ast.SelectorExpr)
+				if !isIdentifier(selector.X, "http") {
+					*violations = append(*violations, fmt.Sprintf("%s: request constructor must be http.NewRequestWithContext", fset.Position(call.Pos())))
+				}
+			}
+			if primitive == "Do" {
+				selector := call.Fun.(*ast.SelectorExpr)
+				receiver := ""
+				if field, ok := selector.X.(*ast.SelectorExpr); ok {
+					if owner, ok := field.X.(*ast.Ident); ok {
+						receiver = owner.Name + "." + field.Sel.Name
+					}
+				}
+				if receiver != injectedClientReceivers[key] {
+					*violations = append(*violations, fmt.Sprintf("%s: Client.Do must use the inventoried injected client", fset.Position(call.Pos())))
+				}
+				variable := ""
+				if len(call.Args) == 1 {
+					if ident, ok := call.Args[0].(*ast.Ident); ok {
+						variable = ident.Name
+					}
+				}
+				sends = append(sends, struct {
+					variable string
+					position token.Pos
+				}{variable, call.Pos()})
+			}
+			return true
+		})
+		for _, send := range sends {
+			constructor := constructors[send.variable]
+			if constructor == token.NoPos || constructor >= send.position {
+				*violations = append(*violations, fmt.Sprintf("%s: Client.Do must send a request constructed in this function", fset.Position(send.position)))
+			} else {
+				for _, position := range requestAssignments[send.variable] {
+					if position > constructor && position < send.position {
+						*violations = append(*violations, fmt.Sprintf("%s: Client.Do request was reassigned after its schema-bound constructor", fset.Position(send.position)))
+						break
+					}
+				}
+			}
+		}
+		if allowedNetworkFunctions[key] && (seen["NewRequestWithContext"] != 1 || seen["Do"] != 1) {
+			*violations = append(*violations, fmt.Sprintf("%s: inventoried network function %s must have one request constructor and one send", fset.Position(decl.Pos()), key))
+		}
+	}
 }
 
 func isTransportHelper(name string) bool {

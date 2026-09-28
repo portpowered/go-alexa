@@ -91,6 +91,18 @@ func TestWireCallsiteGate(t *testing.T) {
 			func send() { customHeaders["X-Undeclared"] = "value" }`,
 			want: "custom request header name must use a schema-generated Header constant",
 		},
+		{
+			name: "direct request header map write",
+			source: `package rest
+			func send() { req.Header["X-Undeclared"] = []string{"value"} }`,
+			want: "request header map key must use a schema-generated Header constant",
+		},
+		{
+			name: "aliased request header map write",
+			source: `package rest
+			func send() { headers := req.Header; headers["X-Undeclared"] = []string{"value"} }`,
+			want: "request header map key must use a schema-generated Header constant",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -106,5 +118,53 @@ func TestWireCallsiteGate(t *testing.T) {
 				t.Fatalf("gate result %q, want %q", got, test.want)
 			}
 		})
+	}
+}
+
+func TestNetworkInventoryGate(t *testing.T) {
+	tests := []struct{ name, source, want string }{
+		{"new Client.Post", `package rest
+		func send() { client.Post("https://example.com", "application/json", nil) }`, "unregistered outbound network primitive Post"},
+		{"new Client.Do", `package rest
+		func send() { client.Do(req) }`, "unregistered outbound network primitive Do"},
+		{"new request constructor", `package rest
+		func send() { http.NewRequest("POST", "https://example.com", nil) }`, "unregistered outbound network primitive NewRequest"},
+		{"new network import", `package rest
+		import "net/http"
+		func send() {}`, "unregistered network import"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "pkg/dependencies/rest/new.go", test.source, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var violations []string
+			checkNetworkInventory(file, fset, "pkg/dependencies/rest/new.go", &violations)
+			if got := strings.Join(violations, "\n"); !strings.Contains(got, test.want) {
+				t.Fatalf("gate result %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestNetworkInventoryRejectsReassignedRequest(t *testing.T) {
+	fset := token.NewFileSet()
+	source := `package alexa
+	func (c *Client) Connect() {
+		req, err := http.NewRequestWithContext(ctx, apiroutes.MethodOpenDirectiveStream, apiroutes.ChannelDirectivesAddress, nil)
+		_ = err
+		req = otherRequest
+		c.client.Do(req)
+	}`
+	file, err := parser.ParseFile(fset, "pkg/alexa/http2.go", source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var violations []string
+	checkNetworkInventory(file, fset, "pkg/alexa/http2.go", &violations)
+	if got := strings.Join(violations, "\n"); !strings.Contains(got, "request was reassigned") {
+		t.Fatalf("gate result %q did not reject reassignment", got)
 	}
 }
