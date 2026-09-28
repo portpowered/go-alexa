@@ -27,6 +27,18 @@ jobs:
         with:
           go-version: '1.24.2'
           cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify generated wire artifacts on the tag
+        run: |
+          make generate
+          go run ./tools/apiroutes --check
+          git diff --exit-code -- pkg/dependencies/graphql/generated.go pkg/dependencies/internal/wire/models.gen.go pkg/alexa/internal/wire pkg/internal/apiroutes
+      - name: Check non-generated coverage on the tag
+        run: |
+          go test -race -coverpkg=./pkg/... -coverprofile=coverage.out ./pkg/...
+          go run ./tools/coverage -profile coverage.out -min 80
       - name: Check public API compatibility and release version
         env:
           VERSION: ${{ github.ref_name }}
@@ -93,4 +105,4 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           gh release create "$VERSION" --repo "$REPOSITORY" --verify-tag --generate-notes \
-            --notes "Provider behavior: the maintainer reports successful tests with their own Alexa accounts, but operation-level results and sanitized captures were not recorded. The REST and event-stream schemas are implementation-derived, not current Amazon wire specifications. See https://github.com/$REPOSITORY/blob/$VERSION/docs/verification.md."
+            --notes "Provider behavior: the maintainer reports successful tests with their own Alexa accounts, but operation-level results and sanitized captures were not recorded. The REST and event-stream schemas are implementation-derived, not current Amazon wire specifications. See [verification notes](https://github.com/$REPOSITORY/blob/$VERSION/docs/verification.md)."
