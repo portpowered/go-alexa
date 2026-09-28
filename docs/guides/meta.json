@@ -1,6 +1,7 @@
 {
   "title": "Guides",
   "pages": [
+    "index",
     "authentication",
     "endpoint-enumeration",
     "endpoint-control",
