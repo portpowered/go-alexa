@@ -3,9 +3,11 @@ package alexa
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
+	directivewire "github.com/portpowered/go-alexa/pkg/alexa/internal/wire"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
@@ -164,6 +166,24 @@ func TestParseEvent(t *testing.T) {
 			event, err := ParseEvent(&msg)
 			if err != nil {
 				t.Fatalf("ParseEvent failed: %v", err)
+			}
+
+			var envelope struct {
+				Data json.RawMessage `json:"data"`
+			}
+			if err := json.Unmarshal([]byte(tt.eventJSON), &envelope); err != nil {
+				t.Fatalf("Failed to unmarshal synthetic event envelope: %v", err)
+			}
+			var directive directivewire.DirectiveMessage
+			if err := json.Unmarshal(envelope.Data, &directive); err != nil {
+				t.Fatalf("Failed to unmarshal synthetic directive model: %v", err)
+			}
+			generatedEvent, err := parseDirectiveMessage(&directive)
+			if err != nil {
+				t.Fatalf("parseDirectiveMessage failed: %v", err)
+			}
+			if !reflect.DeepEqual(event, generatedEvent) {
+				t.Fatalf("generated model result differs from legacy parser: %#v != %#v", generatedEvent, event)
 			}
 
 			// Verify event structure

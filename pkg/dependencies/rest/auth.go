@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
+	"github.com/portpowered/go-alexa/pkg/dependencies/rest/internal/wire"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
 
@@ -50,20 +51,20 @@ func (c *Client) RegisterWithEmailPassword(ctx context.Context, email, password 
 		}
 	}
 
-	req := alexamodels.RegistrationRequest{
+	req := wire.WireRegistrationRequest{
 		RequestedTokenType: []string{"bearer"},
-		RegistrationData: alexamodels.RegistrationData{
+		RegistrationData: wire.WireRegistrationData{
 			AppName:      config.AppName,
 			AppVersion:   config.AppVersion,
 			DeviceType:   config.DeviceType,
 			Domain:       config.Domain,
 			DeviceModel:  config.DeviceModel,
-			OSVersion:    config.OSVersion,
+			OsVersion:    config.OSVersion,
 			DeviceSerial: config.DeviceSerial,
 			DeviceName:   config.DeviceName,
 		},
-		AuthData: alexamodels.AuthData{
-			EmailPasswordAuth: &alexamodels.EmailPasswordAuth{
+		AuthData: wire.WireAuthData{
+			EmailPassword: &wire.WireEmailPasswordAuth{
 				Email:    email,
 				Password: password,
 			},
@@ -71,15 +72,17 @@ func (c *Client) RegisterWithEmailPassword(ctx context.Context, email, password 
 	}
 
 	url := c.amazonapiBaseUri + "/auth/register"
-	var response alexamodels.RegistrationResponse
+	var response wire.WireRegistrationResponse
 	if err := c.doUnauthenticatedJSONRequest(ctx, "POST", url, req, &response); err != nil {
 		// Check if it's a challenge response
 		if reqErr, ok := err.(*UnauthenticatedRequestError); ok {
-			var challengeResp alexamodels.ChallengeResponse
-			if jsonErr := json.Unmarshal([]byte(reqErr.Body), &challengeResp); jsonErr == nil && challengeResp.Response.Challenge.ChallengeReason != "" {
+			var challengeResp wire.WireChallengeResponse
+			if jsonErr := json.Unmarshal([]byte(reqErr.Body), &challengeResp); jsonErr == nil && challengeResp.Response != nil && challengeResp.Response.Challenge != nil && challengeResp.Response.Challenge.ChallengeReason != nil && *challengeResp.Response.Challenge.ChallengeReason != "" {
+				reason := valueOrZero(challengeResp.Response.Challenge.ChallengeReason)
+				authMethod := valueOrZero(challengeResp.Response.Challenge.RequiredAuthenticationMethod)
 				return nil, &RegistrationChallengeError{
-					ChallengeReason:              challengeResp.Response.Challenge.ChallengeReason,
-					RequiredAuthenticationMethod: challengeResp.Response.Challenge.RequiredAuthenticationMethod,
+					ChallengeReason:              reason,
+					RequiredAuthenticationMethod: authMethod,
 				}
 			}
 		}
@@ -89,7 +92,11 @@ func (c *Client) RegisterWithEmailPassword(ctx context.Context, email, password 
 		}
 	}
 
-	return &response, nil
+	converted, err := convertWireModel[alexamodels.RegistrationResponse](response)
+	if err != nil {
+		return nil, &alexaapimodels.NetworkError{Message: "failed to convert registration response", Err: err}
+	}
+	return converted, nil
 }
 
 // RegisterWithCodePair registers a device using code-based linking (CBL)
@@ -101,20 +108,20 @@ func (c *Client) RegisterWithCodePair(ctx context.Context, publicCode, privateCo
 		}
 	}
 
-	req := alexamodels.RegistrationRequest{
+	req := wire.WireRegistrationRequest{
 		RequestedTokenType: []string{"bearer"},
-		RegistrationData: alexamodels.RegistrationData{
+		RegistrationData: wire.WireRegistrationData{
 			AppName:      config.AppName,
 			AppVersion:   config.AppVersion,
 			DeviceType:   config.DeviceType,
 			Domain:       config.Domain,
 			DeviceModel:  config.DeviceModel,
-			OSVersion:    config.OSVersion,
+			OsVersion:    config.OSVersion,
 			DeviceSerial: config.DeviceSerial,
 			DeviceName:   config.DeviceName,
 		},
-		AuthData: alexamodels.AuthData{
-			CodePairAuth: &alexamodels.CodePairAuth{
+		AuthData: wire.WireAuthData{
+			CodePair: &wire.WireCodePairAuth{
 				PublicCode:  publicCode,
 				PrivateCode: privateCode,
 			},
@@ -122,7 +129,7 @@ func (c *Client) RegisterWithCodePair(ctx context.Context, publicCode, privateCo
 	}
 
 	url := c.amazonapiBaseUri + "/auth/register"
-	var response alexamodels.RegistrationResponse
+	var response wire.WireRegistrationResponse
 	if err := c.doUnauthenticatedJSONRequest(ctx, "POST", url, req, &response); err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to register with code pair",
@@ -130,7 +137,11 @@ func (c *Client) RegisterWithCodePair(ctx context.Context, publicCode, privateCo
 		}
 	}
 
-	return &response, nil
+	converted, err := convertWireModel[alexamodels.RegistrationResponse](response)
+	if err != nil {
+		return nil, &alexaapimodels.NetworkError{Message: "failed to convert registration response", Err: err}
+	}
+	return converted, nil
 }
 
 // GenerateCodePair generates a code pair for code-based linking
@@ -142,24 +153,14 @@ func (c *Client) GenerateCodePair(ctx context.Context, config *DeviceRegistratio
 		}
 	}
 
-	req := alexamodels.CodePairRequest{
-		CodeData: struct {
-			AppName               string `json:"app_name"`
-			AppVersion            string `json:"app_version"`
-			DeviceType            string `json:"device_type"`
-			Domain                string `json:"domain"`
-			DeviceModel           string `json:"device_model"`
-			OSVersion             string `json:"os_version"`
-			DeviceSerial          string `json:"device_serial"`
-			DeviceName            string `json:"device_name"`
-			SecondaryRegistration string `json:"secondary_registration"`
-		}{
+	req := wire.WireCodePairRequest{
+		CodeData: wire.WireCodeData{
 			AppName:               config.AppName,
 			AppVersion:            config.AppVersion,
 			DeviceType:            config.DeviceType,
 			Domain:                config.Domain,
 			DeviceModel:           config.DeviceModel,
-			OSVersion:             config.OSVersion,
+			OsVersion:             config.OSVersion,
 			DeviceSerial:          config.DeviceSerial,
 			DeviceName:            config.DeviceName,
 			SecondaryRegistration: "False",
@@ -168,7 +169,7 @@ func (c *Client) GenerateCodePair(ctx context.Context, config *DeviceRegistratio
 	}
 
 	url := c.amazonapiBaseUri + "/auth/create/codepair"
-	var response alexamodels.CodePairResponse
+	var response wire.WireCodePairResponse
 	if err := c.doUnauthenticatedJSONRequest(ctx, "POST", url, req, &response); err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to generate code pair",
@@ -176,7 +177,11 @@ func (c *Client) GenerateCodePair(ctx context.Context, config *DeviceRegistratio
 		}
 	}
 
-	return &response, nil
+	converted, err := convertWireModel[alexamodels.CodePairResponse](response)
+	if err != nil {
+		return nil, &alexaapimodels.NetworkError{Message: "failed to convert code-pair response", Err: err}
+	}
+	return converted, nil
 }
 
 // RefreshAccessToken refreshes an access token using a refresh token
@@ -188,7 +193,7 @@ func (c *Client) RefreshAccessToken(ctx context.Context, refreshToken string, co
 		}
 	}
 
-	req := alexamodels.TokenRefreshRequest{
+	req := wire.WireTokenRefreshRequest{
 		AppName:            config.AppName,
 		AppVersion:         config.AppVersion,
 		SourceTokenType:    "refresh_token",
@@ -197,12 +202,12 @@ func (c *Client) RefreshAccessToken(ctx context.Context, refreshToken string, co
 	}
 	req.DeviceMetadata.DeviceType = config.DeviceType
 	req.DeviceMetadata.DeviceModel = config.DeviceModel
-	req.DeviceMetadata.OSVersion = config.OSVersion
+	req.DeviceMetadata.OsVersion = config.OSVersion
 	req.DeviceMetadata.DeviceSerial = config.DeviceSerial
 	req.DeviceMetadata.Manufacturer = config.Manufacturer
 
 	url := c.amazonapiBaseUri + "/auth/token"
-	var response alexamodels.TokenRefreshResponse
+	var response wire.WireTokenRefreshResponse
 	if err := c.doUnauthenticatedJSONRequest(ctx, "POST", url, req, &response); err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to refresh access token",
@@ -210,7 +215,11 @@ func (c *Client) RefreshAccessToken(ctx context.Context, refreshToken string, co
 		}
 	}
 
-	return &response, nil
+	converted, err := convertWireModel[alexamodels.TokenRefreshResponse](response)
+	if err != nil {
+		return nil, &alexaapimodels.NetworkError{Message: "failed to convert token response", Err: err}
+	}
+	return converted, nil
 }
 
 // RegistrationChallengeError represents a challenge response from registration
@@ -238,35 +247,10 @@ func (e *RegistrationChallengeError) IsAuthenticationFailed() bool {
 	return e.ChallengeReason == "AuthenticationFailed" && e.RequiredAuthenticationMethod == "GenericClaimPassword"
 }
 
-// CookieExchangeRequest represents a request to exchange refresh token for cookies
-type CookieExchangeRequest struct {
-	AppName            string `json:"app_name"`
-	RequestedTokenType string `json:"requested_token_type"`
-	Domain             string `json:"domain"`
-	SourceTokenType    string `json:"source_token_type"`
-	SourceToken        string `json:"source_token"`
-}
-
-// CookieExchangeResponse represents the response from cookie exchange
-type CookieExchangeResponse struct {
-	Response struct {
-		Tokens struct {
-			Cookies map[string][]struct {
-				Name     string `json:"Name"`
-				Value    string `json:"Value"`
-				Path     string `json:"Path"`
-				Secure   bool   `json:"Secure"`
-				HttpOnly bool   `json:"HttpOnly"`
-				Expires  string `json:"Expires"`
-			} `json:"cookies"`
-		} `json:"tokens"`
-	} `json:"response"`
-}
-
 // ExchangeRefreshTokenForCookies exchanges a refresh token for session cookies
 // POST https://api.amazon.com/ap/exchangetoken/cookies
 func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToken, domain string) (map[string]*http.Cookie, error) {
-	req := CookieExchangeRequest{
+	req := wire.WireCookieExchangeRequest{
 		AppName:            "Amazon Alexa",
 		RequestedTokenType: "auth_cookies",
 		Domain:             domain,
@@ -275,7 +259,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 	}
 
 	url := "https://api." + domain + "/ap/exchangetoken/cookies"
-	var response CookieExchangeResponse
+	var response wire.WireCookieExchangeResponse
 
 	// Create a temporary client without auth for this unauthenticated request
 	bodyBytes, err := json.Marshal(req)
@@ -324,19 +308,23 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 
 	// Convert response cookies to http.Cookie map
 	cookies := make(map[string]*http.Cookie)
-	for domainName, cookieList := range response.Response.Tokens.Cookies {
+	if response.Response == nil || response.Response.Tokens == nil || response.Response.Tokens.Cookies == nil {
+		return cookies, nil
+	}
+	for domainName, cookieList := range *response.Response.Tokens.Cookies {
 		for _, cookieData := range cookieList {
 			cookie := &http.Cookie{
-				Name:     cookieData.Name,
-				Value:    cookieData.Value,
-				Path:     cookieData.Path,
-				Secure:   cookieData.Secure,
-				HttpOnly: cookieData.HttpOnly,
+				Name:     valueOrZero(cookieData.Name),
+				Value:    valueOrZero(cookieData.Value),
+				Path:     valueOrZero(cookieData.Path),
+				Secure:   valueOrZero(cookieData.Secure),
+				HttpOnly: valueOrZero(cookieData.HttpOnly),
 			}
 
 			// Parse expiration if provided
-			if cookieData.Expires != "" {
-				if expTime, err := time.Parse(time.RFC1123, cookieData.Expires); err == nil {
+			expires := valueOrZero(cookieData.Expires)
+			if expires != "" {
+				if expTime, err := time.Parse(time.RFC1123, expires); err == nil {
 					cookie.Expires = expTime
 				}
 			}

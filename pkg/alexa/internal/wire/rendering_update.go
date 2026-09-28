@@ -1,0 +1,8 @@
+package wire
+
+type RenderingUpdate struct {
+	Route                string                 `json:"route,omitempty"`
+	ResourceId           string                 `json:"resourceId,omitempty"`
+	ResourceMetadata     string                 `json:"resourceMetadata" binding:"required"`
+	AdditionalProperties map[string]interface{} `json:"-,omitempty"`
+}

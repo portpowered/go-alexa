@@ -1,0 +1,7 @@
+package wire
+
+type Directive struct {
+	Header               *DirectiveHeader       `json:"header" binding:"required"`
+	Payload              *DirectivePayload      `json:"payload" binding:"required"`
+	AdditionalProperties map[string]interface{} `json:"-,omitempty"`
+}

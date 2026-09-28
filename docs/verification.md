@@ -11,7 +11,7 @@ make check
 make generate
 ```
 
-`make check` runs `go vet`, builds the packages and examples, and runs tests with the race detector. CI regenerates the GraphQL client and fails if generated output or module metadata is stale. These checks do not require Amazon credentials.
+`make check` runs `go vet`, builds the packages and examples, and runs tests with the race detector. CI regenerates the GraphQL client and the OpenAPI/AsyncAPI wire models, then fails if generated output or module metadata is stale. These checks do not require Amazon credentials.
 
 ## Fixture provenance
 
@@ -23,4 +23,6 @@ The live integration tests in `test/integration` run only when `ALEXA_REFRESH_TO
 
 ## Documentation and schema
 
-The `Documentation` workflow generates a static API reference from the checked-in GraphQL SDL and builds the authored guides. The SDL is the subset used by this client, not a complete Alexa contract. `make generate` runs genqlient against the checked-in SDL and operation documents; CI compares its result to the checked-in generated client.
+The `Documentation` workflow generates a static API reference from the checked-in GraphQL SDL, OpenAPI document, AsyncAPI document, and authored guides. The GraphQL SDL is the subset used by this client. The HTTP schemas describe route and parser shapes read from the source; they are not provider-issued specifications or verified observations. There are no sanitized live REST or HTTP/2 captures in this repository, and synthetic tests do not prove current service behavior.
+
+`make generate` runs genqlient against the checked-in SDL and operation documents, oapi-codegen against `api/openapi.yaml`, and Modelina against `api/asyncapi.yaml`. CI compares all generated output to the checked-in files.

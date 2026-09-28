@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'api/**'
       - 'pkg/schemas/graphql/**'
       - 'README.md'
       - '.github/workflows/docs.yml'
@@ -40,6 +41,8 @@ jobs:
         uses: portpowered/api-docs-website-github-action@v0.3.0
         with:
           title: Alexa API Reference
+          openapi: api/openapi.yaml
+          asyncapi: api/asyncapi.yaml
           graphql: pkg/schemas/graphql/endpoints-schema.graphql
           discover: false
           guides-directory: docs/guides

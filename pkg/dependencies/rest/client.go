@@ -35,6 +35,26 @@ type Client struct {
 	customerID string
 }
 
+func convertWireModel[T any](source any) (*T, error) {
+	data, err := json.Marshal(source)
+	if err != nil {
+		return nil, err
+	}
+	var result T
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func valueOrZero[T any](value *T) T {
+	if value != nil {
+		return *value
+	}
+	var zero T
+	return zero
+}
+
 // ClientOption is a function that configures a Client
 type ClientOption func(*Client)
 

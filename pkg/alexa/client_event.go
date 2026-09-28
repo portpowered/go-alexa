@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	directivewire "github.com/portpowered/go-alexa/pkg/alexa/internal/wire"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
@@ -176,7 +177,33 @@ func ParseEvent(msg *alexamodels.Message) (*alexaapimodels.Event, error) {
 	if !ok {
 		return nil, fmt.Errorf("resourceMetadata not found or invalid")
 	}
+	return parseEventResourceMetadata(messageID, resourceMetadataStr)
+}
 
+// parseDirectiveMessage converts the generated representation of the current
+// HTTP/2 parser input into the public event model.
+func parseDirectiveMessage(message *directivewire.DirectiveMessage) (*alexaapimodels.Event, error) {
+	if message == nil || message.Directive == nil {
+		return nil, fmt.Errorf("directive not found or invalid")
+	}
+	if message.Directive.Header == nil {
+		return nil, fmt.Errorf("header not found or invalid")
+	}
+	if message.Directive.Payload == nil {
+		return nil, fmt.Errorf("payload not found or invalid")
+	}
+	if len(message.Directive.Payload.RenderingUpdates) == 0 {
+		return nil, fmt.Errorf("renderingUpdates not found or empty")
+	}
+
+	update := message.Directive.Payload.RenderingUpdates[0]
+	if update.ResourceMetadata == "" {
+		return nil, fmt.Errorf("resourceMetadata not found or invalid")
+	}
+	return parseEventResourceMetadata(message.Directive.Header.MessageId, update.ResourceMetadata)
+}
+
+func parseEventResourceMetadata(messageID, resourceMetadataStr string) (*alexaapimodels.Event, error) {
 	// Parse resourceMetadata JSON string
 	var resourceMetadata alexamodels.ResourceMetadataPayload
 	if err := json.Unmarshal([]byte(resourceMetadataStr), &resourceMetadata); err != nil {

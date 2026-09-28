@@ -6,7 +6,7 @@
 
 `Client.ListEndpoints` queries GraphQL for endpoint information and REST for device metadata, then merges the available fields. REST metadata is optional: if that request fails, the method returns GraphQL endpoints with whatever data is available. Request `EndpointIncludeFields` to include features and state properties.
 
-The checked-in GraphQL schema in `pkg/schemas/graphql/endpoints-schema.graphql` is the subset used for the operations in this repository. It is not a complete Alexa schema or a promise that every provider field or operation is stable. `genqlient.yaml` and `make generate` keep the query models tied to the checked-in schema and query documents.
+The checked-in GraphQL schema in `pkg/schemas/graphql/endpoints-schema.graphql` is the subset used for the operations in this repository. `api/openapi.yaml` and `api/asyncapi.yaml` describe REST requests/responses and the directive input accepted by the event parser. All three schemas describe shapes used by this implementation, not complete or provider-verified contracts. `make generate` keeps the GraphQL client and internal REST/event wire models tied to those schema files.
 
 ## Controls and events
 

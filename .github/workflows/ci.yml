@@ -14,17 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOWORK: 'off'
-      GOTOOLCHAIN: local
+      GOTOOLCHAIN: auto
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24.2'
           cache: true
-      - name: Verify generated GraphQL client
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify generated client and wire models
         run: |
           make generate
-          git diff --exit-code -- pkg/dependencies/graphql/generated.go
+          git diff --exit-code -- pkg/dependencies/graphql/generated.go pkg/dependencies/rest/internal/wire/models.gen.go pkg/alexa/internal/wire
       - name: Check module metadata
         run: |
           go mod tidy

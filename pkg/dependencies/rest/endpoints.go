@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
+	"github.com/portpowered/go-alexa/pkg/dependencies/rest/internal/wire"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
 
@@ -35,11 +36,11 @@ func (c *Client) GetEndpoints(ctx context.Context, opts *ListEndpointsOptions) (
 	}
 
 	path := buildEndpointListPath(alexamodels.APIPathV2Endpoints, opts)
-	var response alexamodels.EndpointListResponse
+	var response wire.WireEndpointListResponse
 	if err := c.doJSONRequest(ctx, "GET", path, nil, &response); err != nil {
 		return nil, err
 	}
-	return &response, nil
+	return convertWireModel[alexamodels.EndpointListResponse](response)
 }
 
 // GetEndpointByID retrieves a specific endpoint by its ID
@@ -54,11 +55,11 @@ func (c *Client) GetEndpointByID(ctx context.Context, endpointID string, expand 
 		path += "?" + params.Encode()
 	}
 
-	var endpoint alexamodels.Device
+	var endpoint wire.WireDevice
 	if err := c.doJSONRequest(ctx, "GET", path, nil, &endpoint); err != nil {
 		return nil, err
 	}
-	return &endpoint, nil
+	return convertWireModel[alexamodels.Device](endpoint)
 }
 
 // QueryEndpoints performs an advanced search query for endpoints
@@ -90,11 +91,15 @@ func (c *Client) QueryEndpoints(ctx context.Context, query *alexamodels.Endpoint
 		}
 	}
 
-	var response alexamodels.EndpointListResponse
-	if err := c.doJSONRequest(ctx, "POST", path, query, &response); err != nil {
+	wireQuery, err := convertWireModel[wire.WireEndpointQueryRequest](query)
+	if err != nil {
+		return nil, &alexaapimodels.BadRequestError{Message: "failed to convert endpoint query", Err: err}
+	}
+	var response wire.WireEndpointListResponse
+	if err := c.doJSONRequest(ctx, "POST", path, wireQuery, &response); err != nil {
 		return nil, err
 	}
-	return &response, nil
+	return convertWireModel[alexamodels.EndpointListResponse](response)
 }
 
 // ForgetEndpoint requests that Alexa forget the specified endpoint
@@ -120,12 +125,14 @@ func (c *Client) DeregisterEndpoint(ctx context.Context, endpointID string) erro
 // UpdateFriendlyName changes the friendly name for the specified endpoint
 // POST /v2/endpoints/{endpointId}/friendlyName
 func (c *Client) UpdateFriendlyName(ctx context.Context, endpointID string, friendlyName string) error {
-	request := alexamodels.FriendlyNameRequest{
-		FriendlyName: alexamodels.FriendlyNameValue{
+	request := wire.WireFriendlyNameRequest{
+		FriendlyName: wire.WireFriendlyNameValue{
 			Type: alexamodels.DefaultFriendlyNameType,
+			Value: wire.WireFriendlyNameText{
+				Text: friendlyName,
+			},
 		},
 	}
-	request.FriendlyName.Value.Text = friendlyName
 
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsFriendlyName, endpointID)
 	if err := c.doJSONRequest(ctx, "POST", path, request, nil); err != nil {
@@ -169,7 +176,11 @@ func buildEndpointListPath(basePath string, opts *ListEndpointsOptions) string {
 func (c *Client) ControlEndpoint(ctx context.Context, endpointID string, command alexamodels.Command) error {
 	command.DeviceID = endpointID
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsControl, endpointID)
-	if err := c.doJSONRequest(ctx, "POST", path, command, nil); err != nil {
+	wireCommand, err := convertWireModel[wire.WireCommand](command)
+	if err != nil {
+		return &alexaapimodels.BadRequestError{Message: "failed to convert control command", Err: err}
+	}
+	if err := c.doJSONRequest(ctx, "POST", path, wireCommand, nil); err != nil {
 		return err
 	}
 	return nil
@@ -245,12 +256,12 @@ func (c *Client) GetDevicesV2(ctx context.Context, opts *GetDevicesV2Options) (*
 	}
 
 	// Use the client's helper method to perform the request
-	var response alexamodels.DevicesV2Response
+	var response wire.WireDevicesV2Response
 	if err := c.doJSONRequestWithFullURL(ctx, "GET", baseURL, nil, customHeaders, &response, false); err != nil {
 		return nil, err
 	}
 
-	return &response, nil
+	return convertWireModel[alexamodels.DevicesV2Response](response)
 }
 
 // Behavior API functions
@@ -261,9 +272,9 @@ func (c *Client) GetDevicesV2(ctx context.Context, opts *GetDevicesV2Options) (*
 func (c *Client) RunBehavior(ctx context.Context, sequenceJSON string) error {
 	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathBehaviorsPreview
 
-	request := alexamodels.BehaviorPreviewRequest{
-		BehaviorID:   alexamodels.DefaultBehaviorID,
-		SequenceJSON: sequenceJSON,
+	request := wire.WireBehaviorPreviewRequest{
+		BehaviorId:   alexamodels.DefaultBehaviorID,
+		SequenceJson: sequenceJSON,
 		Status:       alexamodels.DefaultBehaviorStatus,
 	}
 
@@ -510,14 +521,14 @@ func (c *Client) GetPlayerState(ctx context.Context, req *alexamodels.PlayerStat
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	var response alexamodels.PlayerStateResponse
+	var response wire.WirePlayerStateResponse
 	if err := c.doJSONRequestWithFullURL(ctx, "GET", baseURL, nil, nil, &response, true); err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to get player state",
 			Err:     err,
 		}
 	}
-	return &response, nil
+	return convertWireModel[alexamodels.PlayerStateResponse](response)
 }
 
 // ForwardMedia fast-forwards the current media

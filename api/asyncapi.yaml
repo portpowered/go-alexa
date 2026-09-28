@@ -1,0 +1,163 @@
+asyncapi: 3.0.0
+info:
+  title: Alexa directive stream consumed by go-alexa
+  version: 0.1.0
+  description: |
+    Implementation-derived description of the directive stream parser in
+    `pkg/alexa/http2.go` and `pkg/alexa/client_event.go`. The repository has no
+    sanitized live stream captures. The synthetic parser tests do not prove
+    current provider behavior, wire media type, boundary syntax, or event
+    frequency. This document records the shapes required by the current
+    implementation and is not an Amazon-issued protocol specification.
+servers:
+  northAmerica:
+    host: alexa.na.gateway.devices.a2z.com
+    protocol: https
+    protocolVersion: '2'
+    description: Default stream authority in go-alexa.
+  europe:
+    host: alexa.eu.gateway.devices.a2z.com
+    protocol: https
+    protocolVersion: '2'
+    description: EU stream authority constant in go-alexa.
+  japan:
+    host: alexa.fe.gateway.devices.a2z.com
+    protocol: https
+    protocolVersion: '2'
+    description: Japan stream authority constant in go-alexa.
+channels:
+  directives:
+    address: /v20160207/directives
+    servers:
+      - $ref: '#/servers/northAmerica'
+      - $ref: '#/servers/europe'
+      - $ref: '#/servers/japan'
+    messages:
+      directiveLine:
+        $ref: '#/components/messages/DirectiveLine'
+operations:
+  receiveDirectives:
+    action: receive
+    channel:
+      $ref: '#/channels/directives'
+    summary: Receive parsed directive lines from a long-lived response
+    tags:
+      - name: Event stream
+    description: |
+      The client opens an HTTP/2 GET using bearer authentication, reads the
+      response line by line, skips boundary-like lines beginning with
+      `------` and `Content-Type:` lines, and attempts to decode each remaining
+      line as a JSON directive. The exact response framing is not verified.
+    messages:
+      - $ref: '#/channels/directives/messages/directiveLine'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: Sent in the Authorization header by the HTTP/2 client.
+  messages:
+    DirectiveLine:
+      name: DirectiveLine
+      title: JSON directive line accepted by the current parser
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DirectiveMessage'
+      description: |
+        This is the JSON object shape required by `ParseEvent`. It is a parser
+        input description; no captured service message in this repository has
+        verified that the provider currently emits this shape.
+  schemas:
+    DirectiveMessage:
+      type: object
+      properties:
+        directive:
+          $ref: '#/components/schemas/Directive'
+      required: [directive]
+      additionalProperties: true
+    Directive:
+      type: object
+      properties:
+        header:
+          $ref: '#/components/schemas/DirectiveHeader'
+        payload:
+          $ref: '#/components/schemas/DirectivePayload'
+      required: [header, payload]
+      additionalProperties: true
+    DirectiveHeader:
+      type: object
+      description: The current parser reads `messageId`; it does not validate other header fields.
+      properties:
+        namespace: {type: string}
+        name: {type: string}
+        messageId: {type: string}
+      additionalProperties: true
+    DirectivePayload:
+      type: object
+      properties:
+        renderingUpdates:
+          type: array
+          items:
+            $ref: '#/components/schemas/RenderingUpdate'
+      required: [renderingUpdates]
+      additionalProperties: true
+    RenderingUpdate:
+      type: object
+      properties:
+        route: {type: string}
+        resourceId: {type: string}
+        resourceMetadata:
+          type: string
+          description: JSON text which the parser decodes as a ResourceMetadata document.
+          contentMediaType: application/json
+          contentSchema:
+            $ref: '#/components/schemas/ResourceMetadata'
+      required: [resourceMetadata]
+      additionalProperties: true
+    ResourceMetadata:
+      type: object
+      description: Parsed from the resourceMetadata string by the current event parser.
+      properties:
+        metricName: {type: string}
+        payload:
+          $ref: '#/components/schemas/ResourceMetadataPayload'
+        type: {type: string}
+        timestamp: {type: string}
+      required: [metricName, payload]
+      additionalProperties: true
+    ResourceMetadataPayload:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceData'
+        entity:
+          $ref: '#/components/schemas/ResourceEntity'
+      required: [data, entity]
+      additionalProperties: true
+    ResourceData:
+      type: object
+      properties:
+        __typename: {type: string}
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceFeature'
+      required: [features]
+      additionalProperties: true
+    ResourceFeature:
+      type: object
+      description: Feature property content is metric-specific and may be extended by the provider.
+      properties:
+        name: {type: string}
+        __typename: {type: string}
+        properties: {}
+        instance: {type: string, nullable: true}
+      required: [properties]
+      additionalProperties: true
+    ResourceEntity:
+      type: object
+      properties:
+        __typename: {type: string}
+        id: {type: string}
+      required: [id]
+      additionalProperties: true

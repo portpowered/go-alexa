@@ -1,0 +1,8 @@
+package wire
+
+type DirectiveHeader struct {
+	Namespace            string                 `json:"namespace,omitempty"`
+	Name                 string                 `json:"name,omitempty"`
+	MessageId            string                 `json:"messageId,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-,omitempty"`
+}

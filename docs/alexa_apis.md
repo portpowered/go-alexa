@@ -9,6 +9,8 @@ This library implements a subset of provider-specific account and endpoint opera
 - event subscription and an HTTP/2 event connection;
 - user information and player-state requests.
 
-The GraphQL reference on the documentation site is generated from the checked-in SDL and query documents in `pkg/schemas/graphql`. That schema describes the selections used by this client, not all Alexa operations or a stable public provider contract. The REST operations and HTTP/2 event protocol are not described by that GraphQL schema.
+The documentation site includes three protocol views: the GraphQL subset in `pkg/schemas/graphql`, the implementation-derived HTTP routes in `api/openapi.yaml`, and the directive input accepted by the HTTP/2 stream parser in `api/asyncapi.yaml`. The GraphQL SDL and the HTTP schemas describe this client's implementation; none is an Amazon-issued, complete, or currently verified provider contract. There are no sanitized live REST or event-stream captures in this repository, and synthetic tests do not establish provider behavior.
+
+The REST and event-stream schemas generate internal Go wire models used by the client. `make generate` refreshes those models along with the GraphQL client, and CI checks for generated-file drift. See [verification and fixture guidance](verification.md) for provenance and local checks.
 
 The provider may change undocumented endpoints or payloads. The library reports transport, HTTP, authentication, and model errors where it can; operation responses may contain their own error fields. See the package reference and the operation guides for the exact method inputs and result types. Synthetic test fixtures are labeled as such and must not be cited as observations of live service behavior.

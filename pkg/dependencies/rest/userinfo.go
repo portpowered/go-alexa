@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/portpowered/go-alexa/pkg/dependencies/rest/internal/wire"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
 
@@ -42,10 +43,10 @@ func (c *Client) GetUserInfo(ctx context.Context, opts *GetUserInfoOptions) (*al
 	}
 
 	// Use the client's helper method to perform the request
-	var userInfo alexamodels.UserInfo
+	var userInfo wire.WireUserInfo
 	if err := c.doJSONRequestWithFullURL(ctx, "GET", baseURL, nil, customHeaders, &userInfo, true); err != nil {
 		return nil, err
 	}
 
-	return &userInfo, nil
+	return convertWireModel[alexamodels.UserInfo](userInfo)
 }

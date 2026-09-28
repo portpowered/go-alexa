@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	directivewire "github.com/portpowered/go-alexa/pkg/alexa/internal/wire"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 	"golang.org/x/net/http2"
@@ -234,19 +235,15 @@ func (c *HTTP2Connection) processMessages() {
 				continue
 			}
 
-			// Try to parse as JSON
-			var msgData map[string]interface{}
-			if err := json.Unmarshal([]byte(line), &msgData); err != nil {
+			// Decode the implementation-derived directive model. The schema does
+			// not claim to be a provider-verified contract.
+			var directiveMessage directivewire.DirectiveMessage
+			if err := json.Unmarshal([]byte(line), &directiveMessage); err != nil {
 				// Not JSON, skip
 				continue
 			}
 
-			// Create message with parsed data
-			msg := &alexamodels.Message{
-				Data: msgData,
-			}
-
-			parsedEvent, err := ParseEvent(msg)
+			parsedEvent, err := parseDirectiveMessage(&directiveMessage)
 			if err != nil {
 				continue
 			}
