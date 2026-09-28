@@ -1,0 +1,941 @@
+[
+  {
+    "source": "synthetic",
+    "operation": "createCodePair",
+    "request": {
+      "method": "POST",
+      "origin": "https://auth.synthetic.test",
+      "escaped_path": "/auth/create/codepair",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"code_data\":{\"app_name\":\"synthetic-app\",\"app_version\":\"1\",\"device_model\":\"\",\"device_name\":\"\",\"device_serial\":\"synthetic-serial\",\"device_type\":\"synthetic-device\",\"domain\":\"\",\"os_version\":\"\",\"secondary_registration\":\"False\"},\"scopes\":[]}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "registerDevice_email",
+    "request": {
+      "method": "POST",
+      "origin": "https://auth.synthetic.test",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"email_password\":{\"email\":\"synthetic@example.invalid\",\"password\":\"synthetic-password\"}},\"registration_data\":{\"app_name\":\"synthetic-app\",\"app_version\":\"1\",\"device_model\":\"\",\"device_name\":\"\",\"device_serial\":\"synthetic-serial\",\"device_type\":\"synthetic-device\",\"domain\":\"\",\"os_version\":\"\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "registerDevice_codePair",
+    "request": {
+      "method": "POST",
+      "origin": "https://auth.synthetic.test",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"synthetic-public\"}},\"registration_data\":{\"app_name\":\"synthetic-app\",\"app_version\":\"1\",\"device_model\":\"\",\"device_name\":\"\",\"device_serial\":\"synthetic-serial\",\"device_type\":\"synthetic-device\",\"domain\":\"\",\"os_version\":\"\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "refreshAccessToken",
+    "request": {
+      "method": "POST",
+      "origin": "https://auth.synthetic.test",
+      "escaped_path": "/auth/token",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"app_name\":\"synthetic-app\",\"app_version\":\"1\",\"device_metadata\":{\"device_model\":\"\",\"device_serial\":\"synthetic-serial\",\"device_type\":\"synthetic-device\",\"manufacturer\":\"Synthetic\",\"os_version\":\"\"},\"requested_token_type\":\"access_token\",\"source_token\":\"synthetic-refresh\",\"source_token_type\":\"refresh_token\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{\"access_token\":\"synthetic-access\",\"expires_in\":3600}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "exchangeRefreshTokenForCookies",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.synthetic.amazon.test",
+      "escaped_path": "/ap/exchangetoken/cookies",
+      "query": {},
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ],
+        "X-Amzn-Identity-Auth-Domain": [
+          "api.synthetic.amazon.test"
+        ]
+      },
+      "body": "{\"app_name\":\"Amazon Alexa\",\"domain\":\"synthetic.amazon.test\",\"requested_token_type\":\"auth_cookies\",\"source_token\":\"synthetic-refresh\",\"source_token_type\":\"refresh_token\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{\"response\":{\"tokens\":{\"cookies\":{}}}}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "listRestEndpoints",
+    "request": {
+      "method": "GET",
+      "origin": "https://alexa.synthetic.test",
+      "escaped_path": "/v2/endpoints",
+      "query": {
+        "expand": [
+          "all",
+          "feature:power"
+        ],
+        "owner": [
+          "~caller"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-bearer"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "getRestEndpoint",
+    "request": {
+      "method": "GET",
+      "origin": "https://alexa.synthetic.test",
+      "escaped_path": "/v2/endpoints/synthetic-endpoint",
+      "query": {
+        "expand": [
+          "all",
+          "feature:power"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-bearer"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "queryRestEndpoints",
+    "request": {
+      "method": "POST",
+      "origin": "https://alexa.synthetic.test",
+      "escaped_path": "/v2/endpoint-query",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-bearer"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"query\":{}}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "forgetEndpoint",
+    "request": {
+      "method": "POST",
+      "origin": "https://alexa.synthetic.test",
+      "escaped_path": "/v2/endpoints/synthetic-endpoint/forget",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-bearer"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "deregisterEndpoint",
+    "request": {
+      "method": "POST",
+      "origin": "https://alexa.synthetic.test",
+      "escaped_path": "/v2/endpoints/synthetic-endpoint/deregister",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-bearer"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "updateEndpointFriendlyName",
+    "request": {
+      "method": "POST",
+      "origin": "https://alexa.synthetic.test",
+      "escaped_path": "/v2/endpoints/synthetic-endpoint/friendlyName",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-bearer"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"friendlyName\":{\"type\":\"PLAIN\",\"value\":{\"text\":\"Synthetic light\"}}}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "controlRestEndpoint",
+    "request": {
+      "method": "POST",
+      "origin": "https://alexa.synthetic.test",
+      "escaped_path": "/v2/endpoints/synthetic-endpoint/control",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-bearer"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"device_id\":\"synthetic-endpoint\",\"name\":\"TurnOn\",\"namespace\":\"Alexa.PowerController\",\"payload\":{\"powerState\":\"ON\"},\"type\":\"\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "sendEndpointInterfaceMessage",
+    "request": {
+      "method": "POST",
+      "origin": "https://alexa.synthetic.test",
+      "escaped_path": "/v2/endpoints/synthetic-endpoint/interfaces/power/turnOn/",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-bearer"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"state\":\"ON\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "listFirstPartyDevices",
+    "request": {
+      "method": "GET",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/devices-v2/device",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-bearer"
+        ],
+        "Cookie": [
+          "csrf=synthetic-csrf"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "getUserInfo",
+    "request": {
+      "method": "GET",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/users/me",
+      "query": {
+        "platform": [
+          "synthetic"
+        ],
+        "version": [
+          "1"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Cookie": [
+          "csrf=synthetic-csrf"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "fetchCsrfCookie",
+    "request": {
+      "method": "GET",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/language",
+      "query": {},
+      "headers": {
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Set-Cookie": [
+          "csrf=synthetic-csrf; Path=/"
+        ]
+      },
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "submitBehaviorPreview",
+    "request": {
+      "method": "POST",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/behaviors/preview",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"operationPayload\\\":{\\\"deviceType\\\":\\\"synthetic-device\\\"},\\\"type\\\":\\\"synthetic.Operation\\\"}}\",\"status\":\"ENABLED\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "sendMediaCommand_pause",
+    "request": {
+      "method": "POST",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/np/command",
+      "query": {
+        "deviceSerialNumber": [
+          "synthetic-serial"
+        ],
+        "deviceType": [
+          "synthetic-device"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": "{\"type\":\"PauseCommand\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "sendMediaCommand_resume",
+    "request": {
+      "method": "POST",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/np/command",
+      "query": {
+        "deviceSerialNumber": [
+          "synthetic-serial"
+        ],
+        "deviceType": [
+          "synthetic-device"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": "{\"type\":\"PlayCommand\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "sendMediaCommand_next",
+    "request": {
+      "method": "POST",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/np/command",
+      "query": {
+        "deviceSerialNumber": [
+          "synthetic-serial"
+        ],
+        "deviceType": [
+          "synthetic-device"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": "{\"type\":\"NextCommand\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "sendMediaCommand_previous",
+    "request": {
+      "method": "POST",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/np/command",
+      "query": {
+        "deviceSerialNumber": [
+          "synthetic-serial"
+        ],
+        "deviceType": [
+          "synthetic-device"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": "{\"type\":\"PreviousCommand\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "sendMediaCommand_forward",
+    "request": {
+      "method": "POST",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/np/command",
+      "query": {
+        "deviceSerialNumber": [
+          "synthetic-serial"
+        ],
+        "deviceType": [
+          "synthetic-device"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": "{\"type\":\"ForwardCommand\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "sendMediaCommand_rewind",
+    "request": {
+      "method": "POST",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/np/command",
+      "query": {
+        "deviceSerialNumber": [
+          "synthetic-serial"
+        ],
+        "deviceType": [
+          "synthetic-device"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": "{\"type\":\"RewindCommand\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "sendMediaCommand_shuffle",
+    "request": {
+      "method": "POST",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/np/command",
+      "query": {
+        "deviceSerialNumber": [
+          "synthetic-serial"
+        ],
+        "deviceType": [
+          "synthetic-device"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": "{\"shuffle\":true,\"type\":\"ShuffleCommand\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "sendMediaCommand_repeat",
+    "request": {
+      "method": "POST",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/np/command",
+      "query": {
+        "deviceSerialNumber": [
+          "synthetic-serial"
+        ],
+        "deviceType": [
+          "synthetic-device"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": "{\"repeat\":true,\"type\":\"RepeatCommand\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "getMediaPlayerState",
+    "request": {
+      "method": "GET",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/np/player",
+      "query": {
+        "deviceSerialNumber": [
+          "synthetic-serial"
+        ],
+        "deviceType": [
+          "synthetic-device"
+        ]
+      },
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Cookie": [
+          "session-id=synthetic-session"
+        ],
+        "Csrf": [
+          "synthetic-csrf"
+        ],
+        "Dnt": [
+          "1"
+        ],
+        "Origin": [
+          "https://alexa.amazon.com"
+        ],
+        "Referer": [
+          "https://alexa.amazon.com/spa/index.html"
+        ],
+        "User-Agent": [
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "{}"
+    }
+  }
+]

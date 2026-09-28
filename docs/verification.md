@@ -15,14 +15,9 @@ make generate
 
 ## Fixture provenance
 
-Files under `pkg/alexa/testdata/` are synthetic inputs for offline conversion tests. They are not captured traffic and are not evidence of current service behavior. The request and response transports used by tests also return synthetic data. Keep synthetic inputs in that directory and mark their synthetic status in the neighboring README.
+Files under `pkg/alexa/testdata/` are synthetic inputs for offline conversion tests. They are response-only model examples, not captured traffic or paired replay evidence. The checked-in request/response pairs live under `tests/replay/fixtures/synthetic/` with a provenance README. None establish current provider behavior.
 
-`pkg/testing.ReplayCaptureRoundTripper` now matches each recorded request's
-method, full URL, headers, and body in order before returning its paired
-response. Tests must call `AssertConsumed` to detect missing requests. The
-synthetic response-only inputs used by client enumeration are still unit test
-data, not paired replay evidence. A full operation-level replay inventory
-remains open under library standard 15.
+`pkg/testing.SyntheticReplay` matches each outbound method, origin, escaped path, complete repeated query multimap, full headers, and body before releasing the paired status, headers, and body. REST, GraphQL, and event tests call `AssertConsumed`; schema inventory tests fail when a dispatched OpenAPI or generated GraphQL operation lacks a pair. The event script orders the directive stream response frame before the keepalive ping. Mismatch, duplicate, unexpected, and unconsumed exchanges have negative tests. All synthetic IDs, timestamps, and credentials are fixed values and match exactly; no volatile field is skipped. If a future captured exchange needs a variable ID, timestamp, signature, or redacted credential, add a field-specific format or decoded-value matcher and a malformed-value test before admitting it. `ReplayCaptureRoundTripper` remains for sanitized real captures when provenance is available.
 
 The maintainer reports that the APIs covered by this library worked when tested with their own real Alexa accounts. Those tests were not recorded here with an operation list, dates, results, or sanitized request/response captures. Treat this as maintainer-reported history; it does not provide reproducible or independently auditable evidence of current provider behavior. There are no real captured request/response fixtures in this repository. If sanitized captures are added later, keep them in an explicitly named `captured` directory, record the operation, UTC capture date, source category, redactions, and supported behavior in a neighboring provenance note, and remove tokens, cookies, personal data, customer IDs, and device IDs before adding them. Do not use a capture as proof of current behavior if its source or collection date is unknown.
 

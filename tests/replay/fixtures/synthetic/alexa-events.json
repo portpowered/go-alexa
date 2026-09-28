@@ -1,0 +1,47 @@
+[
+  {
+    "source": "synthetic",
+    "operation": "openDirectiveStream",
+    "request": {
+      "method": "GET",
+      "origin": "https://events.synthetic.test",
+      "escaped_path": "/v20160207/directives",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "*/*"
+        ],
+        "Authorization": [
+          "Bearer synthetic-event-token"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": null,
+      "body": "------synthetic-boundary\nContent-Type: application/json\n\n{\"directive\":{\"header\":{\"messageId\":\"synthetic-message\",\"name\":\"RenderUpdate\",\"namespace\":\"Alexa.Mobile.Push\"},\"payload\":{\"renderingUpdates\":[{\"resourceMetadata\":\"{\\\"metricName\\\":\\\"EndpointPower\\\",\\\"payload\\\":{\\\"data\\\":{\\\"features\\\":[{\\\"name\\\":\\\"power\\\",\\\"properties\\\":[{\\\"name\\\":\\\"powerState\\\",\\\"powerStateValue\\\":\\\"OFF\\\"}]}]},\\\"entity\\\":{\\\"id\\\":\\\"synthetic-endpoint\\\"}}}\"}]}}}\n"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "pingDirectiveStream",
+    "request": {
+      "method": "GET",
+      "origin": "https://events.synthetic.test",
+      "escaped_path": "/ping",
+      "query": {},
+      "headers": {
+        "Authorization": [
+          "Bearer synthetic-event-token"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 204,
+      "headers": null,
+      "body": ""
+    }
+  }
+]
