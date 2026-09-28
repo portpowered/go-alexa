@@ -1,18 +1,20 @@
 package alexamodels
 
+import "github.com/portpowered/go-alexa/pkg/internal/apiroutes"
+
 // API Paths
 const (
-	APIPathV2Endpoints             = "/v2/endpoints"
-	APIPathV2EndpointQuery         = "/v2/endpoint-query"
-	APIPathV2EndpointsForget       = "/v2/endpoints/%s/forget"
-	APIPathV2EndpointsDeregister   = "/v2/endpoints/%s/deregister"
-	APIPathV2EndpointsFriendlyName = "/v2/endpoints/%s/friendlyName"
-	APIPathV2EndpointsControl      = "/v2/endpoints/%s/control"
-	APIPathV2EndpointInterface     = "/v2/endpoints/%s/interfaces/%s/%s/"
-	APIPathDevicesV2Device         = "/api/devices-v2/device"
-	APIPathBehaviorsPreview        = "/api/behaviors/preview"
-	APIPathNPCommand               = "/api/np/command"
-	APIPathNPPlayer                = "/api/np/player"
+	APIPathV2Endpoints             = apiroutes.PathListRestEndpoints
+	APIPathV2EndpointQuery         = apiroutes.PathQueryRestEndpoints
+	APIPathV2EndpointsForget       = apiroutes.PathForgetEndpoint
+	APIPathV2EndpointsDeregister   = apiroutes.PathDeregisterEndpoint
+	APIPathV2EndpointsFriendlyName = apiroutes.PathUpdateEndpointFriendlyName
+	APIPathV2EndpointsControl      = apiroutes.PathControlRestEndpoint
+	APIPathV2EndpointInterface     = apiroutes.PathSendEndpointInterfaceMessage
+	APIPathDevicesV2Device         = apiroutes.PathListFirstPartyDevices
+	APIPathBehaviorsPreview        = apiroutes.PathSubmitBehaviorPreview
+	APIPathNPCommand               = apiroutes.PathSendMediaCommand
+	APIPathNPPlayer                = apiroutes.PathGetMediaPlayerState
 )
 
 // Query Parameters

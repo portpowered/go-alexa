@@ -290,6 +290,36 @@ type WireFriendlyNameValue struct {
 	Value WireFriendlyNameText `json:"value"`
 }
 
+// WireGraphQLError defines model for WireGraphQLError.
+type WireGraphQLError struct {
+	Extensions           *map[string]interface{}     `json:"extensions,omitempty"`
+	Locations            *[]WireGraphQLErrorLocation `json:"locations,omitempty"`
+	Message              string                      `json:"message"`
+	Path                 *[]interface{}              `json:"path,omitempty"`
+	AdditionalProperties map[string]interface{}      `json:"-"`
+}
+
+// WireGraphQLErrorLocation defines model for WireGraphQLErrorLocation.
+type WireGraphQLErrorLocation struct {
+	Column int `json:"column"`
+	Line   int `json:"line"`
+}
+
+// WireGraphQLRequest defines model for WireGraphQLRequest.
+type WireGraphQLRequest struct {
+	OperationName        *string                 `json:"operationName,omitempty"`
+	Query                string                  `json:"query"`
+	Variables            *map[string]interface{} `json:"variables,omitempty"`
+	AdditionalProperties map[string]interface{}  `json:"-"`
+}
+
+// WireGraphQLResponse defines model for WireGraphQLResponse.
+type WireGraphQLResponse struct {
+	Data                 *map[string]interface{} `json:"data,omitempty"`
+	Errors               *[]WireGraphQLError     `json:"errors,omitempty"`
+	AdditionalProperties map[string]interface{}  `json:"-"`
+}
+
 // WireInfoText defines model for WireInfoText.
 type WireInfoText struct {
 	Header               *string                `json:"header,omitempty"`
@@ -597,6 +627,9 @@ type RegisterDeviceJSONRequestBody = WireRegistrationRequest
 
 // RefreshAccessTokenJSONRequestBody defines body for RefreshAccessToken for application/json ContentType.
 type RefreshAccessTokenJSONRequestBody = WireTokenRefreshRequest
+
+// ExecuteNexusGraphQLJSONRequestBody defines body for ExecuteNexusGraphQL for application/json ContentType.
+type ExecuteNexusGraphQLJSONRequestBody = WireGraphQLRequest
 
 // QueryRestEndpointsJSONRequestBody defines body for QueryRestEndpoints for application/json ContentType.
 type QueryRestEndpointsJSONRequestBody = WireEndpointQueryRequest
@@ -1625,6 +1658,296 @@ func (a WireEndpointListResponse) MarshalJSON() ([]byte, error) {
 		object["results"], err = json.Marshal(a.Results)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'results': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for WireGraphQLError. Returns the specified
+// element and whether it was found
+func (a WireGraphQLError) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for WireGraphQLError
+func (a *WireGraphQLError) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for WireGraphQLError to handle AdditionalProperties
+func (a *WireGraphQLError) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["extensions"]; found {
+		err = json.Unmarshal(raw, &a.Extensions)
+		if err != nil {
+			return fmt.Errorf("error reading 'extensions': %w", err)
+		}
+		delete(object, "extensions")
+	}
+
+	if raw, found := object["locations"]; found {
+		err = json.Unmarshal(raw, &a.Locations)
+		if err != nil {
+			return fmt.Errorf("error reading 'locations': %w", err)
+		}
+		delete(object, "locations")
+	}
+
+	if raw, found := object["message"]; found {
+		err = json.Unmarshal(raw, &a.Message)
+		if err != nil {
+			return fmt.Errorf("error reading 'message': %w", err)
+		}
+		delete(object, "message")
+	}
+
+	if raw, found := object["path"]; found {
+		err = json.Unmarshal(raw, &a.Path)
+		if err != nil {
+			return fmt.Errorf("error reading 'path': %w", err)
+		}
+		delete(object, "path")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for WireGraphQLError to handle AdditionalProperties
+func (a WireGraphQLError) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Extensions != nil {
+		object["extensions"], err = json.Marshal(a.Extensions)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'extensions': %w", err)
+		}
+	}
+
+	if a.Locations != nil {
+		object["locations"], err = json.Marshal(a.Locations)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'locations': %w", err)
+		}
+	}
+
+	object["message"], err = json.Marshal(a.Message)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'message': %w", err)
+	}
+
+	if a.Path != nil {
+		object["path"], err = json.Marshal(a.Path)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'path': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for WireGraphQLRequest. Returns the specified
+// element and whether it was found
+func (a WireGraphQLRequest) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for WireGraphQLRequest
+func (a *WireGraphQLRequest) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for WireGraphQLRequest to handle AdditionalProperties
+func (a *WireGraphQLRequest) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["operationName"]; found {
+		err = json.Unmarshal(raw, &a.OperationName)
+		if err != nil {
+			return fmt.Errorf("error reading 'operationName': %w", err)
+		}
+		delete(object, "operationName")
+	}
+
+	if raw, found := object["query"]; found {
+		err = json.Unmarshal(raw, &a.Query)
+		if err != nil {
+			return fmt.Errorf("error reading 'query': %w", err)
+		}
+		delete(object, "query")
+	}
+
+	if raw, found := object["variables"]; found {
+		err = json.Unmarshal(raw, &a.Variables)
+		if err != nil {
+			return fmt.Errorf("error reading 'variables': %w", err)
+		}
+		delete(object, "variables")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for WireGraphQLRequest to handle AdditionalProperties
+func (a WireGraphQLRequest) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.OperationName != nil {
+		object["operationName"], err = json.Marshal(a.OperationName)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'operationName': %w", err)
+		}
+	}
+
+	object["query"], err = json.Marshal(a.Query)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'query': %w", err)
+	}
+
+	if a.Variables != nil {
+		object["variables"], err = json.Marshal(a.Variables)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'variables': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for WireGraphQLResponse. Returns the specified
+// element and whether it was found
+func (a WireGraphQLResponse) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for WireGraphQLResponse
+func (a *WireGraphQLResponse) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for WireGraphQLResponse to handle AdditionalProperties
+func (a *WireGraphQLResponse) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["data"]; found {
+		err = json.Unmarshal(raw, &a.Data)
+		if err != nil {
+			return fmt.Errorf("error reading 'data': %w", err)
+		}
+		delete(object, "data")
+	}
+
+	if raw, found := object["errors"]; found {
+		err = json.Unmarshal(raw, &a.Errors)
+		if err != nil {
+			return fmt.Errorf("error reading 'errors': %w", err)
+		}
+		delete(object, "errors")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for WireGraphQLResponse to handle AdditionalProperties
+func (a WireGraphQLResponse) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Data != nil {
+		object["data"], err = json.Marshal(a.Data)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'data': %w", err)
+		}
+	}
+
+	if a.Errors != nil {
+		object["errors"], err = json.Marshal(a.Errors)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'errors': %w", err)
 		}
 	}
 

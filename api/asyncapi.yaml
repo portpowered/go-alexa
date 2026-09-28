@@ -12,22 +12,35 @@ info:
 servers:
   northAmerica:
     host: alexa.na.gateway.devices.a2z.com
+    x-go-alexa-region: na
     protocol: https
     protocolVersion: '2'
     description: Default stream authority in go-alexa.
   europe:
     host: alexa.eu.gateway.devices.a2z.com
+    x-go-alexa-region: eu
     protocol: https
     protocolVersion: '2'
     description: EU stream authority constant in go-alexa.
   japan:
     host: alexa.fe.gateway.devices.a2z.com
+    x-go-alexa-region: jp
     protocol: https
     protocolVersion: '2'
     description: Japan stream authority constant in go-alexa.
 channels:
   directives:
     address: /v20160207/directives
+    x-go-alexa-stream-framing:
+      description: |
+        Implementation-derived parser configuration. No sanitized live capture
+        in this repository verifies the response framing or boundary syntax.
+      line-delimiter: "\n"
+      trim-whitespace: true
+      boundary-prefix: "------"
+      content-type-prefix: "Content-Type:"
+      skip-empty-lines: true
+      authentication-failure-marker: "Unable to authenticate the request. Please provide a valid authorization token."
     servers:
       - $ref: '#/servers/northAmerica'
       - $ref: '#/servers/europe'

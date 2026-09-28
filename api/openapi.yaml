@@ -16,13 +16,16 @@ info:
 servers:
   - url: https://api.amazonalexa.com
     description: Default REST base URL in go-alexa.
+    x-go-alexa-region: na
   - url: https://api.eu.amazonalexa.com
     description: EU REST base URL constant in go-alexa.
+    x-go-alexa-region: eu
   - url: https://api.jp.amazonalexa.com
     description: Japan REST base URL constant in go-alexa.
+    x-go-alexa-region: jp
 tags:
   - name: Account linking
-    description: Code-pair registration and token operations implemented by go-alexa.
+    description: Caller-facing authorization entry point, code-pair registration, and token operations implemented by go-alexa.
   - name: Endpoints
     description: Endpoint enumeration and direct endpoint operations implemented by go-alexa.
   - name: Alexa web APIs
@@ -34,6 +37,27 @@ tags:
 security:
   - BearerToken: []
 paths:
+  /ap/oa:
+    get:
+      tags: [Account linking]
+      operationId: openAuthorizationPage
+      summary: Start caller-managed account authorization
+      description: |
+        go-alexa exports regional authorization URLs using this path. The
+        library does not dispatch this request; callers direct an account
+        holder to the URL and add authorization query values. The path is
+        implementation-derived and is not a provider-verified OAuth contract.
+      servers:
+        - url: https://api.amazon.com
+          x-go-alexa-region: na
+        - url: https://api.amazon.co.uk
+          x-go-alexa-region: eu
+        - url: https://api.amazon.co.jp
+          x-go-alexa-region: jp
+      security: []
+      responses:
+        default:
+          description: Browser navigation response is not decoded by go-alexa.
   /auth/create/codepair:
     post:
       tags: [Account linking]
@@ -373,8 +397,11 @@ paths:
       description: The decoded response contains personal account information. Treat it as sensitive data.
       servers:
         - url: https://alexa.amazon.com
+          x-go-alexa-region: na
         - url: https://alexa.amazon.co.uk
+          x-go-alexa-region: eu
         - url: https://alexa.amazon.co.jp
+          x-go-alexa-region: jp
       security:
         - BearerToken: []
         - CookieHeader: []
@@ -511,6 +538,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WirePlayerStateResponse'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /nexus/v1/graphql:
+    post:
+      tags: [Alexa web APIs]
+      operationId: executeNexusGraphQL
+      summary: Execute a GraphQL operation
+      description: |
+        The generic GraphQL client posts a query, optional operation name, and
+        optional variables to this route. This shape is derived from the
+        current client serializer and GraphQL schema, not from an Amazon-issued
+        HTTP contract or a sanitized live capture.
+      servers:
+        - url: https://alexa.amazon.com
+        - url: https://alexa.amazon.co.uk
+        - url: https://alexa.amazon.co.jp
+      security:
+        - BearerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireGraphQLRequest'
+      responses:
+        '200':
+          description: GraphQL data or operation errors decoded by the client.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireGraphQLResponse'
         default:
           $ref: '#/components/responses/UnhandledResponse'
   /v20160207/directives:
@@ -1003,6 +1061,49 @@ components:
         shuffle: {type: boolean}
         repeat: {type: boolean}
       required: [type]
+    WireGraphQLRequest:
+      type: object
+      properties:
+        query: {type: string}
+        operationName: {type: string}
+        variables:
+          type: object
+          additionalProperties: true
+      required: [query]
+      additionalProperties: true
+    WireGraphQLResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/WireGraphQLError'
+      additionalProperties: true
+    WireGraphQLError:
+      type: object
+      properties:
+        message: {type: string}
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/WireGraphQLErrorLocation'
+        path:
+          type: array
+          items: {}
+        extensions:
+          type: object
+          additionalProperties: true
+      required: [message]
+      additionalProperties: true
+    WireGraphQLErrorLocation:
+      type: object
+      properties:
+        line: {type: integer}
+        column: {type: integer}
+      required: [line, column]
     WirePlayerStateResponse:
       type: object
       properties:

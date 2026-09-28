@@ -1,0 +1,24 @@
+---
+title: 'Control an endpoint'
+---
+
+Choose a target from [`Session.ListEndpoints`](../endpoint-enumeration/) that reports the feature you want to control, then send its feature namespace, operation, and matching payload.
+
+```go
+result, err := session.Control(ctx, alexaapimodels.ControlRequest{
+    Target:    target,
+    Namespace: alexaapimodels.FeatureNamePower,
+    Name:      alexaapimodels.FeatureOperationNameTurnOff,
+    Payload:   alexaapimodels.ControlPowerPayload{},
+})
+if err != nil {
+    return err
+}
+if len(result.Errors) != 0 {
+    return fmt.Errorf("control returned %d operation errors", len(result.Errors))
+}
+```
+
+The target must advertise the selected feature. An accepted request does not confirm the physical device changed state; query state or listen for events when you need an update. Operations depend on the device and account.
+
+See the generated reference for the [feature control mutation](../../graphql/operations/mutation/setendpointfeatures/).

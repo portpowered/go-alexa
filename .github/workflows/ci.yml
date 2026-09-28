@@ -27,7 +27,8 @@ jobs:
       - name: Verify generated client and wire models
         run: |
           make generate
-          git diff --exit-code -- pkg/dependencies/graphql/generated.go pkg/dependencies/rest/internal/wire/models.gen.go pkg/alexa/internal/wire
+          go run ./tools/apiroutes --check
+          git diff --exit-code -- pkg/dependencies/graphql/generated.go pkg/dependencies/internal/wire/models.gen.go pkg/dependencies/rest/internal/wire pkg/alexa/internal/wire pkg/internal/apiroutes
       - name: Check module metadata
         run: |
           go mod tidy

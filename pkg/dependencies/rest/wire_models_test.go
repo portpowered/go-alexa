@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/portpowered/go-alexa/pkg/dependencies/rest/internal/wire"
+	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
 )
 
 func TestGenerateCodePairUsesGeneratedWireModels(t *testing.T) {

@@ -1,31 +1,33 @@
 package alexaapimodels
 
-const (
-	// authorization URIs for each region
-	AuthorizationUriNa = "https://api.amazon.com/ap/oa"
-	AuthorizationUriEu = "https://api.amazon.co.uk/ap/oa"
-	AuthorizationUriJp = "https://api.amazon.co.jp/ap/oa"
+import "github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 
+const (
 	// Amazon API services
-	AmazonApiServiceUriNa = "https://api.amazon.com"
-	AmazonApiServiceUriEu = "https://api.amazon.co.uk"
-	AmazonApiServiceUriJp = "https://api.amazon.co.jp"
+	AmazonApiServiceUriNa = apiroutes.ServerAmazonAPIBaseNa
+	AmazonApiServiceUriEu = apiroutes.ServerAmazonAPIBaseEu
+	AmazonApiServiceUriJp = apiroutes.ServerAmazonAPIBaseJp
+
+	// Authorization entry points for caller-managed browser navigation.
+	AuthorizationUriNa = AmazonApiServiceUriNa + apiroutes.PathOpenAuthorizationPage
+	AuthorizationUriEu = AmazonApiServiceUriEu + apiroutes.PathOpenAuthorizationPage
+	AuthorizationUriJp = AmazonApiServiceUriJp + apiroutes.PathOpenAuthorizationPage
 
 	// Alexa API services
-	ApiServiceUriNa = "https://api.amazonalexa.com"
-	ApiServiceUriEu = "https://api.eu.amazonalexa.com"
-	ApiServiceUriJp = "https://api.jp.amazonalexa.com"
+	ApiServiceUriNa = apiroutes.ServerAlexaAPIBaseNa
+	ApiServiceUriEu = apiroutes.ServerAlexaAPIBaseEu
+	ApiServiceUriJp = apiroutes.ServerAlexaAPIBaseJp
 
 	// Alexa Amazon web domain (for user info and other web APIs)
-	AlexaAmazonBaseUriNa = "https://alexa.amazon.com"
-	AlexaAmazonBaseUriEu = "https://alexa.amazon.co.uk"
-	AlexaAmazonBaseUriJp = "https://alexa.amazon.co.jp"
+	AlexaAmazonBaseUriNa = apiroutes.ServerAlexaWebBaseNa
+	AlexaAmazonBaseUriEu = apiroutes.ServerAlexaWebBaseEu
+	AlexaAmazonBaseUriJp = apiroutes.ServerAlexaWebBaseJp
 
 	// HTTP2 Connection endpoints for each region
 	// https://developer.amazon.com/en-US/docs/alexa/alexa-voice-service/api-overview.html#endpoints
-	Http2ConnectionUriNa = "alexa.na.gateway.devices.a2z.com"
-	Http2ConnectionUriEu = "alexa.eu.gateway.devices.a2z.com"
-	Http2ConnectionUriJp = "alexa.fe.gateway.devices.a2z.com"
+	Http2ConnectionUriNa = apiroutes.ServerEventAuthorityNa
+	Http2ConnectionUriEu = apiroutes.ServerEventAuthorityEu
+	Http2ConnectionUriJp = apiroutes.ServerEventAuthorityJp
 
 	// First party devices within Amazon are registered with a unique device type that is used to uniquely identify the device class, such as mobile alexa app,  etc.
 	DeviceTypeIphone    = "A2IVLV5VM2W81"

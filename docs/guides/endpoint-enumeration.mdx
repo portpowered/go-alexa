@@ -1,0 +1,33 @@
+---
+title: 'Enumerate endpoints'
+---
+
+`Session.ListEndpoints` combines GraphQL endpoint data with optional REST device metadata. Set `Properties` to request state values and `Features` to request supported feature metadata.
+
+```go
+response, err := session.ListEndpoints(ctx, alexaapimodels.EndpointQuery{
+    IncludeFields: &alexaapimodels.EndpointIncludeFields{
+        Properties: true,
+        Features:   true,
+    },
+})
+if err != nil {
+    return err
+}
+for _, endpoint := range response.Results {
+    name := endpoint.EndpointID
+    if endpoint.FriendlyName != nil {
+        name = endpoint.FriendlyName.Value
+    }
+    fmt.Printf("%s: %s (%d features)\n", name, endpoint.EndpointID, len(endpoint.Features))
+}
+```
+
+If the secondary REST request fails, the result may omit REST-only fields. Feature names describe reported capabilities; they do not guarantee a command will succeed on a device.
+
+## API reference
+
+- GraphQL: [list endpoint data](../../graphql/operations/query/listendpoints/) and [query endpoint collections](../../graphql/operations/query/endpoints/).
+- REST metadata: [list first-party devices](../../openapi/alexa-web-apis/listFirstPartyDevices/).
+
+The reference describes implementation-derived schemas. Synthetic fixtures cover conversions, not live Amazon behavior.

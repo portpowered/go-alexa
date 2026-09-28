@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/portpowered/go-alexa/pkg/dependencies/rest/internal/wire"
+	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
+	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
 // GetUserInfoOptions contains options for getting user info
@@ -24,7 +25,7 @@ func (c *Client) GetUserInfo(ctx context.Context, opts *GetUserInfoOptions) (*al
 	}
 
 	// Build the full URL using the client's base URI
-	baseURL := c.alexaAmazonBaseUri + "/api/users/me"
+	baseURL := c.alexaAmazonBaseUri + apiroutes.PathGetUserInfo
 	params := url.Values{}
 	if opts.Platform != "" {
 		params.Set("platform", opts.Platform)
@@ -44,7 +45,7 @@ func (c *Client) GetUserInfo(ctx context.Context, opts *GetUserInfoOptions) (*al
 
 	// Use the client's helper method to perform the request
 	var userInfo wire.WireUserInfo
-	if err := c.doJSONRequestWithFullURL(ctx, "GET", baseURL, nil, customHeaders, &userInfo, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodGetUserInfo, baseURL, nil, customHeaders, &userInfo, true); err != nil {
 		return nil, err
 	}
 

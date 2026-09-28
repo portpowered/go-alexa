@@ -17,7 +17,7 @@ go get github.com/portpowered/go-alexa@v0.2.0
 ```
 
 `v0.1.0` was the first release from the cleaned history. The v0.2.0 API moves
-account operations from `Client` to `Session`; see the [authentication guide](docs/guides/authentication.md)
+account operations from `Client` to `Session`; see the [authentication guide](https://portpowered.github.io/go-alexa/docs/guides/authentication/)
 for the migration pattern.
 
 ## Quick start
@@ -69,7 +69,7 @@ func main() {
 }
 ```
 
-`Client` holds reusable endpoint and transport configuration. Create an account `Session` with credentials before calling API methods, then close the session when finished. Every network operation accepts a context. See [Authentication](docs/guides/authentication.md) for token refresh and code-based linking.
+`Client` holds reusable endpoint and transport configuration. Create an account `Session` with credentials before calling API methods, then close the session when finished. Every network operation accepts a context. See the [authentication guide](https://portpowered.github.io/go-alexa/docs/guides/authentication/) for token refresh and code-based linking.
 
 ## Supported operations
 
@@ -84,15 +84,13 @@ func main() {
 | Account profile | `GetUserInfo` | Returns personal account information; handle the result as sensitive data. |
 | Player state | `GetPlayerState` | Provider- and device-dependent. |
 
-The package also exposes endpoint, feature, event, request, response, and error models under `pkg/alexaapimodels`. The checked-in GraphQL, OpenAPI, and AsyncAPI documents describe the subset used by this client and drive generated client or internal wire models. They are implementation-derived, not complete or authoritative Alexa contracts. The maintainer reports that these APIs have worked with their own Alexa accounts, but those tests were not documented with an operation list, dates, or sanitized captures, so reproducible account-test evidence is absent from this repository. See [API coverage](docs/alexa_apis.md) and [verification guidance](docs/verification.md).
+The package exposes endpoint, feature, event, request, response, and error models under `pkg/alexaapimodels`. Its GraphQL, OpenAPI, and AsyncAPI files describe implementation-derived subsets, not authoritative Amazon contracts. The maintainer reports account testing, but operation-level results and sanitized captures are not recorded. See the [generated API reference](https://portpowered.github.io/go-alexa/docs/) and [verification guidance](docs/verification.md).
 
 ## Authentication, errors, and transports
 
 Create a reusable client with `WithRegion`, `WithTimeout`, endpoint overrides, and network options. Put account credentials on `client.NewSession(alexa.WithBearerToken(...))`. `WithRefreshToken` only stores a caller-managed token: refresh it explicitly and install the returned access token with `Session.SetAccessToken`, or explicitly exchange it for cookies. `WithRESTHTTPClient`, `WithGraphQLHTTPClient`, and `WithEventHTTPClient` inject separate network edges; `WithEventTransport` accepts an event-stream `RoundTripper` such as an HTTP/2 transport.
 
 Errors use typed values such as `AuthenticationError`, `NetworkError`, `TokenError`, `BadRequestError`, and `HTTPError` in `alexaapimodels`; many wrapped errors preserve their cause with `Unwrap`. `ControlResponse`, `SubscribeResponse`, and `QualityOfServiceResponse` can also contain operation-level errors even when the HTTP request succeeded.
-
-See the [API guide](docs/alexa_apis.md), [authentication guide](docs/guides/authentication.md), and [published reference](https://portpowered.github.io/go-alexa/).
 
 ## Examples
 

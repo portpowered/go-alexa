@@ -1,6 +1,6 @@
 package: wire
 generate:
   models: true
-output: pkg/dependencies/rest/internal/wire/models.gen.go
+output: pkg/dependencies/internal/wire/models.gen.go
 output-options:
   skip-prune: true

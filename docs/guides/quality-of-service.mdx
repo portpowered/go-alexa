@@ -1,0 +1,25 @@
+---
+title: 'Request endpoint state polling'
+---
+
+`Session.RequestEndpointQualityOfService` asks the service to poll the selected endpoints for a period. The response may include per-operation errors.
+
+```go
+result, err := session.RequestEndpointQualityOfService(ctx, alexaapimodels.QualityOfServiceRequest{
+    Endpoints: []string{endpoint.EndpointID},
+    Configuration: alexaapimodels.QualityOfServiceConfiguration{
+        TypeOfExperience:  alexaapimodels.QualityOfServiceExperienceBackgroundEphemeral,
+        DurationInSeconds: 60,
+    },
+})
+if err != nil {
+    return err
+}
+if len(result.Errors) != 0 {
+    return fmt.Errorf("quality-of-service request returned %d errors", len(result.Errors))
+}
+```
+
+Pass an endpoint ID returned by [`Session.ListEndpoints`](../endpoint-enumeration/). A successful request does not guarantee immediate or accurate device state.
+
+See the generated [quality-of-service mutation reference](../../graphql/operations/mutation/requestendpointqualityofservice/).

@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
-	"github.com/portpowered/go-alexa/pkg/dependencies/rest/internal/wire"
+	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
+	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
 // Notes: the APIs for this set of endpoints are only available to certain for device registrations of a certain set of device types,
@@ -37,7 +37,7 @@ func (c *Client) GetEndpoints(ctx context.Context, opts *ListEndpointsOptions) (
 
 	path := buildEndpointListPath(alexamodels.APIPathV2Endpoints, opts)
 	var response wire.WireEndpointListResponse
-	if err := c.doJSONRequest(ctx, "GET", path, nil, &response); err != nil {
+	if err := c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, &response); err != nil {
 		return nil, err
 	}
 	return convertWireModel[alexamodels.EndpointListResponse](response)
@@ -46,7 +46,7 @@ func (c *Client) GetEndpoints(ctx context.Context, opts *ListEndpointsOptions) (
 // GetEndpointByID retrieves a specific endpoint by its ID
 // GET /v2/endpoints/{endpointId}?expand={expand}
 func (c *Client) GetEndpointByID(ctx context.Context, endpointID string, expand []string) (*alexamodels.Device, error) {
-	path := fmt.Sprintf("%s/%s", alexamodels.APIPathV2Endpoints, endpointID)
+	path := fmt.Sprintf(apiroutes.PathGetRestEndpoint, endpointID)
 	if len(expand) > 0 {
 		params := url.Values{}
 		for _, e := range expand {
@@ -56,7 +56,7 @@ func (c *Client) GetEndpointByID(ctx context.Context, endpointID string, expand 
 	}
 
 	var endpoint wire.WireDevice
-	if err := c.doJSONRequest(ctx, "GET", path, nil, &endpoint); err != nil {
+	if err := c.doJSONRequest(ctx, apiroutes.MethodGetRestEndpoint, path, nil, &endpoint); err != nil {
 		return nil, err
 	}
 	return convertWireModel[alexamodels.Device](endpoint)
@@ -71,7 +71,7 @@ func (c *Client) QueryEndpoints(ctx context.Context, query *alexamodels.Endpoint
 		}
 	}
 
-	path := alexamodels.APIPathV2EndpointQuery
+	path := apiroutes.PathQueryRestEndpoints
 	if opts != nil {
 		// Add query parameters for pagination
 		params := url.Values{}
@@ -96,7 +96,7 @@ func (c *Client) QueryEndpoints(ctx context.Context, query *alexamodels.Endpoint
 		return nil, &alexaapimodels.BadRequestError{Message: "failed to convert endpoint query", Err: err}
 	}
 	var response wire.WireEndpointListResponse
-	if err := c.doJSONRequest(ctx, "POST", path, wireQuery, &response); err != nil {
+	if err := c.doJSONRequest(ctx, apiroutes.MethodQueryRestEndpoints, path, wireQuery, &response); err != nil {
 		return nil, err
 	}
 	return convertWireModel[alexamodels.EndpointListResponse](response)
@@ -106,7 +106,7 @@ func (c *Client) QueryEndpoints(ctx context.Context, query *alexamodels.Endpoint
 // POST /v2/endpoints/{endpointId}/forget
 func (c *Client) ForgetEndpoint(ctx context.Context, endpointID string) error {
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsForget, endpointID)
-	if err := c.doJSONRequest(ctx, "POST", path, nil, nil); err != nil {
+	if err := c.doJSONRequest(ctx, apiroutes.MethodForgetEndpoint, path, nil, nil); err != nil {
 		return err
 	}
 	return nil
@@ -116,7 +116,7 @@ func (c *Client) ForgetEndpoint(ctx context.Context, endpointID string) error {
 // POST /v2/endpoints/{endpointId}/deregister
 func (c *Client) DeregisterEndpoint(ctx context.Context, endpointID string) error {
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsDeregister, endpointID)
-	if err := c.doJSONRequest(ctx, "POST", path, nil, nil); err != nil {
+	if err := c.doJSONRequest(ctx, apiroutes.MethodDeregisterEndpoint, path, nil, nil); err != nil {
 		return err
 	}
 	return nil
@@ -135,7 +135,7 @@ func (c *Client) UpdateFriendlyName(ctx context.Context, endpointID string, frie
 	}
 
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsFriendlyName, endpointID)
-	if err := c.doJSONRequest(ctx, "POST", path, request, nil); err != nil {
+	if err := c.doJSONRequest(ctx, apiroutes.MethodUpdateEndpointFriendlyName, path, request, nil); err != nil {
 		return err
 	}
 	return nil
@@ -180,7 +180,7 @@ func (c *Client) ControlEndpoint(ctx context.Context, endpointID string, command
 	if err != nil {
 		return &alexaapimodels.BadRequestError{Message: "failed to convert control command", Err: err}
 	}
-	if err := c.doJSONRequest(ctx, "POST", path, wireCommand, nil); err != nil {
+	if err := c.doJSONRequest(ctx, apiroutes.MethodControlRestEndpoint, path, wireCommand, nil); err != nil {
 		return err
 	}
 	return nil
@@ -226,11 +226,14 @@ func (c *Client) SendInterfaceMessage(ctx context.Context, req *alexamodels.Inte
 
 	// Service expects a JSON body; use an empty object when no payload is provided.
 	body := req.Payload
+	if payload, ok := body.(map[string]interface{}); ok {
+		body = wire.WireInterfacePayload(payload)
+	}
 	if body == nil {
-		body = map[string]interface{}{}
+		body = wire.WireInterfacePayload{}
 	}
 
-	if err := c.doJSONRequest(ctx, http.MethodPost, path, body, nil); err != nil {
+	if err := c.doJSONRequest(ctx, apiroutes.MethodSendEndpointInterfaceMessage, path, body, nil); err != nil {
 		return err
 	}
 
@@ -257,7 +260,7 @@ func (c *Client) GetDevicesV2(ctx context.Context, opts *GetDevicesV2Options) (*
 
 	// Use the client's helper method to perform the request
 	var response wire.WireDevicesV2Response
-	if err := c.doJSONRequestWithFullURL(ctx, "GET", baseURL, nil, customHeaders, &response, false); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListFirstPartyDevices, baseURL, nil, customHeaders, &response, false); err != nil {
 		return nil, err
 	}
 
@@ -278,7 +281,7 @@ func (c *Client) RunBehavior(ctx context.Context, sequenceJSON string) error {
 		Status:       alexamodels.DefaultBehaviorStatus,
 	}
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, request, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSubmitBehaviorPreview, baseURL, request, nil, nil, true); err != nil {
 		return err
 	}
 	return nil
@@ -397,7 +400,7 @@ func (c *Client) PausePlayback(ctx context.Context, req *alexamodels.MediaContro
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, command, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to pause playback",
 			Err:     err,
@@ -429,7 +432,7 @@ func (c *Client) ResumePlayback(ctx context.Context, req *alexamodels.MediaContr
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, command, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to resume playback",
 			Err:     err,
@@ -461,7 +464,7 @@ func (c *Client) NextTrack(ctx context.Context, req *alexamodels.MediaControlReq
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, command, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to skip to next track",
 			Err:     err,
@@ -493,7 +496,7 @@ func (c *Client) PreviousTrack(ctx context.Context, req *alexamodels.MediaContro
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, command, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to go to previous track",
 			Err:     err,
@@ -522,7 +525,7 @@ func (c *Client) GetPlayerState(ctx context.Context, req *alexamodels.PlayerStat
 	baseURL += "?" + params.Encode()
 
 	var response wire.WirePlayerStateResponse
-	if err := c.doJSONRequestWithFullURL(ctx, "GET", baseURL, nil, nil, &response, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodGetMediaPlayerState, baseURL, nil, nil, &response, true); err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to get player state",
 			Err:     err,
@@ -554,7 +557,7 @@ func (c *Client) ForwardMedia(ctx context.Context, req *alexamodels.MediaControl
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, command, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to forward media",
 			Err:     err,
@@ -586,7 +589,7 @@ func (c *Client) RewindMedia(ctx context.Context, req *alexamodels.MediaControlR
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, command, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to rewind media",
 			Err:     err,
@@ -619,7 +622,7 @@ func (c *Client) SetShuffle(ctx context.Context, req *alexamodels.MediaControlRe
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, command, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to set shuffle",
 			Err:     err,
@@ -652,7 +655,7 @@ func (c *Client) SetRepeat(ctx context.Context, req *alexamodels.MediaControlReq
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, command, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to set repeat",
 			Err:     err,
@@ -944,7 +947,7 @@ func (c *Client) SendFireTVSequence(ctx context.Context, deviceAccountID, operat
 		Status:       alexamodels.DefaultBehaviorStatus,
 	}
 
-	if err := c.doJSONRequestWithFullURL(ctx, "POST", baseURL, request, nil, nil, true); err != nil {
+	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSubmitBehaviorPreview, baseURL, request, nil, nil, true); err != nil {
 		return err
 	}
 	return nil

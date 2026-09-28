@@ -1,0 +1,38 @@
+---
+title: 'Subscribe to endpoint events'
+---
+
+Create an account session, call `Subscribe`, and check the response's `Errors` field before opening the stream.
+
+```go
+subscription, err := session.Subscribe(ctx, alexaapimodels.SubscribeRequest{
+    Entities: []alexaapimodels.SubscribeEntity{{
+        EntityType: alexaapimodels.EntityTypeEndpoint,
+    }},
+    DurationInMinutes: 4,
+})
+if err != nil {
+    return err
+}
+if len(subscription.Errors) != 0 {
+    return fmt.Errorf("subscription returned %d errors", len(subscription.Errors))
+}
+
+connection, err := session.ConnectEvents(ctx)
+if err != nil {
+    return err
+}
+defer connection.Close()
+
+for {
+    event, err := connection.Receive()
+    if err != nil {
+        return err
+    }
+    fmt.Printf("%s/%s: %+v\n", event.Namespace, event.Name, event.Payload)
+}
+```
+
+`Receive` blocks until an event arrives or the stream closes. Close the connection when finished; closing the session also closes any open streams. Known event types are decoded into typed values.
+
+See the generated references for the [Subscribe mutation](../../graphql/operations/mutation/subscribe/), [HTTP/2 stream route](../../openapi/event-stream/openDirectiveStream/), [keepalive route](../../openapi/event-stream/pingDirectiveStream/), and [event message schema](../../asyncapi/event-stream/receiveDirectives/). The AsyncAPI schema describes the current parser and is not a provider-verified contract; synthetic tests do not establish which events Amazon emits.

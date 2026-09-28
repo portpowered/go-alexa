@@ -1,0 +1,40 @@
+---
+title: 'Authentication'
+---
+
+`Client` holds service and transport settings. `Session` holds one account's credentials. Load credentials from a secret store or environment and never commit or log them.
+
+## Use an access token
+
+```go
+client, err := alexa.NewClient(alexa.WithRegion(alexaapimodels.RegionUS))
+if err != nil {
+    return err
+}
+session, err := client.NewSession(alexa.WithBearerToken(os.Getenv("ALEXA_BEARER_TOKEN")))
+if err != nil {
+    return err
+}
+defer session.Close()
+```
+
+Pass an access token to `WithBearerToken`. The session uses it for authenticated API calls.
+
+## Refresh a token
+
+Create a session with `WithRefreshToken` and call `Session.RefreshAccessToken` when you choose. It returns new credentials without changing session state. Store the new token in your credential store, then install it with `Session.SetAccessToken` or create a new session.
+
+## Link an account with a code
+
+Call `GenerateCodePair`, show the public code to the user, and keep the private code secret. After the user approves the link, call `RegisterWithCodePair`. Treat returned tokens as credentials. Start this flow only after an explicit user action.
+
+## Use cookies and CSRF
+
+Call `Session.ExchangeRefreshTokenForCookies` explicitly, store the result, and create a session with `WithCookies`. If a request needs a CSRF value, call `Session.GetCSRFToken`; requests do not fetch missing CSRF material or exchange tokens implicitly.
+
+`WithRegion` accepts US, EU, or JP. Methods return typed errors from `alexaapimodels`; use `errors.As` to inspect wrapped errors.
+
+## API reference
+
+- [Create a code pair](../../openapi/account-linking/createCodePair/), [register a device](../../openapi/account-linking/registerDevice/), and [refresh a token](../../openapi/account-linking/refreshAccessToken/).
+- [Exchange a refresh token for cookies](../../openapi/account-linking/exchangeRefreshTokenForCookies/) and [retrieve CSRF material](../../openapi/alexa-web-apis/fetchCsrfCookie/).

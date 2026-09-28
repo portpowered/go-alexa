@@ -17,6 +17,7 @@ import (
 	directivewire "github.com/portpowered/go-alexa/pkg/alexa/internal/wire"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
+	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 	"golang.org/x/net/http2"
 )
 
@@ -139,10 +140,10 @@ func (c *HTTP2Connection) Connect(ctx context.Context) error {
 	}
 
 	// Build the URL for the directives endpoint
-	url := fmt.Sprintf("https://%s/v20160207/directives", c.authority)
+	url := fmt.Sprintf("https://%s%s", c.authority, apiroutes.ChannelDirectivesAddress)
 
 	// Create a request for the HTTP/2 connection
-	req, err := http.NewRequestWithContext(requestCtx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(requestCtx, apiroutes.MethodOpenDirectiveStream, url, nil)
 	if err != nil {
 		return alexaapimodels.NewConnectionError("failed to create request", err)
 	}
@@ -195,7 +196,7 @@ func (c *HTTP2Connection) processMessages() {
 		c.mu.Unlock()
 	}()
 
-	reauthRequired := "Unable to authenticate the request. Please provide a valid authorization token."
+	framing := apiroutes.DirectiveFraming
 
 	for {
 		select {
@@ -210,7 +211,7 @@ func (c *HTTP2Connection) processMessages() {
 				return
 			}
 
-			line, err := reader.ReadString('\n')
+			line, err := reader.ReadString(framing.LineDelimiter)
 			if err != nil {
 				if err == io.EOF {
 					// Connection closed by server
@@ -227,10 +228,12 @@ func (c *HTTP2Connection) processMessages() {
 				return
 			}
 
-			line = strings.TrimSpace(line)
+			if framing.TrimWhitespace {
+				line = strings.TrimSpace(line)
+			}
 
 			// Handle boundary detection
-			if strings.HasPrefix(line, "------") {
+			if strings.HasPrefix(line, framing.BoundaryPrefix) {
 				if c.boundary == "" {
 					c.boundary = line
 				}
@@ -238,7 +241,7 @@ func (c *HTTP2Connection) processMessages() {
 			}
 
 			// Handle reauth errors
-			if strings.Contains(line, reauthRequired) {
+			if strings.Contains(line, framing.AuthenticationFailureMarker) {
 				select {
 				case c.errChan <- alexaapimodels.NewAuthenticationError(line, http.StatusUnauthorized):
 				default:
@@ -247,12 +250,12 @@ func (c *HTTP2Connection) processMessages() {
 			}
 
 			// Skip content-type headers
-			if strings.HasPrefix(line, "Content-Type:") {
+			if strings.HasPrefix(line, framing.ContentTypePrefix) {
 				continue
 			}
 
 			// Skip empty lines and boundary lines
-			if line == "" || (c.boundary != "" && strings.HasPrefix(line, c.boundary)) {
+			if (framing.SkipEmptyLines && line == "") || (c.boundary != "" && strings.HasPrefix(line, c.boundary)) {
 				continue
 			}
 
@@ -313,9 +316,9 @@ func (c *HTTP2Connection) managePings(ctx context.Context, token string) {
 
 // ping sends a ping request to the server
 func (c *HTTP2Connection) ping(ctx context.Context, token string) error {
-	url := fmt.Sprintf("https://%s/ping", c.authority)
+	url := fmt.Sprintf("https://%s%s", c.authority, apiroutes.PathPingDirectiveStream)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, apiroutes.MethodPingDirectiveStream, url, nil)
 	if err != nil {
 		return alexaapimodels.NewPingError(0, "failed to create ping request", err)
 	}

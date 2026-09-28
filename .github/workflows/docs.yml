@@ -9,6 +9,7 @@ on:
       - 'docs/**'
       - 'api/**'
       - 'pkg/schemas/graphql/**'
+      - 'tools/check_site_links.py'
       - 'README.md'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
@@ -47,6 +48,8 @@ jobs:
           discover: false
           guides-directory: docs/guides
           output: site
+      - name: Check rendered guide links
+        run: python3 tools/check_site_links.py site
       - name: Generate coverage report and badge data
         if: github.event_name != 'pull_request'
         shell: bash

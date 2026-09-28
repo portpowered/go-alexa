@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
+	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
 // Client is a REST API client for Alexa services
@@ -295,12 +296,15 @@ func (c *Client) InitializeCookieAuth(ctx context.Context) error {
 // fetchCSRFTokenFromAPI fetches CSRF token by visiting Alexa API endpoints
 func (c *Client) fetchCSRFTokenFromAPI(ctx context.Context) (string, error) {
 	// Try multiple endpoints to get CSRF token
-	endpoints := []string{
-		c.alexaAmazonBaseUri + "/api/language",
+	endpoints := []struct {
+		method string
+		url    string
+	}{
+		{method: apiroutes.MethodFetchCsrfCookie, url: c.alexaAmazonBaseUri + apiroutes.PathFetchCsrfCookie},
 	}
 
 	for _, endpoint := range endpoints {
-		req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+		req, err := http.NewRequestWithContext(ctx, endpoint.method, endpoint.url, nil)
 		if err != nil {
 			continue
 		}

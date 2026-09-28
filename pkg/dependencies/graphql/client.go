@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
+	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
+	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
 // Client is a GraphQL API client for Alexa services
@@ -117,12 +119,13 @@ type Location struct {
 
 // Execute executes a GraphQL query or mutation
 func (c *Client) Execute(ctx context.Context, query string, variables map[string]interface{}, result interface{}) error {
-	req := Request{
-		Query:     query,
-		Variables: variables,
+	wireRequest := wire.WireGraphQLRequest{
+		Query: query,
 	}
-
-	bodyBytes, err := json.Marshal(req)
+	if len(variables) > 0 {
+		wireRequest.Variables = &variables
+	}
+	bodyBytes, err := json.Marshal(wireRequest)
 	if err != nil {
 		return &alexaapimodels.BadRequestError{
 			Message: "failed to marshal request",
@@ -130,7 +133,7 @@ func (c *Client) Execute(ctx context.Context, query string, variables map[string
 		}
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/nexus/v1/graphql", bytes.NewReader(bodyBytes))
+	httpReq, err := http.NewRequestWithContext(ctx, apiroutes.MethodExecuteNexusGraphQL, c.baseURL+apiroutes.PathExecuteNexusGraphQL, bytes.NewReader(bodyBytes))
 	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to create request",
@@ -173,12 +176,20 @@ func (c *Client) Execute(ctx context.Context, query string, variables map[string
 		return alexaapimodels.NewHTTPError(resp, string(bodyBytes))
 	}
 
-	var graphqlResp Response
-	if err := json.Unmarshal(bodyBytes, &graphqlResp); err != nil {
+	var wireResponse wire.WireGraphQLResponse
+	if err := json.Unmarshal(bodyBytes, &wireResponse); err != nil {
 		return &alexaapimodels.BadRequestError{
 			Message: "failed to decode response",
 			Err:     err,
 		}
+	}
+	encodedResponse, err := json.Marshal(wireResponse)
+	if err != nil {
+		return &alexaapimodels.BadRequestError{Message: "failed to marshal response", Err: err}
+	}
+	var graphqlResp Response
+	if err := json.Unmarshal(encodedResponse, &graphqlResp); err != nil {
+		return &alexaapimodels.BadRequestError{Message: "failed to convert response", Err: err}
 	}
 
 	if len(graphqlResp.Errors) > 0 {

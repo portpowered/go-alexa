@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
-	"github.com/portpowered/go-alexa/pkg/dependencies/rest/internal/wire"
+	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
+	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
 // DeviceRegistrationConfig contains device information for MAP authentication
@@ -71,9 +72,9 @@ func (c *Client) RegisterWithEmailPassword(ctx context.Context, email, password 
 		},
 	}
 
-	url := c.amazonapiBaseUri + "/auth/register"
+	url := c.amazonapiBaseUri + apiroutes.PathRegisterDevice
 	var response wire.WireRegistrationResponse
-	if err := c.doUnauthenticatedJSONRequest(ctx, "POST", url, req, &response); err != nil {
+	if err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodRegisterDevice, url, req, &response); err != nil {
 		// Check if it's a challenge response
 		if reqErr, ok := err.(*UnauthenticatedRequestError); ok {
 			var challengeResp wire.WireChallengeResponse
@@ -128,9 +129,9 @@ func (c *Client) RegisterWithCodePair(ctx context.Context, publicCode, privateCo
 		},
 	}
 
-	url := c.amazonapiBaseUri + "/auth/register"
+	url := c.amazonapiBaseUri + apiroutes.PathRegisterDevice
 	var response wire.WireRegistrationResponse
-	if err := c.doUnauthenticatedJSONRequest(ctx, "POST", url, req, &response); err != nil {
+	if err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodRegisterDevice, url, req, &response); err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to register with code pair",
 			Err:     err,
@@ -168,9 +169,9 @@ func (c *Client) GenerateCodePair(ctx context.Context, config *DeviceRegistratio
 		Scopes: []string{},
 	}
 
-	url := c.amazonapiBaseUri + "/auth/create/codepair"
+	url := c.amazonapiBaseUri + apiroutes.PathCreateCodePair
 	var response wire.WireCodePairResponse
-	if err := c.doUnauthenticatedJSONRequest(ctx, "POST", url, req, &response); err != nil {
+	if err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodCreateCodePair, url, req, &response); err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to generate code pair",
 			Err:     err,
@@ -206,9 +207,9 @@ func (c *Client) RefreshAccessToken(ctx context.Context, refreshToken string, co
 	req.DeviceMetadata.DeviceSerial = config.DeviceSerial
 	req.DeviceMetadata.Manufacturer = config.Manufacturer
 
-	url := c.amazonapiBaseUri + "/auth/token"
+	url := c.amazonapiBaseUri + apiroutes.PathRefreshAccessToken
 	var response wire.WireTokenRefreshResponse
-	if err := c.doUnauthenticatedJSONRequest(ctx, "POST", url, req, &response); err != nil {
+	if err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodRefreshAccessToken, url, req, &response); err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to refresh access token",
 			Err:     err,
@@ -258,7 +259,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 		SourceToken:        refreshToken,
 	}
 
-	url := "https://api." + domain + "/ap/exchangetoken/cookies"
+	url := fmt.Sprintf(apiroutes.ServerExchangeRefreshTokenForCookies, domain) + apiroutes.PathExchangeRefreshTokenForCookies
 	var response wire.WireCookieExchangeResponse
 
 	// Create a temporary client without auth for this unauthenticated request
@@ -270,7 +271,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 		}
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(bodyBytes))
+	httpReq, err := http.NewRequestWithContext(ctx, apiroutes.MethodExchangeRefreshTokenForCookies, url, bytes.NewReader(bodyBytes))
 	if err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to create request",
