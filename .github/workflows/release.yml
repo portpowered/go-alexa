@@ -2,29 +2,91 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
+
+permissions:
+  contents: read
 
 jobs:
-  release:
-    name: Release
+  verify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GOWORK: 'off'
+      GOTOOLCHAIN: auto
+      GOPROXY: https://proxy.golang.org
+      GOSUMDB: sum.golang.org
+      PUBLIC_MODULE: github.com/portpowered/go-alexa
+      PUBLIC_PACKAGES: pkg/alexa,pkg/alexaapimodels
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.24.2'
-
-      - name: Run tests
+          cache: true
+      - name: Check public API compatibility and release version
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: go run ./tools/compatibility -policy release -base previous-release -version "$VERSION" -module "$PUBLIC_MODULE" -packages "$PUBLIC_PACKAGES"
+      - name: Test
         run: go test -race ./...
-
-      - name: Run vet
+      - name: Vet
         run: go vet ./...
-
       - name: Build
         run: go build ./...
+      - name: Verify tagged module from a public-proxy consumer
+        env:
+          VERSION: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          check_dir="$(mktemp -d)"
+          trap 'rm -rf "$check_dir"' EXIT
+          cd "$check_dir"
+          go mod init example.com/module-check
+          module_ready=false
+          for attempt in {1..12}; do
+            if go get "${PUBLIC_MODULE}@${VERSION}"; then
+              module_ready=true
+              break
+            fi
+            echo "Module not available through proxy.golang.org yet (attempt ${attempt}/12)"
+            sleep 10
+          done
+          if [ "$module_ready" != true ]; then
+            echo "Could not fetch the tagged module from proxy.golang.org after twelve attempts."
+            exit 1
+          fi
+          cat > main.go <<EOF
+          package main
+
+          import (
+              "context"
+              "${PUBLIC_MODULE}/pkg/alexa"
+              "${PUBLIC_MODULE}/pkg/alexaapimodels"
+          )
+
+          var _ interface {
+              ListEndpoints(context.Context, alexaapimodels.EndpointQuery) (*alexaapimodels.UnifiedEndpointListResponse, error)
+          } = (*alexa.Client)(nil)
+
+          func main() {
+              _, _ = alexa.NewClient(alexa.WithBearerToken("release-check"))
+          }
+          EOF
+          go mod tidy
+          go test ./...
+  publish:
+    runs-on: ubuntu-latest
+    needs: verify
+    permissions:
+      contents: write
+    steps:
+      - name: Publish release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: gh release create "$VERSION" --repo "$REPOSITORY" --verify-tag --generate-notes

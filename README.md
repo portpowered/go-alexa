@@ -114,7 +114,7 @@ make generate
 go test ./test/integration/...
 ```
 
-Read [fixture guidance](docs/verification.md) before adding any captured payload. Never check in raw captures, tokens, cookies, customer identifiers, or device identifiers.
+Read [fixture guidance](docs/verification.md) before adding any captured payload and the [release guide](docs/releasing.md) before tagging. Never check in raw captures, tokens, cookies, customer identifiers, or device identifiers.
 
 ## License
 
