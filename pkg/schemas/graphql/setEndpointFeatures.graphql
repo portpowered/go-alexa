@@ -1,0 +1,58 @@
+mutation SetEndpointFeatures($input: SetEndpointFeaturesInput!) {
+	setEndpointFeatures(setEndpointFeaturesInput: $input) {
+		featureControlResponses {
+			endpointId
+			featureName
+			instance
+			featureOperationName
+			payload
+			code
+			responsePayload {
+				... on CommissioningInformationReport {
+					type
+					value {
+						commissioningInformation {
+							... on MatterCommissioningInformation {
+								localProtocol
+								protocolData {
+									manualPairingCode
+									commissioningWindowExpirationTimestamp
+								}
+							}
+						}
+					}
+				}
+				... on FabricList {
+					type
+					maxSupportedFabrics
+					currentFabricCount
+					fabrics {
+						label
+						fabricIndex
+						fabricId
+						vendorId
+						isRemovable
+					}
+				}
+				... on FabricRemoval {
+					type
+					fabric {
+						fabricIndex
+						fabricId
+						vendorId
+					}
+				}
+			}
+		}
+		errors {
+			endpointId
+			featureName
+			instance
+			featureOperationName
+			payload
+			code
+			message
+		}
+	}
+}
+

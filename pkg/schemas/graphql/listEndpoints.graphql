@@ -1,0 +1,139 @@
+# @genqlient(for: "ListEndpointsInput.maxAgeInMillis", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.displayCategory", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.latencyTolerance", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.allDisplayCategories", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.enablement", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.queryExpression", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.endpointIds", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.maxPagesToFetch", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.filters", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.includeHouseholdDevices", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.paginationParams", omitempty: true)
+query ListEndpoints(
+	$input: ListEndpointsInput!) {
+	listEndpoints(listEndpointsInput: $input) {
+		endpoints {
+			id
+			endpointId
+			parentComponent {
+				id
+				friendlyNameObject {
+					type
+					value {
+						text
+						locale
+					}
+				}
+			}
+			childComponents {
+				id
+				friendlyNameObject {
+					type
+					value {
+						text
+						locale
+					}
+				}
+			}
+			dmsIdentifier {
+				deviceType
+				dsn
+			}
+			description {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			manufacturer {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			friendlyName
+			friendlyNameObject {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			model {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			serialNumber {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			softwareVersion {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			creationTime
+			associatedUnits {
+				id
+			}
+			alexaEnabledMetadata {
+				category
+				iconId
+				isVisible
+				capabilities
+			}
+			displayCategories {
+				all {
+					value
+					sources
+				}
+				primary {
+					value
+					sources
+				}
+			}
+			enablement
+			connections {
+				type
+				macAddress
+				bleMeshDeviceUuid
+			}
+			features {
+				name
+				instance
+				operations {
+					name
+					verificationsRequired {
+						type
+					}
+				}
+			}
+			operations {
+				name
+			}
+			endpointReports {
+				reporter {
+					id
+					namespace
+					skillStage
+				}
+			}
+		}
+		paginationInfo {
+			totalCount
+			nextToken
+		}
+		completeResult
+	}
+}
+

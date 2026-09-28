@@ -1,0 +1,272 @@
+# @genqlient(for: "EndpointsQueryParams.filters", omitempty: true)
+# @genqlient(for: "EndpointsQueryParams.includeHouseholdDevices", omitempty: true)
+# @genqlient(for: "EndpointsQueryParams.paginationParams", omitempty: true)
+# @genqlient(for: "EndpointsQueryParams.featureLatencyTolerance", omitempty: true)
+
+query Endpoints(
+	$input: EndpointsQueryParams!) {
+    endpoints(endpointsQueryParams: $input) {
+        items {
+            id
+            endpointId
+            friendlyName
+            creationTime
+            isEnabled
+            enablement
+            dmsIdentifier {
+                deviceType
+                dsn
+            }
+            description {
+                type
+                value {
+                    text
+                    locale
+                }
+            }
+            manufacturer {
+                type
+                value {
+                    text
+                    locale
+                }
+            }
+            friendlyNameObject {
+                type
+            }
+            model {
+                type
+                value {
+                    text
+                    locale
+                }
+            }
+            serialNumber {
+                type
+                value {
+                    text
+                    locale
+                }
+            }
+            associatedUnits {
+                id
+            }
+            displayCategories {
+                all {
+                    isCustomerSpecified
+                    isDiscovered
+                    sources
+                    value
+                }
+                primary {
+                    isCustomerSpecified
+                    isDiscovered
+                    sources
+                    value
+                }
+            }
+            features {
+                name
+                instance
+                configuration {
+                    ... on ThermostatConfiguration {
+                        supportedModes
+                    }
+                    ... on ModeConfiguration {
+                        order
+                        friendlyName {
+                            type
+                            value {
+                                text
+                                locale
+                            }
+                        }
+                        modeOptions {
+                            value
+                        }
+                    }
+                    ... on ToggleConfiguration {
+                        friendlyName {
+                            type
+                            value {
+                                text
+                                locale
+                            }
+                        }
+                    }
+                    ... on RangeConfiguration {
+                        friendlyName {
+                            type
+                            value {
+                                text
+                                locale
+                            }
+                        }
+                        supportedRange {
+                            minimumValue
+                            maximumValue
+                            precision
+                        }
+                        unitOfMeasure {
+                            type
+                            value {
+                                text
+                                locale
+                            }
+                        }
+                        presets {
+                            rangeValue
+                            presetResources {
+                                friendlyName {
+                                    type
+                                    value {
+                                        text
+                                        locale
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ... on SecurityPanelConfiguration {
+                        supportedArmStates {
+                            value
+                        }
+                        supportedAuthorizationTypes {
+                            type
+                        }
+                    }
+                    ... on StatusCodeConfiguration {
+                        supportedCodes {
+                            code
+                            descriptions {
+                                primary {
+                                    type
+                                    value {
+                                        text
+                                        locale
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ... on ActionConfiguration {
+                        action {
+                            supportedStates
+                            categoryLabel {
+                                friendlyNames {
+                                    type
+                                    value {
+                                        text
+                                        locale
+                                    }
+                                }
+                            }
+                            supportedActions {
+                                id
+                                friendlyNames {
+                                    type
+                                    value {
+                                        text
+                                        locale
+                                    }
+                                }
+                            }
+                        }
+                        target {
+                            categoryLabel {
+                                friendlyNames {
+                                    type
+                                    value {
+                                        text
+                                        locale
+                                    }
+                                }
+                            }
+                            supportedTargets {
+                                id
+                                friendlyNames {
+                                    type
+                                    value {
+                                        text
+                                        locale
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ... on SecurityPanelAlertConfiguration {
+                        alerts {
+                            defaultPlaylistId
+                            type
+                        }
+                        assets {
+                            id
+                            url
+                        }
+                        playlists {
+                            id
+                            playOrder {
+                                assetId
+                                loopCount
+                                loopPauseInMilliseconds
+                            }
+                        }
+                    }
+                }
+                semantics {
+                    ... on StatusCodeSemantics {
+                        codeToStatusesMappings {
+                            code
+                            statuses
+                        }
+                    }
+                }
+                featureOperations {
+                    name
+                    verificationsRequired {
+                        type
+                    }
+                }
+                operations {
+                    name
+                    verificationsRequired {
+                        type
+                    }
+                }
+            }
+            operations {
+                name
+            }
+            legacyAppliance {
+                applianceId
+                applianceTypes
+                endpointTypeId
+                friendlyName
+                friendlyDescription
+                manufacturerName
+                connectedVia
+                modelName
+                entityId
+                actions
+                mergedApplianceIds
+                capabilities
+                applianceNetworkState
+                version
+                isEnabled
+                customerDefinedDeviceType
+                customerPreference
+                alexaDeviceIdentifierList
+                aliases
+                driverIdentity
+                additionalApplianceDetails
+                isConsentRequired
+                applianceKey
+                appliancePairs
+                deduplicatedPairs
+                entityPairs
+                deduplicatedAliasesByEntityId
+                relations
+            }
+        }
+    }
+}

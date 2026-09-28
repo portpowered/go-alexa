@@ -1,0 +1,12 @@
+{
+  "data": {
+    "listEndpoints": {
+      "endpoints": [],
+      "paginationInfo": {
+        "totalCount": 0,
+        "nextToken": ""
+      },
+      "completeResult": true
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "title": "Guides",
+  "pages": [
+    "authentication",
+    "endpoint-enumeration",
+    "endpoint-control",
+    "events",
+    "quality-of-service"
+  ]
+}

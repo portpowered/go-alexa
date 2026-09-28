@@ -1,0 +1,26 @@
+# genqlient configuration
+schema:
+  - pkg/schemas/graphql/endpoints-schema.graphql
+
+operations:
+  - pkg/schemas/graphql/listEndpoints.graphql
+  - pkg/schemas/graphql/listEndpointsWithStates.graphql
+  - pkg/schemas/graphql/listEndpointsWithoutStates.graphql
+  - pkg/schemas/graphql/getEndpoint.graphql
+  - pkg/schemas/graphql/setEndpointFeatures.graphql
+  - pkg/schemas/graphql/requestEndpointQualityOfService.graphql
+  - pkg/schemas/graphql/subscribe.graphql
+
+generated: pkg/dependencies/graphql/generated.go
+
+package: graphql
+
+bindings:
+  Long:
+    type: int64
+  JSON:
+    type: interface{}
+  DateTime:
+    type: string
+  EndpointId:
+    type: string

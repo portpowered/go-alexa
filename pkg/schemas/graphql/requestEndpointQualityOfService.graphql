@@ -1,0 +1,10 @@
+mutation RequestEndpointQualityOfService($input: EndpointQualityOfServiceInput!) {
+	requestEndpointQualityOfService(qualityOfServiceInput: $input) {
+		durationInSeconds
+		errors {
+			type
+			message
+		}
+	}
+}
+

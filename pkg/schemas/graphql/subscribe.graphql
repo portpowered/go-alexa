@@ -1,0 +1,11 @@
+mutation Subscribe($input: SubscribeConfiguration!) {
+	subscribe(subscribeConfiguration: $input) {
+		entities
+		errors {
+			type
+			message
+		}
+		durationInMinutes
+	}
+}
+

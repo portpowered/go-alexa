@@ -1,0 +1,83 @@
+{
+  "data": {
+    "listEndpoints": {
+      "endpoints": [
+        {
+          "id": "entity-aqm-1",
+          "endpointId": "amzn1.alexa.endpoint.synthetic-aqm-001",
+          "friendlyName": "Synthetic Air Quality Monitor",
+          "dmsIdentifier": {
+            "deviceType": "AMAZON_AIRQUALITYMONITOR",
+            "dsn": "synthetic-serial-001"
+          },
+          "description": {
+            "type": "PLAIN",
+            "value": {
+              "text": "Amazon Smart Air Quality Monitor",
+              "locale": "en-US"
+            }
+          },
+          "manufacturer": {
+            "type": "PLAIN",
+            "value": {
+              "text": "Amazon",
+              "locale": "en-US"
+            }
+          },
+          "model": {
+            "type": "PLAIN",
+            "value": {
+              "text": "Smart Air Quality Monitor",
+              "locale": "en-US"
+            }
+          },
+          "serialNumber": {
+            "type": "PLAIN",
+            "value": {
+              "text": "synthetic-serial-001",
+              "locale": "en-US"
+            }
+          },
+          "softwareVersion": {
+            "type": "PLAIN",
+            "value": {
+              "text": "1.2.3",
+              "locale": "en-US"
+            }
+          },
+          "displayCategories": {
+            "all": [
+              {
+                "value": "AIR_QUALITY_MONITOR",
+                "sources": ["DISCOVERY"]
+              }
+            ],
+            "primary": {
+              "value": "AIR_QUALITY_MONITOR",
+              "sources": ["DISCOVERY"]
+            }
+          },
+          "features": [
+            {
+              "name": "range",
+              "instance": "Air Quality.indoorAirQuality",
+              "operations": [
+                {
+                  "name": "reportState",
+                  "verificationsRequired": []
+                }
+              ]
+            }
+          ],
+          "operations": [],
+          "endpointReports": []
+        }
+      ],
+      "paginationInfo": {
+        "totalCount": 1,
+        "nextToken": ""
+      },
+      "completeResult": true
+    }
+  }
+}

@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+---
+
+## Project Overview
+
+The project is a golang library that interacts with the amazon alexa APis to interact with alexa connected endpoints (Fire TVs, Amazon Echoes, 3rd party devices like philips, roku, etc). 
+
+## Project structure
+
+The project is structured as follows:
+
+- `pkg/alexa/`: Main client package <-  entry point for the library
+- `pkg/alexaapimodels/`: Data models <- the client side data models that clients use to integrate against the library
+- `pkg/auth/`: OAuth authentication
+- `pkg/api/`: REST and GraphQL clients
+- `pkg/api/rest/`: REST API interfaces used for interaction
+- `pkg/api/graphql/`: GraphQL API interfaces used for interaction
+- `pkg/connection/`: HTTP/2 connection management system which is used to 
+- `pkg/alexamodels/`: Data models <- the server side data models that the library uses to interact with the amazon alexa APIs
+- `pkg/schemas/`: API and GraphQL schemas
+
+
+Customers use the API as follows for the client: 
+
+```
+client, err := alexa.NewClient(ctx, alexa.WithBearerToken("your-bearer-token"))
+if err != nil {
+    log.Fatal(err)
+}
+defer client.Close()
+
+// List devices
+ListEndpointsResponse, err := client.ListEndpoints(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("Found %d endpoints\n", len(ListEndpointsResponse.Endpoints))
+for _, endpoint := range ListEndpointsResponse.Endpoints {
+    fmt.Printf("- %s (%s)\n", endpoint.Name, endpoint.ID)
+}
+```
+## Interface best practices
+
+Interfaces that are exposed as part of the client interface MUST use response and request objects from the alexaapimodels poject. 
+
+Client -> Alexa API interactions MUST be using the alexamodels package for the request and response objects. 
+
+## Errors best practice
+
+We do not return fmt.Errorf. 
+We return custom err structs under alexaapimodels/errors such as AuthenticationError, BadRequestError, NetworkError, etc. 

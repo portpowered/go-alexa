@@ -1,0 +1,1462 @@
+# Combined schema for endpoint operations
+# This schema combines the necessary types from the reference schemas
+
+scalar Long
+scalar JSON
+scalar DateTime
+scalar EndpointId
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  listEndpoints(listEndpointsInput: ListEndpointsInput!): ListEndpointsResponse!
+  endpoints(endpointsQueryParams: EndpointsQueryParams): EndpointsResponse
+  endpoint(id: String!): Endpoint
+}
+
+type Mutation {
+  setEndpointFeatures(setEndpointFeaturesInput: SetEndpointFeaturesInput!): SetEndpointFeaturesResponse
+  requestEndpointQualityOfService(qualityOfServiceInput: EndpointQualityOfServiceInput!): EndpointQualityOfServiceResponse!
+  subscribe(subscribeConfiguration: SubscribeConfiguration!): SubscribeResponse!
+}
+
+input EndpointsQueryParams {
+  featureLatencyTolerance: FeatureLatencyToleranceValue
+  filters: [Filter!]
+  paginationParams: PaginationParams
+  includeHouseholdDevices: Boolean = false
+}
+
+input ListEndpointsInput {
+  maxAgeInMillis: Long
+  latencyTolerance: LatencyToleranceValue
+  displayCategory: String
+  allDisplayCategories: String
+  enablement: Enablement
+  filters: [ListEndpointsFilter]
+  filterExpressions: [FilterExpression!]
+  queryExpression: JSON
+  maxPagesToFetch: Int
+  endpointIds: [String]
+  paginationParams: PaginationParams
+  includeHouseholdDevices: Boolean = false
+}
+
+type ListEndpointsResponse {
+  endpoints: [Endpoint!]!
+  paginationInfo: PaginationInfo
+  completeResult: Boolean!
+}
+
+type EndpointsResponse {
+  items: [Endpoint!]
+  paginationInfo: PaginationInfo
+}
+
+
+input ListEndpointsFilter {
+  type: ListEndpointsFilterType!
+  featureName: FeatureName
+  featurePropertyName: FeaturePropertyName
+  value: String!
+}
+
+enum ListEndpointsFilterType {
+  Feature
+}
+
+enum FilterOperatorOptions {
+  EQ
+}
+
+input Filter {
+  key: String!
+  operator: FilterOperatorOptions = EQ
+  value: String!
+}
+
+input FilterExpression {
+  filterKey: String!
+  filterValue: String!
+}
+
+type Endpoint {
+  id: String!
+  parentComponent: Endpoint
+  childComponents: [Endpoint!]!
+  endpointId: String!
+  legacyIdentifiers: LegacyIdentifiers
+  dmsIdentifier: DmsInfo
+  description: NameValueObject
+  manufacturer: NameValueObject
+  friendlyName: String
+  friendlyNameObject: NameValueObject
+  model: NameValueObject
+  serialNumber: NameValueObject
+  softwareVersion: NameValueObject
+  creationTime: DateTime
+  associatedUnits: [Unit]
+  associateUnits: String
+  alexaEnabledMetadata: AlexaEnabledMetadata
+  isEnabled: Boolean
+  displayCategories: DisplayCategories
+  enablement: Enablement
+  connections: [Connection]
+  features(latencyToleranceValue: LatencyToleranceValue): [Feature]
+  operations: [EndpointOperation]
+  endpointReports: [EndpointReport!]!
+  legacyAppliance: LegacyAppliance
+}
+
+type AlexaEnabledMetadata {
+  category: String
+  iconId: String!
+  isVisible: Boolean
+  capabilities: [String!]!
+}
+
+type LegacyIdentifiers {
+  chrsIdentifier: ChrsIdentifier
+  dmsIdentifier: DmsIdentifier
+}
+
+type ChrsIdentifier {
+  entityId: String!
+}
+
+type DmsIdentifier {
+  deviceType: NameValueObject
+  deviceSerialNumber: NameValueObject
+}
+
+type DmsInfo {
+  deviceType: String
+  dsn: String!
+}
+
+type DisplayCategories {
+  all: [DisplayCategory]
+  primary: DisplayCategory
+}
+
+type DisplayCategory {
+  isCustomerSpecified: Boolean
+  isDiscovered: Boolean
+  sources: [DisplayCategorySource]
+  value: String
+}
+
+enum DisplayCategorySource {
+  CUSTOMER
+  ENDPOINT_REPORTER
+}
+
+enum Enablement {
+  ENABLED
+  DISABLED_BY_CUSTOMER
+}
+
+enum LatencyToleranceValue {
+  HIGH
+  LOW
+}
+
+enum FeatureLatencyToleranceValue {
+  HIGH
+  LOW
+}
+
+type EndpointOperation {
+  name: String!
+}
+
+type Connection {
+  type: ConnectionType!
+  macAddress: String
+  bleMeshDeviceUuid: String
+}
+
+enum ConnectionType {
+  TCP_IP
+  MATTER
+  ZIGBEE
+  BLUETOOTH_MESH
+  UNKNOWN
+}
+
+type Feature {
+  name: String!
+  instance: String
+  properties: [FeatureProperty]
+  featureOperations: [FeatureOperation]
+  operations: [FeatureOperation]
+  configuration: Configuration
+  semantics: Semantics
+}
+
+interface FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+}
+
+# FeatureProperty implementations
+
+type Reachability implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  reachabilityStatusValue: ReachabilityStatusValue
+}
+
+enum ReachabilityStatusValue {
+  REACHABLE
+  UNREACHABLE
+  UNKNOWN
+}
+
+type Power implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  powerStateValue: PowerStateValue
+}
+
+enum PowerStateValue {
+  ON
+  OFF
+  UNKNOWN
+}
+
+type Brightness implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  brightnessStateValue: Int
+}
+
+type Color implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  colorStateValue: ColorValue
+}
+
+type ColorTemperature implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  colorTemperatureInKelvinStateValue: Int
+}
+
+type ThermostatMode implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  thermostatModeValue: ThermostatModeValue
+}
+
+type Setpoint implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  deviceNativeScaleValue: TemperatureScale
+  value: Temperature
+}
+
+type Lock implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  lockState: LockStateValue
+}
+
+enum LockStateValue {
+  LOCKED
+  UNLOCKED
+  UNKNOWN
+}
+
+type TemperatureSensor implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  value: Temperature
+}
+
+type DetectionState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  detectionStateValue: DetectionStateValue
+}
+
+enum DetectionStateValue {
+  DETECTED
+  NOT_DETECTED
+  UNKNOWN
+}
+
+type Volume implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  value: VolumeValue
+}
+
+type ToggleState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  toggleStateValue: ToggleStateValue
+}
+
+type RangeValue implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  rangeValue: RangeValueNumber
+}
+
+type Mode implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  modeValue: ModeValue
+}
+
+type ArmState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  armStateValue: ArmStateValue
+}
+
+type BurglaryAlarm implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  burglaryAlarmValue: AlarmValue
+}
+
+type CarbonMonoxideAlarm implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  carbonMonoxideAlarmValue: AlarmValue
+}
+
+type FireAlarm implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  fireAlarmValue: AlarmValue
+}
+
+type WaterAlarm implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  waterAlarmValue: AlarmValue
+}
+
+type DelayState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  delayStateValue: DelayStateValue
+}
+
+type DelayStateValue {
+  state: SupportedDelayState
+  delayInSeconds: Int
+  playlistId: String
+  playOrder: [PlayListItem!]!
+}
+
+enum SupportedDelayState {
+  ENTRY_DELAY
+  EXIT_DELAY
+  NONE
+  UNKNOWN
+}
+
+type SirenState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  sirenStateValue: SirenStateValue
+}
+
+type SirenStateValue {
+  state: SupportedSirenState
+  playlistId: String
+  playOrder: [PlayListItem!]!
+}
+
+enum SupportedSirenState {
+  ON
+  OFF
+  UNKNOWN
+}
+
+type Battery implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  batteryValue: BatteryValue
+}
+
+type BatteryValue {
+  levelPercentage: Int
+  health: BatteryHealth
+  chargingHealth: BatteryChargingHealth
+}
+
+type BatteryHealth {
+  state: BatteryHealthState!
+  reasons: [BatteryHealthReason!]!
+}
+
+type BatteryChargingHealth {
+  state: BatteryHealthState!
+  reason: BatteryChargingHealthReason
+}
+
+enum BatteryHealthState {
+  OK
+  WARNING
+  CRITICAL
+  UNKNOWN
+}
+
+enum BatteryHealthReason {
+  COLD
+  DEAD
+  LOW_CHARGE
+  NO_BATTERY
+  OVERHEATED
+  OVER_VOLTAGE
+  WIRED
+  UNKNOWN
+}
+
+enum BatteryChargingHealthReason {
+  LOW_POWER
+  INCOMPATIBLE_CHARGER
+  UNKNOWN
+}
+
+type RadioDiagnostics implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  radioDiagnosticsValue: RadioDiagnosticsValues
+}
+
+type RadioDiagnosticsValues {
+  values: [RadioDiagnosticsValue!]!
+}
+
+type RadioDiagnosticsValue {
+  radioType: RadioType!
+  signalStrength: SignalStrength!
+  signalToNoiseRatio: SignalToNoiseRatio
+}
+
+enum RadioType {
+  WIFI
+  BLUETOOTH
+  ZIGBEE
+  ZWAVE
+  BLE
+  BLE_MESH
+  UNKNOWN
+}
+
+type SignalStrength {
+  quality: SignalQuality
+  rssiInDBM: Int
+}
+
+enum SignalQuality {
+  GOOD
+  FAIR
+  POOR
+  UNKNOWN
+}
+
+type SignalToNoiseRatio {
+  quality: SignalQuality
+  snrInDB: Int
+}
+
+type NetworkThroughput implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  networkThroughputValue: NetworkThroughputValue
+}
+
+type NetworkThroughputValue {
+  quality: NetworkQuality!
+  bitsPerSecond: Int
+}
+
+enum NetworkQuality {
+  GOOD
+  FAIR
+  POOR
+  UNKNOWN
+}
+
+type PowerLevel implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  powerLevelValue: Int
+}
+
+type Percentage implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  percentageValue: Int
+}
+
+type Snapshot implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  snapshotValue: SnapshotValue
+}
+
+type SnapshotValue {
+  uri: String!
+  uriExpirationTime: DateTime!
+  authenticationType: AuthenticationType!
+}
+
+enum AuthenticationType {
+  ACCESS_TOKEN
+  UNKNOWN
+}
+
+type Illuminance implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  illuminanceValue: IlluminanceStateValue
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+}
+
+type IlluminanceStateValue {
+  value: Float
+}
+
+type UnknownFeatureProperty implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  data: String
+  accuracy: Accuracy
+  type: PropertyType
+}
+
+type ActionState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  actionStateValue: ActionStateValue
+}
+
+type ActionStateValue {
+  status: ActionStatus!
+  timeInterval: TimeInterval
+  actionId: String
+  targetIds: [String]
+}
+
+enum ActionStatus {
+  IDLE
+  UNAVAILABLE
+  RUNNING
+  PAUSED
+  COMPLETED
+  INCOMPLETE
+  UNKNOWN
+}
+
+type TimeInterval {
+  start: DateTime
+  end: DateTime
+  duration: DateTime
+}
+
+type RelativeHumidity implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  relativeHumidityValue: RelativeHumidityStateValue
+}
+
+type RelativeHumidityStateValue {
+  value: Float
+}
+
+type Geolocation implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  geolocationValue: GeolocationValue
+}
+
+type GeolocationValue {
+  coordinate: GeolocationCoordinate!
+  altitude: GeolocationAltitude
+  heading: GeolocationHeading
+  speed: GeolocationSpeed
+  source: GeolocationSource
+}
+
+type GeolocationCoordinate {
+  latitudeInDegrees: Float!
+  longitudeInDegrees: Float!
+  accuracyInMeters: Float
+}
+
+type GeolocationAltitude {
+  altitudeInMeters: Float!
+  accuracyInMeters: Float
+}
+
+type GeolocationHeading {
+  directionInDegrees: Float!
+  accuracyInDegrees: Float
+}
+
+type GeolocationSpeed {
+  speedInMetersPerSecond: Float!
+  accuracyInMetersPerSecond: Float
+}
+
+enum GeolocationSource {
+  SELF_REPORTED
+  CUSTOMER_SET
+  UNKNOWN
+}
+
+type StatusCode implements FeatureProperty {
+  name: String
+  type: PropertyType
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: ErrorResponse
+  statusCodeValue: StatusCodeValues
+}
+
+type StatusCodeValues {
+  value: [StatusCodeValue!]!
+}
+
+type StatusCodeValue {
+  code: String
+  timeOfDetection: DateTime
+}
+
+type ErrorResponse {
+  type: String!
+  message: String
+}
+
+enum Accuracy {
+  HIGH
+  LOW
+  UNKNOWN
+}
+
+enum PropertyType {
+  RETRIEVABLE
+  NOT_RETRIEVABLE
+  ERROR
+}
+
+type FeatureOperation {
+  name: String!
+  verificationsRequired: [Verification!]
+}
+
+type Verification {
+  type: VerificationType!
+}
+
+enum VerificationType {
+  CONFIRMATION
+}
+
+union Configuration = ThermostatConfiguration | ToggleConfiguration | ModeConfiguration | RangeConfiguration | SecurityPanelConfiguration | SecurityPanelAlertConfiguration | StatusCodeConfiguration | ActionConfiguration | VideoSearchConfiguration | DetectionEventsConfiguration | RecordingProviderConfiguration
+
+type ThermostatConfiguration {
+  supportedModes: [ThermostatModeValue!]
+}
+
+type ToggleConfiguration {
+  friendlyName: NameValueObject
+}
+
+type ModeConfiguration {
+  friendlyName: NameValueObject
+  order: OrderValue!
+  modeOptions: [ModeOption!]!
+}
+
+enum OrderValue {
+  ORDERED
+  UNORDERED
+}
+
+type ModeOption {
+  value: String!
+  modeResources: ModeResources
+}
+
+type ModeResources {
+  friendlyName: NameValueObject
+}
+
+type RangeConfiguration {
+  friendlyName: NameValueObject
+  supportedRange: SupportedRange!
+  unitOfMeasure: NameValueObject
+  presets: [Preset]
+}
+
+type SupportedRange {
+  minimumValue: Float!
+  maximumValue: Float!
+  precision: Float!
+}
+
+type Preset {
+  rangeValue: Float!
+  presetResources: PresetResources!
+}
+
+type PresetResources {
+  friendlyName: NameValueObject!
+}
+
+type SecurityPanelConfiguration {
+  supportedAuthorizationTypes: [SupportedAuthorizationType!]!
+  supportedArmStates: [SupportedArmState!]!
+}
+
+type SupportedAuthorizationType {
+  type: AuthorizationType
+}
+
+enum AuthorizationType {
+  FOUR_DIGIT_PIN
+  UNKNOWN
+}
+
+type SupportedArmState {
+  value: ArmStateValue
+}
+
+enum ArmStateValue {
+  ARMED_AWAY
+  ARMED_STAY
+  ARMED_NIGHT
+  DISARMED
+  UNKNOWN
+}
+
+type SecurityPanelAlertConfiguration {
+  alerts: [Alert!]!
+  assets: [Asset!]!
+  playlists: [Playlist!]!
+}
+
+type Alert {
+  defaultPlaylistId: String
+  type: AlertType
+}
+
+enum AlertType {
+  CHIME
+  SIREN
+  ENTRY_DELAY
+  EXIT_DELAY
+  UNKNOWN
+}
+
+type Asset {
+  id: String
+  url: String
+}
+
+type Playlist {
+  id: String
+  playOrder: [PlayListItem!]!
+}
+
+type PlayListItem {
+  assetId: String
+  loopCount: Int
+  loopPauseInMilliseconds: Int
+}
+
+type StatusCodeConfiguration {
+  supportedCodes: [SupportedCode!]!
+}
+
+type SupportedCode {
+  code: String
+  descriptions: [SupportedCodeLocalization!]
+}
+
+type SupportedCodeLocalization {
+  primary: NameValueObject!
+}
+
+type ActionConfiguration {
+  action: ActionConfig!
+  target: TargetConfig
+}
+
+type ActionConfig {
+  supportedStates: [ActionStateEnum]!
+  categoryLabel: ActionCategoryLabel!
+  supportedActions: [ActionSupportedAction]!
+}
+
+type TargetConfig {
+  categoryLabel: ActionCategoryLabel!
+  supportedTargets: [ActionSupportedTarget]
+}
+
+type ActionSupportedAction {
+  id: String!
+  friendlyNames: [NameValueObject]!
+}
+
+type ActionSupportedTarget {
+  friendlyNames: [NameValueObject]!
+  id: String!
+}
+
+type ActionCategoryLabel {
+  friendlyNames: [NameValueObject]!
+}
+
+enum ActionStateEnum {
+  START
+  STOP
+  PAUSE
+  RESUME
+  UNKNOWN
+}
+
+type VideoSearchConfiguration {
+  isAvailable: Boolean!
+  unavailabilityReason: VideoSearchUnavailabilityReason
+}
+
+enum VideoSearchUnavailabilityReason {
+  SUBSCRIPTION_REQUIRED
+  DISABLED
+  UNSUPPORTED_LOCATION
+  OTHER
+}
+
+type DetectionEventsConfiguration {
+  supportedEvents: [DetectionEventsSupportedEvent!]
+}
+
+type DetectionEventsSupportedEvent {
+  category: SupportedEventCategory!
+  displayText: String!
+  filterIconImageUri: String!
+  fallbackImageUri: String!
+  altTextForFallbackImage: String!
+}
+
+union SupportedEventCategory = CameraCapabilitySupportedEventCategory | CameraEventSupportedEventCategory
+
+type CameraCapabilitySupportedEventCategory {
+  name: SupportedEventCategoryType!
+  subType: CameraCapabilitySubType!
+}
+
+enum CameraCapabilitySubType {
+  VIDEO_SEARCH
+  UNKNOWN
+}
+
+type CameraEventSupportedEventCategory {
+  name: SupportedEventCategoryType!
+  subType: CameraEventSubType!
+}
+
+enum CameraEventSubType {
+  MOTION
+  PACKAGE
+  PERSON
+  DOORBELL
+  ANIMAL
+  VEHICLE
+  UNKNOWN
+}
+
+enum SupportedEventCategoryType {
+  CAMERA_CAPABILITY
+  CAMERA_EVENT
+  UNKNOWN
+}
+
+type RecordingProviderConfiguration {
+  isAvailable: Boolean!
+  unavailabilityReason: RecordingProviderUnavailabilityReason
+  recordingFeatures: [RecordingFeature!]
+  supportedProtocols: [RecordingProviderSupportedProtocols!]!
+  retentionPeriodInHours: Int
+}
+
+enum RecordingProviderUnavailabilityReason {
+  SUBSCRIPTION_REQUIRED
+  DISABLED
+  OTHER
+  UNKNOWN
+}
+
+enum RecordingProviderSupportedProtocols {
+  WEB_RTC
+  HLS
+  UNKNOWN
+}
+
+interface RecordingFeature {
+  name: String!
+}
+
+type ContinuousRecordingFeature implements RecordingFeature {
+  name: String!
+}
+
+union Semantics = StatusCodeSemantics
+
+type StatusCodeSemantics {
+  codeToStatusesMappings: [CodeToStatusesMapping!]
+}
+
+type CodeToStatusesMapping {
+  code: String
+  statuses: [String!]
+}
+
+type EndpointReport {
+  reporter: Reporter
+}
+
+type Reporter {
+  id: String
+  namespace: ReporterNamespace
+  skillStage: SkillStage
+}
+
+enum SkillStage {
+  DEVELOPMENT
+  LIVE
+  CERTIFICATION
+  CERTIFIED
+  UNKNOWN
+}
+
+enum ReporterNamespace {
+  AAA
+  SKILL
+  ALEXABRIDGE
+  LOCAL
+  UNKNOWN
+}
+
+type NameValueObject {
+  type: NameValueObjectType!
+  value: ValueObject!
+}
+
+enum NameValueObjectType {
+  PLAIN
+  SEALED
+}
+
+type ValueObject {
+  text: String!
+  locale: String
+}
+
+type Unit {
+  id: String!
+}
+
+input PaginationParams {
+  disablePagination: Boolean = true
+  pageSize: Int
+  nextToken: String
+}
+
+type PaginationInfo {
+  totalCount: Int
+  nextToken: String
+}
+
+type LegacyAppliance {
+  applianceId: String!
+  applianceTypes: [String!]
+  endpointTypeId: String
+  friendlyName: String!
+  friendlyDescription: String!
+  manufacturerName: String
+  connectedVia: String
+  modelName: String
+  entityId: String!
+  actions: [String!]
+  mergedApplianceIds: [String!]
+  capabilities: [JSON!]
+  applianceNetworkState: JSON
+  version: String
+  isEnabled: Boolean!
+  customerDefinedDeviceType: String
+  customerPreference: JSON
+  alexaDeviceIdentifierList: [JSON!]
+  aliases: [JSON!]
+  driverIdentity: JSON
+  additionalApplianceDetails: JSON
+  isConsentRequired: Boolean
+  applianceKey: String
+  appliancePairs: [String!]
+  deduplicatedPairs: [JSON!]
+  entityPairs: [String!]
+  deduplicatedAliasesByEntityId: JSON
+  relations: [JSON!]
+}
+
+enum FeatureName {
+  power
+  speaker
+  connectivity
+  brightness
+  percentage
+  powerLevel
+  color
+  colorTemperature
+  thermostat
+  lock
+  temperatureSensor
+  commissionable
+  contactSensor
+  motionSensor
+  mode
+  range
+  toggle
+  fabricManagement
+  action
+}
+
+enum FeaturePropertyName {
+  powerState
+  volume
+  reachability
+  brightness
+  percentage
+  powerLevel
+  color
+  colorTemperatureInKelvin
+  lowerSetpoint
+  upperSetpoint
+  targetSetpoint
+  thermostatMode
+  lockState
+  temperature
+  detectionState
+  mode
+  rangeValue
+  toggleState
+  actionState
+}
+
+enum ThermostatModeValue {
+  COOL
+  HEAT
+  OFF
+  AUTO
+  ECO
+  EM_HEAT
+}
+
+type ColorValue {
+  hue: Float!
+  saturation: Float!
+  brightness: Float!
+}
+
+type Temperature {
+  value: Float!
+  scale: TemperatureScale!
+}
+
+enum TemperatureScale {
+  FAHRENHEIT
+  CELSIUS
+  KELVIN
+}
+
+type VolumeValue {
+  value: Int!
+}
+
+type RangeValueNumber {
+  value: Float!
+}
+
+type ModeValue {
+  value: String!
+}
+
+enum ToggleStateValue {
+  ON
+  OFF
+}
+
+enum AlarmValue {
+  OK
+  ALARM
+  UNKNOWN
+}
+
+# SetEndpointFeatures mutation types
+input SetEndpointFeaturesInput {
+  featureControlRequests: [FeatureControlRequest!]!
+}
+
+input FeatureControlRequest {
+  entityId: String
+  endpointId: String
+  featureName: FeatureName!
+  instance: String
+  featureOperationName: FeatureOperationName!
+  payload: JSON
+}
+
+enum FeatureOperationName {
+  #powerState & toggle
+  turnOn
+  turnOff
+  
+  #volume
+  setVolume
+  adjustVolume
+  
+  #brightness
+  setBrightness
+  adjustBrightness
+  
+  #percentage
+  setPercentage
+  adjustPercentage
+  
+  #powerLevel
+  setPowerLevel
+  adjustPowerLevel
+  
+  #color
+  setColor
+  
+  #colorTemperature
+  setColorTemperature
+  increaseColorTemperature
+  decreaseColorTemperature
+  
+  # thermostat
+  setTargetSetpoint
+  setThermostatMode
+  adjustTargetSetpoint
+  
+  # lock
+  lock
+  unlock
+
+  # Commissionable
+  reportCommissioningInformation
+  # mode
+  setMode
+  adjustMode
+  # range
+  setRangeValue
+  adjustRangeValue
+  
+  # Action
+  performAction
+
+  # FabricManagement
+  listFabrics
+  removeFabric
+  
+}
+
+
+type SetEndpointFeaturesResponse {
+  featureControlResponses: [FeatureControlResponse!]!
+  errors: [FeatureControlError!]!
+}
+
+type FeatureControlResponse {
+  endpointId: String!
+  featureName: FeatureName!
+  instance: String
+  featureOperationName: FeatureOperationName!
+  payload: JSON
+  code: String!
+  responsePayload: FeatureResponsePayload
+}
+
+type FeatureControlError {
+  endpointId: String!
+  featureName: FeatureName!
+  instance: String
+  featureOperationName: FeatureOperationName!
+  payload: JSON
+  code: String!
+  message: String
+}
+
+interface FeatureResponsePayload {
+  type: FeaturePayloadType
+}
+
+enum FeaturePayloadType {
+  CommissioningInformationReport
+  FabricList
+  FabricRemoval
+}
+
+type CommissioningInformationReport implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  value: CommissioningInformationReportValue
+}
+
+type CommissioningInformationReportValue {
+  commissioningInformation: [CommissioningInformation!]
+}
+
+interface CommissioningInformation {
+  localProtocol: String
+}
+
+type MatterCommissioningInformation implements CommissioningInformation {
+  localProtocol: String
+  protocolData: MatterProtocolData!
+}
+
+type MatterProtocolData {
+  manualPairingCode: String!
+  commissioningWindowExpirationTimestamp: String!
+}
+
+type FabricList implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  maxSupportedFabrics: Int!
+  currentFabricCount: Int!
+  fabrics: [FabricDetail!]
+}
+
+type FabricDetail {
+  label: String!
+  fabricIndex: Int!
+  fabricId: String!
+  vendorId: Int!
+  isRemovable: Boolean!
+}
+
+type FabricRemoval implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  fabric: RemoveFabricDetail!
+}
+
+type RemoveFabricDetail {
+  fabricIndex: Int!
+  fabricId: String!
+  vendorId: Int!
+}
+
+# Quality of Service mutation types
+input EndpointQualityOfServiceInput {
+  endpoints: [EndpointId!]!
+  configuration: QualityOfServiceConfiguration!
+}
+
+input QualityOfServiceConfiguration {
+  typeOfExperience: QualityOfServiceExperience!
+  durationInSeconds: Int
+}
+
+type EndpointQualityOfServiceResponse {
+  durationInSeconds: Int
+  errors: [ErrorResponse]
+}
+
+enum QualityOfServiceExperience {
+  BACKGROUND_EPHEMERAL
+  BACKGROUND_PERSISTENT
+  FOREGROUND_PERSISTENT
+}
+
+# Subscribe mutation types
+input SubscribeConfiguration {
+  format: SubscriptionEventFormat!
+  entities: [SubscriptionFilter!]
+  reset: Boolean
+  version: String
+  durationInMinutes: Int
+}
+
+enum SubscriptionEventFormat {
+  Default
+  GraphQL
+}
+
+input SubscriptionFilter {
+  entityType: String!
+  ids: [String!]
+}
+
+type SubscribeResponse {
+  entities: [String!]
+  errors: [ErrorResponse!]
+  durationInMinutes: Int
+}
+

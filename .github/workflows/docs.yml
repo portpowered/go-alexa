@@ -1,0 +1,93 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'pkg/schemas/graphql/**'
+      - 'README.md'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GOWORK: 'off'
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test with coverage
+        if: github.event_name != 'pull_request'
+        run: go test -race -coverprofile=coverage.out ./...
+      - name: Build API documentation site
+        uses: portpowered/api-docs-website-github-action@v0.3.0
+        with:
+          title: Alexa API Reference
+          graphql: pkg/schemas/graphql/endpoints-schema.graphql
+          discover: false
+          guides-directory: docs/guides
+          output: site
+      - name: Generate coverage report and badge data
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p site
+          go tool cover -html=coverage.out -o site/coverage.html
+          coverage="$(go tool cover -func=coverage.out | awk '$1 == "total:" {print $3}')"
+          coverage="${coverage%\%}"
+          if awk -v value="$coverage" 'BEGIN {exit !(value >= 90)}'; then
+            color=brightgreen
+          elif awk -v value="$coverage" 'BEGIN {exit !(value >= 75)}'; then
+            color=yellow
+          else
+            color=red
+          fi
+          node - "$coverage" "$color" <<'JS'
+          const fs = require('node:fs');
+          const [coverage, color] = process.argv.slice(2);
+          fs.writeFileSync('site/coverage.json', `${JSON.stringify({
+            schemaVersion: 1,
+            label: 'coverage',
+            message: `${coverage}%`,
+            color,
+          }, null, 2)}\n`);
+          JS
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

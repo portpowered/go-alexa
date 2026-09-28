@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      GOWORK: 'off'
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.2'
+          cache: true
+      - name: Verify generated GraphQL client
+        run: |
+          make generate
+          git diff --exit-code -- pkg/dependencies/graphql/generated.go
+      - name: Check module metadata
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+      - name: Check formatting
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l $(git ls-files -- '*.go'))"
+          if [ -n "$unformatted" ]; then
+            echo "Unformatted Go files: $unformatted"
+            exit 1
+          fi
+      - name: Lint, build, and race tests
+        run: make check

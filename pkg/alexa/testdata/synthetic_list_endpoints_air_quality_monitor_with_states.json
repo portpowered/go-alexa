@@ -1,0 +1,309 @@
+{
+  "data": {
+    "listEndpoints": {
+      "completeResult": true,
+      "endpoints": [
+        {
+          "id": "entity-aqm-1",
+          "endpointId": "amzn1.alexa.endpoint.synthetic-aqm-001",
+          "friendlyName": "Synthetic Air Quality Monitor",
+          "creationTime": "2026-04-13T07:00:00Z",
+          "associateUnits": "",
+          "isEnabled": true,
+          "enablement": "ENABLED",
+          "dmsIdentifier": {
+            "deviceType": "AMAZON_AIRQUALITYMONITOR",
+            "dsn": "synthetic-serial-001"
+          },
+          "description": {
+            "type": "PLAIN",
+            "value": {
+              "text": "Amazon Smart Air Quality Monitor",
+              "locale": "en-US"
+            }
+          },
+          "manufacturer": {
+            "type": "PLAIN",
+            "value": {
+              "text": "Amazon",
+              "locale": "en-US"
+            }
+          },
+          "model": {
+            "type": "PLAIN",
+            "value": {
+              "text": "Smart Air Quality Monitor",
+              "locale": "en-US"
+            }
+          },
+          "serialNumber": {
+            "type": "PLAIN",
+            "value": {
+              "text": "synthetic-serial-001",
+              "locale": "en-US"
+            }
+          },
+          "features": [
+            {
+              "name": "range",
+              "instance": "Air Quality.humidity",
+              "configuration": {
+                "__typename": "RangeConfiguration",
+                "supportedRange": {
+                  "minimumValue": 0,
+                  "maximumValue": 100,
+                  "precision": 1
+                },
+                "friendlyName": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "Humidity",
+                    "locale": "en-US"
+                  }
+                },
+                "unitOfMeasure": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "%",
+                    "locale": "en-US"
+                  }
+                },
+                "presets": []
+              },
+              "semantics": null,
+              "properties": [
+                {
+                  "__typename": "RangeValue",
+                  "name": "rangeValue",
+                  "accuracy": "HIGH",
+                  "timestamp": 1710000000000,
+                  "timeOfSample": "2026-04-13T07:00:00Z",
+                  "timeOfLastChange": "2026-04-13T07:00:00Z",
+                  "type": "RETRIEVABLE",
+                  "error": null,
+                  "rangeValue": {
+                    "value": 42
+                  }
+                }
+              ],
+              "operations": [
+                {
+                  "name": "reportState",
+                  "verificationsRequired": []
+                }
+              ],
+              "featureOperations": []
+            },
+            {
+              "name": "range",
+              "instance": "Air Quality.pm25",
+              "configuration": {
+                "__typename": "RangeConfiguration",
+                "supportedRange": {
+                  "minimumValue": 0,
+                  "maximumValue": 1000,
+                  "precision": 0.1
+                },
+                "friendlyName": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "PM2.5",
+                    "locale": "en-US"
+                  }
+                },
+                "unitOfMeasure": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "ug/m3",
+                    "locale": "en-US"
+                  }
+                },
+                "presets": []
+              },
+              "semantics": null,
+              "properties": [
+                {
+                  "__typename": "RangeValue",
+                  "name": "rangeValue",
+                  "accuracy": "HIGH",
+                  "timestamp": 1710000000000,
+                  "timeOfSample": "2026-04-13T07:00:00Z",
+                  "timeOfLastChange": "2026-04-13T07:00:00Z",
+                  "type": "RETRIEVABLE",
+                  "error": null,
+                  "rangeValue": {
+                    "value": 7.5
+                  }
+                }
+              ],
+              "operations": [
+                {
+                  "name": "reportState",
+                  "verificationsRequired": []
+                }
+              ],
+              "featureOperations": []
+            },
+            {
+              "name": "range",
+              "instance": "Air Quality.indoorAirQuality",
+              "configuration": {
+                "__typename": "RangeConfiguration",
+                "supportedRange": {
+                  "minimumValue": 0,
+                  "maximumValue": 100,
+                  "precision": 1
+                },
+                "friendlyName": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "Air quality",
+                    "locale": "en-US"
+                  }
+                },
+                "unitOfMeasure": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "AQI",
+                    "locale": "en-US"
+                  }
+                },
+                "presets": []
+              },
+              "semantics": null,
+              "properties": [
+                {
+                  "__typename": "RangeValue",
+                  "name": "rangeValue",
+                  "accuracy": "HIGH",
+                  "timestamp": 1710000000000,
+                  "timeOfSample": "2026-04-13T07:00:00Z",
+                  "timeOfLastChange": "2026-04-13T07:00:00Z",
+                  "type": "RETRIEVABLE",
+                  "error": null,
+                  "rangeValue": {
+                    "value": 37
+                  }
+                }
+              ],
+              "operations": [
+                {
+                  "name": "reportState",
+                  "verificationsRequired": []
+                }
+              ],
+              "featureOperations": []
+            },
+            {
+              "name": "range",
+              "instance": "Air Quality.voc",
+              "configuration": {
+                "__typename": "RangeConfiguration",
+                "supportedRange": {
+                  "minimumValue": 0,
+                  "maximumValue": 10000,
+                  "precision": 1
+                },
+                "friendlyName": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "VOC",
+                    "locale": "en-US"
+                  }
+                },
+                "unitOfMeasure": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "ppb",
+                    "locale": "en-US"
+                  }
+                },
+                "presets": []
+              },
+              "semantics": null,
+              "properties": [
+                {
+                  "__typename": "RangeValue",
+                  "name": "rangeValue",
+                  "accuracy": "HIGH",
+                  "timestamp": 1710000000000,
+                  "timeOfSample": "2026-04-13T07:00:00Z",
+                  "timeOfLastChange": "2026-04-13T07:00:00Z",
+                  "type": "RETRIEVABLE",
+                  "error": null,
+                  "rangeValue": {
+                    "value": 125
+                  }
+                }
+              ],
+              "operations": [
+                {
+                  "name": "reportState",
+                  "verificationsRequired": []
+                }
+              ],
+              "featureOperations": []
+            },
+            {
+              "name": "range",
+              "instance": "Air Quality.pm10",
+              "configuration": {
+                "__typename": "RangeConfiguration",
+                "supportedRange": {
+                  "minimumValue": 0,
+                  "maximumValue": 1000,
+                  "precision": 1
+                },
+                "friendlyName": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "PM10",
+                    "locale": "en-US"
+                  }
+                },
+                "unitOfMeasure": {
+                  "type": "PLAIN",
+                  "value": {
+                    "text": "ug/m3",
+                    "locale": "en-US"
+                  }
+                },
+                "presets": []
+              },
+              "semantics": null,
+              "properties": [
+                {
+                  "__typename": "RangeValue",
+                  "name": "rangeValue",
+                  "accuracy": "LOW",
+                  "timestamp": 1710000000000,
+                  "timeOfSample": "2026-04-13T07:00:00Z",
+                  "timeOfLastChange": "2026-04-13T07:00:00Z",
+                  "type": "RETRIEVABLE",
+                  "error": {
+                    "type": "NOT_FOUND",
+                    "message": "Sensor value was not available"
+                  },
+                  "rangeValue": null
+                }
+              ],
+              "operations": [
+                {
+                  "name": "reportState",
+                  "verificationsRequired": []
+                }
+              ],
+              "featureOperations": []
+            }
+          ],
+          "operations": [],
+          "endpointReports": []
+        }
+      ],
+      "paginationInfo": {
+        "totalCount": 1,
+        "nextToken": ""
+      }
+    }
+  }
+}

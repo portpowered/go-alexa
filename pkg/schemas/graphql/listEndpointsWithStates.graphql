@@ -1,0 +1,662 @@
+# @genqlient(for: "ListEndpointsInput.maxAgeInMillis", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.displayCategory", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.latencyTolerance", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.allDisplayCategories", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.enablement", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.queryExpression", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.endpointIds", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.maxPagesToFetch", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.filters", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.includeHouseholdDevices", omitempty: true)
+# @genqlient(for: "ListEndpointsInput.paginationParams", omitempty: true)
+query ListEndpointsWithStates(
+	$input: ListEndpointsInput!) {
+	listEndpoints(listEndpointsInput: $input) {
+		completeResult
+		endpoints {
+			id
+			endpointId
+			friendlyName
+			creationTime
+			associateUnits
+			isEnabled
+			enablement
+			features {
+				name
+				instance
+				configuration {
+					... on ActionConfiguration {
+						action {
+							supportedStates
+							supportedActions {
+								id
+								friendlyNames {
+									type
+									value {
+										text
+										locale
+									}
+								}
+							}
+							categoryLabel {
+								friendlyNames {
+									type
+									value {
+										text
+										locale
+									}
+								}
+							}
+						}
+						target {
+							categoryLabel {
+								friendlyNames {
+									type
+									value {
+										text
+										locale
+									}
+								}
+							}
+							supportedTargets {
+								id
+								friendlyNames {
+									type
+									value {
+										text
+										locale
+									}
+								}
+							}
+						}
+					}
+					... on ThermostatConfiguration {
+						supportedModes
+					}
+					... on ToggleConfiguration {
+						friendlyName {
+							type
+							value {
+								text
+								locale
+							}
+						}
+					}
+					... on ModeConfiguration {
+						order
+						friendlyName {
+							type
+							value {
+								text
+								locale
+							}
+						}
+						modeOptions {
+							value
+							modeResources {
+								friendlyName {
+									type
+									value {
+										text
+										locale
+									}
+								}
+							}
+						}
+					}
+					... on RangeConfiguration {
+						supportedRange {
+							minimumValue
+							maximumValue
+							precision
+						}
+						friendlyName {
+							type
+							value {
+								text
+								locale
+							}
+						}
+						unitOfMeasure {
+							type
+							value {
+								text
+								locale
+							}
+						}
+						presets {
+							rangeValue
+							presetResources {
+								friendlyName {
+									type
+									value {
+										text
+										locale
+									}
+								}
+							}
+						}
+					}
+				}
+				semantics {
+					... on StatusCodeSemantics {
+						codeToStatusesMappings {
+							code
+							statuses
+						}
+					}
+				}
+				properties {
+					name
+					accuracy
+					type
+					... on ActionState {
+						name
+						accuracy
+						type
+						timeOfSample
+						timeOfLastChange
+						actionStateValue {
+							status
+							actionId
+							targetIds
+						}
+						error {
+							type
+							message
+						}
+					}
+					... on ArmState {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						armStateValue
+						error {
+							type
+							message
+						}
+					}
+					... on Battery {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						error {
+							type
+							message
+						}
+						batteryValue {
+							levelPercentage
+							chargingHealth {
+								state
+								reason
+							}
+							health {
+								state
+								reasons
+							}
+						}
+					}
+					... on Brightness {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						brightnessStateValue
+						error {
+							type
+							message
+						}
+					}
+					... on BurglaryAlarm {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						burglaryAlarmValue
+						error {
+							type
+							message
+						}
+					}
+					... on CarbonMonoxideAlarm {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						carbonMonoxideAlarmValue
+					}
+					... on Color {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						colorStateValue {
+							hue
+							saturation
+							brightness
+						}
+					}
+					... on ColorTemperature {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						colorTemperatureInKelvinStateValue
+					}
+					... on Reachability {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						reachabilityStatusValue
+						error {
+							type
+							message
+						}
+					}
+					... on RangeValue {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						error {
+							type
+							message
+						}
+						rangeValue {
+							value
+						}
+					}
+					... on PowerLevel {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						powerLevelValue
+						error {
+							type
+							message
+						}
+					}
+					... on Power {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						powerStateValue
+						error {
+							type
+							message
+						}
+					}
+					... on Percentage {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						percentageValue
+						error {
+							type
+							message
+						}
+					}
+					... on NetworkThroughput {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						error {
+							type
+							message
+						}
+					}
+					... on Mode {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						error {
+							type
+							message
+						}
+						modeValue {
+							value
+						}
+					}
+					... on Lock {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						lockState
+						error {
+							type
+							message
+						}
+					}
+					... on Illuminance {
+						name
+						accuracy
+						type
+						timeOfSample
+						timeOfLastChange
+						error {
+							type
+							message
+						}
+						illuminanceValue {
+							value
+						}
+					}
+					... on Geolocation {
+						name
+						accuracy
+						type
+						timeOfSample
+						timeOfLastChange
+						error {
+							type
+							message
+						}
+						geolocationValue {
+							source
+							coordinate {
+								latitudeInDegrees
+								longitudeInDegrees
+								accuracyInMeters
+							}
+							altitude {
+								altitudeInMeters
+								accuracyInMeters
+							}
+							heading {
+								directionInDegrees
+								accuracyInDegrees
+							}
+							speed {
+								speedInMetersPerSecond
+								accuracyInMetersPerSecond
+							}
+						}
+					}
+					... on FireAlarm {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						fireAlarmValue
+						error {
+							type
+							message
+						}
+					}
+					... on RadioDiagnostics {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						error {
+							type
+							message
+						}
+						radioDiagnosticsValue {
+							values {
+								radioType
+								signalStrength {
+									quality
+									rssiInDBM
+								}
+								signalToNoiseRatio {
+									quality
+									snrInDB
+								}
+							}
+						}
+					}
+					... on WaterAlarm {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						waterAlarmValue
+						error {
+							type
+							message
+						}
+					}
+					... on Volume {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						error {
+							type
+							message
+						}
+					}
+					... on ToggleState {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						toggleStateValue
+						error {
+							type
+							message
+						}
+					}
+					... on ThermostatMode {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						thermostatModeValue
+						error {
+							type
+							message
+						}
+					}
+					... on TemperatureSensor {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						error {
+							type
+							message
+						}
+						value {
+							value
+							scale
+						}
+					}
+					... on StatusCode {
+						name
+						type
+						accuracy
+						timeOfSample
+						timeOfLastChange
+						statusCodeValue {
+							value {
+								code
+								timeOfDetection
+							}
+						}
+						error {
+							type
+							message
+						}
+					}
+					... on Snapshot {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						error {
+							type
+							message
+						}
+						snapshotValue {
+							uri
+							uriExpirationTime
+							authenticationType
+						}
+					}
+					... on SirenState {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						error {
+							type
+							message
+						}
+						sirenStateValue {
+							state
+							playlistId
+							playOrder {
+								assetId
+								loopCount
+								loopPauseInMilliseconds
+							}
+						}
+					}
+					... on Setpoint {
+						name
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						accuracy
+						type
+						deviceNativeScaleValue
+						error {
+							type
+							message
+						}
+						value {
+							value
+							scale
+						}
+					}
+					... on RelativeHumidity {
+						name
+						accuracy
+						type
+						timeOfSample
+						timeOfLastChange
+						error {
+							type
+							message
+						}
+						relativeHumidityValue {
+							value
+						}
+					}
+				}
+				operations {
+					name
+				}
+				featureOperations {
+					name
+				}
+			}
+			displayCategories {
+				all {
+					isCustomerSpecified
+					isDiscovered
+					sources
+					value
+				}
+				primary {
+					isCustomerSpecified
+					isDiscovered
+					sources
+					value
+				}
+			}
+			model {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			manufacturer {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			serialNumber {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			description {
+				type
+				value {
+					text
+					locale
+				}
+			}
+			dmsIdentifier {
+				deviceType
+				dsn
+			}
+		}
+	}
+}
+

@@ -1,0 +1,120 @@
+query GetEndpoint($id: String!) {
+	endpoint(id: $id) {
+		id
+		endpointId
+		parentComponent {
+			id
+			friendlyNameObject {
+				type
+				value {
+					text
+					locale
+				}
+			}
+		}
+		childComponents {
+			id
+			friendlyNameObject {
+				type
+				value {
+					text
+					locale
+				}
+			}
+		}
+		dmsIdentifier {
+			deviceType
+			dsn
+		}
+		description {
+			type
+			value {
+				text
+				locale
+			}
+		}
+		manufacturer {
+			type
+			value {
+				text
+				locale
+			}
+		}
+		friendlyName
+		friendlyNameObject {
+			type
+			value {
+				text
+				locale
+			}
+		}
+		model {
+			type
+			value {
+				text
+				locale
+			}
+		}
+		serialNumber {
+			type
+			value {
+				text
+				locale
+			}
+		}
+		softwareVersion {
+			type
+			value {
+				text
+				locale
+			}
+		}
+		creationTime
+		associatedUnits {
+			id
+		}
+		alexaEnabledMetadata {
+			category
+			iconId
+			isVisible
+			capabilities
+		}
+		displayCategories {
+			all {
+				value
+				sources
+			}
+			primary {
+				value
+				sources
+			}
+		}
+		enablement
+		connections {
+			type
+			macAddress
+			bleMeshDeviceUuid
+		}
+			features {
+				name
+				instance
+				operations {
+					name
+					verificationsRequired {
+						type
+					}
+				}
+			}
+		operations {
+			name
+		}
+		endpointReports {
+			reporter {
+				id
+				namespace
+				skillStage
+			}
+		}
+	}
+}
+
