@@ -20,5 +20,7 @@ Source checklist: `go-third-party-template/docs/library-standards.md`, `docs/ver
 - [x] Run `make lint` and `make check`; both passed after the REST and directive model changes. `make generate` was byte-stable locally, and remote CI passed its regeneration and drift checks.
 - [x] Review the working tree: token-marker scan found no token-shaped values, and no capture/config data files remain. This checks the current tree only; the `main` rewrite and old-tag deletion are recorded below. GitHub's cached views of old commit IDs require a separate Support request.
 - [x] Replace `main` history and remove old tags that retain the old commits. **Signed off:** a new root commit replaced `main`; v1.0.0 through v1.0.7 were deleted. A remote ref check found only the rewritten `main`, and its CI and documentation runs passed.
+- [x] Publish the client/session migration as `v0.2.0`. **Signed off:** CI and documentation passed on `612019b`; the tag's release workflow passed API compatibility, race tests, vet, build, and a fresh public Go proxy consumer compile before publishing the GitHub Release. The published coverage badge reports 81.8%, and the versioned Go Reference page for `pkg/alexa` is available.
 
-All migration checklist items are signed off. The `v0.2.0` release tag for this migration has not yet been published.
+All migration checklist items are signed off for the published library. Cached
+GitHub views of old commit IDs still require the separate Support request noted above.
