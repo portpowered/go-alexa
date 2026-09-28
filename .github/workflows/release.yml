@@ -89,4 +89,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.ref_name }}
           REPOSITORY: ${{ github.repository }}
-        run: gh release create "$VERSION" --repo "$REPOSITORY" --verify-tag --generate-notes
+        run: |
+          gh release create "$VERSION" --repo "$REPOSITORY" --verify-tag --generate-notes \
+            --notes "Provider behavior: the maintainer reports successful tests with their own Alexa accounts, but operation-level results and sanitized captures were not recorded. The REST and event-stream schemas are implementation-derived, not current Amazon wire specifications. See https://github.com/$REPOSITORY/blob/$VERSION/docs/verification.md."

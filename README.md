@@ -78,7 +78,7 @@ func main() {
 | Account profile | `GetUserInfo` | Returns personal account information; handle the result as sensitive data. |
 | Player state | `GetPlayerState` | Provider- and device-dependent. |
 
-The package also exposes endpoint, feature, event, request, response, and error models under `pkg/alexaapimodels`. The checked-in GraphQL, OpenAPI, and AsyncAPI documents describe the subset used by this client and drive generated client or internal wire models. They are implementation-derived, not complete or authoritative Alexa contracts; REST and event-stream shapes are not supported by sanitized live captures in this repository. See [API coverage](docs/alexa_apis.md) and [verification guidance](docs/verification.md).
+The package also exposes endpoint, feature, event, request, response, and error models under `pkg/alexaapimodels`. The checked-in GraphQL, OpenAPI, and AsyncAPI documents describe the subset used by this client and drive generated client or internal wire models. They are implementation-derived, not complete or authoritative Alexa contracts. The maintainer reports that these APIs have worked with their own Alexa accounts, but those tests were not documented with an operation list, dates, or sanitized captures, so reproducible account-test evidence is absent from this repository. See [API coverage](docs/alexa_apis.md) and [verification guidance](docs/verification.md).
 
 ## Authentication, errors, and transports
 

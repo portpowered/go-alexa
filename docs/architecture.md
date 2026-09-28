@@ -20,4 +20,4 @@ The client supports access-token and refresh-token options, code-based linking, 
 
 ## Evidence limits
 
-The automated tests use synthetic JSON responses and test transports. They check request construction and model conversion, but they do not establish that undocumented provider behavior remains available. Live verification is opt-in and should use a disposable account where possible.
+The automated tests use synthetic JSON responses and test transports. They check request construction and model conversion, but they do not establish that undocumented provider behavior remains available. The maintainer reports successful API testing with their own Alexa accounts, but did not record the operations, dates, results, or sanitized captures; reproducible account-test evidence is absent from this repository. Live verification is opt-in and should use a disposable account where possible.
