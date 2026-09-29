@@ -88,6 +88,22 @@ linters:
       - path: ^pkg/dependencymodels/(auth|endpoint|event)\.go$
         linters:
           - tagliatelle
+      # The terminal UI's existing config.json format uses customerID.
+      # Preserve the persisted key so saved credentials still load.
+      - path: ^cmd/examples/terminal-ui/tui/app\.go$
+        text: "^json\\(camel\\): got 'customerID' want 'customerId'$"
+        linters:
+          - tagliatelle
+      # This regression test reads an unexported config loader and changes the
+      # process working directory, so it must stay in-package and serial.
+      - path: ^cmd/examples/terminal-ui/tui/app_config_test\.go$
+        text: '^package should be `tui_test` instead of `tui`$'
+        linters:
+          - testpackage
+      - path: ^cmd/examples/terminal-ui/tui/app_config_test\.go$
+        text: '^Function TestGetConfigFromFilePreservesCustomerIDKey'
+        linters:
+          - paralleltest
       # Preserve v0.3.1 exported spellings and JSON-model fields; changing these
       # Go identifiers would break callers even though the wire tags are stable.
       - path: ^pkg/alexa/client\.go$

@@ -22,7 +22,7 @@ const (
 type config struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
-	CustomerID   string `json:"customerId"`
+	CustomerID   string `json:"customerID"`
 }
 
 type viewMode int

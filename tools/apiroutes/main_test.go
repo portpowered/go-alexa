@@ -217,3 +217,67 @@ func TestNetworkInventoryRejectsReassignedRequest(t *testing.T) {
 		t.Fatalf("gate result %q did not reject reassignment", got)
 	}
 }
+
+func TestNetworkInventoryRejectsRequestRouteMutation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		mutation string
+		want     string
+	}{
+		{name: "path", mutation: "req.URL.Path = apiroutes.PathGetRestEndpoint", want: "request was reassigned or mutated"},
+		{name: "parenthesized path", mutation: "(req).URL.Path = apiroutes.PathGetRestEndpoint", want: "request was reassigned or mutated"},
+		{name: "method", mutation: "req.Method = apiroutes.MethodGetRestEndpoint", want: "request was reassigned or mutated"},
+		{name: "url alias", mutation: "route := req.URL; route.Path = apiroutes.PathGetRestEndpoint", want: "request was reassigned or mutated"},
+		{name: "request alias", mutation: "other := req; other.Method = apiroutes.MethodGetRestEndpoint", want: "request was reassigned or mutated"},
+		{
+			name: "reassigned alias", mutation: "other := req; other.URL.Path = apiroutes.PathGetRestEndpoint; other = unrelated",
+			want: "request was reassigned or mutated",
+		},
+		{name: "var alias", mutation: "var other = req; other.URL.RawPath = apiroutes.PathGetRestEndpoint", want: "request was reassigned or mutated"},
+		{
+			name: "composite alias", mutation: "holder := struct { request *http.Request }{request: req}; holder.request.URL.Path = apiroutes.PathGetRestEndpoint",
+			want: "request was reassigned or mutated",
+		},
+		{name: "request helper", mutation: "mutateRoute(req)", want: "request or URL escaped"},
+		{name: "parenthesized helper", mutation: "mutateRoute((req))", want: "request or URL escaped"},
+		{
+			name: "composite helper", mutation: "mutateRoute(struct { request *http.Request }{request: req})",
+			want: "request or URL escaped",
+		},
+		{
+			name: "composite receiver", mutation: "routeHolder{request: req}.mutate()",
+			want: "request or URL escaped",
+		},
+		{name: "url helper", mutation: "mutateRoute(req.URL)", want: "request or URL escaped"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			fset := token.NewFileSet()
+			source := `package rest
+			func (c *Client) doRequest() {
+				req, err := http.NewRequestWithContext(ctx, apiroutes.MethodListRestEndpoints, apiroutes.PathListRestEndpoints, nil)
+				_ = err
+				` + test.mutation + `
+				c.httpClient.Do(req)
+			}`
+
+			file, err := parser.ParseFile(fset, "pkg/dependencies/rest/client.go", source, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var violations []string
+
+			checkNetworkInventory(file, fset, "pkg/dependencies/rest/client.go", &violations)
+
+			if got := strings.Join(violations, "\n"); !strings.Contains(got, test.want) {
+				t.Fatalf("gate result %q did not reject route mutation", got)
+			}
+		})
+	}
+}

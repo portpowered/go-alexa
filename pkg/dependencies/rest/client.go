@@ -493,7 +493,7 @@ func (c *Client) doRequestWithFullURL(
 		}
 	}
 
-	err = c.setFullURLAuthentication(ctx, req, useCookieAuth)
+	err = c.setFullURLAuthentication(ctx, req.Header, useCookieAuth)
 	if err != nil {
 		return nil, err
 	}
@@ -562,7 +562,7 @@ func marshalFullURLBody(body interface{}) (io.Reader, error) {
 	return bytes.NewReader(bodyBytes), nil
 }
 
-func (c *Client) setFullURLAuthentication(ctx context.Context, req *http.Request, useCookieAuth bool) error {
+func (c *Client) setFullURLAuthentication(ctx context.Context, headers http.Header, useCookieAuth bool) error {
 	if !useCookieAuth || !c.useCookieAuth || len(c.cookies) == 0 {
 		token, err := c.getToken(ctx)
 		if err != nil {
@@ -572,7 +572,7 @@ func (c *Client) setFullURLAuthentication(ctx context.Context, req *http.Request
 			}
 		}
 
-		req.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
+		headers.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
 
 		return nil
 	}
@@ -583,7 +583,7 @@ func (c *Client) setFullURLAuthentication(ctx context.Context, req *http.Request
 	}
 
 	if len(cookiePairs) > 0 {
-		req.Header.Set(apiroutes.HeaderCookie, strings.Join(cookiePairs, "; "))
+		headers.Set(apiroutes.HeaderCookie, strings.Join(cookiePairs, "; "))
 	}
 
 	csrfToken, err := c.cachedCSRFToken()
@@ -592,13 +592,13 @@ func (c *Client) setFullURLAuthentication(ctx context.Context, req *http.Request
 	}
 
 	if csrfToken != "" {
-		req.Header.Set(apiroutes.HeaderCsrf, csrfToken)
+		headers.Set(apiroutes.HeaderCsrf, csrfToken)
 	}
 
-	req.Header.Set(apiroutes.HeaderUserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0")
-	req.Header.Set(apiroutes.HeaderDNT, "1")
-	req.Header.Set(apiroutes.HeaderReferer, "https://alexa.amazon.com/spa/index.html")
-	req.Header.Set(apiroutes.HeaderOrigin, "https://alexa.amazon.com")
+	headers.Set(apiroutes.HeaderUserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0")
+	headers.Set(apiroutes.HeaderDNT, "1")
+	headers.Set(apiroutes.HeaderReferer, "https://alexa.amazon.com/spa/index.html")
+	headers.Set(apiroutes.HeaderOrigin, "https://alexa.amazon.com")
 
 	return nil
 }

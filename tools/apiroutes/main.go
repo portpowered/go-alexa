@@ -25,6 +25,7 @@ import (
 const (
 	apiRoutesPackage                = "apiroutes"
 	newRequestWithContextName       = "NewRequestWithContext"
+	requestHeaderFieldName          = "Header"
 	routeOutputDirectoryPermissions = 0o750
 	routeOutputFilePermissions      = 0o600
 	regionalServerCapacity          = 3
@@ -757,14 +758,14 @@ func (checker *wireCallsiteChecker) checkIndex(node ast.Node, analysis wireFunct
 		return
 	}
 
-	if isIdentifier(index.X, "customHeaders") && !generatedParameter(index.Index, "Header") {
+	if isIdentifier(index.X, "customHeaders") && !generatedParameter(index.Index, requestHeaderFieldName) {
 		*checker.violations = append(*checker.violations, fmt.Sprintf(
 			"%s: custom request header name must use a schema-generated Header constant",
 			checker.fset.Position(index.Pos()),
 		))
 	}
 
-	if isHeaderExpression(index.X, analysis.headerAliases) && !generatedParameter(index.Index, "Header") {
+	if isHeaderExpression(index.X, analysis.headerAliases) && !generatedParameter(index.Index, requestHeaderFieldName) {
 		*checker.violations = append(*checker.violations, fmt.Sprintf(
 			"%s: request header map key must use a schema-generated Header constant",
 			checker.fset.Position(index.Pos()),
@@ -823,15 +824,15 @@ func (checker *wireCallsiteChecker) checkParameterCall(
 		}
 	}
 
-	if header, ok := selector.X.(*ast.SelectorExpr); ok && header.Sel.Name == "Header" {
+	if header, ok := selector.X.(*ast.SelectorExpr); ok && header.Sel.Name == requestHeaderFieldName {
 		allowedDynamicHeader := decl.Name.Name == "doRequestWithFullURL" && isIdentifier(call.Args[0], "key")
-		if !generatedParameter(call.Args[0], "Header") && !allowedDynamicHeader {
+		if !generatedParameter(call.Args[0], requestHeaderFieldName) && !allowedDynamicHeader {
 			checker.addParameterViolation(call, "request header name must use a schema-generated Header constant")
 		}
 	}
 
 	if receiver, ok := selector.X.(*ast.Ident); ok && analysis.headerAliases[receiver.Name] {
-		if !generatedParameter(call.Args[0], "Header") {
+		if !generatedParameter(call.Args[0], requestHeaderFieldName) {
 			checker.addParameterViolation(call, "request header name must use a schema-generated Header constant")
 		}
 	}
@@ -843,7 +844,7 @@ func (checker *wireCallsiteChecker) addParameterViolation(call *ast.CallExpr, me
 
 func isHeaderExpression(expr ast.Expr, aliases map[string]bool) bool {
 	if selector, ok := expr.(*ast.SelectorExpr); ok {
-		return selector.Sel.Name == "Header"
+		return selector.Sel.Name == requestHeaderFieldName
 	}
 
 	if ident, ok := expr.(*ast.Ident); ok {
@@ -924,6 +925,8 @@ type networkFunctionScan struct {
 	allowed            bool
 	constructors       map[string]token.Pos
 	requestAssignments map[string][]token.Pos
+	requestAliases     map[string][]string
+	requestEscapes     map[string][]token.Pos
 	sends              []networkSend
 	seen               map[string]int
 	violations         *[]string
@@ -958,6 +961,8 @@ func checkNetworkFunction(decl *ast.FuncDecl, fset *token.FileSet, path string, 
 		allowed:            allowedNetworkFunctions[path+"#"+decl.Name.Name],
 		constructors:       make(map[string]token.Pos),
 		requestAssignments: make(map[string][]token.Pos),
+		requestAliases:     make(map[string][]string),
+		requestEscapes:     make(map[string][]token.Pos),
 		sends:              nil,
 		seen:               make(map[string]int),
 		violations:         violations,
@@ -985,6 +990,20 @@ func (scan *networkFunctionScan) inspectNode(node ast.Node) {
 	}
 
 	primitive := networkPrimitive(call)
+	if primitive != "Do" {
+		if selector, ok := call.Fun.(*ast.SelectorExpr); ok {
+			for _, variable := range routeMutableArgumentSources(selector.X) {
+				scan.requestEscapes[variable] = append(scan.requestEscapes[variable], call.Pos())
+			}
+		}
+
+		for _, argument := range call.Args {
+			for _, variable := range routeMutableArgumentSources(argument) {
+				scan.requestEscapes[variable] = append(scan.requestEscapes[variable], call.Pos())
+			}
+		}
+	}
+
 	if primitive == "" {
 		return
 	}
@@ -1003,19 +1022,55 @@ func (scan *networkFunctionScan) inspectNode(node ast.Node) {
 	}
 }
 
+func routeMutableArgumentSources(expr ast.Expr) []string {
+	if selector, ok := expr.(*ast.SelectorExpr); ok && selector.Sel.Name == requestHeaderFieldName {
+		return nil
+	}
+
+	if variable := rootIdentifier(expr); variable != "" {
+		return []string{variable}
+	}
+
+	return requestAliasSources(expr)
+}
+
 func (scan *networkFunctionScan) recordRequestAssignments(node ast.Node) {
+	if declaration, ok := node.(*ast.ValueSpec); ok {
+		for index, variable := range declaration.Names {
+			scan.requestAssignments[variable.Name] = append(scan.requestAssignments[variable.Name], declaration.Pos())
+
+			if index < len(declaration.Values) {
+				scan.requestAliases[variable.Name] = append(
+					scan.requestAliases[variable.Name], requestAliasSources(declaration.Values[index])...,
+				)
+			}
+		}
+
+		return
+	}
+
 	assignment, ok := node.(*ast.AssignStmt)
 	if !ok {
 		return
 	}
 
 	for _, target := range assignment.Lhs {
-		if variable, isIdent := target.(*ast.Ident); isIdent {
-			scan.requestAssignments[variable.Name] = append(scan.requestAssignments[variable.Name], assignment.Pos())
+		if variable := rootIdentifier(target); variable != "" {
+			scan.requestAssignments[variable] = append(scan.requestAssignments[variable], assignment.Pos())
 		}
 	}
 
 	for index, value := range assignment.Rhs {
+		if index < len(assignment.Lhs) {
+			if variable, isIdent := assignment.Lhs[index].(*ast.Ident); isIdent {
+				if scan.constructors[variable.Name] == token.NoPos {
+					scan.requestAliases[variable.Name] = append(
+						scan.requestAliases[variable.Name], requestAliasSources(value)...,
+					)
+				}
+			}
+		}
+
 		call, isCall := value.(*ast.CallExpr)
 		if !isCall || networkPrimitive(call) != newRequestWithContextName || index >= len(assignment.Lhs) {
 			continue
@@ -1025,6 +1080,50 @@ func (scan *networkFunctionScan) recordRequestAssignments(node ast.Node) {
 			scan.constructors[variable.Name] = call.Pos()
 		}
 	}
+}
+
+// A request or its URL can be changed through a local alias after construction.
+// Reject creating such aliases instead of trying to prove every later use safe.
+func requestAliasSources(expr ast.Expr) []string {
+	switch value := expr.(type) {
+	case *ast.Ident:
+		return []string{value.Name}
+	case *ast.SelectorExpr:
+		if value.Sel.Name == "URL" {
+			return []string{rootIdentifier(value.X)}
+		}
+	case *ast.UnaryExpr:
+		return requestAliasSources(value.X)
+	case *ast.ParenExpr:
+		return requestAliasSources(value.X)
+	case *ast.KeyValueExpr:
+		return requestAliasSources(value.Value)
+	case *ast.CompositeLit:
+		var sources []string
+
+		for _, element := range value.Elts {
+			sources = append(sources, requestAliasSources(element)...)
+		}
+
+		return sources
+	}
+
+	return nil
+}
+
+func rootIdentifier(expr ast.Expr) string {
+	switch value := expr.(type) {
+	case *ast.Ident:
+		return value.Name
+	case *ast.SelectorExpr:
+		return rootIdentifier(value.X)
+	case *ast.StarExpr:
+		return rootIdentifier(value.X)
+	case *ast.ParenExpr:
+		return rootIdentifier(value.X)
+	}
+
+	return ""
 }
 
 func (scan *networkFunctionScan) checkRequestConstructor(call *ast.CallExpr) {
@@ -1079,13 +1178,53 @@ func (scan *networkFunctionScan) checkRequestSend(send networkSend) {
 		return
 	}
 
-	for _, position := range scan.requestAssignments[send.variable] {
-		if position > constructor && position < send.position {
-			scan.addViolation(send.position, "Client.Do request was reassigned after its schema-bound constructor")
+	for variable, positions := range scan.requestAssignments {
+		if !scan.isRequestAlias(variable, send.variable, make(map[string]bool)) {
+			continue
+		}
 
-			return
+		for _, position := range positions {
+			if position > constructor && position < send.position {
+				scan.addViolation(send.position, "Client.Do request was reassigned or mutated after its schema-bound constructor")
+
+				return
+			}
 		}
 	}
+
+	for variable, positions := range scan.requestEscapes {
+		if !scan.isRequestAlias(variable, send.variable, make(map[string]bool)) {
+			continue
+		}
+
+		for _, position := range positions {
+			if position > constructor && position < send.position {
+				scan.addViolation(send.position, "Client.Do request or URL escaped to a helper after its schema-bound constructor")
+
+				return
+			}
+		}
+	}
+}
+
+func (scan *networkFunctionScan) isRequestAlias(variable, request string, seen map[string]bool) bool {
+	if variable == request {
+		return true
+	}
+
+	if seen[variable] {
+		return false
+	}
+
+	seen[variable] = true
+
+	for _, owner := range scan.requestAliases[variable] {
+		if scan.isRequestAlias(owner, request, seen) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (scan *networkFunctionScan) checkRequiredCalls(position token.Pos) {
