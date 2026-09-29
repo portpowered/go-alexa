@@ -198,6 +198,37 @@ func routeMutationCases() []wireCallsiteTestCase {
 func routeShadowCases() []wireCallsiteTestCase {
 	return []wireCallsiteTestCase{
 		{
+			name: "conditional route replacement",
+			source: `package rest
+			func send() {
+				path := dynamicPath
+				if useList { path = apiroutes.PathListRestEndpoints }
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+			}`,
+			want: "not paired with its generated route",
+		},
+		{
+			name: "route pointer replacement",
+			source: `package rest
+			func send() {
+				path := apiroutes.PathListRestEndpoints
+				pointer := &path
+				*pointer = dynamicPath
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+			}`,
+			want: "not paired with its generated route",
+		},
+		{
+			name: "route pointer helper escape",
+			source: `package rest
+			func send() {
+				path := apiroutes.PathListRestEndpoints
+				mutatePath(&path, dynamicPath)
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+			}`,
+			want: "not paired with its generated route",
+		},
+		{
 			name: "untrusted directive authority",
 			source: `package alexa
 			func send() {
@@ -313,6 +344,76 @@ func TestWireCallsiteGateAllowsQueryMapLength(t *testing.T) {
 			}
 		}`,
 		want: "",
+	})
+}
+
+func TestWireCallsiteGateRejectsShadowedUntrustedQueryMap(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "shadowed untrusted query map",
+		source: `package rest
+		func parseQuery(raw string) url.Values { values, _ := url.ParseQuery(raw); return values }
+		func send(raw string) {
+			params := parseQuery(raw)
+			{ params := url.Values{}; params.Set(alexamodels.QueryParamExpand, "all"); _ = params }
+			path := apiroutes.PathListRestEndpoints
+			path += "?" + params.Encode()
+			c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+		}`,
+		want: "not paired with its generated route",
+	})
+}
+
+func TestWireCallsiteGateRejectsParsedQueryMap(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "parsed untrusted query map",
+		source: `package rest
+		func send(raw string) {
+			params, _ := url.ParseQuery(raw)
+			path := apiroutes.PathListRestEndpoints
+			path += "?" + params.Encode()
+			c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+		}`,
+		want: "not paired with its generated route",
+	})
+}
+
+func TestWireCallsiteGateRejectsReassignedQueryMap(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "reassigned untrusted query map",
+		source: `package rest
+		func parseQuery(raw string) url.Values { values, _ := url.ParseQuery(raw); return values }
+		func send(raw string) {
+			params := url.Values{}
+			params = parseQuery(raw)
+			path := apiroutes.PathListRestEndpoints
+			path += "?" + params.Encode()
+			c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+		}`,
+		want: "not paired with its generated route",
+	})
+}
+
+func TestWireCallsiteGateRejectsQueryMapPointerMutation(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "query map pointer mutation",
+		source: `package rest
+		func send(raw string) {
+			params := url.Values{}
+			pointer := &params
+			*pointer, _ = url.ParseQuery(raw)
+			path := apiroutes.PathListRestEndpoints
+			path += "?" + params.Encode()
+			c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+		}`,
+		want: "not paired with its generated route",
 	})
 }
 
@@ -432,6 +533,23 @@ func TestWireCallsiteGateRejectsShadowedHeaderMap(t *testing.T) {
 				apiroutes.PathListRestEndpoints, nil, headers, nil, true)
 		}`,
 		want: "custom request header map key must use a schema-generated Header constant",
+	})
+}
+
+func TestWireCallsiteGateRejectsHeaderMapPointerMutation(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "header map pointer mutation",
+		source: `package rest
+		func send() {
+			headers := map[string]string{apiroutes.HeaderCookie: "generated"}
+			pointer := &headers
+			*pointer = map[string]string{"Cookie": "raw"}
+			c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListRestEndpoints,
+				apiroutes.PathListRestEndpoints, nil, headers, nil, true)
+		}`,
+		want: "custom header map must be constructed from generated Header keys at this call site",
 	})
 }
 

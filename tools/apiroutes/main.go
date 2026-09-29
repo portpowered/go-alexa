@@ -678,9 +678,10 @@ func checkWireCallsites(
 }
 
 type wireFunctionAnalysis struct {
-	assignments   map[string][]routeAssignment
-	queryValues   map[string]bool
-	headerAliases map[string]bool
+	assignments    map[string][]routeAssignment
+	queryValues    map[any]bool
+	headerAliases  map[string]bool
+	addressEscapes map[any][]token.Pos
 }
 
 type wireCallsiteChecker struct {
@@ -692,13 +693,21 @@ type wireCallsiteChecker struct {
 }
 
 func analyzeWireFunction(body *ast.BlockStmt) wireFunctionAnalysis {
+	conditional := conditionalAssignmentPositions(body)
 	analysis := wireFunctionAnalysis{
-		assignments:   make(map[string][]routeAssignment),
-		queryValues:   make(map[string]bool),
-		headerAliases: make(map[string]bool),
+		assignments:    make(map[string][]routeAssignment),
+		queryValues:    make(map[any]bool),
+		headerAliases:  make(map[string]bool),
+		addressEscapes: make(map[any][]token.Pos),
 	}
 
 	ast.Inspect(body, func(node ast.Node) bool {
+		if address, ok := node.(*ast.UnaryExpr); ok && address.Op == token.AND {
+			if variable, ok := unparenthesizedIdent(address.X); ok {
+				analysis.addressEscapes[variable.Obj] = append(analysis.addressEscapes[variable.Obj], address.Pos())
+			}
+		}
+
 		if declaration, ok := node.(*ast.ValueSpec); ok {
 			analyzeHeaderDeclarations(declaration, analysis.headerAliases)
 			analyzeQueryDeclarations(declaration, analysis.queryValues)
@@ -710,13 +719,76 @@ func analyzeWireFunction(body *ast.BlockStmt) wireFunctionAnalysis {
 			return true
 		}
 
-		analyzeWireAssignments(assignment, &analysis)
+		analyzeWireAssignments(assignment, &analysis, conditional[assignment.Pos()])
 
 		return true
 	})
 	markCustomHeaderAliases(body, &analysis)
 
 	return analysis
+}
+
+func unparenthesizedIdent(value ast.Expr) (*ast.Ident, bool) {
+	for {
+		if parenthesized, ok := value.(*ast.ParenExpr); ok {
+			value = parenthesized.X
+
+			continue
+		}
+
+		variable, ok := value.(*ast.Ident)
+
+		return variable, ok
+	}
+}
+
+func conditionalAssignmentPositions(body ast.Node) map[token.Pos]token.Pos {
+	positions := make(map[token.Pos]token.Pos)
+
+	var parents []ast.Node
+
+	ast.Inspect(body, func(node ast.Node) bool {
+		if node == nil {
+			parents = parents[:len(parents)-1]
+
+			return true
+		}
+
+		if assignment, ok := node.(*ast.AssignStmt); ok {
+			positions[assignment.Pos()] = conditionalScopeEnd(parents, assignment.Pos())
+		}
+
+		parents = append(parents, node)
+
+		return true
+	})
+
+	return positions
+}
+
+func conditionalScopeEnd(parents []ast.Node, assignment token.Pos) token.Pos {
+	for index := len(parents) - 1; index >= 0; index-- {
+		if !isControlFlowNode(parents[index]) {
+			continue
+		}
+
+		if index+1 < len(parents) {
+			return parents[index+1].End()
+		}
+
+		return assignment
+	}
+
+	return token.NoPos
+}
+
+func isControlFlowNode(node ast.Node) bool {
+	switch node.(type) {
+	case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt, *ast.SwitchStmt, *ast.TypeSwitchStmt, *ast.SelectStmt:
+		return true
+	default:
+		return false
+	}
 }
 
 func markCustomHeaderAliases(body *ast.BlockStmt, analysis *wireFunctionAnalysis) {
@@ -772,6 +844,7 @@ func analyzeWireDeclarations(declaration *ast.ValueSpec, assignments map[string]
 			name := declaration.Names[index].Name
 			assignments[name] = append(assignments[name], routeAssignment{
 				value: value, position: declaration.Pos(), op: token.ASSIGN, object: declaration.Names[index].Obj,
+				scopeEnd: token.NoPos,
 			})
 		}
 	}
@@ -785,15 +858,15 @@ func analyzeHeaderDeclarations(declaration *ast.ValueSpec, aliases map[string]bo
 	}
 }
 
-func analyzeQueryDeclarations(declaration *ast.ValueSpec, aliases map[string]bool) {
+func analyzeQueryDeclarations(declaration *ast.ValueSpec, aliases map[any]bool) {
 	for index, value := range declaration.Values {
 		if index < len(declaration.Names) && isQueryValuesExpression(value, aliases) {
-			aliases[declaration.Names[index].Name] = true
+			aliases[declaration.Names[index].Obj] = true
 		}
 	}
 }
 
-func analyzeWireAssignments(assignment *ast.AssignStmt, analysis *wireFunctionAnalysis) {
+func analyzeWireAssignments(assignment *ast.AssignStmt, analysis *wireFunctionAnalysis, scopeEnd token.Pos) {
 	for i, right := range assignment.Rhs {
 		if i >= len(assignment.Lhs) {
 			continue
@@ -809,13 +882,14 @@ func analyzeWireAssignments(assignment *ast.AssignStmt, analysis *wireFunctionAn
 			position: assignment.Pos(),
 			op:       assignment.Tok,
 			object:   name.Obj,
+			scopeEnd: scopeEnd,
 		})
 		if isHeaderExpression(right, analysis.headerAliases) {
 			analysis.headerAliases[name.Name] = true
 		}
 
 		if isQueryValuesExpression(right, analysis.queryValues) {
-			analysis.queryValues[name.Name] = true
+			analysis.queryValues[name.Obj] = true
 		}
 	}
 }
@@ -870,11 +944,11 @@ func (checker *wireCallsiteChecker) checkQueryMapEscape(call *ast.CallExpr, anal
 	}
 }
 
-func containsQueryMap(value ast.Expr, aliases map[string]bool) bool {
+func containsQueryMap(value ast.Expr, aliases map[any]bool) bool {
 	found := false
 
 	ast.Inspect(value, func(node ast.Node) bool {
-		if variable, ok := node.(*ast.Ident); ok && aliases[variable.Name] {
+		if variable, ok := node.(*ast.Ident); ok && variable.Obj != nil && aliases[variable.Obj] {
 			found = true
 		}
 
@@ -920,7 +994,8 @@ func (checker *wireCallsiteChecker) checkCustomHeaderArgument(call *ast.CallExpr
 		return
 	}
 
-	checker.checkHeaderMapExpression(call.Args[customHeaderArgumentIndex], analysis.assignments, call.Pos())
+	checker.checkHeaderMapExpression(call.Args[customHeaderArgumentIndex], analysis.assignments,
+		analysis.addressEscapes, call.Pos())
 }
 
 func (checker *wireCallsiteChecker) checkCustomHeaderEscape(call *ast.CallExpr, analysis wireFunctionAnalysis) {
@@ -949,6 +1024,7 @@ func (checker *wireCallsiteChecker) checkCustomHeaderEscape(call *ast.CallExpr, 
 func (checker *wireCallsiteChecker) checkHeaderMapExpression(
 	expr ast.Expr,
 	assignments map[string][]routeAssignment,
+	addressEscapes map[any][]token.Pos,
 	before token.Pos,
 ) {
 	switch value := expr.(type) {
@@ -957,16 +1033,28 @@ func (checker *wireCallsiteChecker) checkHeaderMapExpression(
 			return
 		}
 
+		if addressEscapedBefore(value.Obj, before, addressEscapes) {
+			checker.addUnverifiedHeaderMap(value.Pos())
+
+			return
+		}
+
 		latest, found := latestScopedRouteAssignment(assignments[value.Name], before, value.Obj)
 		if found {
-			checker.checkHeaderMapExpression(latest.value, assignments, latest.position)
+			if latest.scopeEnd != token.NoPos && before > latest.scopeEnd {
+				checker.addUnverifiedHeaderMap(value.Pos())
+
+				return
+			}
+
+			checker.checkHeaderMapExpression(latest.value, assignments, addressEscapes, latest.position)
 
 			return
 		}
 
 		checker.addUnverifiedHeaderMap(value.Pos())
 	case *ast.ParenExpr:
-		checker.checkHeaderMapExpression(value.X, assignments, before)
+		checker.checkHeaderMapExpression(value.X, assignments, addressEscapes, before)
 	case *ast.CompositeLit:
 		for _, element := range value.Elts {
 			pair, hasKey := element.(*ast.KeyValueExpr)
@@ -1040,7 +1128,7 @@ func (checker *wireCallsiteChecker) checkIndex(node ast.Node, analysis wireFunct
 		))
 	}
 
-	if variable, isIdent := index.X.(*ast.Ident); isIdent && analysis.queryValues[variable.Name] &&
+	if variable, isIdent := index.X.(*ast.Ident); isIdent && analysis.queryValues[variable.Obj] &&
 		!generatedParameter(index.Index, "QueryParam") {
 		*checker.violations = append(*checker.violations, fmt.Sprintf(
 			"%s: query parameter map key must use a schema-generated QueryParam constant",
@@ -1071,7 +1159,7 @@ func (checker *wireCallsiteChecker) checkRequestCall(
 		return
 	}
 
-	found := routeNames(target, analysis.assignments, checker.aliases, analysis.queryValues,
+	found := routeNames(target, analysis.assignments, checker.aliases, analysis.queryValues, analysis.addressEscapes,
 		checker.methods, checker.serverTemplateArity, call.Pos())
 
 	expected := operation
@@ -1097,7 +1185,7 @@ func (checker *wireCallsiteChecker) checkParameterCall(
 		return
 	}
 
-	if receiver, ok := selector.X.(*ast.Ident); ok && analysis.queryValues[receiver.Name] {
+	if receiver, ok := selector.X.(*ast.Ident); ok && analysis.queryValues[receiver.Obj] {
 		if !generatedParameter(call.Args[0], "QueryParam") {
 			checker.addParameterViolation(call, "query parameter key must use a schema-generated QueryParam constant")
 		}
@@ -1618,13 +1706,15 @@ type routeAssignment struct {
 	position token.Pos
 	op       token.Token
 	object   any
+	scopeEnd token.Pos
 }
 
 func routeNames(
 	expr ast.Expr,
 	assignments map[string][]routeAssignment,
 	aliases map[string]string,
-	queryValues map[string]bool,
+	queryValues map[any]bool,
+	addressEscapes map[any][]token.Pos,
 	routeTemplates map[string]string,
 	serverTemplateArity int,
 	before token.Pos,
@@ -1633,6 +1723,7 @@ func routeNames(
 		assignments:         assignments,
 		aliases:             aliases,
 		queryValues:         queryValues,
+		addressEscapes:      addressEscapes,
 		routeTemplates:      routeTemplates,
 		serverTemplateArity: serverTemplateArity,
 	}
@@ -1648,7 +1739,8 @@ func routeNames(
 type routeNameScan struct {
 	assignments         map[string][]routeAssignment
 	aliases             map[string]string
-	queryValues         map[string]bool
+	queryValues         map[any]bool
+	addressEscapes      map[any][]token.Pos
 	routeTemplates      map[string]string
 	serverTemplateArity int
 }
@@ -1656,6 +1748,10 @@ type routeNameScan struct {
 func (scan *routeNameScan) expression(value ast.Expr, cutoff token.Pos) string {
 	switch part := value.(type) {
 	case *ast.Ident:
+		if scan.routeAddressEscaped(part, cutoff) {
+			return ""
+		}
+
 		latest, ok := latestScopedRouteAssignment(scan.assignments[part.Name], cutoff, part.Obj)
 		if !ok {
 			return ""
@@ -1669,7 +1765,8 @@ func (scan *routeNameScan) expression(value ast.Expr, cutoff token.Pos) string {
 			return ""
 		}
 
-		if latest.op != token.ASSIGN && latest.op != token.DEFINE {
+		if latest.scopeEnd != token.NoPos && cutoff > latest.scopeEnd ||
+			(latest.op != token.ASSIGN && latest.op != token.DEFINE) {
 			return ""
 		}
 
@@ -1702,6 +1799,20 @@ func (scan *routeNameScan) expression(value ast.Expr, cutoff token.Pos) string {
 	}
 
 	return ""
+}
+
+func (scan *routeNameScan) routeAddressEscaped(variable *ast.Ident, before token.Pos) bool {
+	return addressEscapedBefore(variable.Obj, before, scan.addressEscapes)
+}
+
+func addressEscapedBefore(object any, before token.Pos, addressEscapes map[any][]token.Pos) bool {
+	for _, address := range addressEscapes[object] {
+		if address < before {
+			return true
+		}
+	}
+
+	return false
 }
 
 func latestScopedRouteAssignment(assignments []routeAssignment, cutoff token.Pos, object any) (routeAssignment, bool) {
@@ -1832,12 +1943,64 @@ func (scan *routeNameScan) querySuffix(expr ast.Expr) bool {
 
 	receiver, isIdent := selector.X.(*ast.Ident)
 
-	return isIdent && scan.queryValues[receiver.Name]
+	return isIdent && trustedQueryMapAt(receiver, call.Pos(), scan.assignments, scan.addressEscapes)
 }
 
-func isQueryValuesExpression(value ast.Expr, aliases map[string]bool) bool {
+func trustedQueryMapAt(variable *ast.Ident, before token.Pos, assignments map[string][]routeAssignment,
+	addressEscapes map[any][]token.Pos,
+) bool {
+	if addressEscapedBefore(variable.Obj, before, addressEscapes) {
+		return false
+	}
+
+	latest, found := latestScopedRouteAssignment(assignments[variable.Name], before, variable.Obj)
+	if !found || (latest.scopeEnd != token.NoPos && before > latest.scopeEnd) ||
+		(latest.op != token.ASSIGN && latest.op != token.DEFINE) {
+		return false
+	}
+
+	switch value := latest.value.(type) {
+	case *ast.Ident:
+		return trustedQueryMapAt(value, latest.position, assignments, addressEscapes)
+	case *ast.ParenExpr:
+		return trustedQueryMapExpression(value.X, latest.position, assignments, addressEscapes)
+	default:
+		return trustedQueryMapExpression(value, latest.position, assignments, addressEscapes)
+	}
+}
+
+func trustedQueryMapExpression(value ast.Expr, before token.Pos, assignments map[string][]routeAssignment,
+	addressEscapes map[any][]token.Pos,
+) bool {
 	if variable, ok := value.(*ast.Ident); ok {
-		return aliases[variable.Name]
+		return trustedQueryMapAt(variable, before, assignments, addressEscapes)
+	}
+
+	if composite, ok := value.(*ast.CompositeLit); ok {
+		if !isURLValuesType(composite.Type) {
+			return false
+		}
+
+		for _, element := range composite.Elts {
+			pair, isPair := element.(*ast.KeyValueExpr)
+			if !isPair || !generatedParameter(pair.Key, "QueryParam") {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	if call, ok := value.(*ast.CallExpr); ok && isIdentifier(call.Fun, "make") && len(call.Args) == 1 {
+		return isURLValuesType(call.Args[0])
+	}
+
+	return false
+}
+
+func isQueryValuesExpression(value ast.Expr, aliases map[any]bool) bool {
+	if variable, ok := value.(*ast.Ident); ok {
+		return variable.Obj != nil && aliases[variable.Obj]
 	}
 
 	if parenthesized, ok := value.(*ast.ParenExpr); ok {
@@ -1848,10 +2011,8 @@ func isQueryValuesExpression(value ast.Expr, aliases map[string]bool) bool {
 		return isURLValuesType(composite.Type)
 	}
 
-	if call, ok := value.(*ast.CallExpr); ok {
-		if selector, ok := call.Fun.(*ast.SelectorExpr); ok {
-			return selector.Sel.Name == "Query" || selector.Sel.Name == "ParseQuery"
-		}
+	if call, ok := value.(*ast.CallExpr); ok && isIdentifier(call.Fun, "make") && len(call.Args) > 0 {
+		return isURLValuesType(call.Args[0])
 	}
 
 	return false
