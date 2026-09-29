@@ -111,12 +111,16 @@ func main() {
 }
 
 func run(root string, check bool) error {
-	openAPI, err := readYAML[openAPIDocument](filepath.Join(root, "api", "openapi.yaml"))
+	var openAPI openAPIDocument
+
+	err := readYAML(filepath.Join(root, "api", "openapi.yaml"), &openAPI)
 	if err != nil {
 		return err
 	}
 
-	asyncAPI, err := readYAML[asyncAPIDocument](filepath.Join(root, "api", "asyncapi.yaml"))
+	var asyncAPI asyncAPIDocument
+
+	err = readYAML(filepath.Join(root, "api", "asyncapi.yaml"), &asyncAPI)
 	if err != nil {
 		return err
 	}
@@ -174,23 +178,19 @@ func run(root string, check bool) error {
 	return nil
 }
 
-func readYAML[T any](path string) (T, error) {
-	var doc T
-
+func readYAML(path string, target any) error {
 	//nolint:gosec // The CLI reads the explicit local OpenAPI or AsyncAPI path.
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return doc, fmt.Errorf("read YAML %s: %w", path, err)
+		return fmt.Errorf("read YAML %s: %w", path, err)
 	}
 
-	{
-		err := yaml.Unmarshal(data, &doc)
-		if err != nil {
-			return doc, fmt.Errorf("parse %s: %w", filepath.ToSlash(path), err)
-		}
+	err = yaml.Unmarshal(data, target)
+	if err != nil {
+		return fmt.Errorf("parse %s: %w", filepath.ToSlash(path), err)
 	}
 
-	return doc, nil
+	return nil
 }
 
 func collectRoutes(doc openAPIDocument) ([]route, error) {
