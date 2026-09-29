@@ -7,8 +7,11 @@ import (
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
 
-// ControlPowerFeature controls power on an endpoint
-func (c *Client) ControlPowerFeature(ctx context.Context, req *alexamodels.PowerControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
+// ControlPowerFeature controls power on an endpoint.
+func (c *Client) ControlPowerFeature(
+	ctx context.Context,
+	req *alexamodels.PowerControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
 	operationName := FeatureOperationNameTurnoff
 	if req.State == "ON" {
 		operationName = FeatureOperationNameTurnon
@@ -21,33 +24,31 @@ func (c *Client) ControlPowerFeature(ctx context.Context, req *alexamodels.Power
 		Payload:              nil,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlSpeakerFeature controls speaker volume on an endpoint
-func (c *Client) ControlSpeakerFeature(ctx context.Context, req *alexamodels.SpeakerControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
-	var operationName FeatureOperationName
-	var payload map[string]interface{}
+// ControlSpeakerFeature controls speaker volume on an endpoint.
+func (c *Client) ControlSpeakerFeature(
+	ctx context.Context,
+	req *alexamodels.SpeakerControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
+	var (
+		operationName FeatureOperationName
+		payload       map[string]interface{}
+	)
 
-	if req.SetVolume && req.Volume != nil {
+	switch {
+	case req.SetVolume && req.Volume != nil:
 		operationName = FeatureOperationNameSetvolume
 		payload = map[string]interface{}{
 			"volume": *req.Volume,
 		}
-	} else if req.Delta != nil {
+	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustvolume
 		payload = map[string]interface{}{
 			"volumeDelta": *req.Delta,
 		}
-	} else {
+	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either volume or delta must be specified",
 		}
@@ -61,33 +62,31 @@ func (c *Client) ControlSpeakerFeature(ctx context.Context, req *alexamodels.Spe
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlBrightnessFeature controls brightness on an endpoint
-func (c *Client) ControlBrightnessFeature(ctx context.Context, req *alexamodels.BrightnessControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
-	var operationName FeatureOperationName
-	var payload map[string]interface{}
+// ControlBrightnessFeature controls brightness on an endpoint.
+func (c *Client) ControlBrightnessFeature(
+	ctx context.Context,
+	req *alexamodels.BrightnessControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
+	var (
+		operationName FeatureOperationName
+		payload       map[string]interface{}
+	)
 
-	if req.SetBrightness && req.Brightness != nil {
+	switch {
+	case req.SetBrightness && req.Brightness != nil:
 		operationName = FeatureOperationNameSetbrightness
 		payload = map[string]interface{}{
 			"brightness": *req.Brightness,
 		}
-	} else if req.Delta != nil {
+	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustbrightness
 		payload = map[string]interface{}{
 			"brightnessDelta": *req.Delta,
 		}
-	} else {
+	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either brightness or delta must be specified",
 		}
@@ -102,19 +101,14 @@ func (c *Client) ControlBrightnessFeature(ctx context.Context, req *alexamodels.
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlColorFeature controls color on an endpoint
-func (c *Client) ControlColorFeature(ctx context.Context, req *alexamodels.ColorControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
+// ControlColorFeature controls color on an endpoint.
+func (c *Client) ControlColorFeature(
+	ctx context.Context,
+	req *alexamodels.ColorControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
 	payload := map[string]interface{}{
 		"color": map[string]interface{}{
 			"hue":        req.Hue,
@@ -132,34 +126,32 @@ func (c *Client) ControlColorFeature(ctx context.Context, req *alexamodels.Color
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlColorTemperatureFeature controls color temperature on an endpoint
-func (c *Client) ControlColorTemperatureFeature(ctx context.Context, req *alexamodels.ColorTemperatureControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
-	var operationName FeatureOperationName
-	var payload map[string]interface{}
+// ControlColorTemperatureFeature controls color temperature on an endpoint.
+func (c *Client) ControlColorTemperatureFeature(
+	ctx context.Context,
+	req *alexamodels.ColorTemperatureControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
+	var (
+		operationName FeatureOperationName
+		payload       map[string]interface{}
+	)
 
-	if req.SetTemperature && req.ColorTemperature != nil {
+	switch {
+	case req.SetTemperature && req.ColorTemperature != nil:
 		operationName = FeatureOperationNameSetcolortemperature
 		payload = map[string]interface{}{
 			"colorTemperatureInKelvin": *req.ColorTemperature,
 		}
-	} else if req.Increase {
+	case req.Increase:
 		operationName = FeatureOperationNameIncreasecolortemperature
 		payload = map[string]interface{}{}
-	} else if !req.Increase {
+	case !req.Increase:
 		operationName = FeatureOperationNameDecreasecolortemperature
 		payload = map[string]interface{}{}
-	} else {
+	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either colorTemperature or delta must be specified",
 		}
@@ -174,19 +166,14 @@ func (c *Client) ControlColorTemperatureFeature(ctx context.Context, req *alexam
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlLockFeature controls lock state on an endpoint
-func (c *Client) ControlLockFeature(ctx context.Context, req *alexamodels.LockControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
+// ControlLockFeature controls lock state on an endpoint.
+func (c *Client) ControlLockFeature(
+	ctx context.Context,
+	req *alexamodels.LockControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
 	operationName := FeatureOperationNameUnlock
 	if req.State == "LOCKED" {
 		operationName = FeatureOperationNameLock
@@ -205,33 +192,31 @@ func (c *Client) ControlLockFeature(ctx context.Context, req *alexamodels.LockCo
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlModeFeature controls mode on an endpoint
-func (c *Client) ControlModeFeature(ctx context.Context, req *alexamodels.ModeControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
-	var operationName FeatureOperationName
-	var payload map[string]interface{}
+// ControlModeFeature controls mode on an endpoint.
+func (c *Client) ControlModeFeature(
+	ctx context.Context,
+	req *alexamodels.ModeControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
+	var (
+		operationName FeatureOperationName
+		payload       map[string]interface{}
+	)
 
-	if req.SetMode && req.Mode != nil {
+	switch {
+	case req.SetMode && req.Mode != nil:
 		operationName = FeatureOperationNameSetmode
 		payload = map[string]interface{}{
 			"mode": *req.Mode,
 		}
-	} else if req.Delta != nil {
+	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustmode
 		payload = map[string]interface{}{
 			"modeDelta": *req.Delta,
 		}
-	} else {
+	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either mode or delta must be specified",
 		}
@@ -246,33 +231,31 @@ func (c *Client) ControlModeFeature(ctx context.Context, req *alexamodels.ModeCo
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlRangeFeature controls range value on an endpoint
-func (c *Client) ControlRangeFeature(ctx context.Context, req *alexamodels.RangeControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
-	var operationName FeatureOperationName
-	var payload map[string]interface{}
+// ControlRangeFeature controls range value on an endpoint.
+func (c *Client) ControlRangeFeature(
+	ctx context.Context,
+	req *alexamodels.RangeControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
+	var (
+		operationName FeatureOperationName
+		payload       map[string]interface{}
+	)
 
-	if req.SetValue && req.RangeValue != nil {
+	switch {
+	case req.SetValue && req.RangeValue != nil:
 		operationName = FeatureOperationNameSetrangevalue
 		payload = map[string]interface{}{
 			"rangeValue": *req.RangeValue,
 		}
-	} else if req.Delta != nil {
+	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustrangevalue
 		payload = map[string]interface{}{
 			"rangeValueDelta": *req.Delta,
 		}
-	} else {
+	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either rangeValue or delta must be specified",
 		}
@@ -287,19 +270,14 @@ func (c *Client) ControlRangeFeature(ctx context.Context, req *alexamodels.Range
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlToggleFeature controls toggle state on an endpoint
-func (c *Client) ControlToggleFeature(ctx context.Context, req *alexamodels.ToggleControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
+// ControlToggleFeature controls toggle state on an endpoint.
+func (c *Client) ControlToggleFeature(
+	ctx context.Context,
+	req *alexamodels.ToggleControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
 	operationName := FeatureOperationNameTurnoff
 	if req.State == "ON" {
 		operationName = FeatureOperationNameTurnon
@@ -318,33 +296,31 @@ func (c *Client) ControlToggleFeature(ctx context.Context, req *alexamodels.Togg
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlPercentageFeature controls percentage on an endpoint
-func (c *Client) ControlPercentageFeature(ctx context.Context, req *alexamodels.PercentageControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
-	var operationName FeatureOperationName
-	var payload map[string]interface{}
+// ControlPercentageFeature controls percentage on an endpoint.
+func (c *Client) ControlPercentageFeature(
+	ctx context.Context,
+	req *alexamodels.PercentageControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
+	var (
+		operationName FeatureOperationName
+		payload       map[string]interface{}
+	)
 
-	if req.SetPercentage && req.Percentage != nil {
+	switch {
+	case req.SetPercentage && req.Percentage != nil:
 		operationName = FeatureOperationNameSetpercentage
 		payload = map[string]interface{}{
 			"percentage": *req.Percentage,
 		}
-	} else if req.Delta != nil {
+	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustpercentage
 		payload = map[string]interface{}{
 			"percentageDelta": *req.Delta,
 		}
-	} else {
+	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either percentage or delta must be specified",
 		}
@@ -359,33 +335,31 @@ func (c *Client) ControlPercentageFeature(ctx context.Context, req *alexamodels.
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlPowerLevelFeature controls power level on an endpoint
-func (c *Client) ControlPowerLevelFeature(ctx context.Context, req *alexamodels.PowerLevelControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
-	var operationName FeatureOperationName
-	var payload map[string]interface{}
+// ControlPowerLevelFeature controls power level on an endpoint.
+func (c *Client) ControlPowerLevelFeature(
+	ctx context.Context,
+	req *alexamodels.PowerLevelControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
+	var (
+		operationName FeatureOperationName
+		payload       map[string]interface{}
+	)
 
-	if req.SetPowerLevel && req.PowerLevel != nil {
+	switch {
+	case req.SetPowerLevel && req.PowerLevel != nil:
 		operationName = FeatureOperationNameSetpercentage
 		payload = map[string]interface{}{
 			"powerLevel": *req.PowerLevel,
 		}
-	} else if req.Delta != nil {
+	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustpercentage
 		payload = map[string]interface{}{
 			"powerLevelDelta": *req.Delta,
 		}
-	} else {
+	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either powerLevel or delta must be specified",
 		}
@@ -400,22 +374,18 @@ func (c *Client) ControlPowerLevelFeature(ctx context.Context, req *alexamodels.
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlActionFeature controls action on an endpoint
-func (c *Client) ControlActionFeature(ctx context.Context, req *alexamodels.ActionControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
+// ControlActionFeature controls action on an endpoint.
+func (c *Client) ControlActionFeature(
+	ctx context.Context,
+	req *alexamodels.ActionControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
 	payload := map[string]interface{}{
 		"action": req.Action,
 	}
+
 	if req.Params != nil {
 		for k, v := range req.Params {
 			payload[k] = v
@@ -431,23 +401,21 @@ func (c *Client) ControlActionFeature(ctx context.Context, req *alexamodels.Acti
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlThermostatFeature controls thermostat target temperature on an endpoint
-func (c *Client) ControlThermostatFeature(ctx context.Context, req *alexamodels.ThermostatControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
-	var operationName FeatureOperationName
-	var payload map[string]interface{}
+// ControlThermostatFeature controls thermostat target temperature on an endpoint.
+func (c *Client) ControlThermostatFeature(
+	ctx context.Context,
+	req *alexamodels.ThermostatControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
+	var (
+		operationName FeatureOperationName
+		payload       map[string]interface{}
+	)
 
-	if req.SetSetpoint && req.Value != nil {
+	switch {
+	case req.SetSetpoint && req.Value != nil:
 		operationName = FeatureOperationNameSettargetsetpoint
 		payload = map[string]interface{}{
 			"targetSetpoint": map[string]interface{}{
@@ -455,7 +423,7 @@ func (c *Client) ControlThermostatFeature(ctx context.Context, req *alexamodels.
 				"scale": req.Scale,
 			},
 		}
-	} else if req.Delta != nil {
+	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjusttargetsetpoint
 		payload = map[string]interface{}{
 			"targetSetpointDelta": map[string]interface{}{
@@ -463,7 +431,7 @@ func (c *Client) ControlThermostatFeature(ctx context.Context, req *alexamodels.
 				"scale": req.Scale,
 			},
 		}
-	} else {
+	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either value or delta must be specified",
 		}
@@ -478,19 +446,14 @@ func (c *Client) ControlThermostatFeature(ctx context.Context, req *alexamodels.
 		Payload:              payload,
 	}
 
-	input := SetEndpointFeaturesInput{
-		FeatureControlRequests: []FeatureControlRequest{featureReq},
-	}
-
-	gqlResp, err := c.SetEndpointFeatures(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToFeatureControlResponse(gqlResp), nil
+	return c.sendFeatureControlRequest(ctx, featureReq)
 }
 
-// ControlThermostatModeFeature controls thermostat mode on an endpoint
-func (c *Client) ControlThermostatModeFeature(ctx context.Context, req *alexamodels.ThermostatModeControlRequest) (*alexaapimodels.FeatureControlResponse, error) {
+// ControlThermostatModeFeature controls thermostat mode on an endpoint.
+func (c *Client) ControlThermostatModeFeature(
+	ctx context.Context,
+	req *alexamodels.ThermostatModeControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
 	payload := map[string]interface{}{
 		"thermostatMode": req.Mode,
 	}
@@ -504,6 +467,13 @@ func (c *Client) ControlThermostatModeFeature(ctx context.Context, req *alexamod
 		Payload:              payload,
 	}
 
+	return c.sendFeatureControlRequest(ctx, featureReq)
+}
+
+func (c *Client) sendFeatureControlRequest(
+	ctx context.Context,
+	featureReq FeatureControlRequest,
+) (*alexaapimodels.FeatureControlResponse, error) {
 	input := SetEndpointFeaturesInput{
 		FeatureControlRequests: []FeatureControlRequest{featureReq},
 	}
@@ -512,5 +482,6 @@ func (c *Client) ControlThermostatModeFeature(ctx context.Context, req *alexamod
 	if err != nil {
 		return nil, err
 	}
+
 	return ConvertToFeatureControlResponse(gqlResp), nil
 }

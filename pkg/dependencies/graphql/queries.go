@@ -15,9 +15,10 @@ import (
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
+// NexusGraphqlEndpoint is the provider path used to execute Nexus GraphQL queries.
 const NexusGraphqlEndpoint = apiroutes.PathExecuteNexusGraphQL
 
-// ListEndpoints executes a GraphQL query to list endpoints using genqlient
+// ListEndpoints executes a GraphQL query to list endpoints using genqlient.
 func (c *Client) ListEndpoints(ctx context.Context, input ListEndpointsInput) (*ListEndpointsResponse, error) {
 	// Create a genqlient client adapter
 	genqlientClient := &genqlientClientAdapter{
@@ -29,7 +30,7 @@ func (c *Client) ListEndpoints(ctx context.Context, input ListEndpointsInput) (*
 	return ListEndpoints(ctx, genqlientClient, input)
 }
 
-// GetEndpoint executes a GraphQL query to get a specific endpoint using genqlient
+// GetEndpoint executes a GraphQL query to get a specific endpoint using genqlient.
 func (c *Client) GetEndpoint(ctx context.Context, endpointID string) (*GetEndpointResponse, error) {
 	// Create a genqlient client adapter
 	genqlientClient := &genqlientClientAdapter{
@@ -41,7 +42,7 @@ func (c *Client) GetEndpoint(ctx context.Context, endpointID string) (*GetEndpoi
 	return GetEndpoint(ctx, genqlientClient, endpointID)
 }
 
-// ListEndpointsWithPagination executes a GraphQL query to list endpoints with pagination support
+// ListEndpointsWithPagination executes a GraphQL query to list endpoints with pagination support.
 func (c *Client) ListEndpointsWithPagination(ctx context.Context, input ListEndpointsInput) (*ListEndpointsResponse, error) {
 	// If pagination is disabled, enable it with default page size
 	if input.PaginationParams.DisablePagination {
@@ -52,6 +53,7 @@ func (c *Client) ListEndpointsWithPagination(ctx context.Context, input ListEndp
 	return c.ListEndpoints(ctx, input)
 }
 
+// ListEndpointsWithoutStates lists endpoints without their state properties.
 func (c *Client) ListEndpointsWithoutStates(ctx context.Context, input EndpointsQueryParams) (*EndpointsResponse, error) {
 	// Create a genqlient client adapter
 	genqlientClient := &genqlientClientAdapter{
@@ -59,10 +61,11 @@ func (c *Client) ListEndpointsWithoutStates(ctx context.Context, input Endpoints
 		httpClient: c.httpClient,
 		getToken:   c.getToken,
 	}
+
 	return Endpoints(ctx, genqlientClient, input)
 }
 
-// ListAllEndpoints fetches all endpoints by automatically handling pagination
+// ListAllEndpoints fetches all endpoints by automatically handling pagination.
 func (c *Client) ListAllEndpoints(ctx context.Context, input ListEndpointsInput) ([]ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpoint, error) {
 	var allEndpoints []ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpoint
 
@@ -110,7 +113,7 @@ func (c *Client) ListEndpointsWithStates(ctx context.Context, input ListEndpoint
 	return ListEndpointsWithStates(ctx, genqlientClient, input)
 }
 
-// SetEndpointFeatures executes a GraphQL mutation to set endpoint features using genqlient
+// SetEndpointFeatures executes a GraphQL mutation to set endpoint features using genqlient.
 func (c *Client) SetEndpointFeatures(ctx context.Context, input SetEndpointFeaturesInput) (*SetEndpointFeaturesResponse, error) {
 	// Create a genqlient client adapter
 	genqlientClient := &genqlientClientAdapter{
@@ -122,14 +125,15 @@ func (c *Client) SetEndpointFeatures(ctx context.Context, input SetEndpointFeatu
 	// The entity seemingly needs to be set for the operation to work.
 	for i := range input.FeatureControlRequests {
 		if input.FeatureControlRequests[i].EntityId == "" {
-			trimmedId := strings.TrimPrefix(input.FeatureControlRequests[i].EndpointId, "amzn1.alexa.endpoint.")
-			input.FeatureControlRequests[i].EntityId = trimmedId
+			trimmedID := strings.TrimPrefix(input.FeatureControlRequests[i].EndpointId, "amzn1.alexa.endpoint.")
+			input.FeatureControlRequests[i].EntityId = trimmedID
 		}
 	}
+
 	return SetEndpointFeatures(ctx, genqlientClient, input)
 }
 
-// RequestEndpointQualityOfService executes a GraphQL mutation to request endpoint quality of service using genqlient
+// RequestEndpointQualityOfService executes a GraphQL mutation to request endpoint quality of service using genqlient.
 func (c *Client) RequestEndpointQualityOfService(ctx context.Context, input EndpointQualityOfServiceInput) (*RequestEndpointQualityOfServiceResponse, error) {
 	// Create a genqlient client adapter
 	genqlientClient := &genqlientClientAdapter{
@@ -141,7 +145,7 @@ func (c *Client) RequestEndpointQualityOfService(ctx context.Context, input Endp
 	return RequestEndpointQualityOfService(ctx, genqlientClient, input)
 }
 
-// Subscribe executes a GraphQL mutation to subscribe to endpoint events using genqlient
+// Subscribe executes a GraphQL mutation to subscribe to endpoint events using genqlient.
 func (c *Client) Subscribe(ctx context.Context, input SubscribeConfiguration) (*SubscribeResponse, error) {
 	// Create a genqlient client adapter
 	genqlientClient := &genqlientClientAdapter{
@@ -153,7 +157,7 @@ func (c *Client) Subscribe(ctx context.Context, input SubscribeConfiguration) (*
 	return Subscribe(ctx, genqlientClient, input)
 }
 
-// genqlientClientAdapter adapts our Client to genqlient's graphql.Client interface
+// genqlientClientAdapter adapts our Client to genqlient's graphql.Client interface.
 type genqlientClientAdapter struct {
 	baseURL    string
 	httpClient *http.Client
@@ -178,10 +182,15 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 			Err:     err,
 		}
 	}
+
 	var wireRequest wire.WireGraphQLRequest
-	if err := json.Unmarshal(bodyBytes, &wireRequest); err != nil {
-		return &alexaapimodels.BadRequestError{Message: "failed to decode request", Err: err}
+	{
+		err := json.Unmarshal(bodyBytes, &wireRequest)
+		if err != nil {
+			return &alexaapimodels.BadRequestError{Message: "failed to decode request", Err: err}
+		}
 	}
+
 	bodyBytes, err = json.Marshal(wireRequest)
 	if err != nil {
 		return &alexaapimodels.BadRequestError{Message: "failed to marshal generated request", Err: err}
@@ -208,6 +217,7 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 			Err:     err,
 		}
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -229,18 +239,26 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 	// Decode through the schema-generated HTTP response model before adapting
 	// it to genqlient's response type.
 	var wireResponse wire.WireGraphQLResponse
-	if err := json.Unmarshal(bodyBytes, &wireResponse); err != nil {
-		return &alexaapimodels.BadRequestError{
-			Message: "failed to decode response",
-			Err:     err,
+	{
+		err := json.Unmarshal(bodyBytes, &wireResponse)
+		if err != nil {
+			return &alexaapimodels.BadRequestError{
+				Message: "failed to decode response",
+				Err:     err,
+			}
 		}
 	}
+
 	bodyBytes, err = json.Marshal(wireResponse)
 	if err != nil {
 		return &alexaapimodels.BadRequestError{Message: "failed to marshal generated response", Err: err}
 	}
-	if err := json.Unmarshal(bodyBytes, resp); err != nil {
-		return &alexaapimodels.BadRequestError{Message: "failed to adapt response", Err: err}
+
+	{
+		err := json.Unmarshal(bodyBytes, resp)
+		if err != nil {
+			return &alexaapimodels.BadRequestError{Message: "failed to adapt response", Err: err}
+		}
 	}
 
 	// Check for GraphQL errors

@@ -1,24 +1,24 @@
 package alexaapimodels
 
-// CodePairResponse represents the response from CBL code generation
+// CodePairResponse represents the response from CBL code generation.
 type CodePairResponse struct {
 	PublicCode  string `json:"publicCode"`
 	PrivateCode string `json:"privateCode"`
 }
 
-// RegistrationResponse represents a successful MAP registration response
+// RegistrationResponse represents a successful MAP registration response.
 type RegistrationResponse struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 }
 
-// TokenRefreshRequest represents a token refresh request
+// TokenRefreshRequest represents a token refresh request.
 type TokenRefreshRequest struct {
 	RefreshToken string                   `json:"refreshToken"`
 	Config       DeviceRegistrationConfig `json:"config"`
 }
 
-// TokenRefreshResponse represents a token refresh response
+// TokenRefreshResponse represents a token refresh response.
 type TokenRefreshResponse struct {
 	AccessToken      string `json:"accessToken"`
 	ExpiresInSeconds int    `json:"expiresInSeconds"`
@@ -40,7 +40,7 @@ func DefaultDeviceRegistrationConfig(deviceSerial, deviceName string) DeviceRegi
 	}
 }
 
-// UserInfoRequest contains options for getting user info
+// UserInfoRequest contains options for getting user info.
 type UserInfoRequest struct {
 	// Platform identifier (e.g., "ios", "android")
 	Platform string `json:"platform,omitempty"`
@@ -50,7 +50,7 @@ type UserInfoRequest struct {
 	CSRFToken string `json:"csrfToken,omitempty"`
 }
 
-// UserInfo represents user information from the /api/users/me endpoint
+// UserInfo represents user information from the /api/users/me endpoint.
 type UserInfo struct {
 	// This is the country code for country of residence for the customer.
 	CountryOfResidence string `json:"countryOfResidence"`

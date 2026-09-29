@@ -1,12 +1,11 @@
-// Package models provides data structures for Alexa API interactions.
-// It includes types for authentication, devices, events, and API requests/responses.
+// Package alexamodels provides dependency API request and response models.
 package alexamodels
 
 import (
 	"time"
 )
 
-// Token represents an OAuth access token with expiration tracking
+// Token represents an OAuth access token with expiration tracking.
 type Token struct {
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token,omitempty"`
@@ -16,7 +15,7 @@ type Token struct {
 	Scope        string    `json:"scope,omitempty"`
 }
 
-// IsExpired checks if the token is expired or will expire soon (within 1 minute)
+// IsExpired checks if the token is expired or will expire soon (within 1 minute).
 func (t *Token) IsExpired() bool {
 	if t.ExpiresAt.IsZero() {
 		return false
@@ -25,7 +24,7 @@ func (t *Token) IsExpired() bool {
 	return time.Now().Add(1 * time.Minute).After(t.ExpiresAt)
 }
 
-// AuthConfig represents OAuth configuration for standard flow
+// AuthConfig represents OAuth configuration for standard flow.
 type AuthConfig struct {
 	ClientID     string
 	ClientSecret string
@@ -35,7 +34,7 @@ type AuthConfig struct {
 	TokenURL     string
 }
 
-// DeviceAuthConfig represents OAuth device authorization configuration
+// DeviceAuthConfig represents OAuth device authorization configuration.
 type DeviceAuthConfig struct {
 	ClientID      string
 	ClientSecret  string
@@ -44,7 +43,7 @@ type DeviceAuthConfig struct {
 	Scopes        []string
 }
 
-// DeviceAuthResponse represents the response from device authorization endpoint
+// DeviceAuthResponse represents the response from device authorization endpoint.
 type DeviceAuthResponse struct {
 	DeviceCode              string `json:"device_code"`
 	UserCode                string `json:"user_code"`
@@ -56,7 +55,7 @@ type DeviceAuthResponse struct {
 
 // MAP (Mobile Access Protocol) Authentication Models
 
-// RegistrationData represents device registration information for MAP authentication
+// RegistrationData represents device registration information for MAP authentication.
 type RegistrationData struct {
 	AppName      string `json:"app_name"`
 	AppVersion   string `json:"app_version"`
@@ -68,31 +67,32 @@ type RegistrationData struct {
 	DeviceName   string `json:"device_name"`
 }
 
-// EmailPasswordAuth represents email/password authentication data
+// EmailPasswordAuth represents email/password authentication data.
 type EmailPasswordAuth struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-// CodePairAuth represents code-based linking authentication data
+// CodePairAuth represents code-based linking authentication data.
 type CodePairAuth struct {
 	PublicCode  string `json:"public_code"`
 	PrivateCode string `json:"private_code"`
 }
 
-// RegistrationRequest represents a MAP registration request
+// RegistrationRequest represents a MAP registration request.
 type RegistrationRequest struct {
 	RequestedTokenType []string         `json:"requested_token_type"`
 	RegistrationData   RegistrationData `json:"registration_data"`
 	AuthData           AuthData         `json:"auth_data"`
 }
 
+// AuthData contains the authentication method used for device registration.
 type AuthData struct {
 	CodePairAuth      *CodePairAuth      `json:"code_pair,omitempty"`
 	EmailPasswordAuth *EmailPasswordAuth `json:"email_password,omitempty"`
 }
 
-// RegistrationResponse represents a successful MAP registration response
+// RegistrationResponse represents a successful MAP registration response.
 type RegistrationResponse struct {
 	Response struct {
 		Success struct {
@@ -106,7 +106,7 @@ type RegistrationResponse struct {
 	} `json:"response"`
 }
 
-// ChallengeResponse represents a challenge response from MAP registration
+// ChallengeResponse represents a challenge response from MAP registration.
 type ChallengeResponse struct {
 	Response struct {
 		Challenge struct {
@@ -116,7 +116,7 @@ type ChallengeResponse struct {
 	} `json:"response"`
 }
 
-// CodePairRequest represents a request to generate CBL codes
+// CodePairRequest represents a request to generate CBL codes.
 type CodePairRequest struct {
 	CodeData struct {
 		AppName               string `json:"app_name"`
@@ -132,13 +132,13 @@ type CodePairRequest struct {
 	Scopes []string `json:"scopes"`
 }
 
-// CodePairResponse represents the response from CBL code generation
+// CodePairResponse represents the response from CBL code generation.
 type CodePairResponse struct {
 	PublicCode  string `json:"public_code"`
 	PrivateCode string `json:"private_code"`
 }
 
-// TokenRefreshRequest represents a token refresh request
+// TokenRefreshRequest represents a token refresh request.
 type TokenRefreshRequest struct {
 	AppName            string `json:"app_name"`
 	AppVersion         string `json:"app_version"`
@@ -154,7 +154,7 @@ type TokenRefreshRequest struct {
 	} `json:"device_metadata"`
 }
 
-// TokenRefreshResponse represents a token refresh response
+// TokenRefreshResponse represents a token refresh response.
 type TokenRefreshResponse struct {
 	AccessToken      string `json:"access_token"`
 	ExpiresInSeconds int    `json:"expires_in"`

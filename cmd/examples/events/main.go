@@ -1,3 +1,4 @@
+// Package main demonstrates receiving Alexa endpoint events.
 package main
 
 import (
@@ -12,20 +13,36 @@ import (
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 )
 
+const exampleSubscriptionDurationMinutes = 4
+const errMissingBearerToken staticError = "Set ALEXA_BEARER_TOKEN"
+
+type staticError string
+
+func (err staticError) Error() string { return string(err) }
+
 func main() {
+	runErr := run()
+	if runErr != nil {
+		log.Fatal(runErr)
+	}
+}
+
+func run() error {
 	bearerToken := os.Getenv("ALEXA_BEARER_TOKEN")
 	if bearerToken == "" {
-		log.Fatal("Set ALEXA_BEARER_TOKEN")
+		return errMissingBearerToken
 	}
 
 	client, err := alexa.NewClient()
 	if err != nil {
-		log.Fatalf("Create Alexa client: %v", err)
+		return fmt.Errorf("create Alexa client: %w", err)
 	}
+
 	session, err := client.NewSession(alexa.WithBearerToken(bearerToken))
 	if err != nil {
-		log.Fatalf("Create Alexa session: %v", err)
+		return fmt.Errorf("create Alexa session: %w", err)
 	}
+
 	defer func() { _ = session.Close() }()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -35,32 +52,53 @@ func main() {
 		Entities: []alexaapimodels.SubscribeEntity{{
 			EntityType: alexaapimodels.EntityTypeEndpoint,
 		}},
-		DurationInMinutes: 4,
+		DurationInMinutes: exampleSubscriptionDurationMinutes,
 	})
 	if err != nil {
-		log.Fatalf("Subscribe to endpoint events: %v", err)
+		return fmt.Errorf("subscribe to endpoint events: %w", err)
 	}
 
-	fmt.Println("Connecting to event stream...")
+	outputLine("Connecting to event stream...")
+
 	conn, err := session.ConnectEvents(ctx)
 	if err != nil {
-		log.Fatalf("Connect to event stream: %v", err)
+		return fmt.Errorf("connect to event stream: %w", err)
 	}
+
 	go func() {
 		<-ctx.Done()
+
 		_ = conn.Close()
 	}()
 
-	fmt.Println("Listening for events; press Ctrl+C to exit")
+	outputLine("Listening for events; press Ctrl+C to exit")
+
 	for {
 		event, err := conn.Receive()
 		if err != nil {
 			if ctx.Err() != nil {
-				return
+				return nil
 			}
+
 			log.Printf("Receive event: %v", err)
-			return
+
+			return nil
 		}
-		fmt.Printf("Event %s/%s for endpoint %s: %+v\n", event.Namespace, event.Name, event.EndpointID, event.Payload)
+
+		outputf("Event %s/%s for endpoint %s: %+v\n", event.Namespace, event.Name, event.EndpointID, event.Payload)
+	}
+}
+
+func outputLine(values ...any) {
+	_, err := fmt.Fprintln(os.Stdout, values...)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func outputf(format string, values ...any) {
+	_, err := fmt.Fprintf(os.Stdout, format, values...)
+	if err != nil {
+		panic(err)
 	}
 }

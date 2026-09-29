@@ -1,9 +1,11 @@
 package alexaapimodels
 
+// EndpointQuery selects optional fields to include in an endpoint listing.
 type EndpointQuery struct {
 	IncludeFields *EndpointIncludeFields `json:"includeFields,omitempty"`
 }
 
+// EndpointIncludeFields controls which optional endpoint details are returned.
 type EndpointIncludeFields struct {
 	// Include the properties of the endpoints (power on, volume, etc) in the response object.
 	Properties bool `json:"states,omitempty"`
@@ -11,18 +13,18 @@ type EndpointIncludeFields struct {
 	Features bool `json:"capabilities,omitempty"`
 }
 
-// PlayerStateRequest represents a request to get player state
+// PlayerStateRequest represents a request to get player state.
 type PlayerStateRequest struct {
 	// Target is the endpoint to get player state for
 	Target EndpointInterface `json:"-"` // Not serialized, used to extract device info
 }
 
-// PlayerStateResponse represents the response from getting player state
+// PlayerStateResponse represents the response from getting player state.
 type PlayerStateResponse struct {
 	PlayerInfo *PlayerInfo `json:"playerInfo,omitempty"`
 }
 
-// PlayerInfo represents player information
+// PlayerInfo represents player information.
 type PlayerInfo struct {
 	Hint             *string     `json:"hint,omitempty"`
 	InfoText         *InfoText   `json:"infoText,omitempty"`
@@ -46,7 +48,7 @@ type PlayerInfo struct {
 	Volume           *Volume     `json:"volume,omitempty"`
 }
 
-// InfoText represents text information displayed to the user
+// InfoText represents text information displayed to the user.
 type InfoText struct {
 	Header         *string `json:"header,omitempty"`
 	HeaderSubtext1 *string `json:"headerSubtext1,omitempty"`
@@ -66,7 +68,7 @@ type Art struct {
 	IconStyles  *string `json:"iconStyles,omitempty"`
 }
 
-// Progress represents playback progress information
+// Progress represents playback progress information.
 type Progress struct {
 	AllowScrubbing bool    `json:"allowScrubbing,omitempty"`
 	LocationInfo   *string `json:"locationInfo,omitempty"`
@@ -76,7 +78,7 @@ type Progress struct {
 	Visible        bool    `json:"visible,omitempty"`
 }
 
-// Provider represents the media provider information
+// Provider represents the media provider information.
 type Provider struct {
 	ArtOverlay          *Art    `json:"artOverlay,omitempty"`
 	FallbackMainArt     *Art    `json:"fallbackMainArt,omitempty"`
@@ -85,14 +87,14 @@ type Provider struct {
 	ProviderName        string  `json:"providerName,omitempty"`
 }
 
-// Template represents the display template
+// Template represents the display template.
 type Template struct {
 	Art                *Art   `json:"art,omitempty"`
 	BackgroundImageURL string `json:"backgroundImageUrl,omitempty"`
 	TemplateType       string `json:"templateType,omitempty"`
 }
 
-// Transport represents transport controls state
+// Transport represents transport controls state.
 type Transport struct {
 	ClosedCaptions    *string            `json:"closedCaptions,omitempty"`
 	LayoutType        string             `json:"layoutType,omitempty"`
@@ -105,14 +107,14 @@ type Transport struct {
 	ThumbsUp          string             `json:"thumbsUp,omitempty"`
 }
 
-// RateContentAction represents rating action information
+// RateContentAction represents rating action information.
 type RateContentAction struct {
 	MediaOwnerCustomerId string  `json:"mediaOwnerCustomerId,omitempty"`
 	Rating               *string `json:"rating,omitempty"`
 	Type                 string  `json:"type,omitempty"`
 }
 
-// Volume represents volume information
+// Volume represents volume information.
 type Volume struct {
 	Muted  bool `json:"muted,omitempty"`
 	Volume int  `json:"volume,omitempty"` // Volume level (0-100)

@@ -1,3 +1,4 @@
+// Package testing provides synthetic and captured transport helpers.
 package testing
 
 import (
@@ -11,13 +12,15 @@ import (
 	"sync/atomic"
 )
 
-// CapturePair represents a captured HTTP request/response pair
+const captureDirectoryPermissions = 0o750
+
+// CapturePair represents a captured HTTP request/response pair.
 type CapturePair struct {
 	Request  CapturedRequest  `json:"request"`
 	Response CapturedResponse `json:"response"`
 }
 
-// CapturedRequest represents a captured HTTP request
+// CapturedRequest represents a captured HTTP request.
 type CapturedRequest struct {
 	Method  string      `json:"method"`
 	URL     string      `json:"url"`
@@ -25,7 +28,7 @@ type CapturedRequest struct {
 	Body    []byte      `json:"body,omitempty"`
 }
 
-// CapturedResponse represents a captured HTTP response
+// CapturedResponse represents a captured HTTP response.
 type CapturedResponse struct {
 	StatusCode int         `json:"status_code"`
 	Status     string      `json:"status"`
@@ -52,13 +55,15 @@ func NewNetworkCaptureRoundTripper(transport http.RoundTripper, dirPath string) 
 	}
 
 	// Create the directory if it doesn't exist
-	if err := os.MkdirAll(dirPath, 0755); err != nil {
+	err := os.MkdirAll(dirPath, captureDirectoryPermissions)
+	if err != nil {
 		return nil, fmt.Errorf("failed to create capture directory: %w", err)
 	}
 
 	return &NetworkCaptureRoundTripper{
 		transport: transport,
 		dirPath:   dirPath,
+		counter:   atomic.Uint64{},
 	}, nil
 }
 
@@ -73,10 +78,16 @@ func (t *NetworkCaptureRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 	if err != nil {
 		// Even on error, try to capture what we have
 		_ = t.writeCapture(CapturePair{
-			Request:  capturedReq,
-			Response: CapturedResponse{},
+			Request: capturedReq,
+			Response: CapturedResponse{
+				StatusCode: 0,
+				Status:     "",
+				Headers:    nil,
+				Body:       nil,
+			},
 		})
-		return nil, err
+
+		return nil, fmt.Errorf("capture HTTP round trip: %w", err)
 	}
 
 	// Capture response
@@ -94,7 +105,7 @@ func (t *NetworkCaptureRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 	return resp, nil
 }
 
-// captureRequest captures the details of an HTTP request
+// captureRequest captures the details of an HTTP request.
 func (t *NetworkCaptureRoundTripper) captureRequest(req *http.Request) CapturedRequest {
 	var body []byte
 	if req.Body != nil {
@@ -111,12 +122,12 @@ func (t *NetworkCaptureRoundTripper) captureRequest(req *http.Request) CapturedR
 	}
 }
 
-// captureResponse captures the details of an HTTP response
+// captureResponse captures the details of an HTTP response.
 func (t *NetworkCaptureRoundTripper) captureResponse(resp *http.Response) CapturedResponse {
 	var body []byte
 	if resp.Body != nil {
+		// RoundTrip restores the body after capture.
 		body, _ = io.ReadAll(resp.Body)
-		// Body will be replaced in RoundTrip
 	}
 
 	return CapturedResponse{
@@ -127,7 +138,7 @@ func (t *NetworkCaptureRoundTripper) captureResponse(resp *http.Response) Captur
 	}
 }
 
-// writeCapture writes a capture pair to a new file (thread-safe)
+// writeCapture writes a capture pair to a new file (thread-safe).
 func (t *NetworkCaptureRoundTripper) writeCapture(pair CapturePair) error {
 	// Generate a unique filename using atomic counter
 	counter := t.counter.Add(1)
@@ -135,18 +146,24 @@ func (t *NetworkCaptureRoundTripper) writeCapture(pair CapturePair) error {
 	filePath := filepath.Join(t.dirPath, filename)
 
 	// Create and write to the file
+	//nolint:gosec // The filename is generated beneath the capture directory.
 	file, err := os.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to create capture file: %w", err)
 	}
+
 	defer func() {
 		_ = file.Close()
 	}()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ") // Pretty-print JSON for readability
-	if err := encoder.Encode(pair); err != nil {
-		return fmt.Errorf("failed to encode capture pair: %w", err)
+
+	{
+		err := encoder.Encode(pair)
+		if err != nil {
+			return fmt.Errorf("failed to encode capture pair: %w", err)
+		}
 	}
 
 	return nil

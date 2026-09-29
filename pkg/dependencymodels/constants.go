@@ -2,7 +2,7 @@ package alexamodels
 
 import "github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 
-// API Paths
+// API Paths.
 const (
 	APIPathV2Endpoints             = apiroutes.PathListRestEndpoints
 	APIPathV2EndpointQuery         = apiroutes.PathQueryRestEndpoints
@@ -17,7 +17,7 @@ const (
 	APIPathNPPlayer                = apiroutes.PathGetMediaPlayerState
 )
 
-// Query Parameters
+// Query Parameters.
 const (
 	QueryParamOwner              = apiroutes.QueryParamOwner
 	QueryParamExpand             = apiroutes.QueryParamExpand
@@ -28,7 +28,7 @@ const (
 	QueryParamCSRF               = apiroutes.HeaderCsrf
 )
 
-// Default Values
+// Default Values.
 const (
 	DefaultOwnerCaller             = "~caller"
 	DefaultLocale                  = "en-US"
@@ -39,19 +39,19 @@ const (
 	DefaultAnnouncementSpeakType   = "text"
 )
 
-// Announcement Methods
+// Announcement Methods.
 const (
 	AnnouncementMethodSpeak = "speak"
 	AnnouncementMethodShow  = "show"
 	AnnouncementMethodAll   = "all"
 )
 
-// Device Families
+// Device Families.
 const (
 	DeviceFamilyFireTV = "FIRE_TV"
 )
 
-// Skill IDs
+// Skill IDs.
 const (
 	SkillIDAlexaDeviceControls = "amzn1.ask.1p.alexadevicecontrols"
 	SkillIDRoutinesMessaging   = "amzn1.ask.1p.routines.messaging"
@@ -60,7 +60,7 @@ const (
 	SkillIDRoutinesFireTV      = "amzn1.ask.1p.routines.firetv"
 )
 
-// Operation Types
+// Operation Types.
 const (
 	OperationTypeDeviceControlsStop          = "Alexa.DeviceControls.Stop"
 	OperationTypeDeviceControlsVolume        = "Alexa.DeviceControls.Volume"
@@ -78,13 +78,13 @@ const (
 	OperationTypeSound                       = "Alexa.Sound"
 )
 
-// Model Types
+// Model Types.
 const (
 	ModelTypeOpaquePayloadOperationNode = "com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode"
 	ModelTypeSequence                   = "com.amazon.alexa.behaviors.model.Sequence"
 )
 
-// Media Command Types
+// Media Command Types.
 const (
 	MediaCommandTypePause    = "PauseCommand"
 	MediaCommandTypePlay     = "PlayCommand"
@@ -96,7 +96,7 @@ const (
 	MediaCommandTypeRepeat   = "RepeatCommand"
 )
 
-// Payload Keys
+// Payload Keys.
 const (
 	PayloadKeyDeviceType            = "deviceType"
 	PayloadKeyDeviceSerialNumber    = "deviceSerialNumber"
@@ -120,13 +120,13 @@ const (
 	PayloadKeySoundStringID         = "soundStringId"
 )
 
-// Cookie Header
+// Cookie Header.
 const (
 	CookieHeaderName = apiroutes.HeaderCookie
 	CookieCSRFFormat = "csrf=%s"
 )
 
-// Alexa URL
+// Alexa URL.
 const (
 	AlexaURLBehaviors = "#v2/behaviors"
 )

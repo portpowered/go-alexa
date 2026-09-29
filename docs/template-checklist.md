@@ -2,6 +2,25 @@
 
 Source checklist: `go-third-party-template/docs/library-standards.md`, `docs/verification.md`, and `docs/releasing.md`. Sign-offs below describe this repository's evidence and remaining release work.
 
+## All-linter policy follow-up
+
+The checked items below record the completed `v0.3.1` migration. The shared
+standard added a stricter lint gate after that release; its new sign-off is
+tracked separately so historical checks are not presented as current proof.
+
+- [ ] **5, new lint gate.** Run golangci-lint v2 with the literal
+  `linters.default: all` over the full module in blocking CI. Resolve findings,
+  run `make lint` and `make check`, and cite CI on the exact implementation commit.
+  golangci-lint v2.3.0's default strict generated-file filter excludes ten Go
+  files with standard generated markers: five Modelina files under
+  `pkg/alexa/internal/wire`, plus `pkg/dependencies/internal/wire/models.gen.go`,
+  `pkg/dependencymodels/embedded_wire.gen.go`, `pkg/dependencies/graphql/generated.go`,
+  `pkg/dependencies/graphql/allowed_operations.gen.go`, and
+  `pkg/internal/apiroutes/routes.gen.go`. `make generate` regenerates them;
+  generated files are outside the lint issue scan.
+- [ ] **14, independent re-review.** Have a reviewer who did not implement this
+  lint migration verify the final config, exceptions, checks, and CI result.
+
 - [x] **1.** Keep the public client, examples, README, and site independent of any consuming application. Port OS plugin mappings and backend rollout notes were removed from this repository; examples use only this module's public packages.
 - [x] **2.** Document supported operations, authentication, errors, and HTTP client injection with the current exported API. Added guides for authentication, endpoint enumeration, control, events, and quality-of-service. Label the fixture suite as synthetic and avoid presenting it as live-service evidence.
 - [x] **3.** Show Go version, CI, coverage, release, Go Reference, license, and documentation badges in the README, with repository-specific links. **Signed off at v0.2.0:** CI, documentation, release verification, the public Go proxy consumer, and versioned Go Reference passed. The published non-generated coverage badge reports 81.8%.

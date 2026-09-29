@@ -2,7 +2,7 @@
 package alexaapimodels
 
 // EndpointInterface represents a device endpoint that can be used for behavior operations
-// This interface provides unified access to endpoint information from different sources
+// This interface provides unified access to endpoint information from different sources.
 type EndpointInterface interface {
 	GetDeviceType() string
 	GetDeviceSerialNumber() string
@@ -14,7 +14,7 @@ type EndpointInterface interface {
 
 // Endpoint represents a unified endpoint that combines GraphQL endpoint data
 // with DeviceV2 data through a left outer join on DMSIdentifier
-// The primary key is the ID from the GraphQL API response
+// The primary key is the ID from the GraphQL API response.
 type Endpoint struct {
 	// Primary key from GraphQL (always present)
 	ID string
@@ -44,17 +44,19 @@ type Endpoint struct {
 	Features []Feature `json:"features,omitempty"`
 }
 
+// DisplayCategories contains the primary and additional categories of an endpoint.
 type DisplayCategories struct {
 	Primary   EndpointDisplayCategory   `json:"primary,omitempty"`
 	Secondary []EndpointDisplayCategory `json:"secondary,omitempty"`
 }
 
-// NameValue represents a name-value pair with type information
+// NameValue represents a name-value pair with type information.
 type NameValue struct {
 	Value string `json:"value"`
 	Type  string `json:"type"`
 }
 
+// Feature describes a capability exposed by an endpoint.
 type Feature struct {
 	Name       FeatureName        `json:"name"`
 	Instance   string             `json:"instance,omitempty"`
@@ -63,10 +65,12 @@ type Feature struct {
 	Operations []FeatureOperation `json:"operations,omitempty"`
 }
 
+// FeatureConfig contains configuration details for a feature.
 type FeatureConfig struct {
 	Range *RangeConfig `json:"range,omitempty"`
 }
 
+// RangeConfig describes the units, supported bounds, and presets for a range feature.
 type RangeConfig struct {
 	FriendlyName   *NameValue      `json:"friendlyName,omitempty"`
 	UnitOfMeasure  *NameValue      `json:"unitOfMeasure,omitempty"`
@@ -74,18 +78,20 @@ type RangeConfig struct {
 	Presets        []RangePreset   `json:"presets,omitempty"`
 }
 
+// SupportedRange describes the minimum, maximum, and precision of a range feature.
 type SupportedRange struct {
 	MinimumValue float64 `json:"minimumValue"`
 	MaximumValue float64 `json:"maximumValue"`
 	Precision    float64 `json:"precision"`
 }
 
+// RangePreset pairs a supported range value with its display name.
 type RangePreset struct {
 	RangeValue   float64    `json:"rangeValue"`
 	FriendlyName *NameValue `json:"friendlyName,omitempty"`
 }
 
-// FeatureProperty represents a property of a feature with its state
+// FeatureProperty represents a property of a feature with its state.
 type FeatureProperty struct {
 	Name             string         `json:"name"`
 	Type             string         `json:"type,omitempty"`
@@ -98,70 +104,74 @@ type FeatureProperty struct {
 	StateValue interface{} `json:"stateValue,omitempty"`
 }
 
+// RangeValueState is the current numeric value of a range feature.
 type RangeValueState struct {
 	Value float64 `json:"value"`
 }
 
-// PropertyError represents an error for a property
+// PropertyError represents an error for a property.
 type PropertyError struct {
 	Type    string `json:"type"`
 	Message string `json:"message,omitempty"`
 }
 
-// FeatureOperation represents an operation available on a feature
+// FeatureOperation represents an operation available on a feature.
 type FeatureOperation struct {
 	Name string `json:"name"`
 }
 
-// IsType checks if the feature matches the given control namespace
+// IsType checks if the feature matches the given control namespace.
 func (f Feature) IsType(namespace FeatureName) bool {
 	return f.Name == namespace
 }
 
-// UnifiedEndpointListResponse represents the response from listing unified endpoints
+// UnifiedEndpointListResponse represents the response from listing unified endpoints.
 type UnifiedEndpointListResponse struct {
 	Results   []*Endpoint `json:"results"`
 	NextToken string      `json:"nextToken,omitempty"`
 }
 
-// GetDeviceType returns the device type
+// GetDeviceType returns the device type.
 func (e *Endpoint) GetDeviceType() string {
 	return e.DeviceType
 }
 
-// GetDeviceSerialNumber returns the device serial number (DSN)
+// GetDeviceSerialNumber returns the device serial number (DSN).
 func (e *Endpoint) GetDeviceSerialNumber() string {
 	return e.DeviceSerialNumber
 }
 
-// GetLocale returns the locale
+// GetLocale returns the locale.
 func (e *Endpoint) GetLocale() string {
 	if e.Locale == "" {
 		return "en-US"
 	}
+
 	return e.Locale
 }
 
-// GetEndpointId returns the endpoint ID from GraphQL
+// GetEndpointId returns the endpoint ID from GraphQL.
 func (e *Endpoint) GetEndpointId() string {
 	return e.EndpointID
 }
 
-// GetDeviceFamily returns the device family from DeviceV2
+// GetDeviceFamily returns the device family from DeviceV2.
 func (e *Endpoint) GetDeviceFamily() string {
 	return e.DeviceFamily
 }
 
-// GetDeviceAccountId returns the device account ID from DeviceV2
+// GetDeviceAccountId returns the device account ID from DeviceV2.
 func (e *Endpoint) GetDeviceAccountId() string {
 	return e.DeviceAccountId
 }
 
+// HasFeature reports whether the endpoint exposes the named feature.
 func (e *Endpoint) HasFeature(featureName FeatureName) bool {
 	for _, feature := range e.Features {
 		if feature.IsType(featureName) {
 			return true
 		}
 	}
+
 	return false
 }

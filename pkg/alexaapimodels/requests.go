@@ -2,22 +2,27 @@
 // These models consolidate structures from both GraphQL and REST APIs.
 package alexaapimodels
 
+// ProviderID identifies a supported media provider.
 type ProviderID string
 
 const (
-	ProviderIDAmazon  ProviderID = "AMAZON_MUSIC"
+	// ProviderIDAmazon identifies Amazon Music.
+	ProviderIDAmazon ProviderID = "AMAZON_MUSIC"
+	// ProviderIdDefault identifies the default media provider.
 	ProviderIdDefault ProviderID = "DEFAULT"
+	// ProviderIDSpotify identifies Spotify.
 	ProviderIDSpotify ProviderID = "SPOTIFY"
+	// ProviderIDAudible identifies Audible.
 	ProviderIDAudible ProviderID = "AUDIBLE"
 )
 
-// FeatureControlResponse represents a unified response for feature control operations
+// FeatureControlResponse represents a unified response for feature control operations.
 type FeatureControlResponse struct {
 	FeatureControlResponses []FeatureControlResponseItem `json:"featureControlResponses,omitempty"`
 	Errors                  []FeatureControlError        `json:"errors,omitempty"`
 }
 
-// FeatureControlResponseItem represents a single feature control response
+// FeatureControlResponseItem represents a single feature control response.
 type FeatureControlResponseItem struct {
 	EndpointID           string      `json:"endpointId,omitempty"`
 	FeatureName          string      `json:"featureName,omitempty"`
@@ -28,7 +33,7 @@ type FeatureControlResponseItem struct {
 	ResponsePayload      interface{} `json:"responsePayload,omitempty"`
 }
 
-// FeatureControlError represents an error from a feature control operation
+// FeatureControlError represents an error from a feature control operation.
 type FeatureControlError struct {
 	EndpointID           string      `json:"endpointId,omitempty"`
 	FeatureName          string      `json:"featureName,omitempty"`
@@ -40,10 +45,10 @@ type FeatureControlError struct {
 }
 
 // ControlResponse is an alias for FeatureControlResponse
-// This provides a unified response type for the Control method
+// This provides a unified response type for the Control method.
 type ControlResponse = FeatureControlResponse
 
-// DeviceRegistrationConfig contains device information for MAP authentication
+// DeviceRegistrationConfig contains device information for MAP authentication.
 type DeviceRegistrationConfig struct {
 	AppName      string `json:"appName"`
 	AppVersion   string `json:"appVersion"`

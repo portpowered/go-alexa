@@ -15,10 +15,12 @@ import (
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
+const maxBehaviorNodeDepth = 16
+
 // Notes: the APIs for this set of endpoints are only available to certain for device registrations of a certain set of device types,
 // this list of device types is unknown.
 
-// ListEndpointsOptions contains options for listing endpoints
+// ListEndpointsOptions contains options for listing endpoints.
 type ListEndpointsOptions struct {
 	Owner      string   // Filter by owner (typically "~caller")
 	Expand     []string // Expand features (e.g., "all", "feature:brightness")
@@ -28,45 +30,59 @@ type ListEndpointsOptions struct {
 
 // GetEndpoints retrieves all endpoints for the authenticated user (owner)
 // This is the primary enumeration API for getting endpoints by owner.
-// GET /v2/endpoints?owner={owner}&expand={expand}&maxResults={maxResults}&nextToken={nextToken}
+// GET /v2/endpoints?owner={owner}&expand={expand}&maxResults={maxResults}&nextToken={nextToken}.
 func (c *Client) GetEndpoints(ctx context.Context, opts *ListEndpointsOptions) (*alexamodels.EndpointListResponse, error) {
 	if opts == nil {
 		opts = &ListEndpointsOptions{Owner: alexamodels.DefaultOwnerCaller}
 	}
+
 	if opts.Owner == "" {
 		opts.Owner = alexamodels.DefaultOwnerCaller
 	}
 
 	path := buildEndpointListPath(alexamodels.APIPathV2Endpoints, opts)
+
 	var response wire.WireEndpointListResponse
-	if err := c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, &response); err != nil {
+
+	err := c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, &response)
+	if err != nil {
 		return nil, err
 	}
+
 	return convertWireModel[alexamodels.EndpointListResponse](response)
 }
 
 // GetEndpointByID retrieves a specific endpoint by its ID
-// GET /v2/endpoints/{endpointId}?expand={expand}
+// GET /v2/endpoints/{endpointId}?expand={expand}.
 func (c *Client) GetEndpointByID(ctx context.Context, endpointID string, expand []string) (*alexamodels.Device, error) {
 	path := fmt.Sprintf(apiroutes.PathGetRestEndpoint, endpointID)
+
 	if len(expand) > 0 {
 		params := url.Values{}
 		for _, e := range expand {
 			params.Add(alexamodels.QueryParamExpand, e)
 		}
+
 		path += "?" + params.Encode()
 	}
 
 	var endpoint wire.WireDevice
-	if err := c.doJSONRequest(ctx, apiroutes.MethodGetRestEndpoint, path, nil, &endpoint); err != nil {
+
+	err := c.doJSONRequest(ctx, apiroutes.MethodGetRestEndpoint, path, nil, &endpoint)
+	if err != nil {
 		return nil, err
 	}
+
 	return convertWireModel[alexamodels.Device](endpoint)
 }
 
 // QueryEndpoints performs an advanced search query for endpoints
-// POST /v2/endpoint-query
-func (c *Client) QueryEndpoints(ctx context.Context, query *alexamodels.EndpointQueryRequest, opts *ListEndpointsOptions) (*alexamodels.EndpointListResponse, error) {
+// POST /v2/endpoint-query.
+func (c *Client) QueryEndpoints(
+	ctx context.Context,
+	query *alexamodels.EndpointQueryRequest,
+	opts *ListEndpointsOptions,
+) (*alexamodels.EndpointListResponse, error) {
 	if query == nil {
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "query cannot be nil",
@@ -74,20 +90,24 @@ func (c *Client) QueryEndpoints(ctx context.Context, query *alexamodels.Endpoint
 	}
 
 	path := apiroutes.PathQueryRestEndpoints
+
 	if opts != nil {
 		// Add query parameters for pagination
 		params := url.Values{}
 		if opts.NextToken != "" {
 			params.Set(alexamodels.QueryParamNextToken, opts.NextToken)
 		}
+
 		if opts.MaxResults > 0 {
 			params.Set(alexamodels.QueryParamMaxResults, strconv.Itoa(opts.MaxResults))
 		}
+
 		if len(opts.Expand) > 0 {
 			for _, e := range opts.Expand {
 				params.Add(alexamodels.QueryParamExpand, e)
 			}
 		}
+
 		if len(params) > 0 {
 			path += "?" + params.Encode()
 		}
@@ -97,35 +117,46 @@ func (c *Client) QueryEndpoints(ctx context.Context, query *alexamodels.Endpoint
 	if err != nil {
 		return nil, &alexaapimodels.BadRequestError{Message: "failed to convert endpoint query", Err: err}
 	}
+
 	var response wire.WireEndpointListResponse
-	if err := c.doJSONRequest(ctx, apiroutes.MethodQueryRestEndpoints, path, wireQuery, &response); err != nil {
-		return nil, err
+	{
+		err := c.doJSONRequest(ctx, apiroutes.MethodQueryRestEndpoints, path, wireQuery, &response)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return convertWireModel[alexamodels.EndpointListResponse](response)
 }
 
 // ForgetEndpoint requests that Alexa forget the specified endpoint
-// POST /v2/endpoints/{endpointId}/forget
+// POST /v2/endpoints/{endpointId}/forget.
 func (c *Client) ForgetEndpoint(ctx context.Context, endpointID string) error {
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsForget, endpointID)
-	if err := c.doJSONRequest(ctx, apiroutes.MethodForgetEndpoint, path, nil, nil); err != nil {
+
+	err := c.doJSONRequest(ctx, apiroutes.MethodForgetEndpoint, path, nil, nil)
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // DeregisterEndpoint deregisters the specified endpoint from your Amazon Business account
-// POST /v2/endpoints/{endpointId}/deregister
+// POST /v2/endpoints/{endpointId}/deregister.
 func (c *Client) DeregisterEndpoint(ctx context.Context, endpointID string) error {
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsDeregister, endpointID)
-	if err := c.doJSONRequest(ctx, apiroutes.MethodDeregisterEndpoint, path, nil, nil); err != nil {
+
+	err := c.doJSONRequest(ctx, apiroutes.MethodDeregisterEndpoint, path, nil, nil)
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // UpdateFriendlyName changes the friendly name for the specified endpoint
-// POST /v2/endpoints/{endpointId}/friendlyName
+// POST /v2/endpoints/{endpointId}/friendlyName.
 func (c *Client) UpdateFriendlyName(ctx context.Context, endpointID string, friendlyName string) error {
 	request := wire.WireFriendlyNameRequest{
 		FriendlyName: wire.WireFriendlyNameValue{
@@ -137,13 +168,16 @@ func (c *Client) UpdateFriendlyName(ctx context.Context, endpointID string, frie
 	}
 
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsFriendlyName, endpointID)
-	if err := c.doJSONRequest(ctx, apiroutes.MethodUpdateEndpointFriendlyName, path, request, nil); err != nil {
+
+	err := c.doJSONRequest(ctx, apiroutes.MethodUpdateEndpointFriendlyName, path, request, nil)
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-// buildEndpointListPath builds a query string for endpoint list requests
+// buildEndpointListPath builds a query string for endpoint list requests.
 func buildEndpointListPath(basePath string, opts *ListEndpointsOptions) string {
 	if opts == nil {
 		return basePath
@@ -153,14 +187,17 @@ func buildEndpointListPath(basePath string, opts *ListEndpointsOptions) string {
 	if opts.Owner != "" {
 		params.Set(alexamodels.QueryParamOwner, opts.Owner)
 	}
+
 	if len(opts.Expand) > 0 {
 		for _, e := range opts.Expand {
 			params.Add(alexamodels.QueryParamExpand, e)
 		}
 	}
+
 	if opts.MaxResults > 0 {
 		params.Set(alexamodels.QueryParamMaxResults, strconv.Itoa(opts.MaxResults))
 	}
+
 	if opts.NextToken != "" {
 		params.Set(alexamodels.QueryParamNextToken, opts.NextToken)
 	}
@@ -168,23 +205,30 @@ func buildEndpointListPath(basePath string, opts *ListEndpointsOptions) string {
 	if len(params) > 0 {
 		return basePath + "?" + params.Encode()
 	}
+
 	return basePath
 }
 
 // Legacy methods for backward compatibility
 
 // ControlEndpoint sends a control command to an endpoint
-// Note: This is not part of the enumeration APIs but kept for backward compatibility
+// Note: This is not part of the enumeration APIs but kept for backward compatibility.
 func (c *Client) ControlEndpoint(ctx context.Context, endpointID string, command alexamodels.Command) error {
 	command.DeviceID = endpointID
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsControl, endpointID)
+
 	wireCommand, err := convertWireModel[wire.WireCommand](command)
 	if err != nil {
 		return &alexaapimodels.BadRequestError{Message: "failed to convert control command", Err: err}
 	}
-	if err := c.doJSONRequest(ctx, apiroutes.MethodControlRestEndpoint, path, wireCommand, nil); err != nil {
-		return err
+
+	{
+		err := c.doJSONRequest(ctx, apiroutes.MethodControlRestEndpoint, path, wireCommand, nil)
+		if err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
@@ -231,28 +275,30 @@ func (c *Client) SendInterfaceMessage(ctx context.Context, req *alexamodels.Inte
 	if payload, ok := body.(map[string]interface{}); ok {
 		body = wire.WireInterfacePayload(payload)
 	}
+
 	if body == nil {
 		body = wire.WireInterfacePayload{}
 	}
 
-	if err := c.doJSONRequest(ctx, apiroutes.MethodSendEndpointInterfaceMessage, path, body, nil); err != nil {
+	err := c.doJSONRequest(ctx, apiroutes.MethodSendEndpointInterfaceMessage, path, body, nil)
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// GetDevicesV2Options contains options for getting devices via the devices-v2 API
+// GetDevicesV2Options contains options for getting devices via the devices-v2 API.
 type GetDevicesV2Options struct {
 	CSRFToken string // CSRF token for cookie header
 }
 
 // GetDevicesV2 retrieves all devices using the devices-v2 API
-// GET {alexaAmazonBaseUri}/api/devices-v2/device
+// GET {alexaAmazonBaseURI}/api/devices-v2/device
 // This API is used to enumerate 1P amazon devices, like the echo show, etc.
 func (c *Client) GetDevicesV2(ctx context.Context, opts *GetDevicesV2Options) (*alexamodels.DevicesV2Response, error) {
 	// Build the full URL using the client's base URI
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathDevicesV2Device
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathDevicesV2Device
 
 	// Build custom headers
 	customHeaders := make(map[string]string)
@@ -262,7 +308,9 @@ func (c *Client) GetDevicesV2(ctx context.Context, opts *GetDevicesV2Options) (*
 
 	// Use the client's helper method to perform the request
 	var response wire.WireDevicesV2Response
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListFirstPartyDevices, baseURL, nil, customHeaders, &response, false); err != nil {
+
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListFirstPartyDevices, baseURL, nil, customHeaders, &response, false)
+	if err != nil {
 		return nil, err
 	}
 
@@ -272,13 +320,15 @@ func (c *Client) GetDevicesV2(ctx context.Context, opts *GetDevicesV2Options) (*
 // Behavior API functions
 
 // RunBehavior runs a behavior sequence using the behaviors preview API
-// POST {alexaAmazonBaseUri}/api/behaviors/preview
-// This is the base function for creating behavior operations
+// POST {alexaAmazonBaseURI}/api/behaviors/preview
+// This is the base function for creating behavior operations.
 func (c *Client) RunBehavior(ctx context.Context, sequenceJSON string) error {
-	if err := validateBehaviorSequence(sequenceJSON); err != nil {
+	err := validateBehaviorSequence(sequenceJSON)
+	if err != nil {
 		return &alexaapimodels.BadRequestError{Message: "sequence is not schema-backed", Err: err}
 	}
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathBehaviorsPreview
+
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathBehaviorsPreview
 
 	request := wire.WireBehaviorPreviewRequest{
 		BehaviorId:   alexamodels.DefaultBehaviorID,
@@ -286,91 +336,129 @@ func (c *Client) RunBehavior(ctx context.Context, sequenceJSON string) error {
 		Status:       alexamodels.DefaultBehaviorStatus,
 	}
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSubmitBehaviorPreview, baseURL, request, nil, nil, true); err != nil {
+	err = c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSubmitBehaviorPreview, baseURL, request, nil, nil, true)
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func validateBehaviorSequence(sequenceJSON string) error {
 	var sequence alexamodels.Sequence
+
 	decoder := json.NewDecoder(strings.NewReader(sequenceJSON))
 	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&sequence); err != nil {
-		return err
+
+	err := decoder.Decode(&sequence)
+	if err != nil {
+		return fmt.Errorf("decode behavior sequence: %w", err)
 	}
-	if err := decoder.Decode(new(any)); err != io.EOF {
-		return fmt.Errorf("sequence contains trailing JSON")
+
+	err = decoder.Decode(new(any))
+
+	if err != io.EOF {
+		return errTrailingBehaviorJSON
 	}
+
 	if !sequence.Type.Valid() || sequence.StartNode == nil {
-		return fmt.Errorf("sequence type or start node is missing")
+		return errMissingSequenceFields
 	}
+
 	return validateBehaviorNode(sequence.StartNode, 0)
 }
 
 func validateBehaviorNode(value any, depth int) error {
-	if depth > 16 {
-		return fmt.Errorf("behavior node nesting exceeds 16")
+	if depth > maxBehaviorNodeDepth {
+		return errBehaviorDepthExceeded
 	}
+
 	data, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("marshal behavior node: %w", err)
+	}
+
+	nodeType, err := behaviorNodeType(data)
 	if err != nil {
 		return err
 	}
-	var kind struct {
+
+	switch nodeType {
+	case string(alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode):
+		return validateOpaqueOperationNode(data)
+	case string(alexamodels.ComAmazonAlexaBehaviorsModelSerialNode):
+		return validateBehaviorSequenceNode(data, depth, string(alexamodels.ComAmazonAlexaBehaviorsModelSerialNode), errSerialNodeWithoutChildren)
+	case string(alexamodels.ComAmazonAlexaBehaviorsModelParallelNode):
+		return validateBehaviorSequenceNode(data, depth, string(alexamodels.ComAmazonAlexaBehaviorsModelParallelNode), errParallelNodeWithoutChildren)
+	default:
+		return fmt.Errorf("%w %q", errUnsupportedBehaviorNode, nodeType)
+	}
+}
+
+func behaviorNodeType(data []byte) (string, error) {
+	var node struct {
 		Type string `json:"@type"`
 	}
-	if err := json.Unmarshal(data, &kind); err != nil {
+
+	err := json.Unmarshal(data, &node)
+	if err != nil {
+		return "", fmt.Errorf("read behavior node type: %w", err)
+	}
+
+	return node.Type, nil
+}
+
+func decodeBehaviorNode(data []byte, target any) error {
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	decoder.DisallowUnknownFields()
+
+	//nolint:wrapcheck // Preserve the decoder's JSON error type for validation callers.
+	return decoder.Decode(target)
+}
+
+func validateOpaqueOperationNode(data []byte) error {
+	var node alexamodels.OpaquePayloadOperationNode
+
+	err := decodeBehaviorNode(data, &node)
+	if err != nil {
 		return err
 	}
-	decode := func(target any) error {
-		decoder := json.NewDecoder(strings.NewReader(string(data)))
-		decoder.DisallowUnknownFields()
-		return decoder.Decode(target)
+
+	if !node.Type.Valid() || node.OperationType == "" || node.OperationPayload == nil {
+		return errIncompleteOperationNode
 	}
-	switch kind.Type {
-	case string(alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode):
-		var node alexamodels.OpaquePayloadOperationNode
-		if err := decode(&node); err != nil {
-			return err
-		}
-		if !node.Type.Valid() || node.OperationType == "" || node.OperationPayload == nil {
-			return fmt.Errorf("opaque operation node is incomplete")
-		}
-	case string(alexamodels.ComAmazonAlexaBehaviorsModelSerialNode):
-		var node alexamodels.SerialNode
-		if err := decode(&node); err != nil {
-			return err
-		}
-		if !node.Type.Valid() || len(node.NodesToExecute) == 0 {
-			return fmt.Errorf("serial node has no children")
-		}
-		for _, child := range node.NodesToExecute {
-			if err := validateBehaviorNode(child, depth+1); err != nil {
-				return err
-			}
-		}
-	case string(alexamodels.ComAmazonAlexaBehaviorsModelParallelNode):
-		var node alexamodels.ParallelNode
-		if err := decode(&node); err != nil {
-			return err
-		}
-		if !node.Type.Valid() || len(node.NodesToExecute) == 0 {
-			return fmt.Errorf("parallel node has no children")
-		}
-		for _, child := range node.NodesToExecute {
-			if err := validateBehaviorNode(child, depth+1); err != nil {
-				return err
-			}
-		}
-	default:
-		return fmt.Errorf("unsupported behavior node type %q", kind.Type)
+
+	return nil
+}
+
+func validateBehaviorSequenceNode(data []byte, depth int, expectedType string, emptyNodeError error) error {
+	var node struct {
+		Type           string        `json:"@type"`
+		NodesToExecute []interface{} `json:"nodesToExecute"`
 	}
+
+	err := decodeBehaviorNode(data, &node)
+	if err != nil {
+		return err
+	}
+
+	if node.Type != expectedType || len(node.NodesToExecute) == 0 {
+		return emptyNodeError
+	}
+
+	for _, child := range node.NodesToExecute {
+		err := validateBehaviorNode(child, depth+1)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 // SendSequence sends a sequence command to a device
 // This is a helper that builds the operation node and calls RunBehavior
-// The operationPayload should already contain all required fields including deviceType, deviceSerialNumber, locale, and customerId
+// The operationPayload should already contain all required fields including deviceType, deviceSerialNumber, locale, and customerId.
 func (c *Client) SendSequence(ctx context.Context, sequenceType string, operationPayload map[string]interface{}) error {
 	node := alexamodels.OpaquePayloadOperationNode{
 		Type:             alexamodels.ModelTypeOpaquePayloadOperationNode,
@@ -397,7 +485,7 @@ func (c *Client) SendSequence(ctx context.Context, sequenceType string, operatio
 // Media control functions
 
 // StopPlayback stops playback on a device
-// Uses Alexa.DeviceControls.Stop sequence
+// Uses Alexa.DeviceControls.Stop sequence.
 func (c *Client) StopPlayback(ctx context.Context, req *alexamodels.StopPlaybackRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -407,6 +495,7 @@ func (c *Client) StopPlayback(ctx context.Context, req *alexamodels.StopPlayback
 
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
+
 	customerID := req.CustomerID
 	if c.customerID != "" {
 		customerID = c.customerID
@@ -424,7 +513,7 @@ func (c *Client) StopPlayback(ctx context.Context, req *alexamodels.StopPlayback
 }
 
 // SetVolume sets the volume on a device
-// Uses Alexa.DeviceControls.Volume sequence
+// Uses Alexa.DeviceControls.Volume sequence.
 func (c *Client) SetVolume(ctx context.Context, req *alexamodels.VolumeControlRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -441,6 +530,7 @@ func (c *Client) SetVolume(ctx context.Context, req *alexamodels.VolumeControlRe
 
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
+
 	customerID := req.CustomerID
 	if c.customerID != "" {
 		customerID = c.customerID
@@ -459,7 +549,7 @@ func (c *Client) SetVolume(ctx context.Context, req *alexamodels.VolumeControlRe
 }
 
 // PausePlayback pauses playback on a device
-// Uses /api/np/command endpoint
+// Uses /api/np/command endpoint.
 func (c *Client) PausePlayback(ctx context.Context, req *alexamodels.MediaControlRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -470,7 +560,7 @@ func (c *Client) PausePlayback(ctx context.Context, req *alexamodels.MediaContro
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
 	command := wire.WireMediaCommand{
 		Type: wire.PauseCommand,
@@ -481,17 +571,19 @@ func (c *Client) PausePlayback(ctx context.Context, req *alexamodels.MediaContro
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true)
+	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to pause playback",
 			Err:     err,
 		}
 	}
+
 	return nil
 }
 
 // ResumePlayback resumes playback on a device
-// Uses /api/np/command endpoint
+// Uses /api/np/command endpoint.
 func (c *Client) ResumePlayback(ctx context.Context, req *alexamodels.MediaControlRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -502,7 +594,7 @@ func (c *Client) ResumePlayback(ctx context.Context, req *alexamodels.MediaContr
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
 	command := wire.WireMediaCommand{
 		Type: wire.PlayCommand,
@@ -513,17 +605,19 @@ func (c *Client) ResumePlayback(ctx context.Context, req *alexamodels.MediaContr
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true)
+	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to resume playback",
 			Err:     err,
 		}
 	}
+
 	return nil
 }
 
 // NextTrack skips to the next track
-// Uses /api/np/command endpoint
+// Uses /api/np/command endpoint.
 func (c *Client) NextTrack(ctx context.Context, req *alexamodels.MediaControlRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -534,7 +628,7 @@ func (c *Client) NextTrack(ctx context.Context, req *alexamodels.MediaControlReq
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
 	command := wire.WireMediaCommand{
 		Type: wire.NextCommand,
@@ -545,17 +639,19 @@ func (c *Client) NextTrack(ctx context.Context, req *alexamodels.MediaControlReq
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true)
+	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to skip to next track",
 			Err:     err,
 		}
 	}
+
 	return nil
 }
 
 // PreviousTrack goes to the previous track
-// Uses /api/np/command endpoint
+// Uses /api/np/command endpoint.
 func (c *Client) PreviousTrack(ctx context.Context, req *alexamodels.MediaControlRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -566,7 +662,7 @@ func (c *Client) PreviousTrack(ctx context.Context, req *alexamodels.MediaContro
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
 	command := wire.WireMediaCommand{
 		Type: wire.PreviousCommand,
@@ -577,17 +673,19 @@ func (c *Client) PreviousTrack(ctx context.Context, req *alexamodels.MediaContro
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true)
+	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to go to previous track",
 			Err:     err,
 		}
 	}
+
 	return nil
 }
 
 // GetPlayerState retrieves the current player state for a device
-// Uses /api/np/player endpoint
+// Uses /api/np/player endpoint.
 func (c *Client) GetPlayerState(ctx context.Context, req *alexamodels.PlayerStateRequest) (*alexamodels.PlayerStateResponse, error) {
 	if req.Endpoint == nil {
 		return nil, &alexaapimodels.BadRequestError{
@@ -598,7 +696,7 @@ func (c *Client) GetPlayerState(ctx context.Context, req *alexamodels.PlayerStat
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPPlayer
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPPlayer
 
 	params := url.Values{}
 	params.Set(alexamodels.QueryParamDeviceSerialNumber, deviceSerialNumber)
@@ -606,17 +704,20 @@ func (c *Client) GetPlayerState(ctx context.Context, req *alexamodels.PlayerStat
 	baseURL += "?" + params.Encode()
 
 	var response wire.WirePlayerStateResponse
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodGetMediaPlayerState, baseURL, nil, nil, &response, true); err != nil {
+
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodGetMediaPlayerState, baseURL, nil, nil, &response, true)
+	if err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to get player state",
 			Err:     err,
 		}
 	}
+
 	return convertWireModel[alexamodels.PlayerStateResponse](response)
 }
 
 // ForwardMedia fast-forwards the current media
-// Uses /api/np/command endpoint
+// Uses /api/np/command endpoint.
 func (c *Client) ForwardMedia(ctx context.Context, req *alexamodels.MediaControlRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -627,7 +728,7 @@ func (c *Client) ForwardMedia(ctx context.Context, req *alexamodels.MediaControl
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
 	command := wire.WireMediaCommand{
 		Type: wire.ForwardCommand,
@@ -638,17 +739,19 @@ func (c *Client) ForwardMedia(ctx context.Context, req *alexamodels.MediaControl
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true)
+	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to forward media",
 			Err:     err,
 		}
 	}
+
 	return nil
 }
 
 // RewindMedia rewinds the current media
-// Uses /api/np/command endpoint
+// Uses /api/np/command endpoint.
 func (c *Client) RewindMedia(ctx context.Context, req *alexamodels.MediaControlRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -659,7 +762,7 @@ func (c *Client) RewindMedia(ctx context.Context, req *alexamodels.MediaControlR
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
 	command := wire.WireMediaCommand{
 		Type: wire.RewindCommand,
@@ -670,17 +773,19 @@ func (c *Client) RewindMedia(ctx context.Context, req *alexamodels.MediaControlR
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true)
+	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to rewind media",
 			Err:     err,
 		}
 	}
+
 	return nil
 }
 
 // SetShuffle sets the shuffle state for media playback
-// Uses /api/np/command endpoint
+// Uses /api/np/command endpoint.
 func (c *Client) SetShuffle(ctx context.Context, req *alexamodels.MediaControlRequest, shuffle bool) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -691,7 +796,7 @@ func (c *Client) SetShuffle(ctx context.Context, req *alexamodels.MediaControlRe
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
 	command := wire.WireMediaCommand{
 		Type:    wire.ShuffleCommand,
@@ -703,17 +808,19 @@ func (c *Client) SetShuffle(ctx context.Context, req *alexamodels.MediaControlRe
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true)
+	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to set shuffle",
 			Err:     err,
 		}
 	}
+
 	return nil
 }
 
 // SetRepeat sets the repeat state for media playback
-// Uses /api/np/command endpoint
+// Uses /api/np/command endpoint.
 func (c *Client) SetRepeat(ctx context.Context, req *alexamodels.MediaControlRequest, repeat bool) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -724,7 +831,7 @@ func (c *Client) SetRepeat(ctx context.Context, req *alexamodels.MediaControlReq
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathNPCommand
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
 	command := wire.WireMediaCommand{
 		Type:   wire.RepeatCommand,
@@ -736,17 +843,19 @@ func (c *Client) SetRepeat(ctx context.Context, req *alexamodels.MediaControlReq
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true); err != nil {
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSendMediaCommand, baseURL, command, nil, nil, true)
+	if err != nil {
 		return &alexaapimodels.NetworkError{
 			Message: "failed to set repeat",
 			Err:     err,
 		}
 	}
+
 	return nil
 }
 
 // SendNotification sends a mobile push notification
-// Uses Alexa.Notifications.SendMobilePush sequence
+// Uses Alexa.Notifications.SendMobilePush sequence.
 func (c *Client) SendNotification(ctx context.Context, req *alexamodels.SendNotificationRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -756,6 +865,7 @@ func (c *Client) SendNotification(ctx context.Context, req *alexamodels.SendNoti
 
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
+
 	customerID := req.CustomerID
 	if c.customerID != "" {
 		customerID = c.customerID
@@ -776,7 +886,7 @@ func (c *Client) SendNotification(ctx context.Context, req *alexamodels.SendNoti
 }
 
 // SendAnnouncement sends an announcement to Alexa devices
-// Uses AlexaAnnouncement sequence
+// Uses AlexaAnnouncement sequence.
 func (c *Client) SendAnnouncement(ctx context.Context, req *alexamodels.SendAnnouncementRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -788,12 +898,14 @@ func (c *Client) SendAnnouncement(ctx context.Context, req *alexamodels.SendAnno
 	if locale == "" {
 		locale = req.Endpoint.GetLocale()
 	}
+
 	if locale == "" {
 		locale = alexamodels.DefaultLocale
 	}
 
 	// Build display and speak content based on method
 	var display alexamodels.AnnouncementDisplay
+
 	speak := alexamodels.AnnouncementSpeak{Type: alexamodels.DefaultAnnouncementSpeakType}
 
 	switch req.Method {
@@ -829,6 +941,7 @@ func (c *Client) SendAnnouncement(ctx context.Context, req *alexamodels.SendAnno
 
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
+
 	customerID := req.CustomerID
 	if c.customerID != "" {
 		customerID = c.customerID
@@ -849,7 +962,7 @@ func (c *Client) SendAnnouncement(ctx context.Context, req *alexamodels.SendAnno
 }
 
 // SendTTS sends a text-to-speech message
-// Uses Alexa.Speak or Alexa.CannedTts.Speak sequence
+// Uses Alexa.Speak or Alexa.CannedTts.Speak sequence.
 func (c *Client) SendTTS(ctx context.Context, req *alexamodels.SendTTSRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -893,7 +1006,7 @@ func (c *Client) SendTTS(ctx context.Context, req *alexamodels.SendTTSRequest) e
 }
 
 // PlayMusic plays music based on a search query
-// Uses Alexa.Music.PlaySearchPhrase sequence
+// Uses Alexa.Music.PlaySearchPhrase sequence.
 func (c *Client) PlayMusic(ctx context.Context, req *alexamodels.PlayMusicRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -903,6 +1016,7 @@ func (c *Client) PlayMusic(ctx context.Context, req *alexamodels.PlayMusicReques
 
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
+
 	customerID := req.CustomerID
 	if c.customerID != "" {
 		customerID = c.customerID
@@ -926,7 +1040,7 @@ func (c *Client) PlayMusic(ctx context.Context, req *alexamodels.PlayMusicReques
 }
 
 // PlayAudioURI plays audio from a public HTTPS URI on a device
-// Uses Alexa.Sound behavior sequence with soundStringId set to the audio URL
+// Uses Alexa.Sound behavior sequence with soundStringId set to the audio URL.
 func (c *Client) PlayAudioURI(ctx context.Context, req *alexamodels.PlayAudioURIRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -936,6 +1050,7 @@ func (c *Client) PlayAudioURI(ctx context.Context, req *alexamodels.PlayAudioURI
 
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
+
 	customerID := req.CustomerID
 	if c.customerID != "" {
 		customerID = c.customerID
@@ -953,7 +1068,7 @@ func (c *Client) PlayAudioURI(ctx context.Context, req *alexamodels.PlayAudioURI
 }
 
 // PlayVideo plays video based on a search query
-// Uses Alexa.Operation.Video.PlaySearchPhrase sequence
+// Uses Alexa.Operation.Video.PlaySearchPhrase sequence.
 func (c *Client) PlayVideo(ctx context.Context, req *alexamodels.PlayVideoRequest) error {
 	if req.Endpoint == nil {
 		return &alexaapimodels.BadRequestError{
@@ -963,6 +1078,7 @@ func (c *Client) PlayVideo(ctx context.Context, req *alexamodels.PlayVideoReques
 
 	deviceType := req.Endpoint.GetDeviceType()
 	deviceSerialNumber := req.Endpoint.GetDeviceSerialNumber()
+
 	customerID := req.CustomerID
 	if c.customerID != "" {
 		customerID = c.customerID
@@ -993,7 +1109,7 @@ func (c *Client) PlayVideo(ctx context.Context, req *alexamodels.PlayVideoReques
 // Fire TV operation functions
 
 // SendFireTVSequence sends a Fire TV sequence command
-// This is a helper that builds the operation node and calls RunBehavior for Fire TV operations
+// This is a helper that builds the operation node and calls RunBehavior for Fire TV operations.
 func (c *Client) SendFireTVSequence(ctx context.Context, deviceAccountID, operationType string) error {
 	// Build the operation payload with only deviceAccountId and skillId
 	payload := map[string]interface{}{
@@ -1020,7 +1136,7 @@ func (c *Client) SendFireTVSequence(ctx context.Context, deviceAccountID, operat
 		}
 	}
 
-	baseURL := c.alexaAmazonBaseUri + alexamodels.APIPathBehaviorsPreview
+	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathBehaviorsPreview
 
 	request := wire.WireBehaviorPreviewRequest{
 		BehaviorId:   alexamodels.DefaultBehaviorID,
@@ -1028,14 +1144,16 @@ func (c *Client) SendFireTVSequence(ctx context.Context, deviceAccountID, operat
 		Status:       alexamodels.DefaultBehaviorStatus,
 	}
 
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSubmitBehaviorPreview, baseURL, request, nil, nil, true); err != nil {
+	err = c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSubmitBehaviorPreview, baseURL, request, nil, nil, true)
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // FireTVTurnOn turns on a Fire TV device
-// Uses Alexa.Operation.FireTV.TurnOn sequence
+// Uses Alexa.Operation.FireTV.TurnOn sequence.
 func (c *Client) FireTVTurnOn(ctx context.Context, req *alexamodels.FireTVRequest) error {
 	deviceAccountID := req.Endpoint.GetDeviceAccountId()
 	if deviceAccountID == "" && req.Endpoint != nil {
@@ -1061,7 +1179,7 @@ func (c *Client) FireTVTurnOn(ctx context.Context, req *alexamodels.FireTVReques
 }
 
 // FireTVTurnOff turns off a Fire TV device
-// Uses Alexa.Operation.FireTV.TurnOff sequence
+// Uses Alexa.Operation.FireTV.TurnOff sequence.
 func (c *Client) FireTVTurnOff(ctx context.Context, req *alexamodels.FireTVRequest) error {
 	deviceAccountID := req.Endpoint.GetDeviceAccountId()
 	if deviceAccountID == "" && req.Endpoint != nil {
@@ -1088,16 +1206,17 @@ func (c *Client) FireTVTurnOff(ctx context.Context, req *alexamodels.FireTVReque
 
 // FireTVTurnOnOff turns on or off a Fire TV device based on the value parameter
 // If value is true, turns on; if false, turns off
-// Uses Alexa.Operation.FireTV.TurnOn or Alexa.Operation.FireTV.TurnOff sequence
+// Uses Alexa.Operation.FireTV.TurnOn or Alexa.Operation.FireTV.TurnOff sequence.
 func (c *Client) FireTVTurnOnOff(ctx context.Context, req *alexamodels.FireTVRequest, value bool) error {
 	if value {
 		return c.FireTVTurnOn(ctx, req)
 	}
+
 	return c.FireTVTurnOff(ctx, req)
 }
 
 // FireTVPauseVideo pauses video playback on a Fire TV device
-// Uses Alexa.Operation.FireTV.PauseVideo sequence
+// Uses Alexa.Operation.FireTV.PauseVideo sequence.
 func (c *Client) FireTVPauseVideo(ctx context.Context, req *alexamodels.FireTVRequest) error {
 	deviceAccountID := req.Endpoint.GetDeviceAccountId()
 	if deviceAccountID == "" && req.Endpoint != nil {
@@ -1123,7 +1242,7 @@ func (c *Client) FireTVPauseVideo(ctx context.Context, req *alexamodels.FireTVRe
 }
 
 // FireTVResumeVideo resumes video playback on a Fire TV device
-// Uses Alexa.Operation.FireTV.ResumeVideo sequence
+// Uses Alexa.Operation.FireTV.ResumeVideo sequence.
 func (c *Client) FireTVResumeVideo(ctx context.Context, req *alexamodels.FireTVRequest) error {
 	deviceAccountID := req.Endpoint.GetDeviceAccountId()
 	if deviceAccountID == "" && req.Endpoint != nil {
@@ -1149,7 +1268,7 @@ func (c *Client) FireTVResumeVideo(ctx context.Context, req *alexamodels.FireTVR
 }
 
 // FireTVNavigateHome navigates to the home screen on a Fire TV device
-// Uses Alexa.Operation.FireTV.NavigateHome sequence
+// Uses Alexa.Operation.FireTV.NavigateHome sequence.
 func (c *Client) FireTVNavigateHome(ctx context.Context, req *alexamodels.FireTVRequest) error {
 	deviceAccountID := req.Endpoint.GetDeviceAccountId()
 	if deviceAccountID == "" && req.Endpoint != nil {

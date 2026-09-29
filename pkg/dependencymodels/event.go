@@ -1,4 +1,4 @@
-// Package models provides data structures for Alexa API interactions.
+// Package alexamodels provides dependency API request and response models.
 package alexamodels
 
 import "time"

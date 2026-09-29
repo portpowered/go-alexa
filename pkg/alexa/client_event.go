@@ -9,14 +9,14 @@ import (
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
 
-// eventParserMetadata holds metadata for parsing a specific event type
+// eventParserMetadata holds metadata for parsing a specific event type.
 type eventParserMetadata[T any] struct {
 	namespace string
 	name      string
 	converter func(*alexamodels.ResourceMetadataPayloadData) (T, error)
 }
 
-// eventParserRegistry maps metric names to their parsing metadata
+// eventParserRegistry maps metric names to their parsing metadata.
 var eventParserRegistry = map[string]eventParserMetadata[any]{
 	"EndpointColorTemperature": {
 		namespace: alexaapimodels.FeatureNameColorTemperature.EventNamespace(),
@@ -135,48 +135,49 @@ var eventParserRegistry = map[string]eventParserMetadata[any]{
 	},
 }
 
-// ParseEvent decomposes a raw Message into a structured Event
+// ParseEvent decomposes a raw Message into a structured Event.
 func ParseEvent(msg *alexamodels.Message) (*alexaapimodels.Event, error) {
 	if msg == nil || msg.Data == nil {
-		return nil, fmt.Errorf("message or data is nil")
+		return nil, errEventMessageMissing
 	}
 
 	// Extract directive
-	directiveRaw, ok := msg.Data["directive"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("directive not found or invalid")
+	directiveRaw, directiveValid := msg.Data["directive"].(map[string]interface{})
+	if !directiveValid {
+		return nil, errDirectiveInvalid
 	}
 
 	// Extract header
-	headerRaw, ok := directiveRaw["header"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("header not found or invalid")
+	headerRaw, headerValid := directiveRaw["header"].(map[string]interface{})
+	if !headerValid {
+		return nil, errHeaderInvalid
 	}
 
 	messageID, _ := headerRaw["messageId"].(string)
 
 	// Extract payload
-	payloadRaw, ok := directiveRaw["payload"].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("payload not found or invalid")
+	payloadRaw, payloadValid := directiveRaw["payload"].(map[string]interface{})
+	if !payloadValid {
+		return nil, errPayloadInvalid
 	}
 
 	// Extract renderingUpdates
-	renderingUpdatesRaw, ok := payloadRaw["renderingUpdates"].([]interface{})
-	if !ok || len(renderingUpdatesRaw) == 0 {
-		return nil, fmt.Errorf("renderingUpdates not found or empty")
+	renderingUpdatesRaw, updatesValid := payloadRaw["renderingUpdates"].([]interface{})
+	if !updatesValid || len(renderingUpdatesRaw) == 0 {
+		return nil, errRenderingUpdatesEmpty
 	}
 
 	// Process the first rendering update (most common case)
-	updateRaw, ok := renderingUpdatesRaw[0].(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("renderingUpdate is invalid")
+	updateRaw, updateValid := renderingUpdatesRaw[0].(map[string]interface{})
+	if !updateValid {
+		return nil, errRenderingUpdateInvalid
 	}
 
-	resourceMetadataStr, ok := updateRaw["resourceMetadata"].(string)
-	if !ok {
-		return nil, fmt.Errorf("resourceMetadata not found or invalid")
+	resourceMetadataStr, metadataValid := updateRaw["resourceMetadata"].(string)
+	if !metadataValid {
+		return nil, errResourceMetadataInvalid
 	}
+
 	return parseEventResourceMetadata(messageID, resourceMetadataStr)
 }
 
@@ -184,36 +185,46 @@ func ParseEvent(msg *alexamodels.Message) (*alexaapimodels.Event, error) {
 // HTTP/2 parser input into the public event model.
 func parseDirectiveMessage(message *directivewire.DirectiveMessage) (*alexaapimodels.Event, error) {
 	if message == nil || message.Directive == nil {
-		return nil, fmt.Errorf("directive not found or invalid")
+		return nil, errDirectiveInvalid
 	}
+
 	if message.Directive.Header == nil {
-		return nil, fmt.Errorf("header not found or invalid")
+		return nil, errHeaderInvalid
 	}
+
 	if message.Directive.Payload == nil {
-		return nil, fmt.Errorf("payload not found or invalid")
+		return nil, errPayloadInvalid
 	}
+
 	if len(message.Directive.Payload.RenderingUpdates) == 0 {
-		return nil, fmt.Errorf("renderingUpdates not found or empty")
+		return nil, errRenderingUpdatesEmpty
 	}
 
 	update := message.Directive.Payload.RenderingUpdates[0]
 	if update.ResourceMetadata == "" {
-		return nil, fmt.Errorf("resourceMetadata not found or invalid")
+		return nil, errResourceMetadataInvalid
 	}
+
 	return parseEventResourceMetadata(message.Directive.Header.MessageId, update.ResourceMetadata)
 }
 
 func parseEventResourceMetadata(messageID, resourceMetadataStr string) (*alexaapimodels.Event, error) {
 	// Parse resourceMetadata JSON string
 	var resourceMetadata alexamodels.ResourceMetadataPayload
-	if err := json.Unmarshal([]byte(resourceMetadataStr), &resourceMetadata); err != nil {
-		return nil, fmt.Errorf("failed to parse resourceMetadata: %w", err)
+	{
+		err := json.Unmarshal([]byte(resourceMetadataStr), &resourceMetadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse resourceMetadata: %w", err)
+		}
 	}
 
 	// Parse the payload data
 	var payloadData alexamodels.ResourceMetadataPayloadData
-	if err := json.Unmarshal(resourceMetadata.Payload, &payloadData); err != nil {
-		return nil, fmt.Errorf("failed to parse payload data: %w", err)
+	{
+		err := json.Unmarshal(resourceMetadata.Payload, &payloadData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse payload data: %w", err)
+		}
 	}
 
 	// Extract endpoint ID
@@ -224,11 +235,14 @@ func parseEventResourceMetadata(messageID, resourceMetadataStr string) (*alexaap
 	if !ok {
 		// For unknown types, return the raw data
 		var rawData map[string]interface{}
-		if err := json.Unmarshal(resourceMetadata.Payload, &rawData); err != nil {
+
+		err := json.Unmarshal(resourceMetadata.Payload, &rawData)
+		if err != nil {
 			return nil, fmt.Errorf("failed to parse unknown payload: %w", err)
 		}
+
 		return nil, &alexaapimodels.SdkError{
-			Message: fmt.Sprintf("unknown payload type: %s", resourceMetadata.MetricName),
+			Message: "unknown payload type: " + resourceMetadata.MetricName,
 		}
 	}
 
@@ -247,25 +261,33 @@ func parseEventResourceMetadata(messageID, resourceMetadataStr string) (*alexaap
 	}, nil
 }
 
-// parsePayload extracts and parses a property from the payload data
+// parsePayload extracts and parses a property from the payload data.
 func parsePayload[T any](data *alexamodels.ResourceMetadataPayloadData) (any, error) {
 	if len(data.Data.Features) == 0 {
-		return nil, fmt.Errorf("no features found")
+		return nil, errNoFeaturesFound
 	}
 
 	feature := data.Data.Features[0]
+
 	var props []T
-	if err := json.Unmarshal(feature.Properties, &props); err != nil {
+
+	err := json.Unmarshal(feature.Properties, &props)
+	if err != nil {
 		var prop T
-		if err := json.Unmarshal(feature.Properties, &prop); err != nil {
+
+		err := json.Unmarshal(feature.Properties, &prop)
+		if err != nil {
 			return nil, fmt.Errorf("failed to parse properties: %w", err)
 		}
+
 		props = []T{prop}
 	}
+
 	if len(props) == 0 {
-		return nil, fmt.Errorf("no properties found")
+		return nil, errNoPropertiesFound
 	}
 
 	prop := props[0]
+
 	return &prop, nil
 }

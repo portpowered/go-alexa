@@ -1,3 +1,4 @@
+//nolint:testpackage // Verifies private control dispatch behavior for audio URI operations.
 package alexa
 
 import (
@@ -23,7 +24,9 @@ func (t *captureTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	if req.Body != nil {
 		t.lastRequestBody, _ = io.ReadAll(req.Body)
 	}
+
 	t.lastRequestURL = req.URL.String()
+
 	return &http.Response{
 		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewReader([]byte(`{}`))),
@@ -32,6 +35,8 @@ func (t *captureTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 }
 
 func TestControlAudioPlayerURI(t *testing.T) {
+	t.Parallel()
+
 	transport := &captureTransport{}
 	httpClient := &http.Client{Transport: transport}
 
@@ -57,12 +62,20 @@ func TestControlAudioPlayerURI(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+
 	if resp == nil {
 		t.Fatal("expected non-nil response")
 	}
+
 	if len(resp.Errors) > 0 {
 		t.Fatalf("unexpected errors: %v", resp.Errors)
 	}
+
+	assertAudioPlayerURIRequest(t, transport, testURI)
+}
+
+func assertAudioPlayerURIRequest(t *testing.T, transport *captureTransport, testURI string) {
+	t.Helper()
 
 	// Verify the request was sent to the behaviors preview endpoint
 	if transport.lastRequestURL == "" {
@@ -71,21 +84,28 @@ func TestControlAudioPlayerURI(t *testing.T) {
 
 	// Parse the behavior preview request body
 	var behaviorReq alexamodels.BehaviorPreviewRequest
-	if err := json.Unmarshal(transport.lastRequestBody, &behaviorReq); err != nil {
-		t.Fatalf("failed to parse request body: %v", err)
+	{
+		err := json.Unmarshal(transport.lastRequestBody, &behaviorReq)
+		if err != nil {
+			t.Fatalf("failed to parse request body: %v", err)
+		}
 	}
 
 	if behaviorReq.BehaviorID != alexamodels.DefaultBehaviorID {
 		t.Errorf("expected behaviorId %q, got %q", alexamodels.DefaultBehaviorID, behaviorReq.BehaviorID)
 	}
+
 	if behaviorReq.Status != alexamodels.DefaultBehaviorStatus {
 		t.Errorf("expected status %q, got %q", alexamodels.DefaultBehaviorStatus, behaviorReq.Status)
 	}
 
 	// Parse the sequence JSON
 	var sequence alexamodels.Sequence
-	if err := json.Unmarshal([]byte(behaviorReq.SequenceJSON), &sequence); err != nil {
-		t.Fatalf("failed to parse sequence JSON: %v", err)
+	{
+		err := json.Unmarshal([]byte(behaviorReq.SequenceJSON), &sequence)
+		if err != nil {
+			t.Fatalf("failed to parse sequence JSON: %v", err)
+		}
 	}
 
 	if sequence.Type != alexamodels.ModelTypeSequence {
@@ -99,13 +119,17 @@ func TestControlAudioPlayerURI(t *testing.T) {
 	}
 
 	var node alexamodels.OpaquePayloadOperationNode
-	if err := json.Unmarshal(startNodeBytes, &node); err != nil {
-		t.Fatalf("failed to parse start node: %v", err)
+	{
+		err := json.Unmarshal(startNodeBytes, &node)
+		if err != nil {
+			t.Fatalf("failed to parse start node: %v", err)
+		}
 	}
 
 	if node.Type != alexamodels.ModelTypeOpaquePayloadOperationNode {
 		t.Errorf("expected node type %q, got %q", alexamodels.ModelTypeOpaquePayloadOperationNode, node.Type)
 	}
+
 	if node.OperationType != alexamodels.OperationTypeSpeak {
 		t.Errorf("expected operation type %q, got %q", alexamodels.OperationTypeSpeak, node.OperationType)
 	}
@@ -115,9 +139,15 @@ func TestControlAudioPlayerURI(t *testing.T) {
 	if payload[alexamodels.PayloadKeyDeviceType] != "synthetic-device-type" {
 		t.Errorf("expected deviceType %q, got %q", "synthetic-device-type", payload[alexamodels.PayloadKeyDeviceType])
 	}
+
 	if payload[alexamodels.PayloadKeyDeviceSerialNumber] != "synthetic-device-serial" {
-		t.Errorf("expected deviceSerialNumber %q, got %q", "synthetic-device-serial", payload[alexamodels.PayloadKeyDeviceSerialNumber])
+		t.Errorf(
+			"expected deviceSerialNumber %q, got %q",
+			"synthetic-device-serial",
+			payload[alexamodels.PayloadKeyDeviceSerialNumber],
+		)
 	}
+
 	textOut := fmt.Sprintf("<audio src='%s'/>", testURI)
 	if payload[alexamodels.PayloadKeyTextToSpeak] != textOut {
 		t.Errorf("expected textToSpeak %q, got %q", textOut, payload[alexamodels.PayloadKeyTextToSpeak])
@@ -125,6 +155,8 @@ func TestControlAudioPlayerURI(t *testing.T) {
 }
 
 func TestControlAudioPlayerURI_InvalidPayload(t *testing.T) {
+	t.Parallel()
+
 	transport := &captureTransport{}
 	httpClient := &http.Client{Transport: transport}
 
@@ -148,6 +180,8 @@ func TestControlAudioPlayerURI_InvalidPayload(t *testing.T) {
 }
 
 func TestControlAudioPlayerURI_NilTarget(t *testing.T) {
+	t.Parallel()
+
 	transport := &captureTransport{}
 	httpClient := &http.Client{Transport: transport}
 

@@ -4,6 +4,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const splitViewPaneCount = 2
+
 var (
 	titleStyle = lipgloss.NewStyle().
 			Bold(true).
@@ -32,7 +34,7 @@ var (
 )
 
 func splitView(left, right string, width int) string {
-	leftWidth := width / 2
+	leftWidth := width / splitViewPaneCount
 	rightWidth := width - leftWidth - 1 // Account for separator
 
 	leftBox := borderStyle.

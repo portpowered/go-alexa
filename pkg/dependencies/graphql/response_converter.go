@@ -4,7 +4,7 @@ import (
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 )
 
-// ConvertToFeatureControlResponse converts a GraphQL SetEndpointFeaturesResponse to alexaapimodels format
+// ConvertToFeatureControlResponse converts a GraphQL SetEndpointFeaturesResponse to alexaapimodels format.
 func ConvertToFeatureControlResponse(gqlResp *SetEndpointFeaturesResponse) *alexaapimodels.FeatureControlResponse {
 	if gqlResp == nil {
 		return nil
@@ -54,7 +54,7 @@ func ConvertToFeatureControlResponse(gqlResp *SetEndpointFeaturesResponse) *alex
 	return response
 }
 
-// ConvertQualityOfServiceRequest converts alexaapimodels.QualityOfServiceRequest to graphql.EndpointQualityOfServiceInput
+// ConvertQualityOfServiceRequest converts alexaapimodels.QualityOfServiceRequest to graphql.EndpointQualityOfServiceInput.
 func ConvertQualityOfServiceRequest(req *alexaapimodels.QualityOfServiceRequest) EndpointQualityOfServiceInput {
 	return EndpointQualityOfServiceInput{
 		Endpoints: req.Endpoints,
@@ -65,7 +65,7 @@ func ConvertQualityOfServiceRequest(req *alexaapimodels.QualityOfServiceRequest)
 	}
 }
 
-// ConvertToQualityOfServiceResponse converts graphql.RequestEndpointQualityOfServiceResponse to alexaapimodels.QualityOfServiceResponse
+// ConvertToQualityOfServiceResponse converts graphql.RequestEndpointQualityOfServiceResponse to alexaapimodels.QualityOfServiceResponse.
 func ConvertToQualityOfServiceResponse(gqlResp *RequestEndpointQualityOfServiceResponse) *alexaapimodels.QualityOfServiceResponse {
 	if gqlResp == nil {
 		return nil
@@ -89,9 +89,8 @@ func ConvertToQualityOfServiceResponse(gqlResp *RequestEndpointQualityOfServiceR
 	return result
 }
 
-// ConvertSubscribeRequest converts alexaapimodels.SubscribeRequest to graphql.SubscribeConfiguration
+// ConvertSubscribeRequest converts alexaapimodels.SubscribeRequest to graphql.SubscribeConfiguration.
 func ConvertSubscribeRequest(req *alexaapimodels.SubscribeRequest) SubscribeConfiguration {
-
 	return SubscribeConfiguration{
 		// NOTE: the GraphQL format allows us to know which endpoint the event is coming from, this not possible with the default format
 
@@ -103,18 +102,19 @@ func ConvertSubscribeRequest(req *alexaapimodels.SubscribeRequest) SubscribeConf
 	}
 }
 
-// ConvertSubscribeEntities converts alexaapimodels.SubscribeEntity to graphql.SubscriptionFilter
+// ConvertSubscribeEntities converts alexaapimodels.SubscribeEntity to graphql.SubscriptionFilter.
 func ConvertSubscribeEntities(entities []alexaapimodels.SubscribeEntity) []SubscriptionFilter {
-	var filters []SubscriptionFilter
+	filters := make([]SubscriptionFilter, 0, len(entities))
 	for _, entity := range entities {
 		filters = append(filters, SubscriptionFilter{
 			EntityType: string(entity.EntityType),
 		})
 	}
+
 	return filters
 }
 
-// ConvertToSubscribeResponse converts graphql.SubscribeResponse to alexaapimodels.SubscribeResponse
+// ConvertToSubscribeResponse converts graphql.SubscribeResponse to alexaapimodels.SubscribeResponse.
 func ConvertToSubscribeResponse(gqlResp *SubscribeResponse) *alexaapimodels.SubscribeResponse {
 	if gqlResp == nil {
 		return nil

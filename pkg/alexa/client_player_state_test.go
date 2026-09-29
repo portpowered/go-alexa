@@ -1,3 +1,4 @@
+//nolint:testpackage // Verifies private player-state mapping behavior.
 package alexa
 
 import (
@@ -16,16 +17,20 @@ type playerStateTransport struct {
 
 func (transport playerStateTransport) RoundTrip(request *http.Request) (*http.Response, error) {
 	transport.t.Helper()
+
 	if request.Method != http.MethodGet {
 		transport.t.Fatalf("method = %s, want GET", request.Method)
 	}
+
 	if request.URL.Path != "/api/np/player" {
 		transport.t.Fatalf("path = %s, want /api/np/player", request.URL.Path)
 	}
+
 	query := request.URL.Query()
 	if got := query.Get("deviceType"); got != "synthetic-device-type" {
 		transport.t.Fatalf("device type = %q", got)
 	}
+
 	if got := query.Get("deviceSerialNumber"); got != "synthetic-device-serial" {
 		transport.t.Fatalf("device serial = %q", got)
 	}
@@ -41,6 +46,8 @@ func (transport playerStateTransport) RoundTrip(request *http.Request) (*http.Re
 }
 
 func TestGetPlayerStateUsesEndpointIdentityAndConvertsResponse(t *testing.T) {
+	t.Parallel()
+
 	client := newTestSession(t, &http.Client{Transport: playerStateTransport{t: t}}, WithBearerToken("synthetic-token"))
 
 	response, err := client.GetPlayerState(context.Background(), alexaapimodels.PlayerStateRequest{
@@ -52,15 +59,19 @@ func TestGetPlayerStateUsesEndpointIdentityAndConvertsResponse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get player state: %v", err)
 	}
+
 	if response.PlayerInfo == nil {
 		t.Fatal("player info is nil")
 	}
+
 	if response.PlayerInfo.State != "PLAYING" {
 		t.Fatalf("state = %q, want PLAYING", response.PlayerInfo.State)
 	}
+
 	if response.PlayerInfo.Provider == nil || response.PlayerInfo.Provider.ProviderName != "Synthetic source" {
 		t.Fatalf("provider = %#v", response.PlayerInfo.Provider)
 	}
+
 	if response.PlayerInfo.Progress == nil || response.PlayerInfo.Progress.MediaProgress != 45 {
 		t.Fatalf("progress = %#v", response.PlayerInfo.Progress)
 	}

@@ -1,98 +1,144 @@
 package alexaapimodels
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 )
 
-// AuthenticationError represents an authentication failure
+// AuthenticationError represents an authentication failure.
 type AuthenticationError struct {
 	Message string
 	Status  int
 }
 
+// NewAuthenticationError creates a new AuthenticationError.
+func NewAuthenticationError(message string, status int) *AuthenticationError {
+	return &AuthenticationError{
+		Message: message,
+		Status:  status,
+	}
+}
+
 func (e *AuthenticationError) Error() string {
 	if e.Message != "" {
-		return fmt.Sprintf("authentication error: %s", e.Message)
+		return "authentication error: " + e.Message
 	}
+
 	return fmt.Sprintf("authentication error (status: %d)", e.Status)
 }
 
-// IsAuthenticationError checks if an error is an AuthenticationError
+// IsAuthenticationError checks if an error is an AuthenticationError.
 func IsAuthenticationError(err error) bool {
-	_, ok := err.(*AuthenticationError)
+	authenticationError := &AuthenticationError{}
+	ok := errors.As(err, &authenticationError)
+
 	return ok
 }
 
-// ConnectionError represents a connection failure
+// ConnectionError represents a connection failure.
 type ConnectionError struct {
 	Message string
 	Err     error
+}
+
+// NewConnectionError creates a new ConnectionError.
+func NewConnectionError(message string, err error) *ConnectionError {
+	return &ConnectionError{
+		Message: message,
+		Err:     err,
+	}
 }
 
 func (e *ConnectionError) Error() string {
 	if e.Err != nil {
 		return fmt.Sprintf("connection error: %s: %v", e.Message, e.Err)
 	}
-	return fmt.Sprintf("connection error: %s", e.Message)
+
+	return "connection error: " + e.Message
 }
 
 func (e *ConnectionError) Unwrap() error {
 	return e.Err
 }
 
-// IsConnectionError checks if an error is a ConnectionError
+// IsConnectionError checks if an error is a ConnectionError.
 func IsConnectionError(err error) bool {
-	_, ok := err.(*ConnectionError)
+	connectionError := &ConnectionError{}
+	ok := errors.As(err, &connectionError)
+
 	return ok
 }
 
-// NetworkError represents a network-level error
+// NetworkError represents a network-level error.
 type NetworkError struct {
 	Message string
 	Err     error
+}
+
+// NewNetworkError creates a new NetworkError.
+func NewNetworkError(message string, err error) *NetworkError {
+	return &NetworkError{
+		Message: message,
+		Err:     err,
+	}
 }
 
 func (e *NetworkError) Error() string {
 	if e.Err != nil {
 		return fmt.Sprintf("network error: %s: %v", e.Message, e.Err)
 	}
-	return fmt.Sprintf("network error: %s", e.Message)
+
+	return "network error: " + e.Message
 }
 
 func (e *NetworkError) Unwrap() error {
 	return e.Err
 }
 
-// IsNetworkError checks if an error is a NetworkError
+// IsNetworkError checks if an error is a NetworkError.
 func IsNetworkError(err error) bool {
-	_, ok := err.(*NetworkError)
+	networkError := &NetworkError{}
+	ok := errors.As(err, &networkError)
+
 	return ok
 }
 
-// TokenError represents a token retrieval or validation error
+// TokenError represents a token retrieval or validation error.
 type TokenError struct {
 	Message string
 	Err     error
+}
+
+// NewTokenError creates a new TokenError.
+func NewTokenError(message string, err error) *TokenError {
+	return &TokenError{
+		Message: message,
+		Err:     err,
+	}
 }
 
 func (e *TokenError) Error() string {
 	if e.Err != nil {
 		return fmt.Sprintf("token error: %s: %v", e.Message, e.Err)
 	}
-	return fmt.Sprintf("token error: %s", e.Message)
+
+	return "token error: " + e.Message
 }
 
 func (e *TokenError) Unwrap() error {
 	return e.Err
 }
 
-// IsTokenError checks if an error is a TokenError
+// IsTokenError checks if an error is a TokenError.
 func IsTokenError(err error) bool {
-	_, ok := err.(*TokenError)
+	tokenError := &TokenError{}
+	ok := errors.As(err, &tokenError)
+
 	return ok
 }
 
+// SdkError represents an error reported by the Alexa SDK layer.
 type SdkError struct {
 	Message string
 	Err     error
@@ -114,11 +160,13 @@ func (e *ServerError) Unwrap() error {
 	return e.Err
 }
 
+// ServerError represents an error returned by an Alexa service.
 type ServerError struct {
 	Message string
 	Err     error
 }
 
+// BadRequestError represents a request rejected as invalid by the service.
 type BadRequestError struct {
 	Message string
 	Err     error
@@ -132,12 +180,15 @@ func (e *BadRequestError) Unwrap() error {
 	return e.Err
 }
 
-// IsBadRequestError checks if an error is a BadRequestError
+// IsBadRequestError checks if an error is a BadRequestError.
 func IsBadRequestError(err error) bool {
-	_, ok := err.(*BadRequestError)
+	badRequestError := &BadRequestError{}
+	ok := errors.As(err, &badRequestError)
+
 	return ok
 }
 
+// UnauthorizedError represents a request rejected for missing or invalid authorization.
 type UnauthorizedError struct {
 	Message string
 	Err     error
@@ -151,12 +202,15 @@ func (e *UnauthorizedError) Unwrap() error {
 	return e.Err
 }
 
-// IsUnauthorizedError checks if an error is a UnauthorizedError
+// IsUnauthorizedError checks if an error is a UnauthorizedError.
 func IsUnauthorizedError(err error) bool {
-	_, ok := err.(*UnauthorizedError)
+	unauthorizedError := &UnauthorizedError{}
+	ok := errors.As(err, &unauthorizedError)
+
 	return ok
 }
 
+// NotFoundError represents a resource that the service could not find.
 type NotFoundError struct {
 	Message string
 	Err     error
@@ -164,8 +218,9 @@ type NotFoundError struct {
 
 func (e *NotFoundError) Error() string {
 	if e.Message != "" {
-		return fmt.Sprintf("not found error: %s", e.Message)
+		return "not found error: " + e.Message
 	}
+
 	return "not found"
 }
 
@@ -173,7 +228,7 @@ func (e *NotFoundError) Unwrap() error {
 	return e.Err
 }
 
-// IsNotFoundError checks if an error is a NotFoundError
+// InternalServerError represents an unexpected failure in the service.
 type InternalServerError struct {
 	Message string
 	Err     error
@@ -187,13 +242,15 @@ func (e *InternalServerError) Unwrap() error {
 	return e.Err
 }
 
-// IsInternalServerError checks if an error is a InternalServerError
+// IsInternalServerError checks if an error is a InternalServerError.
 func IsInternalServerError(err error) bool {
-	_, ok := err.(*InternalServerError)
+	internalServerError := &InternalServerError{}
+	ok := errors.As(err, &internalServerError)
+
 	return ok
 }
 
-// HTTPError represents an HTTP-level error with status code
+// HTTPError represents an HTTP-level error with status code.
 type HTTPError struct {
 	StatusCode int
 	Status     string
@@ -201,109 +258,7 @@ type HTTPError struct {
 	Message    string
 }
 
-func (e *HTTPError) Error() string {
-	if e.Message != "" {
-		return fmt.Sprintf("HTTP error %d (%s): %s", e.StatusCode, e.Status, e.Message)
-	}
-	if e.Body != "" {
-		return fmt.Sprintf("HTTP error %d (%s): %s", e.StatusCode, e.Status, e.Body)
-	}
-	return fmt.Sprintf("HTTP error %d (%s)", e.StatusCode, e.Status)
-}
-
-// IsHTTPError checks if an error is an HTTPError
-func IsHTTPError(err error) bool {
-	_, ok := err.(*HTTPError)
-	return ok
-}
-
-// IsHTTPStatusCode checks if an error is an HTTPError with a specific status code
-func IsHTTPStatusCode(err error, code int) bool {
-	httpErr, ok := err.(*HTTPError)
-	if !ok {
-		return false
-	}
-	return httpErr.StatusCode == code
-}
-
-// ClosedError represents an error when trying to use a closed connection
-type ClosedError struct {
-	Message string
-}
-
-func (e *ClosedError) Error() string {
-	if e.Message != "" {
-		return fmt.Sprintf("connection closed: %s", e.Message)
-	}
-	return "connection closed"
-}
-
-// IsClosedError checks if an error is a ClosedError
-func IsClosedError(err error) bool {
-	_, ok := err.(*ClosedError)
-	return ok
-}
-
-// PingError represents an error during ping operations
-type PingError struct {
-	StatusCode int
-	Message    string
-	Err        error
-}
-
-func (e *PingError) Error() string {
-	if e.StatusCode > 0 {
-		return fmt.Sprintf("ping error (status %d): %s", e.StatusCode, e.Message)
-	}
-	if e.Err != nil {
-		return fmt.Sprintf("ping error: %s: %v", e.Message, e.Err)
-	}
-	return fmt.Sprintf("ping error: %s", e.Message)
-}
-
-func (e *PingError) Unwrap() error {
-	return e.Err
-}
-
-// IsPingError checks if an error is a PingError
-func IsPingError(err error) bool {
-	_, ok := err.(*PingError)
-	return ok
-}
-
-// NewAuthenticationError creates a new AuthenticationError
-func NewAuthenticationError(message string, status int) *AuthenticationError {
-	return &AuthenticationError{
-		Message: message,
-		Status:  status,
-	}
-}
-
-// NewConnectionError creates a new ConnectionError
-func NewConnectionError(message string, err error) *ConnectionError {
-	return &ConnectionError{
-		Message: message,
-		Err:     err,
-	}
-}
-
-// NewNetworkError creates a new NetworkError
-func NewNetworkError(message string, err error) *NetworkError {
-	return &NetworkError{
-		Message: message,
-		Err:     err,
-	}
-}
-
-// NewTokenError creates a new TokenError
-func NewTokenError(message string, err error) *TokenError {
-	return &TokenError{
-		Message: message,
-		Err:     err,
-	}
-}
-
-// NewHTTPError creates a new HTTPError from an HTTP response
+// NewHTTPError creates a new HTTPError from an HTTP response.
 func NewHTTPError(resp *http.Response, body string) *HTTPError {
 	return &HTTPError{
 		StatusCode: resp.StatusCode,
@@ -312,18 +267,102 @@ func NewHTTPError(resp *http.Response, body string) *HTTPError {
 	}
 }
 
-// NewClosedError creates a new ClosedError
+func (e *HTTPError) Error() string {
+	if e.Message != "" {
+		return fmt.Sprintf("HTTP error %d (%s): %s", e.StatusCode, e.Status, e.Message)
+	}
+
+	if e.Body != "" {
+		return fmt.Sprintf("HTTP error %d (%s): %s", e.StatusCode, e.Status, e.Body)
+	}
+
+	return fmt.Sprintf("HTTP error %d (%s)", e.StatusCode, e.Status)
+}
+
+// IsHTTPError checks if an error is an HTTPError.
+func IsHTTPError(err error) bool {
+	hTTPError := &HTTPError{}
+	ok := errors.As(err, &hTTPError)
+
+	return ok
+}
+
+// IsHTTPStatusCode checks if an error is an HTTPError with a specific status code.
+func IsHTTPStatusCode(err error, code int) bool {
+	httpErr := &HTTPError{}
+
+	ok := errors.As(err, &httpErr)
+	if !ok {
+		return false
+	}
+
+	return httpErr.StatusCode == code
+}
+
+// ClosedError represents an error when trying to use a closed connection.
+type ClosedError struct {
+	Message string
+}
+
+// NewClosedError creates a new ClosedError.
 func NewClosedError(message string) *ClosedError {
 	return &ClosedError{
 		Message: message,
 	}
 }
 
-// NewPingError creates a new PingError
+func (e *ClosedError) Error() string {
+	if e.Message != "" {
+		return "connection closed: " + e.Message
+	}
+
+	return "connection closed"
+}
+
+// IsClosedError checks if an error is a ClosedError.
+func IsClosedError(err error) bool {
+	closedError := &ClosedError{}
+	ok := errors.As(err, &closedError)
+
+	return ok
+}
+
+// PingError represents an error during ping operations.
+type PingError struct {
+	StatusCode int
+	Message    string
+	Err        error
+}
+
+// NewPingError creates a new PingError.
 func NewPingError(statusCode int, message string, err error) *PingError {
 	return &PingError{
 		StatusCode: statusCode,
 		Message:    message,
 		Err:        err,
 	}
+}
+
+func (e *PingError) Error() string {
+	if e.StatusCode > 0 {
+		return fmt.Sprintf("ping error (status %d): %s", e.StatusCode, e.Message)
+	}
+
+	if e.Err != nil {
+		return fmt.Sprintf("ping error: %s: %v", e.Message, e.Err)
+	}
+
+	return "ping error: " + e.Message
+}
+
+func (e *PingError) Unwrap() error {
+	return e.Err
+}
+
+// IsPingError checks if an error is a PingError.
+func IsPingError(err error) bool {
+	pingError := &PingError{}
+	ok := errors.As(err, &pingError)
+
+	return ok
 }

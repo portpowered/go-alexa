@@ -14,6 +14,7 @@ import "github.com/portpowered/go-alexa/pkg/alexaapimodels"
 var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	// connectivity — Alexa.EndpointHealth connectivity property
 	alexaapimodels.FeatureNameConnectivity: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "reachabilityState"},
 		},
@@ -21,6 +22,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// location — Alexa.Location geolocation properties
 	alexaapimodels.FeatureNameLocation: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "geolocation"},
 		},
@@ -28,6 +30,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// locationTracker — Alexa.Location.Tracker operations
 	alexaapimodels.FeatureNameLocationTracker: {
+		Properties: nil,
 		Operations: []alexaapimodels.FeatureOperation{
 			{Name: "Locate"},
 		},
@@ -35,6 +38,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// playback — Alexa.PlaybackController operations
 	alexaapimodels.FeatureNamePlayback: {
+		Properties: nil,
 		Operations: []alexaapimodels.FeatureOperation{
 			{Name: "Play"},
 			{Name: "Pause"},
@@ -49,6 +53,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// speaker — Alexa.Speaker properties
 	alexaapimodels.FeatureNameSpeaker: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "volume"},
 			{Name: "muted"},
@@ -182,6 +187,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// temperatureSensor — Alexa.TemperatureSensor property (read-only)
 	alexaapimodels.FeatureNameTemperatureSensor: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "temperature"},
 		},
@@ -189,6 +195,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// endpointHealth — Alexa.EndpointHealth battery property
 	alexaapimodels.FeatureNameEndpointHealth: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "battery"},
 		},
@@ -207,6 +214,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// humiditySensor — Alexa.HumiditySensor property (read-only)
 	alexaapimodels.FeatureNameHumiditySensor: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "relativeHumidity"},
 		},
@@ -214,6 +222,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// lightSensor — Alexa.LightSensor property (read-only)
 	alexaapimodels.FeatureNameLightSensor: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "illuminance"},
 		},
@@ -221,6 +230,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// motionSensor — Alexa.MotionSensor property (read-only)
 	alexaapimodels.FeatureNameMotionSensor: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "detectionState"},
 		},
@@ -228,6 +238,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// contactSensor — Alexa.ContactSensor property (read-only)
 	alexaapimodels.FeatureNameContactSensor: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "detectionState"},
 		},
@@ -246,6 +257,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 
 	// statusCode — read-only status code property
 	alexaapimodels.FeatureNameStatusCode: {
+		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
 			{Name: "statusCode"},
 		},
@@ -260,13 +272,17 @@ type featureDefaultEntry struct {
 
 // getFeatureDefaults returns the default properties and operations for a given feature name.
 // If no defaults are defined, it returns empty (non-nil) slices.
-func getFeatureDefaults(name alexaapimodels.FeatureName) ([]alexaapimodels.FeatureProperty, []alexaapimodels.FeatureOperation) {
+func getFeatureDefaults(
+	name alexaapimodels.FeatureName,
+) ([]alexaapimodels.FeatureProperty, []alexaapimodels.FeatureOperation) {
 	if entry, ok := featureDefaults[name]; ok {
 		props := make([]alexaapimodels.FeatureProperty, len(entry.Properties))
 		copy(props, entry.Properties)
 		ops := make([]alexaapimodels.FeatureOperation, len(entry.Operations))
 		copy(ops, entry.Operations)
+
 		return props, ops
 	}
+
 	return []alexaapimodels.FeatureProperty{}, []alexaapimodels.FeatureOperation{}
 }

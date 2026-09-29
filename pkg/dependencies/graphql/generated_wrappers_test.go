@@ -1,8 +1,11 @@
+//nolint:testpackage // Verifies generated operation wrappers through private client execution.
 package graphql
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -18,24 +21,36 @@ type recordingGeneratedClient struct {
 
 func (client *recordingGeneratedClient) MakeRequest(_ context.Context, request *genqlient.Request, response *genqlient.Response) error {
 	client.calls++
+
 	client.request = request
 	if client.err != nil {
 		return client.err
 	}
+
 	if client.responseData == "" || response.Data == nil {
 		return nil
 	}
-	return json.Unmarshal([]byte(client.responseData), response.Data)
+
+	decodeErr := json.Unmarshal([]byte(client.responseData), response.Data)
+	if decodeErr != nil {
+		return fmt.Errorf("decode generated operation response: %w", decodeErr)
+	}
+
+	return nil
+}
+
+type generatedOperationTestCase struct {
+	name           string
+	operation      string
+	responseData   string
+	variableMarker string
+	call           func(context.Context, genqlient.Client) error
 }
 
 func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testing.T) {
-	tests := []struct {
-		name           string
-		operation      string
-		responseData   string
-		variableMarker string
-		call           func(context.Context, genqlient.Client) error
-	}{
+	t.Parallel()
+
+	tests := []generatedOperationTestCase{
 		{
 			name:           "get endpoint",
 			operation:      "GetEndpoint",
@@ -49,6 +64,7 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 						t.Errorf("unexpected generated endpoint response: %#v", response)
 					}
 				}
+
 				return err
 			},
 		},
@@ -62,6 +78,7 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 					EndpointIds:      []string{"synthetic-endpoint-id"},
 					PaginationParams: PaginationParams{NextToken: "synthetic-next"},
 				})
+
 				return err
 			},
 		},
@@ -72,6 +89,7 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 			variableMarker: "synthetic-endpoint-id",
 			call: func(ctx context.Context, client genqlient.Client) error {
 				_, err := ListEndpointsWithStates(ctx, client, ListEndpointsInput{EndpointIds: []string{"synthetic-endpoint-id"}})
+
 				return err
 			},
 		},
@@ -85,6 +103,7 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 					Endpoints:     []string{"synthetic-endpoint-id"},
 					Configuration: QualityOfServiceConfiguration{DurationInSeconds: 45},
 				})
+
 				return err
 			},
 		},
@@ -101,6 +120,7 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 						FeatureOperationName: FeatureOperationNameTurnon,
 					}},
 				})
+
 				return err
 			},
 		},
@@ -114,6 +134,7 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 					Entities:          []SubscriptionFilter{{EntityType: "endpoint", Ids: []string{"synthetic-endpoint-id"}}},
 					DurationInMinutes: 5,
 				})
+
 				return err
 			},
 		},
@@ -121,32 +142,49 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			client := &recordingGeneratedClient{responseData: testCase.responseData}
-			if err := testCase.call(context.Background(), client); err != nil {
-				t.Fatalf("generated wrapper returned an error: %v", err)
-			}
-			if client.calls != 1 || client.request == nil {
-				t.Fatalf("generated wrapper did not make exactly one request: calls=%d request=%#v", client.calls, client.request)
-			}
-			if client.request.OpName != testCase.operation || strings.TrimSpace(client.request.Query) == "" {
-				t.Fatalf("unexpected generated operation: name=%q query-empty=%v", client.request.OpName, strings.TrimSpace(client.request.Query) == "")
-			}
-			variables, err := json.Marshal(client.request.Variables)
-			if err != nil {
-				t.Fatalf("marshal generated variables: %v", err)
-			}
-			if !strings.Contains(string(variables), testCase.variableMarker) {
-				t.Errorf("generated variables omitted input marker %q: %s", testCase.variableMarker, variables)
-			}
+			t.Parallel()
+
+			assertGeneratedOperationWrapper(t, testCase)
 		})
 	}
 }
 
+func assertGeneratedOperationWrapper(t *testing.T, testCase generatedOperationTestCase) {
+	t.Helper()
+
+	client := &recordingGeneratedClient{responseData: testCase.responseData, request: nil, calls: 0, err: nil}
+
+	err := testCase.call(context.Background(), client)
+	if err != nil {
+		t.Fatalf("generated wrapper returned an error: %v", err)
+	}
+
+	if client.calls != 1 || client.request == nil {
+		t.Fatalf("generated wrapper did not make exactly one request: calls=%d request=%#v", client.calls, client.request)
+	}
+
+	if client.request.OpName != testCase.operation || strings.TrimSpace(client.request.Query) == "" {
+		t.Fatalf("unexpected generated operation: name=%q query-empty=%v", client.request.OpName, strings.TrimSpace(client.request.Query) == "")
+	}
+
+	variables, err := json.Marshal(client.request.Variables)
+	if err != nil {
+		t.Fatalf("marshal generated variables: %v", err)
+	}
+
+	if !strings.Contains(string(variables), testCase.variableMarker) {
+		t.Errorf("generated variables omitted input marker %q: %s", testCase.variableMarker, variables)
+	}
+}
+
 func TestGeneratedOperationWrapperReturnsClientError(t *testing.T) {
+	t.Parallel()
+
 	wantErr := &syntheticGraphQLError{message: "synthetic transport rejection"}
-	client := &recordingGeneratedClient{err: wantErr}
+	client := &recordingGeneratedClient{responseData: "", request: nil, calls: 0, err: wantErr}
+
 	_, err := GetEndpoint(context.Background(), client, "synthetic-endpoint-id")
-	if err != wantErr {
+	if !errors.Is(err, wantErr) {
 		t.Fatalf("expected generated wrapper to return client error unchanged, got %v", err)
 	}
 }

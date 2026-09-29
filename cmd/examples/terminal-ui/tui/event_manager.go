@@ -9,16 +9,20 @@ import (
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 )
 
+const eventSubscriptionDurationMinutes = 60
+
 type eventManager struct {
-	client    alexa.ClientInterface
-	conn      alexa.Connection
+	client alexa.ClientInterface
+	conn   alexa.Connection
+	//nolint:containedctx // Event subscriptions and reads share this manager lifetime.
 	ctx       context.Context
 	connected bool
 }
 
-func newEventManager(client alexa.ClientInterface, ctx context.Context) *eventManager {
+func newEventManager(ctx context.Context, client alexa.ClientInterface) *eventManager {
 	return &eventManager{
 		client:    client,
+		conn:      nil,
 		ctx:       ctx,
 		connected: false,
 	}
@@ -27,7 +31,7 @@ func newEventManager(client alexa.ClientInterface, ctx context.Context) *eventMa
 func (em *eventManager) connect(eventChan chan<- *alexaapimodels.Event) tea.Cmd {
 	return func() tea.Msg {
 		if em.client == nil {
-			return eventConnectionErrorMsg{err: fmt.Errorf("client not initialized")}
+			return eventConnectionErrorMsg{err: errClientNotInitialized}
 		}
 
 		conn, err := em.client.ConnectEvents(em.ctx)
@@ -40,13 +44,14 @@ func (em *eventManager) connect(eventChan chan<- *alexaapimodels.Event) tea.Cmd 
 
 		// Subscribe to events
 		subscribeReq := alexaapimodels.SubscribeRequest{
-			DurationInMinutes: 60,
+			DurationInMinutes: eventSubscriptionDurationMinutes,
 		}
 
 		_, err = em.client.Subscribe(em.ctx, subscribeReq)
 		if err != nil {
 			_ = em.conn.Close()
 			em.connected = false
+
 			return eventConnectionErrorMsg{err: fmt.Errorf("failed to subscribe: %w", err)}
 		}
 
@@ -66,6 +71,7 @@ func (em *eventManager) receiveEvents(eventChan chan<- *alexaapimodels.Event) {
 		event, err := em.conn.Receive()
 		if err != nil {
 			em.connected = false
+
 			return
 		}
 
@@ -74,24 +80,26 @@ func (em *eventManager) receiveEvents(eventChan chan<- *alexaapimodels.Event) {
 		case eventChan <- event:
 		case <-em.ctx.Done():
 			return
+		// Drop the event when the buffer is full.
 		default:
-			// Channel full, skip this event
 		}
 	}
 }
 
-// Commands for event management
-func connectEventsCmd(client alexa.ClientInterface, ctx context.Context, eventChan chan<- *alexaapimodels.Event) tea.Cmd {
+// Commands for event management.
+func connectEventsCmd(ctx context.Context, client alexa.ClientInterface, eventChan chan<- *alexaapimodels.Event) tea.Cmd {
 	return func() tea.Msg {
-		em := newEventManager(client, ctx)
+		em := newEventManager(ctx, client)
+
 		return em.connect(eventChan)
 	}
 }
 
-// Command to listen for events from channel
+// Command to listen for events from channel.
 func listenForEvents(eventChan <-chan *alexaapimodels.Event) tea.Cmd {
 	return func() tea.Msg {
 		event := <-eventChan
+
 		return eventReceivedMsg{event: event}
 	}
 }

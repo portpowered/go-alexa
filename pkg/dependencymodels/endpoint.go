@@ -1,9 +1,9 @@
-// Package models provides data structures for Alexa API interactions.
+// Package alexamodels provides dependency API request and response models.
 package alexamodels
 
 import "github.com/portpowered/go-alexa/pkg/alexaapimodels"
 
-// Device represents an Alexa device
+// Device represents an Alexa device.
 type Device struct {
 	ID           string                 `json:"id"`
 	Name         string                 `json:"name"`
@@ -13,7 +13,7 @@ type Device struct {
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 }
 
-// Capability represents a device capability
+// Capability represents a device capability.
 type Capability struct {
 	Type       string                 `json:"type"`
 	Interface  string                 `json:"interface,omitempty"`
@@ -21,7 +21,7 @@ type Capability struct {
 	Properties map[string]interface{} `json:"properties,omitempty"`
 }
 
-// Command represents a device control command
+// Command represents a device control command.
 type Command struct {
 	Type      string `json:"type"`
 	DeviceID  string `json:"device_id,omitempty"`
@@ -30,34 +30,34 @@ type Command struct {
 	Name      string `json:"name,omitempty"`
 }
 
-// AnnouncementContent represents content for an announcement
+// AnnouncementContent represents content for an announcement.
 type AnnouncementContent struct {
 	Locale  string              `json:"locale"`
 	Display AnnouncementDisplay `json:"display"`
 	Speak   AnnouncementSpeak   `json:"speak"`
 }
 
-// AnnouncementDisplay represents display content
+// AnnouncementDisplay represents display content.
 type AnnouncementDisplay struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`
 }
 
-// AnnouncementSpeak represents speak content
+// AnnouncementSpeak represents speak content.
 type AnnouncementSpeak struct {
 	Type  string `json:"type"` // "text"
 	Value string `json:"value"`
 }
 
-// MediaCommand represents a media control command
+// MediaCommand represents a media control command.
 type MediaCommand struct {
-	Type    string `json:"type"`              // "PlayCommand", "PauseCommand", "NextCommand", "PreviousCommand", "ForwardCommand", "RewindCommand", "ShuffleCommand", "RepeatCommand"
+	Type    string `json:"type"`
 	Shuffle *bool  `json:"shuffle,omitempty"` // For ShuffleCommand: true or false
 	Repeat  *bool  `json:"repeat,omitempty"`  // For RepeatCommand: true or false
 }
 
 // Endpoint represents a device endpoint that can be used for behavior operations
-// This interface provides unified access to endpoint information from different sources
+// This interface provides unified access to endpoint information from different sources.
 type Endpoint interface {
 	GetDeviceType() string
 	GetDeviceSerialNumber() string
@@ -69,29 +69,29 @@ type Endpoint interface {
 
 // Request structs for behavior APIs
 
-// StopPlaybackRequest represents a request to stop playback
+// StopPlaybackRequest represents a request to stop playback.
 type StopPlaybackRequest struct {
 	Endpoint   Endpoint `json:"-"` // Not serialized, used to extract device info
 	CustomerID string   `json:"customerId,omitempty"`
 	AllDevices bool     `json:"allDevices,omitempty"`
 }
 
-// MediaControlRequest represents a request for media control (pause, resume, next, previous)
+// MediaControlRequest represents a request for media control (pause, resume, next, previous).
 type MediaControlRequest struct {
 	Endpoint Endpoint `json:"-"` // Not serialized, used to extract device info
 }
 
-// PlayerStateRequest represents a request to get player state
+// PlayerStateRequest represents a request to get player state.
 type PlayerStateRequest struct {
 	Endpoint Endpoint `json:"-"` // Not serialized, used to extract device info
 }
 
-// PlayerStateResponse represents the response from getting player state
+// PlayerStateResponse represents the response from getting player state.
 type PlayerStateResponse struct {
 	PlayerInfo *PlayerInfo `json:"playerInfo,omitempty"`
 }
 
-// PlayerInfo represents player information
+// PlayerInfo represents player information.
 type PlayerInfo struct {
 	Hint             *string     `json:"hint,omitempty"`
 	InfoText         *InfoText   `json:"infoText,omitempty"`
@@ -115,7 +115,7 @@ type PlayerInfo struct {
 	Volume           *Volume     `json:"volume,omitempty"`
 }
 
-// InfoText represents text information displayed to the user
+// InfoText represents text information displayed to the user.
 type InfoText struct {
 	Header         *string `json:"header,omitempty"`
 	HeaderSubtext1 *string `json:"headerSubtext1,omitempty"`
@@ -135,7 +135,7 @@ type Art struct {
 	IconStyles  *string `json:"iconStyles,omitempty"`
 }
 
-// Progress represents playback progress information
+// Progress represents playback progress information.
 type Progress struct {
 	AllowScrubbing bool    `json:"allowScrubbing,omitempty"`
 	LocationInfo   *string `json:"locationInfo,omitempty"`
@@ -145,7 +145,7 @@ type Progress struct {
 	Visible        bool    `json:"visible,omitempty"`
 }
 
-// Provider represents the media provider information
+// Provider represents the media provider information.
 type Provider struct {
 	ArtOverlay          *Art    `json:"artOverlay,omitempty"`
 	FallbackMainArt     *Art    `json:"fallbackMainArt,omitempty"`
@@ -154,14 +154,14 @@ type Provider struct {
 	ProviderName        string  `json:"providerName,omitempty"`
 }
 
-// Template represents the display template
+// Template represents the display template.
 type Template struct {
 	Art                *Art   `json:"art,omitempty"`
 	BackgroundImageURL string `json:"backgroundImageUrl,omitempty"`
 	TemplateType       string `json:"templateType,omitempty"`
 }
 
-// Transport represents transport controls state
+// Transport represents transport controls state.
 type Transport struct {
 	ClosedCaptions    *string            `json:"closedCaptions,omitempty"`
 	LayoutType        string             `json:"layoutType,omitempty"`
@@ -174,20 +174,20 @@ type Transport struct {
 	ThumbsUp          string             `json:"thumbsUp,omitempty"`
 }
 
-// RateContentAction represents rating action information
+// RateContentAction represents rating action information.
 type RateContentAction struct {
 	MediaOwnerCustomerId string  `json:"mediaOwnerCustomerId,omitempty"`
 	Rating               *string `json:"rating,omitempty"`
 	Type                 string  `json:"type,omitempty"`
 }
 
-// Volume represents volume information
+// Volume represents volume information.
 type Volume struct {
 	Muted  bool `json:"muted,omitempty"`
 	Volume int  `json:"volume,omitempty"` // Volume level (0-100)
 }
 
-// SendNotificationRequest represents a request to send a notification
+// SendNotificationRequest represents a request to send a notification.
 type SendNotificationRequest struct {
 	Endpoint   Endpoint `json:"-"` // Not serialized, used to extract device info
 	Message    string   `json:"message"`
@@ -195,7 +195,7 @@ type SendNotificationRequest struct {
 	CustomerID string   `json:"customerId,omitempty"`
 }
 
-// SendAnnouncementRequest represents a request to send an announcement
+// SendAnnouncementRequest represents a request to send an announcement.
 type SendAnnouncementRequest struct {
 	Endpoint      Endpoint       `json:"-"` // Not serialized, used to extract device info
 	Message       string         `json:"message"`
@@ -206,7 +206,7 @@ type SendAnnouncementRequest struct {
 	TargetDevices []DeviceTarget `json:"targetDevices,omitempty"`
 }
 
-// SendTTSRequest represents a request to send text-to-speech
+// SendTTSRequest represents a request to send text-to-speech.
 type SendTTSRequest struct {
 	Endpoint      Endpoint       `json:"-"` // Not serialized, used to extract device info
 	Message       string         `json:"message"`
@@ -214,7 +214,7 @@ type SendTTSRequest struct {
 	TargetDevices []DeviceTarget `json:"targetDevices,omitempty"`
 }
 
-// PlayMusicRequest represents a request to play music
+// PlayMusicRequest represents a request to play music.
 type PlayMusicRequest struct {
 	Endpoint     Endpoint `json:"-"` // Not serialized, used to extract device info
 	ProviderID   string   `json:"providerId"`
@@ -223,7 +223,7 @@ type PlayMusicRequest struct {
 	TimerSeconds *int     `json:"timerSeconds,omitempty"`
 }
 
-// PlayVideoRequest represents a request to play video
+// PlayVideoRequest represents a request to play video.
 type PlayVideoRequest struct {
 	Endpoint        Endpoint `json:"-"` // Not serialized, used to extract device info
 	VideoProviderID string   `json:"videoProviderId"`
@@ -232,40 +232,46 @@ type PlayVideoRequest struct {
 	TimerSeconds    *int     `json:"timerSeconds,omitempty"`
 }
 
-// PlayAudioURIRequest represents a request to play audio from a public HTTPS URI
+// PlayAudioURIRequest represents a request to play audio from a public HTTPS URI.
 type PlayAudioURIRequest struct {
 	Endpoint   Endpoint `json:"-"` // Not serialized, used to extract device info
 	URI        string   `json:"uri"`
 	CustomerID string   `json:"customerId,omitempty"`
 }
 
+// VideoProviderID identifies a video provider supported by Fire TV operations.
 type VideoProviderID string
 
 const (
-	VideoProviderIDAmazon      VideoProviderID = "PRIME VIDEO"
-	VideoProviderIDYouTube     VideoProviderID = "YOUTUBE"
-	VideoProviderIDNetflix     VideoProviderID = "NETFLIX"
+	// VideoProviderIDAmazon identifies Prime Video.
+	VideoProviderIDAmazon VideoProviderID = "PRIME VIDEO"
+	// VideoProviderIDYouTube identifies YouTube.
+	VideoProviderIDYouTube VideoProviderID = "YOUTUBE"
+	// VideoProviderIDNetflix identifies Netflix.
+	VideoProviderIDNetflix VideoProviderID = "NETFLIX"
+	// VideoProviderIDDailymotion identifies Dailymotion.
 	VideoProviderIDDailymotion VideoProviderID = "DAILYMOTION"
 )
 
+// FireTVRequest selects an endpoint for a Fire TV operation.
 type FireTVRequest struct {
 	Endpoint Endpoint `json:"-"` // Not serialized, used to extract device info
 }
 
-// FireTVOperationRequest represents a request for Fire TV operations
+// FireTVOperationRequest represents a request for Fire TV operations.
 type FireTVOperationRequest struct {
 	Endpoint Endpoint `json:"-"` // Not serialized, used to extract device info
 }
 
 // PlaybackControlRequest represents a unified request for playback control
-// Works for both media playback and FireTV playback
+// Works for both media playback and FireTV playback.
 type PlaybackControlRequest struct {
 	Endpoint   Endpoint `json:"-"` // Not serialized, used to extract device info
 	CustomerID string   `json:"customerId,omitempty"`
 	Operation  string   `json:"operation"` // "play", "pause", "resume", "stop", "next", "previous"
 }
 
-// InterfaceMessageRequest represents a direct interface message to an endpoint feature/operation
+// InterfaceMessageRequest represents a direct interface message to an endpoint feature/operation.
 type InterfaceMessageRequest struct {
 	Endpoint      Endpoint    `json:"-"`                 // Not serialized, used to extract endpoint information
 	FeatureName   string      `json:"featureName"`       // Name of the feature, e.g. "playback"
@@ -274,14 +280,14 @@ type InterfaceMessageRequest struct {
 }
 
 // PowerControlRequest represents a unified request for power control
-// Works for both regular power and FireTV power
+// Works for both regular power and FireTV power.
 type PowerControlRequest struct {
 	Endpoint Endpoint                  `json:"-"`     // Not serialized, used to extract device info
 	State    alexaapimodels.PowerState `json:"state"` // "ON" or "OFF"
 }
 
 // VolumeControlRequest represents a unified request for volume control
-// Works for both REST API volume control and GraphQL speaker feature control
+// Works for both REST API volume control and GraphQL speaker feature control.
 type VolumeControlRequest struct {
 	Endpoint   Endpoint `json:"-"`                    // Not serialized, used to extract device info
 	Volume     *int     `json:"volume,omitempty"`     // Set volume (0-100)
@@ -290,7 +296,7 @@ type VolumeControlRequest struct {
 	CustomerID string   `json:"customerId,omitempty"` // For REST API
 }
 
-// Message represents a message received from the Alexa API via HTTP/2 connection
+// Message represents a message received from the Alexa API via HTTP/2 connection.
 type Message struct {
 	Data map[string]interface{} `json:"data,omitempty"`
 }

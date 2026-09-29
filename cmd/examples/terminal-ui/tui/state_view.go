@@ -18,7 +18,11 @@ type stateModel struct {
 
 func newStateModel() stateModel {
 	return stateModel{
-		loading: false,
+		endpoint: nil,
+		state:    nil,
+		width:    0,
+		height:   0,
+		loading:  false,
 	}
 }
 
@@ -33,6 +37,7 @@ func (m stateModel) Update(msg tea.Msg) (stateModel, tea.Cmd) {
 	case endpointSelectedMsg:
 		m.endpoint = msg.endpoint
 		m.loading = true
+
 		return m, nil
 
 	case stateLoadedMsg:
@@ -40,10 +45,13 @@ func (m stateModel) Update(msg tea.Msg) (stateModel, tea.Cmd) {
 		for _, ep := range msg.response.Results {
 			if ep.ID == m.endpoint.ID {
 				m.state = ep
+
 				break
 			}
 		}
+
 		m.loading = false
+
 		return m, nil
 
 	case tea.KeyMsg:
@@ -51,6 +59,7 @@ func (m stateModel) Update(msg tea.Msg) (stateModel, tea.Cmd) {
 		case "r":
 			// Refresh state
 			m.loading = true
+
 			return m, func() tea.Msg {
 				return refreshStateMsg{}
 			}
@@ -76,8 +85,8 @@ func (m stateModel) View() string {
 		return "No endpoint selected"
 	}
 
-	view := titleStyle.Render(fmt.Sprintf("State: %s", m.endpoint.EndpointID)) + "\n"
-	view += helpStyle.Render(fmt.Sprintf("Device: %s", m.endpoint.DeviceType)) + "\n\n"
+	view := titleStyle.Render("State: "+m.endpoint.EndpointID) + "\n"
+	view += helpStyle.Render("Device: "+m.endpoint.DeviceType) + "\n\n"
 
 	if m.loading {
 		return view + "Loading state..."
@@ -89,6 +98,7 @@ func (m stateModel) View() string {
 
 	// Display features with states (filter features that have properties)
 	featuresWithStates := make([]alexaapimodels.Feature, 0)
+
 	for _, feature := range m.state.Features {
 		if len(feature.Properties) > 0 {
 			featuresWithStates = append(featuresWithStates, feature)
@@ -99,40 +109,41 @@ func (m stateModel) View() string {
 		view += "No features with states found.\n"
 	} else {
 		for _, feature := range featuresWithStates {
-			view += lipgloss.NewStyle().Bold(true).Render(string(feature.Name)) + "\n"
-
-			if len(feature.Properties) == 0 {
-				view += "  No properties\n"
-			} else {
-				for _, prop := range feature.Properties {
-					view += fmt.Sprintf("  %s: ", prop.Name)
-
-					// Display state value
-					if prop.StateValue != nil {
-						view += fmt.Sprintf("%v", prop.StateValue)
-					} else {
-						view += "N/A"
-					}
-
-					// Display accuracy if available
-					if prop.Accuracy != "" {
-						view += fmt.Sprintf(" (accuracy: %s)", prop.Accuracy)
-					}
-
-					// Display error if present
-					if prop.Error != nil {
-						view += " " + errorStyle.Render(fmt.Sprintf("[ERROR: %s]", prop.Error.Type))
-					}
-
-					view += "\n"
-				}
-			}
-			view += "\n"
+			view += renderFeatureState(feature)
 		}
 	}
 
 	view += "\n" + helpStyle.Render("r: Refresh | b: Back | c: Control | q: Quit")
+
 	return view
+}
+
+func renderFeatureState(feature alexaapimodels.Feature) string {
+	view := lipgloss.NewStyle().Bold(true).Render(string(feature.Name)) + "\n"
+	for _, prop := range feature.Properties {
+		view += renderPropertyState(prop)
+	}
+
+	return view + "\n"
+}
+
+func renderPropertyState(prop alexaapimodels.FeatureProperty) string {
+	view := fmt.Sprintf("  %s: ", prop.Name)
+	if prop.StateValue == nil {
+		view += "N/A"
+	} else {
+		view += fmt.Sprintf("%v", prop.StateValue)
+	}
+
+	if prop.Accuracy != "" {
+		view += fmt.Sprintf(" (accuracy: %s)", prop.Accuracy)
+	}
+
+	if prop.Error != nil {
+		view += " " + errorStyle.Render(fmt.Sprintf("[ERROR: %s]", prop.Error.Type))
+	}
+
+	return view + "\n"
 }
 
 type refreshStateMsg struct{}

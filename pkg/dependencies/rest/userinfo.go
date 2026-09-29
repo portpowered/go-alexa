@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
 	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
@@ -10,7 +9,7 @@ import (
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
-// GetUserInfoOptions contains options for getting user info
+// GetUserInfoOptions contains options for getting user info.
 type GetUserInfoOptions struct {
 	Platform  string // Platform identifier (e.g., "ios", "android")
 	Version   string // App version (e.g., "2.2.556530.0")
@@ -18,21 +17,24 @@ type GetUserInfoOptions struct {
 }
 
 // GetUserInfo retrieves user information from the /api/users/me endpoint
-// GET {alexaAmazonBaseUri}/api/users/me?platform={platform}&version={version}
+// GET {alexaAmazonBaseURI}/api/users/me?platform={platform}&version={version}.
 func (c *Client) GetUserInfo(ctx context.Context, opts *GetUserInfoOptions) (*alexamodels.UserInfo, error) {
 	if opts == nil {
 		opts = &GetUserInfoOptions{}
 	}
 
 	// Build the full URL using the client's base URI
-	baseURL := c.alexaAmazonBaseUri + apiroutes.PathGetUserInfo
+	baseURL := c.alexaAmazonBaseURI + apiroutes.PathGetUserInfo
+
 	params := url.Values{}
 	if opts.Platform != "" {
 		params.Set(apiroutes.QueryParamPlatform, opts.Platform)
 	}
+
 	if opts.Version != "" {
 		params.Set(apiroutes.QueryParamVersion, opts.Version)
 	}
+
 	if len(params) > 0 {
 		baseURL += "?" + params.Encode()
 	}
@@ -40,12 +42,14 @@ func (c *Client) GetUserInfo(ctx context.Context, opts *GetUserInfoOptions) (*al
 	// Build custom headers
 	customHeaders := make(map[string]string)
 	if opts.CSRFToken != "" {
-		customHeaders[apiroutes.HeaderCookie] = fmt.Sprintf("csrf=%s", opts.CSRFToken)
+		customHeaders[apiroutes.HeaderCookie] = "csrf=" + opts.CSRFToken
 	}
 
 	// Use the client's helper method to perform the request
 	var userInfo wire.WireUserInfo
-	if err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodGetUserInfo, baseURL, nil, customHeaders, &userInfo, true); err != nil {
+
+	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodGetUserInfo, baseURL, nil, customHeaders, &userInfo, true)
+	if err != nil {
 		return nil, err
 	}
 

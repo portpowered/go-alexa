@@ -1,3 +1,4 @@
+// Package tui implements the terminal Alexa client interface.
 package tui
 
 import (
@@ -5,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,10 +13,16 @@ import (
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 )
 
+const (
+	eventChannelBufferSize = 100
+	splitPaneCount         = 2
+	clearErrorDelay        = 3 * time.Second
+)
+
 type config struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
-	CustomerID   string `json:"customerID"`
+	CustomerID   string `json:"customerId"`
 }
 
 type viewMode int
@@ -28,10 +34,12 @@ const (
 	viewState
 )
 
-type model struct {
+// Model is the stateful Bubble Tea model for the terminal client.
+type Model struct {
 	// Client and connection
-	client          alexa.ClientInterface
-	eventChan       chan *alexaapimodels.Event
+	client    alexa.ClientInterface
+	eventChan chan *alexaapimodels.Event
+	//nolint:containedctx // Asynchronous commands share the Bubble Tea model lifetime.
 	ctx             context.Context
 	cancel          context.CancelFunc
 	eventsConnected bool
@@ -51,53 +59,48 @@ type model struct {
 	height           int
 }
 
-func NewModel() *model {
+// NewModel creates an initialized terminal client model.
+func NewModel() *Model {
 	ctx, cancel := context.WithCancel(context.Background())
-	eventChan := make(chan *alexaapimodels.Event, 100)
-	m := &model{
-		ctx:         ctx,
-		cancel:      cancel,
-		eventChan:   eventChan,
-		currentView: viewTokenInput,
-		tokenInput:  newTokenInputModel(),
-		endpoints:   newEndpointsModel(),
-		control:     newControlModel(),
-		state:       newStateModel(),
-		events:      newEventsModel(),
+	eventChan := make(chan *alexaapimodels.Event, eventChannelBufferSize)
+	model := &Model{
+		client:           nil,
+		ctx:              ctx,
+		cancel:           cancel,
+		eventChan:        eventChan,
+		eventsConnected:  false,
+		currentView:      viewTokenInput,
+		selectedEndpoint: nil,
+		errorMsg:         "",
+		width:            0,
+		height:           0,
+		tokenInput:       newTokenInputModel(),
+		endpoints:        newEndpointsModel(),
+		control:          newControlModel(),
+		state:            newStateModel(),
+		events:           newEventsModel(),
 	}
 
-	// Check for config file in current directory
-	if cfg := getConfigFromFile(); cfg != nil {
-		// Auto-validate config if provided via file
-		go func() {
-			// Small delay to let the UI initialize
-			time.Sleep(100 * time.Millisecond)
-			// This will be handled by the Update method when tokenValidatedMsg is received
-		}()
-	}
-	return m
+	return model
 }
 
 func getConfigFromFile() *config {
 	// Look for config.json in the current directory
 	configPath := "config.json"
 
-	// Get the absolute path to ensure we're reading from the current working directory
-	absPath, err := filepath.Abs(configPath)
-	if err != nil {
-		return nil
-	}
-
-	data, err := os.ReadFile(absPath)
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		// Config file doesn't exist or can't be read - that's okay
 		return nil
 	}
 
 	var cfg config
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		// Config file exists but is invalid - that's okay, we'll prompt for input
-		return nil
+	{
+		err := json.Unmarshal(data, &cfg)
+		if err != nil {
+			// Config file exists but is invalid - that's okay, we'll prompt for input
+			return nil
+		}
 	}
 
 	// Validate that all required fields are present
@@ -108,42 +111,41 @@ func getConfigFromFile() *config {
 	return &cfg
 }
 
-func (m *model) Init() tea.Cmd {
+// Init starts model initialization and optional configuration validation.
+func (m *Model) Init() tea.Cmd {
 	// If config is provided via file, auto-validate it
 	if cfg := getConfigFromFile(); cfg != nil {
 		return tea.Batch(m.tokenInput.Init(), validateToken(cfg.AccessToken, cfg.RefreshToken, cfg.CustomerID))
 	}
+
 	return m.tokenInput.Init()
 }
 
-func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
+// Update applies a message and returns the next command.
+//
+//nolint:ireturn // Bubble Tea requires Model.Update to return the tea.Model interface.
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	cmds := updateEventMessage(m, msg)
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.endpoints.width = msg.Width / 2
+		m.endpoints.width = msg.Width / splitPaneCount
 		m.endpoints.height = msg.Height
-		m.events.width = msg.Width / 2
+		m.events.width = msg.Width / splitPaneCount
 		m.events.height = msg.Height
-		m.control.width = msg.Width / 2
+		m.control.width = msg.Width / splitPaneCount
 		m.control.height = msg.Height
-		m.state.width = msg.Width / 2
+		m.state.width = msg.Width / splitPaneCount
 		m.state.height = msg.Height
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			if m.currentView == viewTokenInput {
-				m.closeSession()
-				return m, tea.Quit
-			}
-			// Allow quitting from main views too
-			if msg.String() == "ctrl+c" {
-				m.closeSession()
-				return m, tea.Quit
-			}
+		key := msg.String()
+		if key == "ctrl+c" || (key == "q" && m.currentView == viewTokenInput) {
+			m.closeSession()
+
+			return m, tea.Quit
 		}
 
 	case tokenValidatedMsg:
@@ -153,7 +155,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.currentView = viewEndpoints
 		// Load endpoints
 		// Also connect to events
-		return m, tea.Batch(m.loadEndpoints(), connectEventsCmd(m.client, m.ctx, m.eventChan), listenForEvents(m.eventChan))
+		return m, tea.Batch(m.loadEndpoints(), connectEventsCmd(m.ctx, m.client, m.eventChan), listenForEvents(m.eventChan))
 
 	case endpointSelectedMsg:
 		m.selectedEndpoint = msg.endpoint
@@ -166,23 +168,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case viewStateMsg:
 		m.currentView = viewState
+
 		return m, m.loadState()
-
-	case eventReceivedMsg:
-		// Add event to events view
-		_, cmd := m.events.Update(msg)
-		cmds = append(cmds, cmd)
-		// Continue listening for more events
-		cmds = append(cmds, listenForEvents(m.eventChan))
-
-	case eventConnectedMsg:
-		m.eventsConnected = true
-		// Continue listening for events
-		cmds = append(cmds, listenForEvents(m.eventChan))
-
-	case eventConnectionErrorMsg:
-		m.errorMsg = fmt.Sprintf("Event connection error: %v", msg.err)
-		cmds = append(cmds, clearErrorAfterDelay())
 
 	case errorMsg:
 		m.errorMsg = msg.error
@@ -201,62 +188,94 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.loadState()
 
 	case stateLoadedMsg:
-		m.state.state = nil
-		// Find the endpoint in the response
-		for _, ep := range msg.response.Results {
-			if ep.ID == m.selectedEndpoint.ID {
-				m.state.state = ep
-				break
-			}
-		}
+		m.state.state = findEndpointByID(msg.response, m.selectedEndpoint.ID)
+
 		return m, nil
 
 	case tokenValidationErrorMsg:
 		m.tokenInput.err = msg.err
+
 		return m, nil
 
 	case clearErrorMsg:
 		m.errorMsg = ""
+
 		return m, nil
 	}
 
-	// Update current view
-	switch m.currentView {
-	case viewTokenInput:
-		var cmd tea.Cmd
-		m.tokenInput, cmd = m.tokenInput.Update(msg)
-		cmds = append(cmds, cmd)
-
-	case viewEndpoints:
-		var cmd tea.Cmd
-		m.endpoints, cmd = m.endpoints.Update(msg)
-		cmds = append(cmds, cmd)
-
-	case viewControl:
-		var cmd tea.Cmd
-		m.control, cmd = m.control.Update(msg)
-		cmds = append(cmds, cmd)
-		// Also update events view for display
-		_, cmd = m.events.Update(tea.WindowSizeMsg{Width: m.width / 2, Height: m.height})
-		cmds = append(cmds, cmd)
-
-	case viewState:
-		var cmd tea.Cmd
-		m.state, cmd = m.state.Update(msg)
-		cmds = append(cmds, cmd)
-	}
+	cmds = append(cmds, updateCurrentView(m, msg)...)
 
 	return m, tea.Batch(cmds...)
 }
 
-func (m *model) closeSession() {
-	m.cancel()
-	if m.client != nil {
-		_ = m.client.Close()
+func updateEventMessage(model *Model, msg tea.Msg) []tea.Cmd {
+	var cmds []tea.Cmd
+
+	switch msg := msg.(type) {
+	case eventReceivedMsg:
+		_, cmd := model.events.Update(msg)
+		cmds = append(cmds, cmd, listenForEvents(model.eventChan))
+
+	case eventConnectedMsg:
+		model.eventsConnected = true
+		cmds = append(cmds, listenForEvents(model.eventChan))
+
+	case eventConnectionErrorMsg:
+		model.errorMsg = fmt.Sprintf("Event connection error: %v", msg.err)
+		cmd := clearErrorAfterDelay()
+		cmds = append(cmds, cmd)
 	}
+
+	return cmds
 }
 
-func (m *model) View() string {
+func updateCurrentView(model *Model, msg tea.Msg) []tea.Cmd {
+	var cmds []tea.Cmd
+
+	switch model.currentView {
+	case viewTokenInput:
+		var cmd tea.Cmd
+
+		model.tokenInput, cmd = model.tokenInput.Update(msg)
+		cmds = append(cmds, cmd)
+
+	case viewEndpoints:
+		var cmd tea.Cmd
+
+		model.endpoints, cmd = model.endpoints.Update(msg)
+		cmds = append(cmds, cmd)
+
+	case viewControl:
+		var cmd tea.Cmd
+
+		model.control, cmd = model.control.Update(msg)
+		cmds = append(cmds, cmd)
+		// Also update events view for display
+		_, cmd = model.events.Update(tea.WindowSizeMsg{Width: model.width / splitPaneCount, Height: model.height})
+		cmds = append(cmds, cmd)
+
+	case viewState:
+		var cmd tea.Cmd
+
+		model.state, cmd = model.state.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
+	return cmds
+}
+
+func findEndpointByID(response *alexaapimodels.UnifiedEndpointListResponse, endpointID string) *alexaapimodels.Endpoint {
+	for _, endpoint := range response.Results {
+		if endpoint.ID == endpointID {
+			return endpoint
+		}
+	}
+
+	return nil
+}
+
+// View renders the active terminal view.
+func (m *Model) View() string {
 	if m.width == 0 {
 		return "Loading..."
 	}
@@ -268,27 +287,39 @@ func (m *model) View() string {
 	case viewEndpoints:
 		left := m.endpoints.View()
 		right := m.events.View()
+
 		return splitView(left, right, m.width)
 
 	case viewControl:
 		left := m.control.View()
 		right := m.events.View()
+
 		view := splitView(left, right, m.width)
 		if m.errorMsg != "" {
 			view += "\n" + errorStyle.Render("Error: "+m.errorMsg)
 		}
+
 		return view
 
 	case viewState:
 		left := m.state.View()
 		right := m.events.View()
+
 		return splitView(left, right, m.width)
 	}
 
 	return ""
 }
 
-func (m *model) loadEndpoints() tea.Cmd {
+func (m *Model) closeSession() {
+	m.cancel()
+
+	if m.client != nil {
+		_ = m.client.Close()
+	}
+}
+
+func (m *Model) loadEndpoints() tea.Cmd {
 	return func() tea.Msg {
 		if m.client == nil {
 			return errorMsg{error: "Client not initialized"}
@@ -307,7 +338,7 @@ func (m *model) loadEndpoints() tea.Cmd {
 	}
 }
 
-func (m *model) loadState() tea.Cmd {
+func (m *Model) loadState() tea.Cmd {
 	return func() tea.Msg {
 		if m.client == nil || m.selectedEndpoint == nil {
 			return errorMsg{error: "Client or endpoint not initialized"}
@@ -324,9 +355,11 @@ func (m *model) loadState() tea.Cmd {
 
 		// Find the endpoint in the response
 		var endpointState *alexaapimodels.Endpoint
+
 		for _, ep := range response.Results {
 			if ep.ID == m.selectedEndpoint.ID {
 				endpointState = ep
+
 				break
 			}
 		}
@@ -339,7 +372,7 @@ func (m *model) loadState() tea.Cmd {
 	}
 }
 
-// Messages
+// Messages.
 type tokenValidatedMsg struct {
 	client alexa.ClientInterface
 }
@@ -374,7 +407,7 @@ type errorMsg struct {
 }
 
 func clearErrorAfterDelay() tea.Cmd {
-	return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+	return tea.Tick(clearErrorDelay, func(_ time.Time) tea.Msg {
 		return clearErrorMsg{}
 	})
 }

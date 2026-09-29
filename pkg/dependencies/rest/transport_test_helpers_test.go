@@ -1,3 +1,4 @@
+//nolint:testpackage // Shared helpers require access to private REST transport details.
 package rest
 
 import (

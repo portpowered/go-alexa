@@ -2,12 +2,15 @@ package tui
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 )
+
+const eventViewHeaderHeight = 5
 
 const maxEvents = 100
 
@@ -27,6 +30,9 @@ type eventEntry struct {
 func newEventsModel() eventsModel {
 	return eventsModel{
 		events:     make([]eventEntry, 0),
+		scrollPos:  0,
+		width:      0,
+		height:     0,
 		autoScroll: true,
 	}
 }
@@ -42,6 +48,7 @@ func (m eventsModel) Update(msg tea.Msg) (eventsModel, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
 		return m, nil
 
 	case eventReceivedMsg:
@@ -73,6 +80,7 @@ func (m eventsModel) Update(msg tea.Msg) (eventsModel, tea.Cmd) {
 				m.scrollPos--
 				m.autoScroll = false
 			}
+
 			return m, nil
 
 		case "down", "j":
@@ -81,12 +89,14 @@ func (m eventsModel) Update(msg tea.Msg) (eventsModel, tea.Cmd) {
 			} else {
 				m.autoScroll = true
 			}
+
 			return m, nil
 
 		case "g":
 			// Go to top
 			m.scrollPos = 0
 			m.autoScroll = false
+
 			return m, nil
 
 		case "G":
@@ -95,7 +105,9 @@ func (m eventsModel) Update(msg tea.Msg) (eventsModel, tea.Cmd) {
 			if m.scrollPos < 0 {
 				m.scrollPos = 0
 			}
+
 			m.autoScroll = true
+
 			return m, nil
 		}
 	}
@@ -110,11 +122,12 @@ func (m eventsModel) View() string {
 	if len(m.events) == 0 {
 		view += "No events received yet.\n"
 		view += helpStyle.Render("Connect to events stream to see events here.")
+
 		return view
 	}
 
 	// Calculate visible range
-	visibleHeight := m.height - 5 // Account for header
+	visibleHeight := m.height - eventViewHeaderHeight
 	if visibleHeight < 1 {
 		visibleHeight = 1
 	}
@@ -123,6 +136,7 @@ func (m eventsModel) View() string {
 	if start < 0 {
 		start = 0
 	}
+
 	if start >= len(m.events) {
 		start = len(m.events) - 1
 	}
@@ -139,7 +153,8 @@ func (m eventsModel) View() string {
 		view += "\n"
 	}
 
-	view += "\n" + helpStyle.Render("↑/↓: Scroll | g/G: Top/Bottom | Auto-scroll: "+fmt.Sprintf("%v", m.autoScroll))
+	view += "\n" + helpStyle.Render("↑/↓: Scroll | g/G: Top/Bottom | Auto-scroll: "+strconv.FormatBool(m.autoScroll))
+
 	return view
 }
 
@@ -149,7 +164,7 @@ func (m eventsModel) formatEvent(entry eventEntry, selected bool) string {
 
 	line := fmt.Sprintf("[%s] %s::%s", timeStr, event.Namespace, event.Name)
 	if event.EndpointID != "" {
-		line += fmt.Sprintf(" @ %s", event.EndpointID)
+		line += " @ " + event.EndpointID
 	}
 
 	if selected {
@@ -172,70 +187,87 @@ func formatPayload(payload interface{}) string {
 		return ""
 	}
 
-	switch p := payload.(type) {
+	switch payloadValue := payload.(type) {
 	case *alexaapimodels.PowerPayload:
-		return fmt.Sprintf("Power: %s", p.PowerState)
+		return "Power: " + payloadValue.PowerState
 
 	case *alexaapimodels.SpeakerPayload:
-		result := "Speaker: "
-		if p.Volume != nil {
-			result += fmt.Sprintf("Volume=%d", *p.Volume)
-		}
-		if p.Muted != nil {
-			result += fmt.Sprintf(" Muted=%v", *p.Muted)
-		}
-		return result
+		return formatSpeakerPayload(payloadValue)
 
 	case *alexaapimodels.BrightnessPayload:
-		if p.Brightness != nil {
-			return fmt.Sprintf("Brightness: %d", *p.Brightness)
+		if payloadValue.Brightness != nil {
+			return fmt.Sprintf("Brightness: %d", *payloadValue.Brightness)
 		}
+
 		return "Brightness: N/A"
 
 	case *alexaapimodels.ColorPayload:
-		result := "Color: "
-		if p.Hue != nil {
-			result += fmt.Sprintf("Hue=%.1f", *p.Hue)
-		}
-		if p.Saturation != nil {
-			result += fmt.Sprintf(" Sat=%.1f", *p.Saturation)
-		}
-		if p.Brightness != nil {
-			result += fmt.Sprintf(" Bright=%.1f", *p.Brightness)
-		}
-		return result
+		return formatColorPayload(payloadValue)
 
 	case *alexaapimodels.ColorTemperaturePayload:
-		return fmt.Sprintf("Color Temp: %dK", p.ColorTemperatureInKelvin)
+		return fmt.Sprintf("Color Temp: %dK", payloadValue.ColorTemperatureInKelvin)
 
 	case *alexaapimodels.LockPayload:
-		return fmt.Sprintf("Lock: %s", p.LockState)
+		return "Lock: " + payloadValue.LockState
 
 	case *alexaapimodels.TogglePayload:
-		return fmt.Sprintf("Toggle: %s", p.ToggleState)
+		return "Toggle: " + payloadValue.ToggleState
 
 	case *alexaapimodels.ModePayload:
-		return fmt.Sprintf("Mode: %s", p.Mode)
+		return "Mode: " + payloadValue.Mode
 
 	case *alexaapimodels.RangePayload:
-		if p.RangeValue != nil {
-			return fmt.Sprintf("Range: %.2f", *p.RangeValue)
+		if payloadValue.RangeValue != nil {
+			return fmt.Sprintf("Range: %.2f", *payloadValue.RangeValue)
 		}
+
 		return "Range: N/A"
 
 	case *alexaapimodels.PercentagePayload:
-		if p.Percentage != nil {
-			return fmt.Sprintf("Percentage: %.1f%%", *p.Percentage)
+		if payloadValue.Percentage != nil {
+			return fmt.Sprintf("Percentage: %.1f%%", *payloadValue.Percentage)
 		}
+
 		return "Percentage: N/A"
 
 	case *alexaapimodels.PowerLevelPayload:
-		if p.PowerLevel != nil {
-			return fmt.Sprintf("Power Level: %d", *p.PowerLevel)
+		if payloadValue.PowerLevel != nil {
+			return fmt.Sprintf("Power Level: %d", *payloadValue.PowerLevel)
 		}
+
 		return "Power Level: N/A"
 
 	default:
-		return fmt.Sprintf("Payload: %T", p)
+		return fmt.Sprintf("Payload: %T", payloadValue)
 	}
+}
+
+func formatSpeakerPayload(payload *alexaapimodels.SpeakerPayload) string {
+	result := "Speaker: "
+	if payload.Volume != nil {
+		result += fmt.Sprintf("Volume=%d", *payload.Volume)
+	}
+
+	if payload.Muted != nil {
+		result += fmt.Sprintf(" Muted=%v", *payload.Muted)
+	}
+
+	return result
+}
+
+func formatColorPayload(payload *alexaapimodels.ColorPayload) string {
+	result := "Color: "
+	if payload.Hue != nil {
+		result += fmt.Sprintf("Hue=%.1f", *payload.Hue)
+	}
+
+	if payload.Saturation != nil {
+		result += fmt.Sprintf(" Sat=%.1f", *payload.Saturation)
+	}
+
+	if payload.Brightness != nil {
+		result += fmt.Sprintf(" Bright=%.1f", *payload.Brightness)
+	}
+
+	return result
 }

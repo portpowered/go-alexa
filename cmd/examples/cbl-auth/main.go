@@ -1,27 +1,42 @@
+// Package main demonstrates cookie-based Alexa authentication.
 package main
 
 import (
 	"bufio"
 	"context"
+	"crypto/rand"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/big"
 	"os"
-	"time"
 
 	"github.com/portpowered/go-alexa/pkg/alexa"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 )
 
-// generateRandomString generates a random string of specified length
-func generateRandomString(length int) string {
+const (
+	deviceSerialLength      = 13
+	deviceNameSuffixLength  = 3
+	maximumEndpointsToPrint = 5
+)
+
+// generateRandomString generates a random string of specified length.
+func generateRandomString(length int) (string, error) {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
+
+	limit := big.NewInt(int64(len(charset)))
+	value := make([]byte, length)
+
+	for index := range value {
+		randomIndex, err := rand.Int(rand.Reader, limit)
+		if err != nil {
+			return "", fmt.Errorf("generate random device identifier: %w", err)
+		}
+
+		value[index] = charset[randomIndex.Int64()]
 	}
-	return string(b)
+
+	return string(value), nil
 }
 
 func main() {
@@ -34,37 +49,50 @@ func main() {
 	}
 
 	// Generate device identifiers
-	deviceSerial := generateRandomString(13)
-	deviceName := fmt.Sprintf("Client_Ad_Hoc_%d", rand.Intn(1000)+1)
+	deviceSerial, err := generateRandomString(deviceSerialLength)
+	if err != nil {
+		log.Fatalf("Generate device serial: %v", err)
+	}
+
+	deviceNameSuffix, err := generateRandomString(deviceNameSuffixLength)
+	if err != nil {
+		log.Fatalf("Generate device name suffix: %v", err)
+	}
+
+	deviceName := "Client_Ad_Hoc_" + deviceNameSuffix
 
 	// Create device registration config
 	config := alexaapimodels.DefaultDeviceRegistrationConfig(deviceSerial, deviceName)
 
-	fmt.Println("=== Code-Based Linking (CBL) Authentication Example ===")
-	fmt.Println()
+	outputLine("=== Code-Based Linking (CBL) Authentication Example ===")
+	outputLine()
 
 	// Step 1: Generate code pair
-	fmt.Println("Step 1: Generating code pair for CBL...")
+	outputLine("Step 1: Generating code pair for CBL...")
+
 	codePair, err := client.GenerateCodePair(ctx, config)
 	if err != nil {
 		log.Fatalf("Failed to generate code pair: %v", err)
 	}
 
-	fmt.Printf("✓ Code pair generated successfully!\n")
-	fmt.Printf("  Public Code:  %s\n", codePair.PublicCode)
-	fmt.Println()
+	outputf("✓ Code pair generated successfully!\n")
+	outputf("  Public Code:  %s\n", codePair.PublicCode)
+	outputLine()
 
 	// Step 2: Prompt user to enter code on Amazon website
-	fmt.Println("Step 2: Please visit https://amazon.com/code")
-	fmt.Printf("   Enter the following code: %s\n", codePair.PublicCode)
-	fmt.Println()
-	fmt.Print("Press Enter after you have entered the code on Amazon's website...")
+	outputLine("Step 2: Please visit https://amazon.com/code")
+	outputf("   Enter the following code: %s\n", codePair.PublicCode)
+	outputLine()
+	outputText("Press Enter after you have entered the code on Amazon's website...")
+
 	reader := bufio.NewReader(os.Stdin)
 	_, _ = reader.ReadString('\n')
-	fmt.Println()
+
+	outputLine()
 
 	// Step 3: Register using code pair
-	fmt.Println("Step 3: Registering device with code pair...")
+	outputLine("Step 3: Registering device with code pair...")
+
 	registrationResp, err := client.RegisterWithCodePair(ctx, codePair.PublicCode, codePair.PrivateCode, config)
 	if err != nil {
 		log.Fatalf("Failed to register with code pair: %v", err)
@@ -72,32 +100,37 @@ func main() {
 
 	refreshToken := registrationResp.RefreshToken
 
-	fmt.Println("Device registered successfully; credential values are kept out of console output.")
-	fmt.Println()
+	outputLine("Device registered successfully; credential values are kept out of console output.")
+	outputLine()
 
 	// Step 4: Demonstrate token refresh
-	fmt.Println("Step 4: Refreshing access token...")
+	outputLine("Step 4: Refreshing access token...")
+
 	refreshReq := alexaapimodels.TokenRefreshRequest{
 		RefreshToken: refreshToken,
 		Config:       config,
 	}
+
 	refreshResp, err := client.RefreshAccessToken(ctx, refreshReq)
 	if err != nil {
 		log.Fatalf("Failed to refresh access token: %v", err)
 	}
 
 	newAccessToken := refreshResp.AccessToken
-	fmt.Println("Access token refreshed successfully.")
-	fmt.Println()
+
+	outputLine("Access token refreshed successfully.")
+	outputLine()
 
 	// Step 5: Demonstrate using the token with the Alexa client
-	fmt.Println("Step 5: Using the access token to list endpoints...")
+	outputLine("Step 5: Using the access token to list endpoints...")
+
 	authenticatedClient, err := client.NewSession(
 		alexa.WithBearerToken(newAccessToken),
 	)
 	if err != nil {
 		log.Fatalf("Failed to create authenticated session: %v", err)
 	}
+
 	defer func() {
 		_ = authenticatedClient.Close()
 	}()
@@ -111,20 +144,53 @@ func main() {
 	if err != nil {
 		log.Printf("Warning: Failed to list endpoints (this is expected if you don't have any devices): %v", err)
 	} else {
-		fmt.Printf("✓ Found %d endpoints\n", len(endpoints.Results))
-		for i, endpoint := range endpoints.Results {
-			if i >= 5 {
-				fmt.Printf("  ... and %d more\n", len(endpoints.Results)-5)
-				break
-			}
-			name := endpoint.EndpointID
-			if endpoint.FriendlyName != nil {
-				name = endpoint.FriendlyName.Value
-			}
-			fmt.Printf("  - %s (%s)\n", name, endpoint.ID)
-		}
+		printEndpoints(endpoints.Results)
 	}
 
-	fmt.Println()
-	fmt.Println("=== CBL Authentication Complete ===")
+	printCompletion()
+}
+
+func printCompletion() {
+	outputLine()
+	outputLine("=== CBL Authentication Complete ===")
+}
+
+func printEndpoints(endpoints []*alexaapimodels.Endpoint) {
+	outputf("✓ Found %d endpoints\n", len(endpoints))
+
+	for index, endpoint := range endpoints {
+		if index >= maximumEndpointsToPrint {
+			outputf("  ... and %d more\n", len(endpoints)-maximumEndpointsToPrint)
+
+			break
+		}
+
+		name := endpoint.EndpointID
+		if endpoint.FriendlyName != nil {
+			name = endpoint.FriendlyName.Value
+		}
+
+		outputf("  - %s (%s)\n", name, endpoint.ID)
+	}
+}
+
+func outputLine(values ...any) {
+	_, err := fmt.Fprintln(os.Stdout, values...)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func outputf(format string, values ...any) {
+	_, err := fmt.Fprintf(os.Stdout, format, values...)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func outputText(values ...any) {
+	_, err := fmt.Fprint(os.Stdout, values...)
+	if err != nil {
+		panic(err)
+	}
 }

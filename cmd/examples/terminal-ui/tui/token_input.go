@@ -26,15 +26,19 @@ type tokenInputModel struct {
 }
 
 func newTokenInputModel() tokenInputModel {
-	ti := textinput.New()
-	ti.Placeholder = "Enter your access token..."
-	ti.Focus()
-	ti.CharLimit = 1000
-	ti.Width = 50
+	textInput := textinput.New()
+	textInput.Placeholder = "Enter your access token..."
+	textInput.Focus()
+	textInput.CharLimit = 1000
+	textInput.Width = 50
 
 	return tokenInputModel{
-		textInput: ti,
-		step:      stepAccessToken,
+		textInput:    textInput,
+		err:          nil,
+		step:         stepAccessToken,
+		accessToken:  "",
+		refreshToken: "",
+		customerID:   "",
 	}
 }
 
@@ -45,13 +49,14 @@ func (m tokenInputModel) Init() tea.Cmd {
 func (m tokenInputModel) Update(msg tea.Msg) (tokenInputModel, tea.Cmd) {
 	var cmd tea.Cmd
 
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
+	if keyMessage, isKeyMessage := msg.(tea.KeyMsg); isKeyMessage {
+		//nolint:exhaustive // Unhandled key types are intentionally ignored in text input.
+		switch keyMessage.Type {
 		case tea.KeyEnter:
 			value := m.textInput.Value()
 			if value == "" {
-				m.err = fmt.Errorf("field cannot be empty")
+				m.err = errEmptyInputField
+
 				return m, nil
 			}
 
@@ -63,6 +68,7 @@ func (m tokenInputModel) Update(msg tea.Msg) (tokenInputModel, tea.Cmd) {
 				m.textInput.SetValue("")
 				m.textInput.Placeholder = "Enter your refresh token..."
 				m.err = nil
+
 				return m, textinput.Blink
 
 			case stepRefreshToken:
@@ -71,6 +77,7 @@ func (m tokenInputModel) Update(msg tea.Msg) (tokenInputModel, tea.Cmd) {
 				m.textInput.SetValue("")
 				m.textInput.Placeholder = "Enter your customer ID..."
 				m.err = nil
+
 				return m, textinput.Blink
 
 			case stepCustomerID:
@@ -91,6 +98,7 @@ func (m tokenInputModel) Update(msg tea.Msg) (tokenInputModel, tea.Cmd) {
 
 	// Let textinput handle all other messages (including regular key presses)
 	m.textInput, cmd = m.textInput.Update(msg)
+
 	return m, cmd
 }
 
@@ -98,6 +106,7 @@ func (m tokenInputModel) View() string {
 	view := titleStyle.Render("Alexa SDK Terminal UI") + "\n\n"
 
 	var prompt string
+
 	switch m.step {
 	case stepAccessToken:
 		prompt = "Enter your access token:"
@@ -115,6 +124,7 @@ func (m tokenInputModel) View() string {
 	}
 
 	view += "\n" + helpStyle.Render("Press Enter to continue, Esc to quit")
+
 	return view
 }
 
@@ -125,6 +135,7 @@ func validateToken(accessToken, refreshToken, customerID string) tea.Cmd {
 		if err != nil {
 			return tokenValidationErrorMsg{err: err}
 		}
+
 		sessionOptions := []alexa.SessionOption{
 			alexa.WithBearerToken(accessToken),
 			alexa.WithRefreshToken(refreshToken),
@@ -132,6 +143,7 @@ func validateToken(accessToken, refreshToken, customerID string) tea.Cmd {
 		if customerID != "" {
 			sessionOptions = append(sessionOptions, alexa.WithCustomerID(customerID))
 		}
+
 		session, err := client.NewSession(sessionOptions...)
 		if err != nil {
 			return tokenValidationErrorMsg{err: err}

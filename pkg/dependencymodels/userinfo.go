@@ -1,7 +1,7 @@
-// Package models provides data structures for Alexa API interactions.
+// Package alexamodels provides dependency API request and response models.
 package alexamodels
 
-// UserInfo represents user information from the /api/users/me endpoint
+// UserInfo represents user information from the /api/users/me endpoint.
 type UserInfo struct {
 	// This is the country code for country of residence for the customer.
 	CountryOfResidence string `json:"countryOfResidence"`

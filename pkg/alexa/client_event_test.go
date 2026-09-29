@@ -1,3 +1,4 @@
+//nolint:testpackage // Verifies private event parsing and payload conversion behavior.
 package alexa
 
 import (
@@ -12,17 +13,29 @@ import (
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
 
-// generateRandomUUID generates a random UUID-like string
+// generateRandomUUID generates a random UUID-like string.
 func generateRandomUUID() string {
 	return uuid.New().String()
 }
 
-// generateRandomEndpointID generates a random Alexa endpoint ID
+// generateRandomEndpointID generates a random Alexa endpoint ID.
 func generateRandomEndpointID() string {
 	return "amzn1.alexa.endpoint." + generateRandomUUID()
 }
 
+type parseEventTestCase struct {
+	name            string
+	eventJSON       string
+	expectedNS      string
+	expectedName    string
+	expectedMsgID   string
+	expectedEpID    string
+	validatePayload func(t *testing.T, payload interface{})
+}
+
 func TestParseEvent(t *testing.T) {
+	t.Parallel()
+
 	messageID1 := generateRandomUUID()
 	endpointID1 := generateRandomEndpointID()
 	resourceID1 := generateRandomUUID()
@@ -30,16 +43,27 @@ func TestParseEvent(t *testing.T) {
 	messageID2 := generateRandomUUID()
 	endpointID2 := generateRandomEndpointID()
 	resourceID2 := generateRandomUUID()
+	temperatureMetadata := fmt.Sprintf(
+		`{"metricName":"EndpointTemperatureSensor","payload":{"data":{"__typename":"Endpoint","features":[{"n`+
+			`ame":"temperatureSensor","__typename":"Feature","properties":[{"__typename":"TemperatureSensor","nam`+
+			`e":"temperature","value":{"__typename":"Temperature","value":20.8,"scale":"CELSIUS"},"type":"RETRIEV`+
+			`ABLE","timeOfSample":"2025-12-02T05:17:29.25Z","accuracy":"HIGH","error":null}],"instance":null}]},"`+
+			`entity":{"__typename":"Endpoint","id":"%s"},"fragment":"fragment EndpointTemperatureSensor on Endpoi`+
+			`nt{features{name instance properties{...on TemperatureSensor{name value{value scale} timeOfSample ac`+
+			`curacy type error{type}}}}}"},"type":"UPDATE_ENTITY","timestamp":"2025-12-02T05:17:29.25Z"}`,
+		endpointID1,
+	)
+	powerMetadata := fmt.Sprintf(
+		`{"metricName":"EndpointPower","payload":{"data":{"__typename":"Endpoint","features":[{"name":"power"`+
+			`,"__typename":"Feature","properties":[{"__typename":"Power","name":"powerState","powerStateValue":"O`+
+			`FF","type":"RETRIEVABLE","timeOfSample":"2025-12-02T05:17:49Z","accuracy":"HIGH","error":null}],"ins`+
+			`tance":null}]},"entity":{"__typename":"Endpoint","id":"%s"},"fragment":"fragment EndpointPower on En`+
+			`dpoint{features{name instance properties{...on Power{name powerStateValue timeOfSample accuracy type`+
+			` error{type}}}}}"},"type":"UPDATE_ENTITY","timestamp":"2025-12-02T05:17:49Z"}`,
+		endpointID2,
+	)
 
-	tests := []struct {
-		name            string
-		eventJSON       string
-		expectedNS      string
-		expectedName    string
-		expectedMsgID   string
-		expectedEpID    string
-		validatePayload func(t *testing.T, payload interface{})
-	}{
+	tests := []parseEventTestCase{
 		{
 			name: "TemperatureSensor",
 			eventJSON: fmt.Sprintf(`{
@@ -55,51 +79,18 @@ func TestParseEvent(t *testing.T) {
 								{
 									"route": "EventBus:AlexaMobile::FDAL",
 									"resourceId": "%s",
-									"resourceMetadata": "{\"metricName\":\"EndpointTemperatureSensor\",\"payload\":{\"data\":{\"__typename\":\"Endpoint\",\"features\":[{\"name\":\"temperatureSensor\",\"__typename\":\"Feature\",\"properties\":[{\"__typename\":\"TemperatureSensor\",\"name\":\"temperature\",\"value\":{\"__typename\":\"Temperature\",\"value\":20.8,\"scale\":\"CELSIUS\"},\"type\":\"RETRIEVABLE\",\"timeOfSample\":\"2025-12-02T05:17:29.25Z\",\"accuracy\":\"HIGH\",\"error\":null}],\"instance\":null}]},\"entity\":{\"__typename\":\"Endpoint\",\"id\":\"%s\"},\"fragment\":\"fragment EndpointTemperatureSensor on Endpoint{features{name instance properties{...on TemperatureSensor{name value{value scale} timeOfSample accuracy type error{type}}}}}\"},\"type\":\"UPDATE_ENTITY\",\"timestamp\":\"2025-12-02T05:17:29.25Z\"}"
+									"resourceMetadata": %q
 								}
 							]
 						}
 					}
 				}
-			}`, messageID1, resourceID1, endpointID1),
-			expectedNS:    alexaapimodels.FeatureNameTemperatureSensor.EventNamespace(),
-			expectedName:  alexaapimodels.EventNameTemperatureState,
-			expectedMsgID: messageID1,
-			expectedEpID:  endpointID1,
-			validatePayload: func(t *testing.T, payload interface{}) {
-				p, ok := payload.(*alexamodels.TemperatureSensorProperty)
-				if !ok {
-					t.Fatalf("Expected payload type *alexamodels.TemperatureSensorProperty, got %T", payload)
-				}
-
-				if p.Name != "temperature" {
-					t.Errorf("Expected property name 'temperature', got %s", p.Name)
-				}
-
-				if p.Value == nil {
-					t.Fatal("Expected value to be non-nil")
-				}
-
-				if p.Value.Value != 20.8 {
-					t.Errorf("Expected temperature value 20.8, got %f", p.Value.Value)
-				}
-
-				if p.Value.Scale != "CELSIUS" {
-					t.Errorf("Expected temperature scale 'CELSIUS', got %s", p.Value.Scale)
-				}
-
-				if p.TimeOfSample != "2025-12-02T05:17:29.25Z" {
-					t.Errorf("Expected timeOfSample '2025-12-02T05:17:29.25Z', got %s", p.TimeOfSample)
-				}
-
-				if p.Accuracy != "HIGH" {
-					t.Errorf("Expected accuracy 'HIGH', got %s", p.Accuracy)
-				}
-
-				if p.Type != "RETRIEVABLE" {
-					t.Errorf("Expected type 'RETRIEVABLE', got %s", p.Type)
-				}
-			},
+			}`, messageID1, resourceID1, temperatureMetadata),
+			expectedNS:      alexaapimodels.FeatureNameTemperatureSensor.EventNamespace(),
+			expectedName:    alexaapimodels.EventNameTemperatureState,
+			expectedMsgID:   messageID1,
+			expectedEpID:    endpointID1,
+			validatePayload: assertTemperaturePayload,
 		},
 		{
 			name: "Power",
@@ -116,95 +107,155 @@ func TestParseEvent(t *testing.T) {
 								{
 									"route": "EventBus:AlexaMobile::FDAL",
 									"resourceId": "%s",
-									"resourceMetadata": "{\"metricName\":\"EndpointPower\",\"payload\":{\"data\":{\"__typename\":\"Endpoint\",\"features\":[{\"name\":\"power\",\"__typename\":\"Feature\",\"properties\":[{\"__typename\":\"Power\",\"name\":\"powerState\",\"powerStateValue\":\"OFF\",\"type\":\"RETRIEVABLE\",\"timeOfSample\":\"2025-12-02T05:17:49Z\",\"accuracy\":\"HIGH\",\"error\":null}],\"instance\":null}]},\"entity\":{\"__typename\":\"Endpoint\",\"id\":\"%s\"},\"fragment\":\"fragment EndpointPower on Endpoint{features{name instance properties{...on Power{name powerStateValue timeOfSample accuracy type error{type}}}}}\"},\"type\":\"UPDATE_ENTITY\",\"timestamp\":\"2025-12-02T05:17:49Z\"}"
+									"resourceMetadata": %q
 								}
 							]
 						}
 					}
 				}
-			}`, messageID2, resourceID2, endpointID2),
-			expectedNS:    alexaapimodels.FeatureNamePower.EventNamespace(),
-			expectedName:  alexaapimodels.EventNamePowerState,
-			expectedMsgID: messageID2,
-			expectedEpID:  endpointID2,
-			validatePayload: func(t *testing.T, payload interface{}) {
-				p, ok := payload.(*alexamodels.PowerProperty)
-				if !ok {
-					t.Fatalf("Expected payload type *alexamodels.PowerProperty, got %T", payload)
-				}
-
-				if p.Name != "powerState" {
-					t.Errorf("Expected property name 'powerState', got %s", p.Name)
-				}
-
-				if p.PowerStateValue != "OFF" {
-					t.Errorf("Expected powerStateValue 'OFF', got %s", p.PowerStateValue)
-				}
-
-				if p.TimeOfSample != "2025-12-02T05:17:49Z" {
-					t.Errorf("Expected timeOfSample '2025-12-02T05:17:49Z', got %s", p.TimeOfSample)
-				}
-
-				if p.Accuracy != "HIGH" {
-					t.Errorf("Expected accuracy 'HIGH', got %s", p.Accuracy)
-				}
-
-				if p.Type != "RETRIEVABLE" {
-					t.Errorf("Expected type 'RETRIEVABLE', got %s", p.Type)
-				}
-			},
+			}`, messageID2, resourceID2, powerMetadata),
+			expectedNS:      alexaapimodels.FeatureNamePower.EventNamespace(),
+			expectedName:    alexaapimodels.EventNamePowerState,
+			expectedMsgID:   messageID2,
+			expectedEpID:    endpointID2,
+			validatePayload: assertPowerPayload,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var msg alexamodels.Message
-			if err := json.Unmarshal([]byte(tt.eventJSON), &msg); err != nil {
-				t.Fatalf("Failed to unmarshal test event: %v", err)
-			}
-
-			event, err := ParseEvent(&msg)
-			if err != nil {
-				t.Fatalf("ParseEvent failed: %v", err)
-			}
-
-			var envelope struct {
-				Data json.RawMessage `json:"data"`
-			}
-			if err := json.Unmarshal([]byte(tt.eventJSON), &envelope); err != nil {
-				t.Fatalf("Failed to unmarshal synthetic event envelope: %v", err)
-			}
-			var directive directivewire.DirectiveMessage
-			if err := json.Unmarshal(envelope.Data, &directive); err != nil {
-				t.Fatalf("Failed to unmarshal synthetic directive model: %v", err)
-			}
-			generatedEvent, err := parseDirectiveMessage(&directive)
-			if err != nil {
-				t.Fatalf("parseDirectiveMessage failed: %v", err)
-			}
-			if !reflect.DeepEqual(event, generatedEvent) {
-				t.Fatalf("generated model result differs from legacy parser: %#v != %#v", generatedEvent, event)
-			}
-
-			// Verify event structure
-			if event.Namespace != tt.expectedNS {
-				t.Errorf("Expected namespace %s, got %s", tt.expectedNS, event.Namespace)
-			}
-
-			if event.Name != tt.expectedName {
-				t.Errorf("Expected name %s, got %s", tt.expectedName, event.Name)
-			}
-
-			if event.EndpointID != tt.expectedEpID {
-				t.Errorf("Expected endpoint ID %s, got %s", tt.expectedEpID, event.EndpointID)
-			}
-
-			if event.MessageID != tt.expectedMsgID {
-				t.Errorf("Expected message ID %s, got %s", tt.expectedMsgID, event.MessageID)
-			}
-
-			// Validate payload
-			tt.validatePayload(t, event.Payload)
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+			assertParsedEvent(t, testCase)
 		})
+	}
+}
+
+func assertParsedEvent(t *testing.T, testCase parseEventTestCase) {
+	t.Helper()
+
+	var message alexamodels.Message
+
+	err := json.Unmarshal([]byte(testCase.eventJSON), &message)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal test event: %v", err)
+	}
+
+	event, err := ParseEvent(&message)
+	if err != nil {
+		t.Fatalf("ParseEvent failed: %v", err)
+	}
+
+	var envelope struct {
+		Data json.RawMessage `json:"data"`
+	}
+
+	err = json.Unmarshal([]byte(testCase.eventJSON), &envelope)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal synthetic event envelope: %v", err)
+	}
+
+	var directive directivewire.DirectiveMessage
+
+	err = json.Unmarshal(envelope.Data, &directive)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal synthetic directive model: %v", err)
+	}
+
+	generatedEvent, err := parseDirectiveMessage(&directive)
+	if err != nil {
+		t.Fatalf("parseDirectiveMessage failed: %v", err)
+	}
+
+	if !reflect.DeepEqual(event, generatedEvent) {
+		t.Fatalf("generated model result differs from legacy parser: %#v != %#v", generatedEvent, event)
+	}
+
+	assertParsedEventMetadata(t, event, testCase)
+	testCase.validatePayload(t, event.Payload)
+}
+
+func assertParsedEventMetadata(t *testing.T, event *alexaapimodels.Event, testCase parseEventTestCase) {
+	t.Helper()
+
+	if event.Namespace != testCase.expectedNS {
+		t.Errorf("Expected namespace %s, got %s", testCase.expectedNS, event.Namespace)
+	}
+
+	if event.Name != testCase.expectedName {
+		t.Errorf("Expected name %s, got %s", testCase.expectedName, event.Name)
+	}
+
+	if event.EndpointID != testCase.expectedEpID {
+		t.Errorf("Expected endpoint ID %s, got %s", testCase.expectedEpID, event.EndpointID)
+	}
+
+	if event.MessageID != testCase.expectedMsgID {
+		t.Errorf("Expected message ID %s, got %s", testCase.expectedMsgID, event.MessageID)
+	}
+}
+
+func assertTemperaturePayload(t *testing.T, payload interface{}) {
+	t.Helper()
+
+	property, ok := payload.(*alexamodels.TemperatureSensorProperty)
+	if !ok {
+		t.Fatalf("Expected payload type *alexamodels.TemperatureSensorProperty, got %T", payload)
+	}
+
+	if property.Name != "temperature" {
+		t.Errorf("Expected property name 'temperature', got %s", property.Name)
+	}
+
+	if property.Value == nil {
+		t.Fatal("Expected value to be non-nil")
+	}
+
+	if property.Value.Value != 20.8 {
+		t.Errorf("Expected temperature value 20.8, got %f", property.Value.Value)
+	}
+
+	if property.Value.Scale != "CELSIUS" {
+		t.Errorf("Expected temperature scale 'CELSIUS', got %s", property.Value.Scale)
+	}
+
+	if property.TimeOfSample != "2025-12-02T05:17:29.25Z" {
+		t.Errorf("Expected timeOfSample '2025-12-02T05:17:29.25Z', got %s", property.TimeOfSample)
+	}
+
+	if property.Accuracy != "HIGH" {
+		t.Errorf("Expected accuracy 'HIGH', got %s", property.Accuracy)
+	}
+
+	if property.Type != "RETRIEVABLE" {
+		t.Errorf("Expected type 'RETRIEVABLE', got %s", property.Type)
+	}
+}
+
+func assertPowerPayload(t *testing.T, payload interface{}) {
+	t.Helper()
+
+	property, ok := payload.(*alexamodels.PowerProperty)
+	if !ok {
+		t.Fatalf("Expected payload type *alexamodels.PowerProperty, got %T", payload)
+	}
+
+	if property.Name != "powerState" {
+		t.Errorf("Expected property name 'powerState', got %s", property.Name)
+	}
+
+	if property.PowerStateValue != "OFF" {
+		t.Errorf("Expected powerStateValue 'OFF', got %s", property.PowerStateValue)
+	}
+
+	if property.TimeOfSample != "2025-12-02T05:17:49Z" {
+		t.Errorf("Expected timeOfSample '2025-12-02T05:17:49Z', got %s", property.TimeOfSample)
+	}
+
+	if property.Accuracy != "HIGH" {
+		t.Errorf("Expected accuracy 'HIGH', got %s", property.Accuracy)
+	}
+
+	if property.Type != "RETRIEVABLE" {
+		t.Errorf("Expected type 'RETRIEVABLE', got %s", property.Type)
 	}
 }
