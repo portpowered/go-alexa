@@ -660,6 +660,45 @@ func TestWireCallsiteGateRejectsQueryMapAggregateStorage(t *testing.T) {
 	}
 }
 
+func TestWireCallsiteGateRejectsGlobalSchemaMapStorage(t *testing.T) {
+	t.Parallel()
+
+	tests := []wireCallsiteTestCase{
+		{
+			name: "global header map",
+			source: `package rest
+			var shared map[string]string
+			func send() {
+				headers := map[string]string{apiroutes.HeaderCookie: "safe"}
+				shared = headers
+				c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListRestEndpoints,
+					apiroutes.PathListRestEndpoints, nil, headers, nil, true)
+			}`,
+			want: "custom header map must not escape into aggregate storage",
+		},
+		{
+			name: "global query map",
+			source: `package rest
+			var shared url.Values
+			func send() {
+				params := url.Values{}
+				shared = params
+				path := apiroutes.PathListRestEndpoints
+				path += "?" + params.Encode()
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+			}`,
+			want: "query parameter map must not escape into aggregate storage",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			assertWireCallsiteGateCase(t, test)
+		})
+	}
+}
+
 func TestWireCallsiteGateRejectsPackageHeaderMap(t *testing.T) {
 	t.Parallel()
 

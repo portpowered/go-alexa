@@ -910,7 +910,7 @@ func (checker *wireCallsiteChecker) checkFunction(decl *ast.FuncDecl, analysis w
 	ast.Inspect(decl.Body, func(node ast.Node) bool {
 		checker.checkIndex(node, analysis)
 		checker.checkQueryComposite(node)
-		checker.checkSchemaMapAggregateStorage(node, analysis)
+		checker.checkSchemaMapAggregateStorage(node, analysis, decl)
 
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
@@ -931,7 +931,9 @@ func (checker *wireCallsiteChecker) checkFunction(decl *ast.FuncDecl, analysis w
 	})
 }
 
-func (checker *wireCallsiteChecker) checkSchemaMapAggregateStorage(node ast.Node, analysis wireFunctionAnalysis) {
+func (checker *wireCallsiteChecker) checkSchemaMapAggregateStorage(node ast.Node, analysis wireFunctionAnalysis,
+	decl *ast.FuncDecl,
+) {
 	if composite, ok := node.(*ast.CompositeLit); ok {
 		for _, expression := range composite.Elts {
 			if escapedSchemaMapKind(expression, analysis) != "" {
@@ -955,7 +957,8 @@ func (checker *wireCallsiteChecker) checkSchemaMapAggregateStorage(node ast.Node
 			continue
 		}
 
-		if _, isLocalAlias := assignment.Lhs[index].(*ast.Ident); isLocalAlias {
+		if target, isIdentifier := assignment.Lhs[index].(*ast.Ident); isIdentifier &&
+			isFunctionLocalTarget(target, decl) {
 			continue
 		}
 
@@ -964,6 +967,16 @@ func (checker *wireCallsiteChecker) checkSchemaMapAggregateStorage(node ast.Node
 			checker.fset.Position(value.Pos()), escapedSchemaMapKind(value, analysis),
 		))
 	}
+}
+
+func isFunctionLocalTarget(target *ast.Ident, decl *ast.FuncDecl) bool {
+	if target.Obj == nil {
+		return false
+	}
+
+	declaration, ok := target.Obj.Decl.(ast.Node)
+
+	return ok && declaration.Pos() >= decl.Pos() && declaration.End() <= decl.End()
 }
 
 func escapedSchemaMapKind(value ast.Expr, analysis wireFunctionAnalysis) string {
