@@ -564,6 +564,102 @@ func TestWireCallsiteGateRejectsCustomHeaderHelperEscapes(t *testing.T) {
 	}
 }
 
+func TestWireCallsiteGateRejectsAggregatedHeaderMapEscape(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "aggregated header map helper escape",
+		source: `package rest
+		type headerHolder struct{ values map[string]string }
+		func fill(h headerHolder) { h.values["Cookie"] = "raw" }
+		func send() {
+			headers := map[string]string{apiroutes.HeaderCookie: "safe"}
+			fill(headerHolder{values: headers})
+			c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListRestEndpoints,
+				apiroutes.PathListRestEndpoints, nil, headers, nil, true)
+		}`,
+		want: "custom header map must not escape to an unverified helper",
+	})
+}
+
+func TestWireCallsiteGateRejectsHeaderMapAggregateStorage(t *testing.T) {
+	t.Parallel()
+
+	tests := []wireCallsiteTestCase{
+		{
+			name: "struct field storage",
+			source: `package rest
+			func send() {
+				headers := map[string]string{apiroutes.HeaderCookie: "safe"}
+				holder := struct{ values map[string]string }{headers}
+				holder.values["Cookie"] = "raw"
+				c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListRestEndpoints,
+					apiroutes.PathListRestEndpoints, nil, headers, nil, true)
+			}`,
+			want: "custom header map must not escape into aggregate storage",
+		},
+		{
+			name: "indexed storage",
+			source: `package rest
+			func send() {
+				headers := map[string]string{apiroutes.HeaderCookie: "safe"}
+				holders := []map[string]string{headers}
+				holders[0]["Cookie"] = "raw"
+				c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListRestEndpoints,
+					apiroutes.PathListRestEndpoints, nil, headers, nil, true)
+			}`,
+			want: "custom header map must not escape into aggregate storage",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			assertWireCallsiteGateCase(t, test)
+		})
+	}
+}
+
+func TestWireCallsiteGateRejectsQueryMapAggregateStorage(t *testing.T) {
+	t.Parallel()
+
+	tests := []wireCallsiteTestCase{
+		{
+			name: "query struct field storage",
+			source: `package rest
+			func send() {
+				params := url.Values{}
+				holder := struct{ values url.Values }{params}
+				holder.values["raw"] = []string{"x"}
+				path := apiroutes.PathListRestEndpoints
+				path += "?" + params.Encode()
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+			}`,
+			want: "query parameter map must not escape into aggregate storage",
+		},
+		{
+			name: "query indexed storage",
+			source: `package rest
+			func send() {
+				params := url.Values{}
+				holders := []url.Values{params}
+				holders[0]["raw"] = []string{"x"}
+				path := apiroutes.PathListRestEndpoints
+				path += "?" + params.Encode()
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+			}`,
+			want: "query parameter map must not escape into aggregate storage",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			assertWireCallsiteGateCase(t, test)
+		})
+	}
+}
+
 func TestWireCallsiteGateRejectsPackageHeaderMap(t *testing.T) {
 	t.Parallel()
 

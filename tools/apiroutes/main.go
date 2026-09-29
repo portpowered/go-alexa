@@ -910,6 +910,7 @@ func (checker *wireCallsiteChecker) checkFunction(decl *ast.FuncDecl, analysis w
 	ast.Inspect(decl.Body, func(node ast.Node) bool {
 		checker.checkIndex(node, analysis)
 		checker.checkQueryComposite(node)
+		checker.checkSchemaMapAggregateStorage(node, analysis)
 
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
@@ -928,6 +929,53 @@ func (checker *wireCallsiteChecker) checkFunction(decl *ast.FuncDecl, analysis w
 
 		return true
 	})
+}
+
+func (checker *wireCallsiteChecker) checkSchemaMapAggregateStorage(node ast.Node, analysis wireFunctionAnalysis) {
+	if composite, ok := node.(*ast.CompositeLit); ok {
+		for _, expression := range composite.Elts {
+			if escapedSchemaMapKind(expression, analysis) != "" {
+				*checker.violations = append(*checker.violations, fmt.Sprintf(
+					"%s: %s map must not escape into aggregate storage",
+					checker.fset.Position(expression.Pos()), escapedSchemaMapKind(expression, analysis),
+				))
+
+				return
+			}
+		}
+	}
+
+	assignment, ok := node.(*ast.AssignStmt)
+	if !ok {
+		return
+	}
+
+	for index, value := range assignment.Rhs {
+		if index >= len(assignment.Lhs) || escapedSchemaMapKind(value, analysis) == "" {
+			continue
+		}
+
+		if _, isLocalAlias := assignment.Lhs[index].(*ast.Ident); isLocalAlias {
+			continue
+		}
+
+		*checker.violations = append(*checker.violations, fmt.Sprintf(
+			"%s: %s map must not escape into aggregate storage",
+			checker.fset.Position(value.Pos()), escapedSchemaMapKind(value, analysis),
+		))
+	}
+}
+
+func escapedSchemaMapKind(value ast.Expr, analysis wireFunctionAnalysis) string {
+	if containsHeaderMap(value, analysis.headerAliases) {
+		return "custom header"
+	}
+
+	if containsQueryMap(value, analysis.queryValues) {
+		return "query parameter"
+	}
+
+	return ""
 }
 
 func (checker *wireCallsiteChecker) checkSchemaMapMethodValues(body ast.Node, analysis wireFunctionAnalysis) {
@@ -1062,12 +1110,12 @@ func (checker *wireCallsiteChecker) checkCustomHeaderEscape(call *ast.CallExpr, 
 	selector, isSelector := call.Fun.(*ast.SelectorExpr)
 
 	for index, argument := range call.Args {
-		variable, isIdent := argument.(*ast.Ident)
-		if !isIdent || !analysis.headerAliases[variable.Name] {
+		if !containsHeaderMap(argument, analysis.headerAliases) {
 			continue
 		}
 
-		if isSelector && index == customHeaderArgumentIndex &&
+		_, isDirect := argument.(*ast.Ident)
+		if isDirect && isSelector && index == customHeaderArgumentIndex &&
 			(selector.Sel.Name == fullURLJSONHelperName || selector.Sel.Name == fullURLRequestHelperName) {
 			continue
 		}
@@ -1077,6 +1125,20 @@ func (checker *wireCallsiteChecker) checkCustomHeaderEscape(call *ast.CallExpr, 
 			checker.fset.Position(argument.Pos()),
 		))
 	}
+}
+
+func containsHeaderMap(value ast.Expr, aliases map[string]bool) bool {
+	found := false
+
+	ast.Inspect(value, func(node ast.Node) bool {
+		if variable, ok := node.(*ast.Ident); ok && aliases[variable.Name] {
+			found = true
+		}
+
+		return !found
+	})
+
+	return found
 }
 
 func (checker *wireCallsiteChecker) checkHeaderMapExpression(
