@@ -865,6 +865,24 @@ func TestWireCallsiteGateRejectsShadowedPackages(t *testing.T) {
 	}
 }
 
+func TestWireCallsiteGateRejectsCounterfeitImports(t *testing.T) {
+	t.Parallel()
+
+	for _, alias := range []string{"apiroutes", "alexamodels", "fmt", "http", "url"} {
+		t.Run(alias, func(t *testing.T) {
+			t.Parallel()
+
+			assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+				name: "counterfeit import",
+				source: `package rest
+				import ` + alias + ` "example.com/unverified/routes"
+				func send() {}`,
+				want: "protected package alias",
+			})
+		})
+	}
+}
+
 func TestWireCallsiteGateRejectsHandwrittenHeaders(t *testing.T) {
 	t.Parallel()
 

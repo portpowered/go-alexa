@@ -664,6 +664,8 @@ func checkWireCallsites(
 	checker := wireCallsiteChecker{
 		fset: fset, aliases: aliases, methods: methods, serverTemplateArity: serverTemplateArity, violations: violations,
 	}
+
+	checkProtectedPackageImports(file, fset, violations)
 	checker.checkTransportMethodValues(file)
 
 	ast.Inspect(file, func(node ast.Node) bool {
@@ -1401,6 +1403,34 @@ var allowedNetworkImports = map[string]map[string]bool{
 	"pkg/dependencies/rest/client.go":     {"net/http": true, "net/http/cookiejar": true},
 }
 
+func checkProtectedPackageImports(file *ast.File, fset *token.FileSet, violations *[]string) {
+	protectedPackageImports := map[string]string{
+		apiRoutesPackage: "github.com/portpowered/go-alexa/pkg/internal/apiroutes",
+		"alexamodels":    "github.com/portpowered/go-alexa/pkg/dependencymodels",
+		"fmt":            "fmt",
+		"http":           "net/http",
+		"url":            "net/url",
+	}
+
+	for _, spec := range file.Imports {
+		importPath, err := strconv.Unquote(spec.Path.Value)
+		if err != nil {
+			continue
+		}
+
+		name := importPath[strings.LastIndex(importPath, "/")+1:]
+		if spec.Name != nil {
+			name = spec.Name.Name
+		}
+
+		if expected, protected := protectedPackageImports[name]; protected && importPath != expected {
+			*violations = append(*violations, fmt.Sprintf(
+				"%s: protected package alias %q must import %q", fset.Position(spec.Pos()), name, expected,
+			))
+		}
+	}
+}
+
 func isNetworkImport(path string) bool {
 	lower := strings.ToLower(path)
 
@@ -1447,6 +1477,7 @@ type networkFunctionScan struct {
 }
 
 func checkNetworkInventory(file *ast.File, fset *token.FileSet, path string, violations *[]string) {
+	checkProtectedPackageImports(file, fset, violations)
 	checkNetworkImports(file, fset, path, violations)
 	checkNetworkMethodValues(file, fset, violations)
 
