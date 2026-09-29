@@ -67,7 +67,7 @@ func TestWireCallsiteGate(t *testing.T) {
 		{
 			name: "generated directive channel", want: "",
 			source: `package alexa
-			func send() { http.NewRequestWithContext(ctx, apiroutes.MethodOpenDirectiveStream, c.baseURL+apiroutes.ChannelDirectivesAddress, nil) }`,
+			func (c *Client) send() { http.NewRequestWithContext(ctx, apiroutes.MethodOpenDirectiveStream, c.baseURL+apiroutes.ChannelDirectivesAddress, nil) }`,
 		},
 		{
 			name: "unschematized channel",
@@ -328,6 +328,47 @@ func TestWireCallsiteGateRejectsQueryMapHelperEscape(t *testing.T) {
 	})
 }
 
+func TestWireCallsiteGateRejectsQueryMapMethodValues(t *testing.T) {
+	t.Parallel()
+
+	for _, method := range []string{"Set", "Add"} {
+		t.Run(method, func(t *testing.T) {
+			t.Parallel()
+
+			assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+				name: "query map method value",
+				source: `package rest
+				func send() {
+					params := url.Values{}
+					set := params.` + method + `
+					set("raw", "unmodeled")
+					path := apiroutes.PathListRestEndpoints
+					path += "?" + params.Encode()
+					c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+				}`,
+				want: "schema-keyed map method value must not be aliased",
+			})
+		})
+	}
+}
+
+func TestWireCallsiteGateRejectsParenthesizedQueryKey(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "parenthesized query receiver",
+		source: `package rest
+		func send() {
+			params := url.Values{}
+			(params).Set("raw", "x")
+			path := apiroutes.PathListRestEndpoints
+			path += "?" + params.Encode()
+			c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+		}`,
+		want: "query parameter key must use a schema-generated QueryParam constant",
+	})
+}
+
 func TestWireCallsiteGateAllowsQueryMapLength(t *testing.T) {
 	t.Parallel()
 
@@ -344,6 +385,24 @@ func TestWireCallsiteGateAllowsQueryMapLength(t *testing.T) {
 			}
 		}`,
 		want: "",
+	})
+}
+
+func TestWireCallsiteGateRejectsShadowedLengthHelper(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "shadowed length helper",
+		source: `package rest
+		func send() {
+			len := func(values url.Values) { values.Set("raw", "x") }
+			params := url.Values{}
+			len(params)
+			path := apiroutes.PathListRestEndpoints
+			path += "?" + params.Encode()
+			c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+		}`,
+		want: "query parameter map must not escape to an unverified helper",
 	})
 }
 
@@ -551,6 +610,124 @@ func TestWireCallsiteGateRejectsHeaderMapPointerMutation(t *testing.T) {
 		}`,
 		want: "custom header map must be constructed from generated Header keys at this call site",
 	})
+}
+
+func TestWireCallsiteGateRejectsParenthesizedHeaderKeys(t *testing.T) {
+	t.Parallel()
+
+	tests := []wireCallsiteTestCase{
+		{
+			name: "parenthesized custom header map",
+			source: `package rest
+			func send() {
+				headers := map[string]string{apiroutes.HeaderCookie: "generated"}
+				(headers)["Cookie"] = "raw"
+				c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListRestEndpoints,
+					apiroutes.PathListRestEndpoints, nil, headers, nil, true)
+			}`,
+			want: "request header map key must use a schema-generated Header constant",
+		},
+		{
+			name: "parenthesized request header index",
+			source: `package rest
+			func send() { (req.Header)["Cookie"] = []string{"raw"} }`,
+			want: "request header map key must use a schema-generated Header constant",
+		},
+		{
+			name: "parenthesized request header method",
+			source: `package rest
+			func send() { (req.Header).Set("X-Undeclared", "raw") }`,
+			want: "request header name must use a schema-generated Header constant",
+		},
+		{
+			name: "converted request header method",
+			source: `package rest
+			func send() { http.Header(req.Header).Set("X-Undeclared", "raw") }`,
+			want: "request header name must use a schema-generated Header constant",
+		},
+		{
+			name: "converted request header alias",
+			source: `package rest
+			func send() { headers := http.Header(req.Header); headers.Set("X-Undeclared", "raw") }`,
+			want: "request header name must use a schema-generated Header constant",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			assertWireCallsiteGateCase(t, test)
+		})
+	}
+}
+
+func TestWireCallsiteGateRejectsShadowedPackages(t *testing.T) {
+	t.Parallel()
+
+	tests := []wireCallsiteTestCase{
+		{
+			name: "generated package qualifier",
+			source: `package rest
+			type routeValues struct{ MethodListRestEndpoints, PathListRestEndpoints string }
+			func send(apiroutes routeValues) {
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, apiroutes.PathListRestEndpoints, nil, nil)
+			}`,
+			want: "method must be a generated OpenAPI operation",
+		},
+		{
+			name: "formatter qualifier",
+			source: `package rest
+			type routeFmt struct{}
+			func (routeFmt) Sprintf(_ string, _ ...any) string { return "/v2/evil" }
+			func send(fmt routeFmt) {
+				path := fmt.Sprintf(apiroutes.PathGetRestEndpoint, "id")
+				c.doJSONRequest(ctx, apiroutes.MethodGetRestEndpoint, path, nil, nil)
+			}`,
+			want: "not paired with its generated route",
+		},
+		{
+			name: "query constant qualifier",
+			source: `package rest
+			func send(alexamodels struct{ QueryParamExpand string }) {
+				params := url.Values{}
+				params.Set(alexamodels.QueryParamExpand, "raw")
+			}`,
+			want: "query parameter key must use a schema-generated QueryParam constant",
+		},
+		{
+			name: "header constant qualifier",
+			source: `package rest
+			func send(apiroutes struct{ HeaderCookie string }) { req.Header.Set(apiroutes.HeaderCookie, "raw") }`,
+			want: "request header name must use a schema-generated Header constant",
+		},
+		{
+			name: "shadowed event authority",
+			source: `package alexa
+			type fakeClient struct{ authority string }
+			func send(c fakeClient) {
+				http.NewRequestWithContext(ctx, apiroutes.MethodOpenDirectiveStream,
+					fmt.Sprintf("https://%s%s", c.authority, apiroutes.ChannelDirectivesAddress), nil)
+			}`,
+			want: "not paired with its generated route or channel",
+		},
+		{
+			name: "shadowed REST base URL",
+			source: `package rest
+			type fakeClient struct{ baseURL string }
+			func send(c fakeClient) {
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints,
+					c.baseURL+apiroutes.PathListRestEndpoints, nil, nil)
+			}`,
+			want: "not paired with its generated route",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			assertWireCallsiteGateCase(t, test)
+		})
+	}
 }
 
 func TestWireCallsiteGateRejectsHandwrittenHeaders(t *testing.T) {
@@ -808,4 +985,92 @@ func TestNetworkInventoryRejectsRequestRouteMutation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNetworkInventoryRejectsHeaderHelperEscape(t *testing.T) {
+	t.Parallel()
+
+	fset := token.NewFileSet()
+	source := `package rest
+	func (c *Client) doRequest() {
+		req, _ := http.NewRequestWithContext(ctx, apiroutes.MethodListRestEndpoints, apiroutes.PathListRestEndpoints, nil)
+		mutateHeader(req.Header)
+		c.httpClient.Do(req)
+	}`
+
+	file, err := parser.ParseFile(fset, "pkg/dependencies/rest/client.go", source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var violations []string
+
+	checkNetworkInventory(file, fset, "pkg/dependencies/rest/client.go", &violations)
+
+	if got := strings.Join(violations, "\n"); !strings.Contains(got, "request or URL escaped") {
+		t.Fatalf("gate result %q did not reject header escape", got)
+	}
+}
+
+func TestNetworkInventoryRejectsShadowedInjectedClient(t *testing.T) {
+	t.Parallel()
+
+	fset := token.NewFileSet()
+	source := `package rest
+	func (c *Client) doRequest() {
+		req, _ := http.NewRequestWithContext(ctx, apiroutes.MethodListRestEndpoints,
+			c.baseURL+apiroutes.PathListRestEndpoints, nil)
+		{ c := fakeClient{httpClient: http.DefaultClient}; c.httpClient.Do(req) }
+	}`
+
+	file, err := parser.ParseFile(fset, "pkg/dependencies/rest/client.go", source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var violations []string
+
+	checkNetworkInventory(file, fset, "pkg/dependencies/rest/client.go", &violations)
+
+	if got := strings.Join(violations, "\n"); !strings.Contains(got, "Client.Do must use the inventoried injected client") {
+		t.Fatalf("gate result %q did not reject shadowed injected client", got)
+	}
+}
+
+func TestNetworkInventoryRejectsShadowedHTTPPackage(t *testing.T) {
+	t.Parallel()
+
+	fset := token.NewFileSet()
+	source := `package rest
+	func (c *Client) doRequest(http fakeHTTP) {
+		req, _ := http.NewRequestWithContext(ctx, apiroutes.MethodListRestEndpoints,
+			c.baseURL+apiroutes.PathListRestEndpoints, nil)
+		c.httpClient.Do(req)
+	}`
+
+	file, err := parser.ParseFile(fset, "pkg/dependencies/rest/client.go", source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var violations []string
+
+	checkNetworkInventory(file, fset, "pkg/dependencies/rest/client.go", &violations)
+
+	if got := strings.Join(violations, "\n"); !strings.Contains(got, "request constructor must be http.NewRequestWithContext") {
+		t.Fatalf("gate result %q did not reject shadowed http package", got)
+	}
+}
+
+func TestWireCallsiteGateChecksVerifiedHeaderHelper(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "verified header helper raw key",
+		source: `package rest
+		func (c *Client) setFullURLAuthentication(headers http.Header) {
+			headers.Set("X-Undeclared", "raw")
+		}`,
+		want: "request header name must use a schema-generated Header constant",
+	})
 }
