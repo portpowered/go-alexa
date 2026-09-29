@@ -7,6 +7,7 @@
     "endpoint-control",
     "events",
     "wire-contracts",
+    "independent-review",
     "quality-of-service"
   ]
 }
