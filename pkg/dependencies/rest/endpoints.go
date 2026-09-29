@@ -40,7 +40,25 @@ func (c *Client) GetEndpoints(ctx context.Context, opts *ListEndpointsOptions) (
 		opts.Owner = alexamodels.DefaultOwnerCaller
 	}
 
-	path := buildEndpointListPath(alexamodels.APIPathV2Endpoints, opts)
+	params := url.Values{}
+	params.Set(alexamodels.QueryParamOwner, opts.Owner)
+
+	for _, expand := range opts.Expand {
+		params.Add(alexamodels.QueryParamExpand, expand)
+	}
+
+	if opts.MaxResults > 0 {
+		params.Set(alexamodels.QueryParamMaxResults, strconv.Itoa(opts.MaxResults))
+	}
+
+	if opts.NextToken != "" {
+		params.Set(alexamodels.QueryParamNextToken, opts.NextToken)
+	}
+
+	path := alexamodels.APIPathV2Endpoints
+	if len(params) > 0 {
+		path += "?" + params.Encode()
+	}
 
 	var response wire.WireEndpointListResponse
 
@@ -175,38 +193,6 @@ func (c *Client) UpdateFriendlyName(ctx context.Context, endpointID string, frie
 	}
 
 	return nil
-}
-
-// buildEndpointListPath builds a query string for endpoint list requests.
-func buildEndpointListPath(basePath string, opts *ListEndpointsOptions) string {
-	if opts == nil {
-		return basePath
-	}
-
-	params := url.Values{}
-	if opts.Owner != "" {
-		params.Set(alexamodels.QueryParamOwner, opts.Owner)
-	}
-
-	if len(opts.Expand) > 0 {
-		for _, e := range opts.Expand {
-			params.Add(alexamodels.QueryParamExpand, e)
-		}
-	}
-
-	if opts.MaxResults > 0 {
-		params.Set(alexamodels.QueryParamMaxResults, strconv.Itoa(opts.MaxResults))
-	}
-
-	if opts.NextToken != "" {
-		params.Set(alexamodels.QueryParamNextToken, opts.NextToken)
-	}
-
-	if len(params) > 0 {
-		return basePath + "?" + params.Encode()
-	}
-
-	return basePath
 }
 
 // Legacy methods for backward compatibility

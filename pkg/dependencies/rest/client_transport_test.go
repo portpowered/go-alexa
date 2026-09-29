@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -361,27 +360,37 @@ func TestRestResponseErrorsCoverStatusDecodeAndTokenFailure(t *testing.T) {
 	})
 }
 
-func TestBuildEndpointListPathEncodesOptions(t *testing.T) {
+func TestGetEndpointsEncodesOptions(t *testing.T) {
 	t.Parallel()
 
-	path := buildEndpointListPath("/v2/endpoints", &ListEndpointsOptions{
+	client := NewClient(
+		WithAlexaAmazonBaseURI("https://alexa.synthetic.test"),
+		WithBearerToken("synthetic-rest-token"),
+		WithHTTPClient(&http.Client{Transport: syntheticRoundTripper(func(request *http.Request) (*http.Response, error) {
+			if request.Method != http.MethodGet || request.URL.Path != "/v2/endpoints" {
+				t.Errorf("unexpected list route: %s %s", request.Method, request.URL)
+			}
+
+			query := request.URL.Query()
+			if query.Get("owner") != "~caller" || query.Get("maxResults") != "7" || query.Get("nextToken") != "next page/one" {
+				t.Errorf("unexpected list query: %s", request.URL.RawQuery)
+			}
+
+			if got := query["expand"]; len(got) != 2 || got[0] != expandAll || got[1] != "feature:power" {
+				t.Errorf("unexpected expand options: %#v", got)
+			}
+
+			return syntheticResponse(request, http.StatusOK, `{"results":[]}`), nil
+		})}),
+	)
+
+	_, err := client.GetEndpoints(context.Background(), &ListEndpointsOptions{
 		Owner:      "~caller",
 		Expand:     []string{expandAll, "feature:power"},
 		MaxResults: 7,
 		NextToken:  "next page/one",
 	})
-
-	parsed, err := url.Parse(path)
 	if err != nil {
-		t.Fatalf("parse generated list path: %v", err)
-	}
-
-	query := parsed.Query()
-	if query.Get("owner") != "~caller" || query.Get("maxResults") != "7" || query.Get("nextToken") != "next page/one" {
-		t.Fatalf("unexpected list query: %s", parsed.RawQuery)
-	}
-
-	if got := query["expand"]; len(got) != 2 || got[0] != expandAll || got[1] != "feature:power" {
-		t.Fatalf("unexpected expand options: %#v", got)
+		t.Fatalf("GetEndpoints returned an error: %v", err)
 	}
 }

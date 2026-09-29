@@ -5,9 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/url"
 	"reflect"
-	"strconv"
 	"testing"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
@@ -639,20 +637,5 @@ func TestEndpointQueryRejectsNilInput(t *testing.T) {
 		if !alexaapimodels.IsBadRequestError(err) {
 			t.Fatalf("expected nil query to return BadRequestError, got %v", err)
 		}
-	}
-}
-
-func TestQueryEndpointPaginationParametersAreEncoded(t *testing.T) {
-	t.Parallel()
-
-	path := buildEndpointListPath("/v2/endpoints", &ListEndpointsOptions{NextToken: "synthetic token/1", MaxResults: 12})
-
-	parsed, err := url.Parse(path)
-	if err != nil {
-		t.Fatalf("parse query path: %v", err)
-	}
-
-	if parsed.Query().Get("nextToken") != "synthetic token/1" || parsed.Query().Get("maxResults") != strconv.Itoa(12) {
-		t.Fatalf("unexpected pagination query: %s", parsed.RawQuery)
 	}
 }

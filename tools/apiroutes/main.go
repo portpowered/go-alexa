@@ -25,7 +25,10 @@ import (
 const (
 	apiRoutesPackage                = "apiroutes"
 	newRequestWithContextName       = "NewRequestWithContext"
+	fullURLRequestHelperName        = "doRequestWithFullURL"
+	fullURLJSONHelperName           = "doJSONRequestWithFullURL"
 	requestHeaderFieldName          = "Header"
+	querySetMethodName              = "Set"
 	routeOutputDirectoryPermissions = 0o750
 	routeOutputFilePermissions      = 0o600
 	regionalServerCapacity          = 3
@@ -163,7 +166,7 @@ func run(root string, check bool) error {
 			return fmt.Errorf("%s is stale; run make generate-api", filepath.ToSlash(outputPath))
 		}
 
-		return checkProductionRouteLiterals(root, routes)
+		return checkProductionRouteLiterals(root, routes, endpoints)
 	}
 
 	err = os.MkdirAll(filepath.Dir(outputPath), routeOutputDirectoryPermissions)
@@ -546,7 +549,7 @@ func exportedIdentifier(value string) string {
 	return strings.Join(parts, "")
 }
 
-func checkProductionRouteLiterals(root string, routes []route) error {
+func checkProductionRouteLiterals(root string, routes []route, endpoints regionalEndpoints) error {
 	base := filepath.Join(root, "pkg")
 
 	var violations []string
@@ -556,9 +559,9 @@ func checkProductionRouteLiterals(root string, routes []route) error {
 		return err
 	}
 
-	knownMethods := make(map[string]bool, len(routes))
+	knownMethods := make(map[string]string, len(routes))
 	for _, route := range routes {
-		knownMethods[route.name] = true
+		knownMethods[route.name] = route.path
 	}
 
 	err = filepath.WalkDir(base, func(path string, entry fs.DirEntry, walkErr error) error {
@@ -586,7 +589,7 @@ func checkProductionRouteLiterals(root string, routes []route) error {
 		}
 
 		exemptLiterals := nonRouteURLLiterals(file)
-		checkWireCallsites(file, fset, aliases, knownMethods, &violations)
+		checkWireCallsites(file, fset, aliases, knownMethods, strings.Count(endpoints.ExchangeURLTemplate, "%s"), &violations)
 		checkNetworkInventory(file, fset, filepath.ToSlash(strings.TrimPrefix(path, root+string(filepath.Separator))), &violations)
 		ast.Inspect(file, func(node ast.Node) bool {
 			literal, ok := node.(*ast.BasicLit)
@@ -648,8 +651,18 @@ func routeAliases(path string) (map[string]string, error) {
 	return aliases, nil
 }
 
-func checkWireCallsites(file *ast.File, fset *token.FileSet, aliases map[string]string, methods map[string]bool, violations *[]string) {
-	checker := wireCallsiteChecker{fset: fset, aliases: aliases, methods: methods, violations: violations}
+func checkWireCallsites(
+	file *ast.File,
+	fset *token.FileSet,
+	aliases map[string]string,
+	methods map[string]string,
+	serverTemplateArity int,
+	violations *[]string,
+) {
+	checker := wireCallsiteChecker{
+		fset: fset, aliases: aliases, methods: methods, serverTemplateArity: serverTemplateArity, violations: violations,
+	}
+	checker.checkTransportMethodValues(file)
 
 	ast.Inspect(file, func(node ast.Node) bool {
 		decl, ok := node.(*ast.FuncDecl)
@@ -671,10 +684,11 @@ type wireFunctionAnalysis struct {
 }
 
 type wireCallsiteChecker struct {
-	fset       *token.FileSet
-	aliases    map[string]string
-	methods    map[string]bool
-	violations *[]string
+	fset                *token.FileSet
+	aliases             map[string]string
+	methods             map[string]string
+	serverTemplateArity int
+	violations          *[]string
 }
 
 func analyzeWireFunction(body *ast.BlockStmt) wireFunctionAnalysis {
@@ -687,6 +701,8 @@ func analyzeWireFunction(body *ast.BlockStmt) wireFunctionAnalysis {
 	ast.Inspect(body, func(node ast.Node) bool {
 		if declaration, ok := node.(*ast.ValueSpec); ok {
 			analyzeHeaderDeclarations(declaration, analysis.headerAliases)
+			analyzeQueryDeclarations(declaration, analysis.queryValues)
+			analyzeWireDeclarations(declaration, analysis.assignments)
 		}
 
 		assignment, ok := node.(*ast.AssignStmt)
@@ -698,14 +714,81 @@ func analyzeWireFunction(body *ast.BlockStmt) wireFunctionAnalysis {
 
 		return true
 	})
+	markCustomHeaderAliases(body, &analysis)
 
 	return analysis
+}
+
+func markCustomHeaderAliases(body *ast.BlockStmt, analysis *wireFunctionAnalysis) {
+	const customHeaderArgumentIndex = 4
+
+	analysis.headerAliases["customHeaders"] = true
+
+	ast.Inspect(body, func(node ast.Node) bool {
+		call, isCall := node.(*ast.CallExpr)
+		if !isCall || len(call.Args) <= customHeaderArgumentIndex {
+			return true
+		}
+
+		selector, isSelector := call.Fun.(*ast.SelectorExpr)
+		if !isSelector || (selector.Sel.Name != fullURLJSONHelperName && selector.Sel.Name != fullURLRequestHelperName) {
+			return true
+		}
+
+		if variable, isIdent := call.Args[customHeaderArgumentIndex].(*ast.Ident); isIdent && variable.Name != "nil" {
+			analysis.headerAliases[variable.Name] = true
+		}
+
+		return true
+	})
+
+	for changed := true; changed; {
+		changed = false
+
+		for name, assignments := range analysis.assignments {
+			for _, assignment := range assignments {
+				alias, isIdent := assignment.value.(*ast.Ident)
+				if !isIdent {
+					continue
+				}
+
+				if analysis.headerAliases[name] && !analysis.headerAliases[alias.Name] {
+					analysis.headerAliases[alias.Name] = true
+					changed = true
+				}
+
+				if analysis.headerAliases[alias.Name] && !analysis.headerAliases[name] {
+					analysis.headerAliases[name] = true
+					changed = true
+				}
+			}
+		}
+	}
+}
+
+func analyzeWireDeclarations(declaration *ast.ValueSpec, assignments map[string][]routeAssignment) {
+	for index, value := range declaration.Values {
+		if index < len(declaration.Names) {
+			name := declaration.Names[index].Name
+			assignments[name] = append(assignments[name], routeAssignment{
+				value: value, position: declaration.Pos(), op: token.ASSIGN, object: declaration.Names[index].Obj,
+			})
+		}
+	}
 }
 
 func analyzeHeaderDeclarations(declaration *ast.ValueSpec, aliases map[string]bool) {
 	for i, value := range declaration.Values {
 		if i < len(declaration.Names) && isHeaderExpression(value, aliases) {
 			aliases[declaration.Names[i].Name] = true
+		}
+	}
+}
+
+func analyzeQueryDeclarations(declaration *ast.ValueSpec, aliases map[string]bool) {
+	for index, value := range declaration.Values {
+		if index < len(declaration.Names) && isQueryValuesExpression(value, aliases) {
+			aliases[declaration.Names[index].Name] = true
 		}
 	}
 }
@@ -725,12 +808,13 @@ func analyzeWireAssignments(assignment *ast.AssignStmt, analysis *wireFunctionAn
 			value:    right,
 			position: assignment.Pos(),
 			op:       assignment.Tok,
+			object:   name.Obj,
 		})
 		if isHeaderExpression(right, analysis.headerAliases) {
 			analysis.headerAliases[name.Name] = true
 		}
 
-		if isQueryValuesExpression(right) {
+		if isQueryValuesExpression(right, analysis.queryValues) {
 			analysis.queryValues[name.Name] = true
 		}
 	}
@@ -739,6 +823,7 @@ func analyzeWireAssignments(assignment *ast.AssignStmt, analysis *wireFunctionAn
 func (checker *wireCallsiteChecker) checkFunction(decl *ast.FuncDecl, analysis wireFunctionAnalysis) {
 	ast.Inspect(decl.Body, func(node ast.Node) bool {
 		checker.checkIndex(node, analysis)
+		checker.checkQueryComposite(node)
 
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
@@ -747,9 +832,190 @@ func (checker *wireCallsiteChecker) checkFunction(decl *ast.FuncDecl, analysis w
 
 		checker.checkRequestCall(decl, call, analysis)
 		checker.checkParameterCall(decl, call, analysis)
+		checker.checkQueryMapEscape(call, analysis)
+
+		if decl.Name.Name != fullURLJSONHelperName {
+			checker.checkCustomHeaderArgument(call, analysis)
+		}
+
+		checker.checkCustomHeaderEscape(call, analysis)
 
 		return true
 	})
+}
+
+func (checker *wireCallsiteChecker) checkQueryMapEscape(call *ast.CallExpr, analysis wireFunctionAnalysis) {
+	if isIdentifier(call.Fun, "len") && len(call.Args) == 1 {
+		return
+	}
+
+	for _, argument := range call.Args {
+		if containsQueryMap(argument, analysis.queryValues) {
+			checker.addParameterViolation(call, "query parameter map must not escape to an unverified helper")
+
+			return
+		}
+	}
+
+	selector, isSelector := call.Fun.(*ast.SelectorExpr)
+	if !isSelector || !containsQueryMap(selector.X, analysis.queryValues) {
+		return
+	}
+
+	switch selector.Sel.Name {
+	case querySetMethodName, "Add", "Encode":
+		return
+	default:
+		checker.addParameterViolation(call, "query parameter map must not escape to an unverified helper")
+	}
+}
+
+func containsQueryMap(value ast.Expr, aliases map[string]bool) bool {
+	found := false
+
+	ast.Inspect(value, func(node ast.Node) bool {
+		if variable, ok := node.(*ast.Ident); ok && aliases[variable.Name] {
+			found = true
+		}
+
+		return !found
+	})
+
+	return found
+}
+
+func (checker *wireCallsiteChecker) checkTransportMethodValues(body ast.Node) {
+	directCalls := make(map[token.Pos]bool)
+
+	ast.Inspect(body, func(node ast.Node) bool {
+		call, isCall := node.(*ast.CallExpr)
+		if isCall {
+			if selector, isSelector := call.Fun.(*ast.SelectorExpr); isSelector {
+				directCalls[selector.Pos()] = true
+			}
+		}
+
+		return true
+	})
+
+	ast.Inspect(body, func(node ast.Node) bool {
+		selector, isSelector := node.(*ast.SelectorExpr)
+		if isSelector && isTransportHelper(selector.Sel.Name) && !directCalls[selector.Pos()] {
+			*checker.violations = append(*checker.violations, fmt.Sprintf(
+				"%s: transport helper method value must not be aliased",
+				checker.fset.Position(selector.Pos()),
+			))
+		}
+
+		return true
+	})
+}
+
+func (checker *wireCallsiteChecker) checkCustomHeaderArgument(call *ast.CallExpr, analysis wireFunctionAnalysis) {
+	const customHeaderArgumentIndex = 4
+
+	selector, isSelector := call.Fun.(*ast.SelectorExpr)
+	if !isSelector || (selector.Sel.Name != fullURLJSONHelperName && selector.Sel.Name != fullURLRequestHelperName) ||
+		len(call.Args) <= customHeaderArgumentIndex {
+		return
+	}
+
+	checker.checkHeaderMapExpression(call.Args[customHeaderArgumentIndex], analysis.assignments, call.Pos())
+}
+
+func (checker *wireCallsiteChecker) checkCustomHeaderEscape(call *ast.CallExpr, analysis wireFunctionAnalysis) {
+	const customHeaderArgumentIndex = 4
+
+	selector, isSelector := call.Fun.(*ast.SelectorExpr)
+
+	for index, argument := range call.Args {
+		variable, isIdent := argument.(*ast.Ident)
+		if !isIdent || !analysis.headerAliases[variable.Name] {
+			continue
+		}
+
+		if isSelector && index == customHeaderArgumentIndex &&
+			(selector.Sel.Name == fullURLJSONHelperName || selector.Sel.Name == fullURLRequestHelperName) {
+			continue
+		}
+
+		*checker.violations = append(*checker.violations, fmt.Sprintf(
+			"%s: custom header map must not escape to an unverified helper",
+			checker.fset.Position(argument.Pos()),
+		))
+	}
+}
+
+func (checker *wireCallsiteChecker) checkHeaderMapExpression(
+	expr ast.Expr,
+	assignments map[string][]routeAssignment,
+	before token.Pos,
+) {
+	switch value := expr.(type) {
+	case *ast.Ident:
+		if value.Name == "nil" {
+			return
+		}
+
+		latest, found := latestScopedRouteAssignment(assignments[value.Name], before, value.Obj)
+		if found {
+			checker.checkHeaderMapExpression(latest.value, assignments, latest.position)
+
+			return
+		}
+
+		checker.addUnverifiedHeaderMap(value.Pos())
+	case *ast.ParenExpr:
+		checker.checkHeaderMapExpression(value.X, assignments, before)
+	case *ast.CompositeLit:
+		for _, element := range value.Elts {
+			pair, hasKey := element.(*ast.KeyValueExpr)
+			if hasKey && !generatedParameter(pair.Key, requestHeaderFieldName) {
+				*checker.violations = append(*checker.violations, fmt.Sprintf(
+					"%s: custom request header map key must use a schema-generated Header constant",
+					checker.fset.Position(pair.Key.Pos()),
+				))
+			}
+		}
+	case *ast.CallExpr:
+		if isIdentifier(value.Fun, "make") {
+			return
+		}
+
+		checker.addUnverifiedHeaderMap(value.Pos())
+	default:
+		checker.addUnverifiedHeaderMap(value.Pos())
+	}
+}
+
+func (checker *wireCallsiteChecker) addUnverifiedHeaderMap(position token.Pos) {
+	*checker.violations = append(*checker.violations, fmt.Sprintf(
+		"%s: custom header map must be constructed from generated Header keys at this call site",
+		checker.fset.Position(position),
+	))
+}
+
+func (checker *wireCallsiteChecker) checkQueryComposite(node ast.Node) {
+	composite, isComposite := node.(*ast.CompositeLit)
+	if !isComposite || !isURLValuesType(composite.Type) {
+		return
+	}
+
+	for _, element := range composite.Elts {
+		pair, hasKey := element.(*ast.KeyValueExpr)
+		if hasKey && !generatedParameter(pair.Key, "QueryParam") {
+			*checker.violations = append(*checker.violations, fmt.Sprintf(
+				"%s: query parameter map key must use a schema-generated QueryParam constant",
+				checker.fset.Position(pair.Key.Pos()),
+			))
+		}
+	}
+}
+
+func isURLValuesType(expr ast.Expr) bool {
+	selector, isSelector := expr.(*ast.SelectorExpr)
+
+	return isSelector && isIdentifier(selector.X, "url") && selector.Sel.Name == "Values"
 }
 
 func (checker *wireCallsiteChecker) checkIndex(node ast.Node, analysis wireFunctionAnalysis) {
@@ -763,11 +1029,21 @@ func (checker *wireCallsiteChecker) checkIndex(node ast.Node, analysis wireFunct
 			"%s: custom request header name must use a schema-generated Header constant",
 			checker.fset.Position(index.Pos()),
 		))
+
+		return
 	}
 
 	if isHeaderExpression(index.X, analysis.headerAliases) && !generatedParameter(index.Index, requestHeaderFieldName) {
 		*checker.violations = append(*checker.violations, fmt.Sprintf(
 			"%s: request header map key must use a schema-generated Header constant",
+			checker.fset.Position(index.Pos()),
+		))
+	}
+
+	if variable, isIdent := index.X.(*ast.Ident); isIdent && analysis.queryValues[variable.Name] &&
+		!generatedParameter(index.Index, "QueryParam") {
+		*checker.violations = append(*checker.violations, fmt.Sprintf(
+			"%s: query parameter map key must use a schema-generated QueryParam constant",
 			checker.fset.Position(index.Pos()),
 		))
 	}
@@ -784,7 +1060,9 @@ func (checker *wireCallsiteChecker) checkRequestCall(
 	}
 
 	operation := generatedMethod(method)
-	if operation == "" || !checker.methods[operation] {
+
+	_, knownMethod := checker.methods[operation]
+	if operation == "" || !knownMethod {
 		*checker.violations = append(*checker.violations, fmt.Sprintf(
 			"%s: outbound request method must be a generated OpenAPI operation",
 			checker.fset.Position(call.Pos()),
@@ -793,7 +1071,8 @@ func (checker *wireCallsiteChecker) checkRequestCall(
 		return
 	}
 
-	found := routeNames(target, analysis.assignments, checker.aliases, call.Pos())
+	found := routeNames(target, analysis.assignments, checker.aliases, analysis.queryValues,
+		checker.methods, checker.serverTemplateArity, call.Pos())
 
 	expected := operation
 	if operation == "OpenDirectiveStream" {
@@ -814,7 +1093,7 @@ func (checker *wireCallsiteChecker) checkParameterCall(
 	analysis wireFunctionAnalysis,
 ) {
 	selector, ok := call.Fun.(*ast.SelectorExpr)
-	if !ok || len(call.Args) == 0 || (selector.Sel.Name != "Set" && selector.Sel.Name != "Add") {
+	if !ok || len(call.Args) == 0 || (selector.Sel.Name != querySetMethodName && selector.Sel.Name != "Add") {
 		return
 	}
 
@@ -825,7 +1104,7 @@ func (checker *wireCallsiteChecker) checkParameterCall(
 	}
 
 	if header, ok := selector.X.(*ast.SelectorExpr); ok && header.Sel.Name == requestHeaderFieldName {
-		allowedDynamicHeader := decl.Name.Name == "doRequestWithFullURL" && isIdentifier(call.Args[0], "key")
+		allowedDynamicHeader := decl.Name.Name == fullURLRequestHelperName && isIdentifier(call.Args[0], "key")
 		if !generatedParameter(call.Args[0], requestHeaderFieldName) && !allowedDynamicHeader {
 			checker.addParameterViolation(call, "request header name must use a schema-generated Header constant")
 		}
@@ -906,6 +1185,10 @@ func networkPrimitive(call *ast.CallExpr) string {
 		return ""
 	}
 
+	return networkPrimitiveSelector(selector)
+}
+
+func networkPrimitiveSelector(selector *ast.SelectorExpr) string {
 	switch selector.Sel.Name {
 	case "Get", "Post", "PostForm", "Head", "Do", "RoundTrip", "Dial", "DialContext", "DialTLS", "Upgrade", "NewRequest", newRequestWithContextName:
 		return selector.Sel.Name
@@ -934,6 +1217,7 @@ type networkFunctionScan struct {
 
 func checkNetworkInventory(file *ast.File, fset *token.FileSet, path string, violations *[]string) {
 	checkNetworkImports(file, fset, path, violations)
+	checkNetworkMethodValues(file, fset, violations)
 
 	for _, declaration := range file.Decls {
 		decl, ok := declaration.(*ast.FuncDecl)
@@ -979,6 +1263,35 @@ func checkNetworkFunction(decl *ast.FuncDecl, fset *token.FileSet, path string, 
 	}
 
 	scan.checkRequiredCalls(decl.Pos())
+}
+
+func checkNetworkMethodValues(body ast.Node, fset *token.FileSet, violations *[]string) {
+	var parents []ast.Node
+
+	ast.Inspect(body, func(node ast.Node) bool {
+		if node == nil {
+			parents = parents[:len(parents)-1]
+
+			return true
+		}
+
+		if selector, ok := node.(*ast.SelectorExpr); ok && networkPrimitiveSelector(selector) != "" {
+			var direct bool
+
+			if len(parents) != 0 {
+				call, ok := parents[len(parents)-1].(*ast.CallExpr)
+				direct = ok && call.Fun == selector
+			}
+
+			if !direct {
+				*violations = append(*violations, fmt.Sprintf("%s: outbound network method value must be called directly", fset.Position(selector.Pos())))
+			}
+		}
+
+		parents = append(parents, node)
+
+		return true
+	})
 }
 
 func (scan *networkFunctionScan) inspectNode(node ast.Node) {
@@ -1240,7 +1553,8 @@ func (scan *networkFunctionScan) addViolation(position token.Pos, message string
 
 func isTransportHelper(name string) bool {
 	switch name {
-	case "doRequest", "doRequestWithFullURL", "doUnauthenticatedRequest", "doUnauthenticatedJSONRequest":
+	case "doRequest", "doJSONRequest", fullURLRequestHelperName, fullURLJSONHelperName,
+		"doUnauthenticatedRequest", "doUnauthenticatedJSONRequest":
 		return true
 	default:
 		return false
@@ -1285,7 +1599,8 @@ func requestTarget(call *ast.CallExpr) (ast.Expr, ast.Expr, bool) {
 	}
 
 	switch selector.Sel.Name {
-	case newRequestWithContextName, "doJSONRequest", "doJSONRequestWithFullURL", "doUnauthenticatedJSONRequest":
+	case newRequestWithContextName, "doRequest", "doJSONRequest", fullURLRequestHelperName,
+		fullURLJSONHelperName, "doUnauthenticatedRequest", "doUnauthenticatedJSONRequest":
 		if len(call.Args) >= requestWithContextArgumentCount {
 			return call.Args[1], call.Args[2], true
 		}
@@ -1302,51 +1617,101 @@ type routeAssignment struct {
 	value    ast.Expr
 	position token.Pos
 	op       token.Token
+	object   any
 }
 
-func routeNames(expr ast.Expr, assignments map[string][]routeAssignment, aliases map[string]string, before token.Pos) map[string]bool {
+func routeNames(
+	expr ast.Expr,
+	assignments map[string][]routeAssignment,
+	aliases map[string]string,
+	queryValues map[string]bool,
+	routeTemplates map[string]string,
+	serverTemplateArity int,
+	before token.Pos,
+) map[string]bool {
 	scan := routeNameScan{
-		found:       make(map[string]bool),
-		assignments: assignments,
-		aliases:     aliases,
+		assignments:         assignments,
+		aliases:             aliases,
+		queryValues:         queryValues,
+		routeTemplates:      routeTemplates,
+		serverTemplateArity: serverTemplateArity,
 	}
-	scan.expression(expr, before)
 
-	return scan.found
+	name := scan.expression(expr, before)
+	if name == "" {
+		return nil
+	}
+
+	return map[string]bool{name: true}
 }
 
 type routeNameScan struct {
-	found       map[string]bool
-	assignments map[string][]routeAssignment
-	aliases     map[string]string
+	assignments         map[string][]routeAssignment
+	aliases             map[string]string
+	queryValues         map[string]bool
+	routeTemplates      map[string]string
+	serverTemplateArity int
 }
 
-func (scan *routeNameScan) expression(value ast.Expr, cutoff token.Pos) {
-	ast.Inspect(value, func(node ast.Node) bool {
-		switch part := node.(type) {
-		case *ast.Ident:
-			latest, ok := latestRouteAssignment(scan.assignments[part.Name], cutoff)
-			if !ok {
-				return true
-			}
-
-			if latest.op == token.ADD_ASSIGN {
-				scan.expression(part, latest.position)
-			}
-
-			scan.expression(latest.value, latest.position)
-		case *ast.SelectorExpr:
-			scan.recordSelector(part)
+func (scan *routeNameScan) expression(value ast.Expr, cutoff token.Pos) string {
+	switch part := value.(type) {
+	case *ast.Ident:
+		latest, ok := latestScopedRouteAssignment(scan.assignments[part.Name], cutoff, part.Obj)
+		if !ok {
+			return ""
 		}
 
-		return true
-	})
+		if latest.op == token.ADD_ASSIGN {
+			if scan.querySuffix(latest.value) {
+				return scan.expression(part, latest.position)
+			}
+
+			return ""
+		}
+
+		if latest.op != token.ASSIGN && latest.op != token.DEFINE {
+			return ""
+		}
+
+		return scan.expression(latest.value, latest.position)
+	case *ast.SelectorExpr:
+		return scan.selectorName(part)
+	case *ast.ParenExpr:
+		return scan.expression(part.X, cutoff)
+	case *ast.BinaryExpr:
+		if part.Op != token.ADD {
+			return ""
+		}
+
+		left := scan.expression(part.X, cutoff)
+
+		right := scan.expression(part.Y, cutoff)
+		if left == "" {
+			if right != "" && scan.routePrefix(part.X) {
+				return right
+			}
+
+			return ""
+		}
+
+		if right == "" && scan.querySuffix(part.Y) {
+			return left
+		}
+	case *ast.CallExpr:
+		return scan.callName(part, cutoff)
+	}
+
+	return ""
 }
 
-func latestRouteAssignment(assignments []routeAssignment, cutoff token.Pos) (routeAssignment, bool) {
+func latestScopedRouteAssignment(assignments []routeAssignment, cutoff token.Pos, object any) (routeAssignment, bool) {
 	var latest routeAssignment
 
 	for _, candidate := range assignments {
+		if object != nil && candidate.object != object {
+			continue
+		}
+
 		if candidate.position < cutoff && (latest.position == token.NoPos || candidate.position > latest.position) {
 			latest = candidate
 		}
@@ -1355,33 +1720,132 @@ func latestRouteAssignment(assignments []routeAssignment, cutoff token.Pos) (rou
 	return latest, latest.position != token.NoPos
 }
 
-func (scan *routeNameScan) recordSelector(selector *ast.SelectorExpr) {
+func (scan *routeNameScan) selectorName(selector *ast.SelectorExpr) string {
 	qualifier, ok := selector.X.(*ast.Ident)
 	if !ok {
-		return
+		return ""
 	}
 
 	switch qualifier.Name {
 	case apiRoutesPackage:
 		if strings.HasPrefix(selector.Sel.Name, "Path") {
-			scan.found[strings.TrimPrefix(selector.Sel.Name, "Path")] = true
+			return strings.TrimPrefix(selector.Sel.Name, "Path")
 		} else if selector.Sel.Name == "ChannelDirectivesAddress" {
-			scan.found["channel:directives"] = true
+			return "channel:directives"
 		}
 	case "alexamodels":
 		if routeName, ok := scan.aliases[selector.Sel.Name]; ok {
-			scan.found[routeName] = true
+			return routeName
 		}
 	}
+
+	return ""
 }
 
-func isQueryValuesExpression(value ast.Expr) bool {
-	if composite, ok := value.(*ast.CompositeLit); ok {
-		if selector, ok := composite.Type.(*ast.SelectorExpr); ok {
-			if qualifier, ok := selector.X.(*ast.Ident); ok {
-				return qualifier.Name == "url" && selector.Sel.Name == "Values"
-			}
+func (scan *routeNameScan) callName(call *ast.CallExpr, cutoff token.Pos) string {
+	if len(call.Args) == 0 {
+		return ""
+	}
+
+	selector, isSelector := call.Fun.(*ast.SelectorExpr)
+	if !isSelector || !isIdentifier(selector.X, "fmt") || selector.Sel.Name != "Sprintf" {
+		return ""
+	}
+
+	if name := scan.expression(call.Args[0], cutoff); name != "" {
+		template, known := scan.routeTemplates[name]
+		if known && strings.Count(template, "%s") == len(call.Args)-1 {
+			return name
 		}
+
+		return ""
+	}
+
+	format, ok := call.Args[0].(*ast.BasicLit)
+	if !ok || format.Kind != token.STRING || len(call.Args) < 2 {
+		return ""
+	}
+
+	pattern, err := strconv.Unquote(format.Value)
+	if err != nil || pattern != "https://%s%s" || len(call.Args) != 3 || !isEventAuthority(call.Args[1]) {
+		return ""
+	}
+
+	return scan.expression(call.Args[len(call.Args)-1], cutoff)
+}
+
+func isEventAuthority(value ast.Expr) bool {
+	selector, ok := value.(*ast.SelectorExpr)
+
+	return ok && isIdentifier(selector.X, "c") && selector.Sel.Name == "authority"
+}
+
+func (scan *routeNameScan) routePrefix(expr ast.Expr) bool {
+	if selector, ok := expr.(*ast.SelectorExpr); ok {
+		owner, isIdent := selector.X.(*ast.Ident)
+		if !isIdent || (owner.Name != "c" && owner.Name != "a") {
+			return false
+		}
+
+		switch selector.Sel.Name {
+		case "alexaAmazonBaseURI", "amazonapiBaseURI", "baseURL":
+			return true
+		}
+	}
+
+	call, isCall := expr.(*ast.CallExpr)
+	if !isCall || len(call.Args) == 0 {
+		return false
+	}
+
+	formatter, isFormatter := call.Fun.(*ast.SelectorExpr)
+	if !isFormatter || !isIdentifier(formatter.X, "fmt") || formatter.Sel.Name != "Sprintf" {
+		return false
+	}
+
+	format, isSelector := call.Args[0].(*ast.SelectorExpr)
+
+	return isSelector && isIdentifier(format.X, apiRoutesPackage) &&
+		format.Sel.Name == "ServerExchangeRefreshTokenForCookies" && len(call.Args)-1 == scan.serverTemplateArity
+}
+
+func (scan *routeNameScan) querySuffix(expr ast.Expr) bool {
+	addition, isAddition := expr.(*ast.BinaryExpr)
+	if !isAddition || addition.Op != token.ADD {
+		return false
+	}
+
+	separator, isLiteral := addition.X.(*ast.BasicLit)
+	if !isLiteral || separator.Kind != token.STRING || separator.Value != `"?"` {
+		return false
+	}
+
+	call, isCall := addition.Y.(*ast.CallExpr)
+	if !isCall || len(call.Args) != 0 {
+		return false
+	}
+
+	selector, isSelector := call.Fun.(*ast.SelectorExpr)
+	if !isSelector || selector.Sel.Name != "Encode" {
+		return false
+	}
+
+	receiver, isIdent := selector.X.(*ast.Ident)
+
+	return isIdent && scan.queryValues[receiver.Name]
+}
+
+func isQueryValuesExpression(value ast.Expr, aliases map[string]bool) bool {
+	if variable, ok := value.(*ast.Ident); ok {
+		return aliases[variable.Name]
+	}
+
+	if parenthesized, ok := value.(*ast.ParenExpr); ok {
+		return isQueryValuesExpression(parenthesized.X, aliases)
+	}
+
+	if composite, ok := value.(*ast.CompositeLit); ok {
+		return isURLValuesType(composite.Type)
 	}
 
 	if call, ok := value.(*ast.CallExpr); ok {
@@ -1403,7 +1867,7 @@ func nonRouteURLLiterals(file *ast.File) map[token.Pos]bool {
 		}
 
 		selector, isSelector := call.Fun.(*ast.SelectorExpr)
-		if !isSelector || selector.Sel.Name != "Set" {
+		if !isSelector || selector.Sel.Name != querySetMethodName {
 			return true
 		}
 
