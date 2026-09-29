@@ -240,6 +240,14 @@ func TestNetworkInventoryRejectsRequestRouteMutation(t *testing.T) {
 			name: "composite alias", mutation: "holder := struct { request *http.Request }{request: req}; holder.request.URL.Path = apiroutes.PathGetRestEndpoint",
 			want: "request was reassigned or mutated",
 		},
+		{
+			name: "field store", mutation: "holder := &routeHolder{}; holder.request = req; holder.request.URL.Path = apiroutes.PathGetRestEndpoint",
+			want: "request was reassigned or mutated",
+		},
+		{
+			name: "indexed store", mutation: "holders := make([]*http.Request, 1); holders[0] = req; holders[0].URL.Path = apiroutes.PathGetRestEndpoint",
+			want: "request was reassigned or mutated",
+		},
 		{name: "request helper", mutation: "mutateRoute(req)", want: "request or URL escaped"},
 		{name: "parenthesized helper", mutation: "mutateRoute((req))", want: "request or URL escaped"},
 		{

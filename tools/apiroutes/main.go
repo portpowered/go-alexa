@@ -1062,12 +1062,8 @@ func (scan *networkFunctionScan) recordRequestAssignments(node ast.Node) {
 
 	for index, value := range assignment.Rhs {
 		if index < len(assignment.Lhs) {
-			if variable, isIdent := assignment.Lhs[index].(*ast.Ident); isIdent {
-				if scan.constructors[variable.Name] == token.NoPos {
-					scan.requestAliases[variable.Name] = append(
-						scan.requestAliases[variable.Name], requestAliasSources(value)...,
-					)
-				}
+			if variable := rootIdentifier(assignment.Lhs[index]); variable != "" && scan.constructors[variable] == token.NoPos {
+				scan.requestAliases[variable] = append(scan.requestAliases[variable], requestAliasSources(value)...)
 			}
 		}
 
@@ -1120,6 +1116,8 @@ func rootIdentifier(expr ast.Expr) string {
 	case *ast.StarExpr:
 		return rootIdentifier(value.X)
 	case *ast.ParenExpr:
+		return rootIdentifier(value.X)
+	case *ast.IndexExpr:
 		return rootIdentifier(value.X)
 	}
 
