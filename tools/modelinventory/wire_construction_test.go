@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
@@ -40,7 +41,7 @@ func request(caller string) {
 			t.Fatalf("parse construction probe: %v", err)
 		}
 
-		err = rejectRawGeneratedWireConstructions(file, set, "pkg/probe.go", wireConstructionTestModels())
+		err = rejectRawGeneratedWireConstructions(file, set, wireConstructionTestModels())
 		if err == nil {
 			t.Fatalf("unregistered fixed value/key accepted: %s", construction)
 		}
@@ -71,7 +72,7 @@ func request(caller string, input *wire.Payload) {
 		t.Fatalf("parse caller probe: %v", err)
 	}
 
-	err = rejectRawGeneratedWireConstructions(file, set, "pkg/probe.go", wireConstructionTestModels())
+	err = rejectRawGeneratedWireConstructions(file, set, wireConstructionTestModels())
 	if err != nil {
 		t.Fatalf("caller or generated value rejected: %v", err)
 	}
@@ -125,7 +126,7 @@ func request(input *wire.Payload) { `+mutation+` }
 			t.Fatalf("parse mutation probe: %v", err)
 		}
 
-		err = rejectRawGeneratedWireConstructions(file, set, "pkg/probe.go", wireConstructionTestModels())
+		err = rejectRawGeneratedWireConstructions(file, set, wireConstructionTestModels())
 		if err == nil {
 			t.Fatalf("unregistered mutation accepted: %s", mutation)
 		}
@@ -150,8 +151,18 @@ func request(caller string) {
 		t.Fatalf("parse scope probe: %v", err)
 	}
 
-	err = rejectRawGeneratedWireConstructions(file, set, "pkg/probe.go", wireConstructionTestModels())
+	err = rejectRawGeneratedWireConstructions(file, set, wireConstructionTestModels())
 	if err != nil {
 		t.Fatalf("non-wire strings were treated as wire values: %v", err)
 	}
+}
+
+func rejectRawGeneratedWireConstructions(file *ast.File, set *token.FileSet, models map[string]generatedModel) error {
+	path := "pkg/probe.go"
+	owner := primitivePackage{ImportPath: wireImportPath, Name: "alexamodels", Directory: "pkg/dependencymodels"}
+	aliases := primitiveImportAliases(file, owner)
+	assignments := indexWireSourceAssignments(file)
+	indexWireHelperParameters(file, aliases, path, models, assignments)
+
+	return rejectRawGeneratedWireConstructionsWithAssignments(file, set, path, models, assignments)
 }

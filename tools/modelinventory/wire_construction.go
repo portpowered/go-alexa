@@ -3,9 +3,7 @@ package main
 import (
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"go/token"
-	"io/fs"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -24,59 +22,26 @@ func checkGeneratedWireConstructions(models map[string]generatedModel) error {
 	return err
 }
 
-func checkGeneratedWireConstructionRoot(root string, generated map[string]bool, models map[string]generatedModel) error {
-	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return fmt.Errorf("walk wire construction sources: %w", walkErr)
-		}
-
-		path = filepath.ToSlash(path)
-		if entry.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") || generated[path] {
-			return nil
-		}
-
-		set := token.NewFileSet()
-
-		file, parseErr := parser.ParseFile(set, path, mustRead(path), 0)
-		if parseErr != nil {
-			return fmt.Errorf("parse wire construction source %s: %w", path, parseErr)
-		}
-
-		return rejectRawGeneratedWireConstructions(file, set, path, models)
-	})
-	if err != nil {
-		return fmt.Errorf("check generated wire construction: %w", err)
-	}
-
-	return nil
-}
-
-func rejectRawGeneratedWireConstructions(file *ast.File, set *token.FileSet, path string, models map[string]generatedModel) error {
+func rejectRawGeneratedWireConstructionsWithAssignments(
+	file *ast.File, set *token.FileSet, path string, models map[string]generatedModel, assignments wireSourceAssignments,
+) error {
 	owner := primitivePackage{ImportPath: wireImportPath, Name: "alexamodels", Directory: "pkg/dependencymodels"}
 	aliases := primitiveImportAliases(file, owner)
-	assignments := indexWireSourceAssignments(file)
 
 	var problems []string
 
 	ast.Inspect(file, func(node ast.Node) bool {
-		if assignment, isAssignment := node.(*ast.AssignStmt); isAssignment {
-			for index, left := range assignment.Lhs {
-				receiver, key := wireAssignmentParts(left)
-				if receiver == nil || index >= len(assignment.Rhs) ||
-					!generatedWireReceiver(receiver, aliases, path, models, make(map[wireSourceVariable]bool), assignments) {
-					continue
+		if call, isCall := node.(*ast.CallExpr); isCall {
+			inspectWireCopyCall(file, call, aliases, path, models, assignments, func(raw *ast.BasicLit) {
+				decoded, err := strconv.Unquote(raw.Value)
+				if err == nil && decoded != "" {
+					problems = append(problems, fmt.Sprintf("%s: fixed wire copy %q must be generated from schema", set.Position(raw.Pos()), decoded))
 				}
+			})
+		}
 
-				report := func(raw *ast.BasicLit) {
-					decoded, err := strconv.Unquote(raw.Value)
-					if err == nil && decoded != "" {
-						problems = append(problems, fmt.Sprintf("%s: fixed wire assignment %q must be generated from schema", set.Position(raw.Pos()), decoded))
-					}
-				}
-				inspectWireReceiverKeys(receiver, make(map[wireSourceVariable]bool), report, assignments)
-				inspectWireValueLiterals(key, make(map[wireSourceVariable]bool), report, assignments)
-				inspectWireValueLiterals(assignment.Rhs[index], make(map[wireSourceVariable]bool), report, assignments)
-			}
+		if assignment, isAssignment := node.(*ast.AssignStmt); isAssignment {
+			inspectWireMutationAssignment(assignment, aliases, path, models, assignments, set, &problems)
 		}
 
 		literal, isComposite := node.(*ast.CompositeLit)
@@ -183,7 +148,7 @@ func inspectWireAlias(identifier *ast.Ident, visiting map[wireSourceVariable]boo
 		inspectWireValueLiterals(value, visiting, report, assignments)
 	}
 
-	for _, value := range assignments[key] {
+	for _, value := range assignments.values[key] {
 		if value.Pos() < identifier.Pos() {
 			inspectWireValueLiterals(value, visiting, report, assignments)
 		}
@@ -256,6 +221,10 @@ func generatedWireIdentifier(
 
 	visiting[key] = true
 
+	if assignments.generatedParameters[key] {
+		return true
+	}
+
 	switch declaration := declaration.(type) {
 	case *ast.Field:
 		return generatedWireDeclaredType(declaration.Type, aliases, path, models)
@@ -270,7 +239,7 @@ func generatedWireIdentifier(
 		return true
 	}
 
-	for _, value := range assignments[key] {
+	for _, value := range assignments.values[key] {
 		if value.Pos() < identifier.Pos() && generatedWireReceiver(value, aliases, path, models, visiting, assignments) {
 			return true
 		}
@@ -303,4 +272,27 @@ func wireAssignmentParts(expression ast.Expr) (ast.Expr, ast.Expr) {
 	}
 
 	return nil, nil
+}
+
+func inspectWireMutationAssignment(
+	assignment *ast.AssignStmt, aliases map[string]bool, path string, models map[string]generatedModel,
+	assignments wireSourceAssignments, set *token.FileSet, problems *[]string,
+) {
+	for index, left := range assignment.Lhs {
+		receiver, key := wireAssignmentParts(left)
+		if receiver == nil || index >= len(assignment.Rhs) ||
+			!generatedWireReceiver(receiver, aliases, path, models, make(map[wireSourceVariable]bool), assignments) {
+			continue
+		}
+
+		report := func(raw *ast.BasicLit) {
+			decoded, err := strconv.Unquote(raw.Value)
+			if err == nil && decoded != "" {
+				*problems = append(*problems, fmt.Sprintf("%s: fixed wire assignment %q must be generated from schema", set.Position(raw.Pos()), decoded))
+			}
+		}
+		inspectWireReceiverKeys(receiver, make(map[wireSourceVariable]bool), report, assignments)
+		inspectWireValueLiterals(key, make(map[wireSourceVariable]bool), report, assignments)
+		inspectWireValueLiterals(assignment.Rhs[index], make(map[wireSourceVariable]bool), report, assignments)
+	}
 }

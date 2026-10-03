@@ -30,6 +30,7 @@ func restPairedReplayResponses(
 ) []restReplayResponse {
 	responses := make([]restReplayResponse, 0, 26)
 	responses = append(responses, restAuthenticationReplayCases(ctx, config)...)
+	responses = append(responses, restAuthenticationFailureReplayCases(ctx, config)...)
 	responses = append(responses, restEndpointReplayCases(ctx, endpoint)...)
 	responses = append(responses, restAccountReplayCases(ctx)...)
 	responses = append(responses, restMediaReplayCases(ctx, endpoint, media)...)

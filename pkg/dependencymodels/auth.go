@@ -12,7 +12,10 @@ func (t *Token) IsExpired() bool {
 	return time.Now().Add(time.Minute).After(t.ExpiresAt)
 }
 
-// AuthConfig represents caller-provided OAuth configuration.
+// AuthConfig retains the legacy shape for caller-owned OAuth configuration.
+// SDK operations do not consume it or handle browser callbacks.
+//
+// Deprecated: configure browser authorization in the calling application.
 type AuthConfig struct {
 	ClientID     string
 	ClientSecret string
@@ -22,7 +25,10 @@ type AuthConfig struct {
 	TokenURL     string
 }
 
-// DeviceAuthConfig represents caller-provided OAuth device configuration.
+// DeviceAuthConfig retains the legacy shape for caller-owned device OAuth configuration.
+// SDK operations do not consume it; account linking uses code-pair registration.
+//
+// Deprecated: use the session's code-pair registration methods for account linking.
 type DeviceAuthConfig struct {
 	ClientID      string
 	ClientSecret  string

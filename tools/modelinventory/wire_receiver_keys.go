@@ -49,7 +49,7 @@ func inspectWireReceiverAliasKeys(
 		inspectWireReceiverKeys(value, visiting, report, assignments)
 	}
 
-	for _, value := range assignments[key] {
+	for _, value := range assignments.values[key] {
 		if value.Pos() < identifier.Pos() {
 			inspectWireReceiverKeys(value, visiting, report, assignments)
 		}

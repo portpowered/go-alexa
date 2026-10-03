@@ -41,6 +41,8 @@ Refresh is explicit and leaves session state unchanged until you install the ret
 
 Call `GenerateCodePair`, show the public code to the user, and keep the private code secret. After the user approves the link, call `RegisterWithCodePair`. Treat returned tokens as credentials. Start this flow only after an explicit user action.
 
+Browser authorization URLs are implementation-derived links managed by your application. Your application supplies authorization parameters and handles callback state and PKCE validation.
+
 ## Use cookies and CSRF
 
 Call `Session.ExchangeRefreshTokenForCookies` explicitly, store the result, and create a session with `WithCookies`. If a request needs a CSRF value, call `Session.GetCSRFToken`; requests do not fetch missing CSRF material or exchange tokens implicitly.

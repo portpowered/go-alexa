@@ -46,6 +46,11 @@ references and rejects inconsistent compositions. Handwritten companions impleme
 not duplicate wire fields. CI checks regeneration, untracked generated output,
 endpoint call sites, and the complete model inventory.
 
+`AuthConfig` and `DeviceAuthConfig` are retained legacy caller-side configuration
+shapes. No SDK operation accepts, encodes, or decodes them; they have no JSON
+fields or codecs and are excluded from the wire-model population. Their deprecated
+comments make the caller-owned OAuth scope explicit.
+
 Edit the API responsibility files listed in `api/openapi/sources.yaml`;
 `tools/openapibundle` builds `api/openapi.yaml` for code generation and the site.
 Requests, responses, and their nested components stay in their owning API file.

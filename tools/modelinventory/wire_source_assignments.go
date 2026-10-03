@@ -7,10 +7,16 @@ type wireSourceVariable struct {
 	name        string
 }
 
-type wireSourceAssignments map[wireSourceVariable][]ast.Expr
+type wireSourceAssignments struct {
+	values              map[wireSourceVariable][]ast.Expr
+	generatedParameters map[wireSourceVariable]bool
+}
 
 func indexWireSourceAssignments(file *ast.File) wireSourceAssignments {
-	assignments := make(wireSourceAssignments)
+	assignments := wireSourceAssignments{
+		values:              make(map[wireSourceVariable][]ast.Expr),
+		generatedParameters: make(map[wireSourceVariable]bool),
+	}
 
 	ast.Inspect(file, func(node ast.Node) bool {
 		assignment, isAssignment := node.(*ast.AssignStmt)
@@ -27,7 +33,7 @@ func indexWireSourceAssignments(file *ast.File) wireSourceAssignments {
 			declaration, isNode := identifier.Obj.Decl.(ast.Node)
 			if isNode {
 				key := wireSourceVariable{declaration: declaration, name: identifier.Name}
-				assignments[key] = append(assignments[key], assignment.Rhs[index])
+				assignments.values[key] = append(assignments.values[key], assignment.Rhs[index])
 			}
 		}
 
@@ -35,4 +41,30 @@ func indexWireSourceAssignments(file *ast.File) wireSourceAssignments {
 	})
 
 	return assignments
+}
+
+func wireAliasExpressions(identifier *ast.Ident, assignments wireSourceAssignments) []ast.Expr {
+	if identifier.Obj == nil {
+		return nil
+	}
+
+	declaration, isNode := identifier.Obj.Decl.(ast.Node)
+	if !isNode {
+		return nil
+	}
+
+	var values []ast.Expr
+
+	if value := wireAliasValue(identifier.Name, declaration); value != nil {
+		values = append(values, value)
+	}
+
+	key := wireSourceVariable{declaration: declaration, name: identifier.Name}
+	for _, value := range assignments.values[key] {
+		if value.Pos() < identifier.Pos() {
+			values = append(values, value)
+		}
+	}
+
+	return values
 }
