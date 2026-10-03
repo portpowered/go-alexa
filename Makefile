@@ -6,10 +6,18 @@ CLI_DIR := cmd/go-alexa
 export GOWORK := off
 
 .DEFAULT_GOAL := check
-.PHONY: check vet build test lint fmt cli-check cli-vet cli-build cli-test cli-lint cli-fmt module cli-module generate generate-graphql generate-api model-inventory openapi-bundle openapi-bundle-check
+.PHONY: check format-check vet build test lint fmt cli-check cli-vet cli-build cli-test cli-lint cli-fmt module cli-module generate generate-graphql generate-api model-inventory openapi-bundle openapi-bundle-check
 
-check: lint vet build test model-inventory openapi-bundle-check module cli-module
+check: format-check lint vet build test model-inventory openapi-bundle-check module cli-module
 
+ifeq ($(OS),Windows_NT)
+format-check:
+	@powershell -NoProfile -Command "$$files = git ls-files -- '*.go'; if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE }; $$unformatted = gofmt -l $$files; if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE }; if ($$unformatted) { Write-Output 'Unformatted Go files:'; $$unformatted; exit 1 }"
+else
+format-check:
+	@unformatted="$$(gofmt -l $$(git ls-files -- '*.go'))" || exit $$?; \
+	if [ -n "$$unformatted" ]; then echo "Unformatted Go files: $$unformatted"; exit 1; fi
+endif
 vet:
 	$(GO) vet ./...
 	cd $(CLI_DIR) && $(GO) vet ./...
@@ -31,7 +39,7 @@ fmt:
 	cd $(CLI_DIR) && $(GO) fmt ./...
 
 cli-vet:
-	cd $(CLI_DIR) && $(GO) vet ./...
+	$(GO) -C $(CLI_DIR) vet ./...
 
 cli-build:
 	cd $(CLI_DIR) && $(GO) build ./...

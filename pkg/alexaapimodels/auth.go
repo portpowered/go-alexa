@@ -1,6 +1,7 @@
 package alexaapimodels
 
 // CodePairResponse represents the response from CBL code generation.
+//
 //modelinventory:semantic CodePairResponse: browser login codes returned by the code-pair endpoint.
 type CodePairResponse struct {
 	PublicCode  string `json:"publicCode"`
@@ -8,6 +9,7 @@ type CodePairResponse struct {
 }
 
 // RegistrationResponse represents a successful MAP registration response.
+//
 //modelinventory:semantic RegistrationResponse: access and refresh credentials returned after device pairing.
 type RegistrationResponse struct {
 	AccessToken  string `json:"accessToken"`
@@ -15,6 +17,7 @@ type RegistrationResponse struct {
 }
 
 // TokenRefreshRequest represents a token refresh request.
+//
 //modelinventory:client-input TokenRefreshRequest: refresh credential and device registration options passed into the explicit token exchange.
 type TokenRefreshRequest struct {
 	RefreshToken string                   `json:"refreshToken"`
@@ -22,6 +25,7 @@ type TokenRefreshRequest struct {
 }
 
 // TokenRefreshResponse represents a token refresh response.
+//
 //modelinventory:semantic TokenRefreshResponse: caller-facing access token and expiry projection from the generated OAuth response.
 type TokenRefreshResponse struct {
 	AccessToken      string `json:"accessToken"`
@@ -45,6 +49,7 @@ func DefaultDeviceRegistrationConfig(deviceSerial, deviceName string) DeviceRegi
 }
 
 // UserInfoRequest contains options for getting user info.
+//
 //modelinventory:client-input UserInfoRequest: optional platform, client version, and CSRF values mapped to the profile request.
 type UserInfoRequest struct {
 	// Platform identifier (e.g., "ios", "android")
@@ -56,6 +61,7 @@ type UserInfoRequest struct {
 }
 
 // UserInfo represents user information from the /api/users/me endpoint.
+//
 //modelinventory:semantic UserInfo: account profile fields returned by the SDK profile lookup.
 type UserInfo struct {
 	// This is the country code for country of residence for the customer.

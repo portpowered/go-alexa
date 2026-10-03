@@ -17,6 +17,7 @@ const (
 )
 
 // FeatureControlResponse represents a unified response for feature control operations.
+//
 //modelinventory:semantic FeatureControlResponse: public result of a feature-control GraphQL operation.
 type FeatureControlResponse struct {
 	FeatureControlResponses []FeatureControlResponseItem `json:"featureControlResponses,omitempty"`
@@ -24,6 +25,7 @@ type FeatureControlResponse struct {
 }
 
 // FeatureControlResponseItem represents a single feature control response.
+//
 //modelinventory:semantic FeatureControlResponseItem: successful operation result with endpoint, feature, operation, and payload fields.
 type FeatureControlResponseItem struct {
 	EndpointID           string      `json:"endpointId,omitempty"`
@@ -36,6 +38,7 @@ type FeatureControlResponseItem struct {
 }
 
 // FeatureControlError represents an error from a feature control operation.
+//
 //modelinventory:semantic FeatureControlError: failed feature-control result with typed operation context and message.
 type FeatureControlError struct {
 	EndpointID           string      `json:"endpointId,omitempty"`
@@ -52,6 +55,7 @@ type FeatureControlError struct {
 type ControlResponse = FeatureControlResponse
 
 // DeviceRegistrationConfig contains device information for MAP authentication.
+//
 //modelinventory:client-input DeviceRegistrationConfig: device identity and app metadata accepted by code-pair, registration, and token-refresh calls.
 type DeviceRegistrationConfig struct {
 	AppName      string `json:"appName"`
