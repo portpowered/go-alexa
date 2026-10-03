@@ -60,3 +60,42 @@ func TestEventFieldBindingsRejectLostEnumAndAnonymousObject(t *testing.T) {
 		})
 	}
 }
+
+func TestControlFieldBindingsRejectDroppedEnumReferences(t *testing.T) {
+	t.Parallel()
+
+	for component, field := range map[string]string{
+		"LockPayload": "lockState", "TogglePayload": "toggleState",
+		"ThermostatSetpoint": "scale", "ThermostatModePayload": "thermostatMode",
+	} {
+		t.Run(component+"."+field, func(t *testing.T) {
+			t.Parallel()
+
+			data, err := os.ReadFile("../../api/feature-controls.yaml")
+			if err != nil {
+				t.Fatalf("read controls: %v", err)
+			}
+
+			var document schemaDocument
+
+			err = yaml.Unmarshal(data, &document)
+			if err != nil {
+				t.Fatalf("decode controls: %v", err)
+			}
+
+			err = checkControlFieldBindings("api/feature-controls.yaml", document.Components.Schemas)
+			if err != nil {
+				t.Fatalf("valid binding rejected: %v", err)
+			}
+
+			property := emptySchemaNode()
+			property.Type = schemaStringType
+			document.Components.Schemas[component].Properties[field] = property
+
+			err = checkControlFieldBindings("api/feature-controls.yaml", document.Components.Schemas)
+			if err == nil {
+				t.Fatal("dropped control enum binding accepted")
+			}
+		})
+	}
+}

@@ -459,7 +459,10 @@ components:
         deviceSerialNumber: {type: string}
         locale: {type: string}
         customerId: {type: string, x-go-name: CustomerID}
-        searchPhrase: {type: string}
+        searchPhrase:
+          type: string
+          x-go-compat-constant-values:
+            BehaviorVideoSearchPhraseTemplate: "%s on %s"
         sanitizedSearchPhrase: {type: string}
         waitTimeInSeconds: {type: integer, x-go-type-skip-optional-pointer: true}
       required: [deviceType, deviceSerialNumber, locale, customerId, searchPhrase, sanitizedSearchPhrase]

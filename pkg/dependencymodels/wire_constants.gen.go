@@ -39,6 +39,7 @@ const (
 	AuthTokenTypeRefresh                                                    = "refresh_token"
 	AuxSettingsCapability                               CapabilityInterface = "AUX_SETTINGS"
 	BehaviorAudioSSMLTemplate                                               = "<audio src='%s'/>"
+	BehaviorVideoSearchPhraseTemplate                                       = "%s on %s"
 	BtPairingFlowV2Capability                           CapabilityInterface = "BT_PAIRING_FLOW_V2"
 	ChangeNameCapability                                CapabilityInterface = "CHANGE_NAME"
 	ClockFormat24HrCapability                           CapabilityInterface = "CLOCK_FORMAT_24_HR"

@@ -1142,7 +1142,7 @@ func (c *Client) PlayVideo(ctx context.Context, req *alexamodels.PlayVideoReques
 	// Combine search phrase with provider: "{searchPhrase} on {provider}"
 	combinedSearchPhrase := req.SearchPhrase
 	if req.VideoProviderID != "" {
-		combinedSearchPhrase = fmt.Sprintf("%s on %s", req.SearchPhrase, req.VideoProviderID)
+		combinedSearchPhrase = fmt.Sprintf(alexamodels.BehaviorVideoSearchPhraseTemplate, req.SearchPhrase, req.VideoProviderID)
 	}
 
 	payload := alexamodels.VideoPlaySearchPhrasePayload{

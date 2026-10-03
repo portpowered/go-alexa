@@ -79,29 +79,31 @@ func checkSDKGraphQLBindingCompleteness(schema schemaNode, graphql *graphqlast.S
 func findPrimitiveCallSites(names map[string]sdkPrimitive, owner primitivePackage) (map[string][]string, error) {
 	usages := make(map[string][]string)
 
-	err := filepath.WalkDir("pkg", func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return fmt.Errorf("walk SDK primitive uses: %w", walkErr)
-		}
+	for _, root := range []string{"pkg", "cmd"} {
+		err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return fmt.Errorf("walk SDK primitive uses: %w", walkErr)
+			}
 
-		path = filepath.ToSlash(path)
-		if entry.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") || (path == sdkPrimitiveOutput || path == wirePrimitiveOutput) {
+			path = filepath.ToSlash(path)
+			if entry.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") || (path == sdkPrimitiveOutput || path == wirePrimitiveOutput) {
+				return nil
+			}
+
+			set := token.NewFileSet()
+
+			file, parseErr := parser.ParseFile(set, path, mustRead(path), 0)
+			if parseErr != nil {
+				return fmt.Errorf("parse SDK primitive uses %s: %w", path, parseErr)
+			}
+
+			collectPrimitiveUses(file, path, set, names, usages, owner)
+
 			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("inventory primitive uses: %w", err)
 		}
-
-		set := token.NewFileSet()
-
-		file, parseErr := parser.ParseFile(set, path, mustRead(path), 0)
-		if parseErr != nil {
-			return fmt.Errorf("parse SDK primitive uses %s: %w", path, parseErr)
-		}
-
-		collectPrimitiveUses(file, path, set, names, usages, owner)
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("inventory SDK primitive uses: %w", err)
 	}
 
 	for name, sites := range usages {

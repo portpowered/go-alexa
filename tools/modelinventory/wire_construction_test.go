@@ -15,6 +15,8 @@ func TestWireConstructionRejectsUnregisteredFixedValuesAndAliases(t *testing.T) 
 		`wire.Payload{Value: string("brandNewUnregisteredValue")}`,
 		`wire.Payload{Value: raw}`,
 		`wire.Payload{Value: indirect}`,
+		`wire.Payload{Value: reassigned}`,
+		`wire.Payload{Value: declared}`,
 		`wire.Payload{Extra: map[string]any{"brandNewUnregisteredKey": caller}}`,
 	} {
 		set := token.NewFileSet()
@@ -22,7 +24,14 @@ func TestWireConstructionRejectsUnregisteredFixedValuesAndAliases(t *testing.T) 
 		file, err := parser.ParseFile(set, "probe.go", `package probe
 import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
 const raw = "brandNewUnregisteredValue"
-func request(caller string) { indirect := raw; _ = `+construction+` }
+func request(caller string) {
+ indirect := raw
+ reassigned := caller
+ reassigned = "brandNewReassignedValue"
+ var declared string
+ declared = "brandNewDeclaredValue"
+ _ = `+construction+`
+}
 `, 0)
 		if err != nil {
 			t.Fatalf("parse construction probe: %v", err)
@@ -42,7 +51,12 @@ func TestWireConstructionAllowsCallerInputsAndGeneratedConstants(t *testing.T) {
 
 	file, err := parser.ParseFile(set, "probe.go", `package probe
 import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
-func request(caller string) { _ = wire.Payload{Value: caller}; _ = wire.Payload{Value: wire.RegisteredValue} }
+func request(caller string, input *wire.Payload) {
+ _ = wire.Payload{Value: caller}
+ _ = wire.Payload{Value: wire.RegisteredValue}
+ input.Extra[caller] = caller
+ input.Extra[wire.RegisteredValue] = caller
+}
 `, 0)
 	if err != nil {
 		t.Fatalf("parse caller probe: %v", err)
@@ -72,6 +86,10 @@ func TestWireMutationRejectsNewFixedValuesAfterInitialization(t *testing.T) {
 		`payload := wire.Payload{}; payload.Value = "unregistered"`,
 		`payload := &wire.Payload{}; alias := payload; alias.Value = "unregistered"`,
 		`input.Value = "unregistered"`,
+		`input.Extra["brandNewKey"] = input.Value`,
+		`input.Extra[input.Value] = "brandNewValue"`,
+		`alias := input.Extra; alias["brandNewKey"] = input.Value`,
+		`key := "brandNewKey"; input.Extra[key] = input.Value`,
 	} {
 		set := token.NewFileSet()
 

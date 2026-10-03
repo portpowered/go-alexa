@@ -16,7 +16,16 @@ func checkGeneratedWireConstructions(models map[string]generatedModel) error {
 	generated[wirePrimitiveOutput] = true
 	generated["pkg/internal/apiroutes/routes.gen.go"] = true
 
-	err := filepath.WalkDir("pkg", func(path string, entry fs.DirEntry, walkErr error) error {
+	err := checkGeneratedWireConstructionRoot("pkg", generated, models)
+	if err == nil {
+		err = checkGeneratedWireConstructionRoot("cmd", generated, models)
+	}
+
+	return err
+}
+
+func checkGeneratedWireConstructionRoot(root string, generated map[string]bool, models map[string]generatedModel) error {
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return fmt.Errorf("walk wire construction sources: %w", walkErr)
 		}
@@ -45,24 +54,27 @@ func checkGeneratedWireConstructions(models map[string]generatedModel) error {
 func rejectRawGeneratedWireConstructions(file *ast.File, set *token.FileSet, path string, models map[string]generatedModel) error {
 	owner := primitivePackage{ImportPath: wireImportPath, Name: "alexamodels", Directory: "pkg/dependencymodels"}
 	aliases := primitiveImportAliases(file, owner)
+	assignments := indexWireSourceAssignments(file)
 
 	var problems []string
 
 	ast.Inspect(file, func(node ast.Node) bool {
 		if assignment, isAssignment := node.(*ast.AssignStmt); isAssignment {
 			for index, left := range assignment.Lhs {
-				field, isField := left.(*ast.SelectorExpr)
-				if !isField || index >= len(assignment.Rhs) ||
-					!generatedWireReceiver(field.X, aliases, path, models, make(map[ast.Node]bool)) {
+				receiver, key := wireAssignmentParts(left)
+				if receiver == nil || index >= len(assignment.Rhs) ||
+					!generatedWireReceiver(receiver, aliases, path, models, make(map[ast.Node]bool)) {
 					continue
 				}
 
-				inspectWireValueLiterals(assignment.Rhs[index], make(map[ast.Node]bool), func(raw *ast.BasicLit) {
+				report := func(raw *ast.BasicLit) {
 					decoded, err := strconv.Unquote(raw.Value)
 					if err == nil && decoded != "" {
 						problems = append(problems, fmt.Sprintf("%s: fixed wire assignment %q must be generated from schema", set.Position(raw.Pos()), decoded))
 					}
-				})
+				}
+				inspectWireValueLiterals(key, make(map[wireSourceVariable]bool), report, assignments)
+				inspectWireValueLiterals(assignment.Rhs[index], make(map[wireSourceVariable]bool), report, assignments)
 			}
 		}
 
@@ -77,12 +89,12 @@ func rejectRawGeneratedWireConstructions(file *ast.File, set *token.FileSet, pat
 				value = field.Value
 			}
 
-			inspectWireValueLiterals(value, make(map[ast.Node]bool), func(raw *ast.BasicLit) {
+			inspectWireValueLiterals(value, make(map[wireSourceVariable]bool), func(raw *ast.BasicLit) {
 				decoded, err := strconv.Unquote(raw.Value)
 				if err == nil && decoded != "" {
 					problems = append(problems, fmt.Sprintf("%s: fixed wire value %q must be generated from schema", set.Position(raw.Pos()), decoded))
 				}
-			})
+			}, assignments)
 		}
 
 		return false
@@ -117,14 +129,18 @@ func isGeneratedWireConstruction(expression ast.Expr, aliases map[string]bool, p
 
 // Follow source-local aliases as well as direct literals. Parameters and
 // generated constants have no local value declaration and remain caller inputs.
-func inspectWireValueLiterals(expression ast.Expr, visiting map[ast.Node]bool, report func(*ast.BasicLit)) {
+func inspectWireValueLiterals(expression ast.Expr, visiting map[wireSourceVariable]bool, report func(*ast.BasicLit), assignments wireSourceAssignments) {
+	if expression == nil {
+		return
+	}
+
 	ast.Inspect(expression, func(node ast.Node) bool {
 		if field, isField := node.(*ast.KeyValueExpr); isField {
 			if key, isLiteral := field.Key.(*ast.BasicLit); isLiteral && key.Kind == token.STRING {
 				report(key)
 			}
 
-			inspectWireValueLiterals(field.Value, visiting, report)
+			inspectWireValueLiterals(field.Value, visiting, report, assignments)
 
 			return false
 		}
@@ -134,27 +150,36 @@ func inspectWireValueLiterals(expression ast.Expr, visiting map[ast.Node]bool, r
 		}
 
 		if identifier, isIdentifier := node.(*ast.Ident); isIdentifier {
-			inspectWireAlias(identifier, visiting, report)
+			inspectWireAlias(identifier, visiting, report, assignments)
 		}
 
 		return true
 	})
 }
 
-func inspectWireAlias(identifier *ast.Ident, visiting map[ast.Node]bool, report func(*ast.BasicLit)) {
+func inspectWireAlias(identifier *ast.Ident, visiting map[wireSourceVariable]bool, report func(*ast.BasicLit), assignments wireSourceAssignments) {
 	if identifier.Obj == nil {
 		return
 	}
 
 	declaration, isNode := identifier.Obj.Decl.(ast.Node)
-	if !isNode || visiting[declaration] {
+
+	key := wireSourceVariable{declaration: declaration, name: identifier.Name}
+
+	if !isNode || visiting[key] {
 		return
 	}
 
-	visiting[declaration] = true
+	visiting[key] = true
 
 	if value := wireAliasValue(identifier.Name, declaration); value != nil {
-		inspectWireValueLiterals(value, visiting, report)
+		inspectWireValueLiterals(value, visiting, report, assignments)
+	}
+
+	for _, value := range assignments[key] {
+		if value.Pos() < identifier.Pos() {
+			inspectWireValueLiterals(value, visiting, report, assignments)
+		}
 	}
 }
 
@@ -240,4 +265,15 @@ func generatedWireDeclaredType(expression ast.Expr, aliases map[string]bool, pat
 	}
 
 	return isGeneratedWireConstruction(expression, aliases, path, models)
+}
+
+func wireAssignmentParts(expression ast.Expr) (ast.Expr, ast.Expr) {
+	switch expression := expression.(type) {
+	case *ast.SelectorExpr:
+		return expression.X, nil
+	case *ast.IndexExpr:
+		return expression.X, expression.Index
+	}
+
+	return nil, nil
 }

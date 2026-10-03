@@ -41,6 +41,11 @@ func readSDKPrimitiveSchemas() (map[string]sdkPrimitive, error) {
 			return nil, err
 		}
 
+		err = checkControlFieldBindings(set.Schema, document.Components.Schemas)
+		if err != nil {
+			return nil, err
+		}
+
 		err = checkEventFieldBindings(set.Schema, document.Components.Schemas, graphql)
 		if err != nil {
 			return nil, err
@@ -130,7 +135,12 @@ func checkRawWirePrimitiveValues() error {
 	// Route constants are regenerated and drift-checked by tools/apiroutes.
 	generated["pkg/internal/apiroutes/routes.gen.go"] = true
 
-	return rejectRawWirePrimitiveValues("pkg", values, generated)
+	err = rejectRawWirePrimitiveValues("pkg", values, generated)
+	if err != nil {
+		return err
+	}
+
+	return rejectRawExampleInputPrimitives("cmd", values)
 }
 
 func generatedWirePrimitiveValues() (map[string]bool, error) {
