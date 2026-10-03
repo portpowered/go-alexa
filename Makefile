@@ -6,9 +6,9 @@ CLI_DIR := cmd/go-alexa
 export GOWORK := off
 
 .DEFAULT_GOAL := check
-.PHONY: check vet build test lint fmt cli-check cli-vet cli-build cli-test cli-lint cli-fmt cli-module generate generate-graphql generate-api model-inventory openapi-bundle openapi-bundle-check
+.PHONY: check vet build test lint fmt cli-check cli-vet cli-build cli-test cli-lint cli-fmt module cli-module generate generate-graphql generate-api model-inventory openapi-bundle openapi-bundle-check
 
-check: lint vet build test model-inventory openapi-bundle-check cli-module
+check: lint vet build test model-inventory openapi-bundle-check module cli-module
 
 vet:
 	$(GO) vet ./...
@@ -44,6 +44,10 @@ cli-lint:
 
 cli-fmt:
 	cd $(CLI_DIR) && $(GO) fmt ./...
+
+module:
+	$(GO) mod tidy -diff
+	$(GO) mod verify
 
 cli-module:
 	cd $(CLI_DIR) && $(GO) mod tidy -diff && $(GO) mod verify
