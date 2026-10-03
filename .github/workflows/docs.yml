@@ -76,6 +76,13 @@ jobs:
             color,
           }, null, 2)}\n`);
           JS
+      - name: Upload reviewable documentation build
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-site
+          path: site
+          include-hidden-files: true
+          retention-days: 14
       - name: Upload Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5
