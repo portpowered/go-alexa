@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unsafe"
 
 	"github.com/portpowered/go-alexa/cmd/go-alexa/internal/cli"
 	"golang.org/x/sys/windows"
@@ -72,7 +73,8 @@ func TestSavedCredentialFileHasProtectedOwnerOnlyDACL(t *testing.T) {
 		t.Fatalf("get current Windows user: %v", err)
 	}
 
-	if !strings.Contains(descriptor.String(), user.User.Sid.String()) {
+	entrySID := (*windows.SID)(unsafe.Pointer(&entry.SidStart)) //nolint:gosec // GetAce returns the SID at SidStart.
+	if !entrySID.Equals(user.User.Sid) {
 		t.Fatalf("credential file ACL does not grant access to current user: %s", descriptor)
 	}
 
