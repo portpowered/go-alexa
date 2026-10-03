@@ -63,7 +63,7 @@ func rejectRawGeneratedWireConstructions(file *ast.File, set *token.FileSet, pat
 			for index, left := range assignment.Lhs {
 				receiver, key := wireAssignmentParts(left)
 				if receiver == nil || index >= len(assignment.Rhs) ||
-					!generatedWireReceiver(receiver, aliases, path, models, make(map[ast.Node]bool)) {
+					!generatedWireReceiver(receiver, aliases, path, models, make(map[wireSourceVariable]bool), assignments) {
 					continue
 				}
 
@@ -79,23 +79,16 @@ func rejectRawGeneratedWireConstructions(file *ast.File, set *token.FileSet, pat
 		}
 
 		literal, isComposite := node.(*ast.CompositeLit)
-		if !isComposite || !isGeneratedWireConstruction(literal.Type, aliases, path, models) {
+		if !isComposite || !generatedWireDeclaredType(literal.Type, aliases, path, models) {
 			return true
 		}
 
-		for _, element := range literal.Elts {
-			value := element
-			if field, isField := element.(*ast.KeyValueExpr); isField {
-				value = field.Value
+		inspectWireValueLiterals(literal, make(map[wireSourceVariable]bool), func(raw *ast.BasicLit) {
+			decoded, err := strconv.Unquote(raw.Value)
+			if err == nil && decoded != "" {
+				problems = append(problems, fmt.Sprintf("%s: fixed wire value %q must be generated from schema", set.Position(raw.Pos()), decoded))
 			}
-
-			inspectWireValueLiterals(value, make(map[wireSourceVariable]bool), func(raw *ast.BasicLit) {
-				decoded, err := strconv.Unquote(raw.Value)
-				if err == nil && decoded != "" {
-					problems = append(problems, fmt.Sprintf("%s: fixed wire value %q must be generated from schema", set.Position(raw.Pos()), decoded))
-				}
-			}, assignments)
-		}
+		}, assignments)
 
 		return false
 	})
@@ -135,6 +128,19 @@ func inspectWireValueLiterals(expression ast.Expr, visiting map[wireSourceVariab
 	}
 
 	ast.Inspect(expression, func(node ast.Node) bool {
+		if literal, isComposite := node.(*ast.CompositeLit); isComposite {
+			if _, isMap := literal.Type.(*ast.MapType); isMap {
+				for _, element := range literal.Elts {
+					if entry, isEntry := element.(*ast.KeyValueExpr); isEntry {
+						inspectWireValueLiterals(entry.Key, visiting, report, assignments)
+						inspectWireValueLiterals(entry.Value, visiting, report, assignments)
+					}
+				}
+
+				return false
+			}
+		}
+
 		if field, isField := node.(*ast.KeyValueExpr); isField {
 			if key, isLiteral := field.Key.(*ast.BasicLit); isLiteral && key.Kind == token.STRING {
 				report(key)
@@ -204,35 +210,44 @@ func wireAliasValue(name string, declaration ast.Node) ast.Expr {
 }
 
 func generatedWireReceiver(
-	expression ast.Expr, aliases map[string]bool, path string, models map[string]generatedModel, visiting map[ast.Node]bool,
+	expression ast.Expr, aliases map[string]bool, path string, models map[string]generatedModel,
+	visiting map[wireSourceVariable]bool, assignments wireSourceAssignments,
 ) bool {
 	switch expression := expression.(type) {
 	case *ast.SelectorExpr:
-		return generatedWireReceiver(expression.X, aliases, path, models, visiting)
+		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
 	case *ast.UnaryExpr:
-		return generatedWireReceiver(expression.X, aliases, path, models, visiting)
+		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
+	case *ast.IndexExpr:
+		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
+	case *ast.ParenExpr:
+		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
 	case *ast.CompositeLit:
-		return isGeneratedWireConstruction(expression.Type, aliases, path, models)
+		return generatedWireDeclaredType(expression.Type, aliases, path, models)
 	case *ast.Ident:
-		return generatedWireIdentifier(expression, aliases, path, models, visiting)
+		return generatedWireIdentifier(expression, aliases, path, models, visiting, assignments)
 	}
 
 	return false
 }
 
 func generatedWireIdentifier(
-	identifier *ast.Ident, aliases map[string]bool, path string, models map[string]generatedModel, visiting map[ast.Node]bool,
+	identifier *ast.Ident, aliases map[string]bool, path string, models map[string]generatedModel,
+	visiting map[wireSourceVariable]bool, assignments wireSourceAssignments,
 ) bool {
 	if identifier.Obj == nil {
 		return false
 	}
 
 	declaration, isNode := identifier.Obj.Decl.(ast.Node)
-	if !isNode || visiting[declaration] {
+
+	key := wireSourceVariable{declaration: declaration, name: identifier.Name}
+
+	if !isNode || visiting[key] {
 		return false
 	}
 
-	visiting[declaration] = true
+	visiting[key] = true
 
 	switch declaration := declaration.(type) {
 	case *ast.Field:
@@ -241,18 +256,16 @@ func generatedWireIdentifier(
 		if generatedWireDeclaredType(declaration.Type, aliases, path, models) {
 			return true
 		}
+	}
 
-		for index, name := range declaration.Names {
-			if name.Name == identifier.Name && index < len(declaration.Values) {
-				return generatedWireReceiver(declaration.Values[index], aliases, path, models, visiting)
-			}
-		}
-	case *ast.AssignStmt:
-		for index, left := range declaration.Lhs {
-			name, isIdentifier := left.(*ast.Ident)
-			if isIdentifier && name.Name == identifier.Name && index < len(declaration.Rhs) {
-				return generatedWireReceiver(declaration.Rhs[index], aliases, path, models, visiting)
-			}
+	if value := wireAliasValue(identifier.Name, declaration); value != nil &&
+		generatedWireReceiver(value, aliases, path, models, visiting, assignments) {
+		return true
+	}
+
+	for _, value := range assignments[key] {
+		if value.Pos() < identifier.Pos() && generatedWireReceiver(value, aliases, path, models, visiting, assignments) {
+			return true
 		}
 	}
 
@@ -260,8 +273,15 @@ func generatedWireIdentifier(
 }
 
 func generatedWireDeclaredType(expression ast.Expr, aliases map[string]bool, path string, models map[string]generatedModel) bool {
-	if pointer, isPointer := expression.(*ast.StarExpr); isPointer {
-		expression = pointer.X
+	switch expression := expression.(type) {
+	case *ast.StarExpr:
+		return generatedWireDeclaredType(expression.X, aliases, path, models)
+	case *ast.ArrayType:
+		return generatedWireDeclaredType(expression.Elt, aliases, path, models)
+	case *ast.MapType:
+		return generatedWireDeclaredType(expression.Value, aliases, path, models)
+	case *ast.ParenExpr:
+		return generatedWireDeclaredType(expression.X, aliases, path, models)
 	}
 
 	return isGeneratedWireConstruction(expression, aliases, path, models)

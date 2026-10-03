@@ -18,6 +18,9 @@ func TestWireConstructionRejectsUnregisteredFixedValuesAndAliases(t *testing.T) 
 		`wire.Payload{Value: reassigned}`,
 		`wire.Payload{Value: declared}`,
 		`wire.Payload{Extra: map[string]any{"brandNewUnregisteredKey": caller}}`,
+		`wire.Payload{Extra: map[string]any{raw: caller}}`,
+		`[]wire.Payload{{Value: "brandNewUnregisteredValue"}}`,
+		`map[string]wire.Payload{raw: {Value: caller}}`,
 	} {
 		set := token.NewFileSet()
 
@@ -89,6 +92,14 @@ func TestWireMutationRejectsNewFixedValuesAfterInitialization(t *testing.T) {
 		`input.Extra["brandNewKey"] = input.Value`,
 		`input.Extra[input.Value] = "brandNewValue"`,
 		`alias := input.Extra; alias["brandNewKey"] = input.Value`,
+		`var alias map[string]any; alias = input.Extra; alias["brandNewKey"] = input.Value`,
+		`var alias map[string]any; alias = input.Extra; alias[input.Value] = "brandNewValue"`,
+		`var alias *wire.Payload; alias = input; alias.Value = "brandNewValue"`,
+		`payloads := []wire.Payload{}; payloads[0].Value = "brandNewValue"`,
+		`var payloads []wire.Payload; payloads[0].Value = "brandNewValue"`,
+		`input.Extra[input.Value]["brandNewKey"] = input.Value`,
+		`input.Extra[input.Value][input.Value] = "brandNewValue"`,
+		`(input).Value = "brandNewValue"`,
 		`key := "brandNewKey"; input.Extra[key] = input.Value`,
 	} {
 		set := token.NewFileSet()
