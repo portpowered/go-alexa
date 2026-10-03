@@ -38,6 +38,8 @@ jobs:
       - name: Test with coverage
         if: github.event_name != 'pull_request'
         run: go test -race -coverpkg=./pkg/... -coverprofile=coverage.out ./pkg/...
+      - name: Check bundled OpenAPI source
+        run: go run ./tools/openapibundle -check
       - name: Build API documentation site
         uses: portpowered/api-docs-website-github-action@v0.3.0
         with:

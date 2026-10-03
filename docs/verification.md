@@ -25,8 +25,55 @@ The live integration tests in `test/integration` run only when `ALEXA_REFRESH_TO
 
 ## Documentation and schema
 
+The pinned external codec contract is inventoried in `api/external/http2.yaml`.
+`TestEventNativeHTTP2PairedReplay` injects a `net.Pipe` connection beneath
+`http2.Transport`, serves paired exchanges through `http2.Server`, and verifies
+HTTP/2 requests, directive decoding, keepalive, complete consumption, and close.
+The codec owns standard HTTP/2 control frames; generated provider routes and
+message models remain the application's contract. This is offline synthetic
+evidence and does not verify provider TLS negotiation.
+
 The `Documentation` workflow generates a static API reference from the checked-in GraphQL SDL, OpenAPI document, AsyncAPI document, and authored guides. The GraphQL SDL is the subset used by this client. The HTTP schemas describe route and parser shapes read from the source; they are not provider-issued specifications or verified observations. The reported account tests are not documented at the operation or protocol level, and there are no sanitized live REST or HTTP/2 captures in this repository. Synthetic tests do not prove current service behavior.
 
-`make generate` runs genqlient against the checked-in SDL and operation documents, oapi-codegen against `api/openapi.yaml` and `api/embedded-wire.yaml`, and Modelina against `api/asyncapi.yaml`. The embedded schema describes the JSON text within `sequenceJson` and metric-specific event properties; these models retain historical exported names in `pkg/dependencymodels`. They are exported compatibility types, while private REST and directive models live under `internal`. CI compares every generated output to the checked-in files and checks method/path and query-key callsites.
+`make generate` runs genqlient against the SDL and operation documents,
+oapi-codegen against the HTTP and API-specific component schemas, and Modelina
+against `api/asyncapi.yaml`. Provider field definitions belong in
+`pkg/dependencymodels`, with separate generated files for authentication,
+endpoints, behaviors, feature events, media, and stream payloads. Compatibility
+projections preserve old exported Go shapes when those differ from runtime wire
+nullability. `tools/oapiallOfix` restores Go embedding from schema `allOf`
+references and rejects inconsistent compositions. Handwritten companions implement behavior or conversion; they do
+not duplicate wire fields. CI checks regeneration, untracked generated output,
+endpoint call sites, and the complete model inventory.
 
-The generic GraphQL `Execute`, `Query`, and `Mutate` methods accept only the seven generated operation documents. The allowlist is generated from genqlient output; an unknown document returns an error before any request. `RunBehavior` accepts a JSON sequence string for compatibility, then validates its sequence and node types against `api/embedded-wire.yaml` before sending. Caller-supplied feature names and operation payload fields remain open within the schema's documented path parameters and object fields; they cannot create an unlisted HTTP method or route.
+Edit the API responsibility files listed in `api/openapi/sources.yaml`;
+`tools/openapibundle` builds `api/openapi.yaml` for code generation and the site.
+Requests, responses, and their nested components stay in their owning API file.
+`make openapi-bundle-check` rejects bundle drift and mismatched operation owners.
+
+The inventory must include active models, exported compatibility definitions,
+anonymous nested serialization objects, and custom encoders or decoders. Link
+each type to its schema component, generated definition, generator command,
+and use. Independently search for missing entries. Negative tests must reject
+an unreferenced exported handwritten JSON struct and an anonymous nested wire
+object. A generated file list or route-gate pass does not prove completeness.
+
+Include the concrete behavior payloads and wire constants used by library
+builders, not just their outer sequence envelope. Distinguish those known
+shapes from caller-defined open payload input. For GraphQL, check actual emitted
+operation selections, generator-added discriminators, and the exact decoder
+branches against SDL possible types. Label type-only implementations without
+selected subtype fields explicitly. Negative controls must reject unregistered
+nested payloads or wire keys, mismatched decoder branches, possible-type drift,
+and missing discriminators.
+
+The generic GraphQL `Execute`, `Query`, and `Mutate` methods accept only the seven generated operation documents. The allowlist is generated from genqlient output; an unknown document returns an error before any request. `RunBehavior` accepts a JSON sequence string for compatibility and validates its sequence and node types before sending. Caller-supplied feature names and operation payload fields remain open within the schema's documented path parameters and object fields; they cannot create an unlisted HTTP method or route.
+
+## Documentation review
+
+Review every tracked Markdown and MDX file, including documents excluded from
+the site. Record its audience and purpose, remove redundant internal reports,
+and check incoming links after deletion. Keep the README useful to callers and
+the customer guide navigation free of maintenance audits. Retain one current
+checklist and [independent review](independent-review.md); run the full rendered
+site link check after source review.

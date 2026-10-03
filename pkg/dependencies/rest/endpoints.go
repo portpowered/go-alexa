@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
-	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
@@ -60,7 +59,7 @@ func (c *Client) GetEndpoints(ctx context.Context, opts *ListEndpointsOptions) (
 		path += "?" + params.Encode()
 	}
 
-	var response wire.WireEndpointListResponse
+	var response alexamodels.WireEndpointListResponse
 
 	err := c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, &response)
 	if err != nil {
@@ -84,7 +83,7 @@ func (c *Client) GetEndpointByID(ctx context.Context, endpointID string, expand 
 		path += "?" + params.Encode()
 	}
 
-	var endpoint wire.WireDevice
+	var endpoint alexamodels.WireDevice
 
 	err := c.doJSONRequest(ctx, apiroutes.MethodGetRestEndpoint, path, nil, &endpoint)
 	if err != nil {
@@ -131,12 +130,12 @@ func (c *Client) QueryEndpoints(
 		}
 	}
 
-	wireQuery, err := convertWireModel[wire.WireEndpointQueryRequest](query)
+	wireQuery, err := convertWireModel[alexamodels.WireEndpointQueryRequest](query)
 	if err != nil {
 		return nil, &alexaapimodels.BadRequestError{Message: "failed to convert endpoint query", Err: err}
 	}
 
-	var response wire.WireEndpointListResponse
+	var response alexamodels.WireEndpointListResponse
 	{
 		err := c.doJSONRequest(ctx, apiroutes.MethodQueryRestEndpoints, path, wireQuery, &response)
 		if err != nil {
@@ -176,10 +175,10 @@ func (c *Client) DeregisterEndpoint(ctx context.Context, endpointID string) erro
 // UpdateFriendlyName changes the friendly name for the specified endpoint
 // POST /v2/endpoints/{endpointId}/friendlyName.
 func (c *Client) UpdateFriendlyName(ctx context.Context, endpointID string, friendlyName string) error {
-	request := wire.WireFriendlyNameRequest{
-		FriendlyName: wire.WireFriendlyNameValue{
+	request := alexamodels.WireFriendlyNameRequest{
+		FriendlyName: alexamodels.WireFriendlyNameValue{
 			Type: alexamodels.DefaultFriendlyNameType,
-			Value: wire.WireFriendlyNameText{
+			Value: alexamodels.WireFriendlyNameText{
 				Text: friendlyName,
 			},
 		},
@@ -203,7 +202,7 @@ func (c *Client) ControlEndpoint(ctx context.Context, endpointID string, command
 	command.DeviceID = endpointID
 	path := fmt.Sprintf(alexamodels.APIPathV2EndpointsControl, endpointID)
 
-	wireCommand, err := convertWireModel[wire.WireCommand](command)
+	wireCommand, err := convertWireModel[alexamodels.WireCommand](command)
 	if err != nil {
 		return &alexaapimodels.BadRequestError{Message: "failed to convert control command", Err: err}
 	}
@@ -259,11 +258,11 @@ func (c *Client) SendInterfaceMessage(ctx context.Context, req *alexamodels.Inte
 	// Service expects a JSON body; use an empty object when no payload is provided.
 	body := req.Payload
 	if payload, ok := body.(map[string]interface{}); ok {
-		body = wire.WireInterfacePayload(payload)
+		body = alexamodels.WireInterfacePayload(payload)
 	}
 
 	if body == nil {
-		body = wire.WireInterfacePayload{}
+		body = alexamodels.WireInterfacePayload{}
 	}
 
 	err := c.doJSONRequest(ctx, apiroutes.MethodSendEndpointInterfaceMessage, path, body, nil)
@@ -293,7 +292,7 @@ func (c *Client) GetDevicesV2(ctx context.Context, opts *GetDevicesV2Options) (*
 	}
 
 	// Use the client's helper method to perform the request
-	var response wire.WireDevicesV2Response
+	var response alexamodels.WireDevicesV2Response
 
 	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListFirstPartyDevices, baseURL, nil, customHeaders, &response, false)
 	if err != nil {
@@ -316,7 +315,7 @@ func (c *Client) RunBehavior(ctx context.Context, sequenceJSON string) error {
 
 	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathBehaviorsPreview
 
-	request := wire.WireBehaviorPreviewRequest{
+	request := alexamodels.WireBehaviorPreviewRequest{
 		BehaviorId:   alexamodels.DefaultBehaviorID,
 		SequenceJson: sequenceJSON,
 		Status:       alexamodels.DefaultBehaviorStatus,
@@ -382,9 +381,7 @@ func validateBehaviorNode(value any, depth int) error {
 }
 
 func behaviorNodeType(data []byte) (string, error) {
-	var node struct {
-		Type string `json:"@type"`
-	}
+	var node alexamodels.BehaviorNodeDiscriminator
 
 	err := json.Unmarshal(data, &node)
 	if err != nil {
@@ -418,10 +415,7 @@ func validateOpaqueOperationNode(data []byte) error {
 }
 
 func validateBehaviorSequenceNode(data []byte, depth int, expectedType string, emptyNodeError error) error {
-	var node struct {
-		Type           string        `json:"@type"`
-		NodesToExecute []interface{} `json:"nodesToExecute"`
-	}
+	var node alexamodels.BehaviorSequenceNodeInspection
 
 	err := decodeBehaviorNode(data, &node)
 	if err != nil {
@@ -452,9 +446,84 @@ func (c *Client) SendSequence(ctx context.Context, sequenceType string, operatio
 		OperationPayload: operationPayload,
 	}
 
+	return c.runBehaviorSequence(ctx, node)
+}
+
+func (c *Client) sendTypedSequence(ctx context.Context, sequenceType string, operationPayload any) error {
+	var node any
+
+	switch typed := operationPayload.(type) {
+	case alexamodels.DeviceControlsStopPayload:
+		node = alexamodels.DeviceControlsStopOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    alexamodels.DeviceControlsStopOperationTypeStop,
+			OperationPayload: typed,
+		}
+	case alexamodels.DeviceControlsVolumePayload:
+		node = alexamodels.DeviceControlsVolumeOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    alexamodels.DeviceControlsVolumeOperationTypeVolume,
+			OperationPayload: typed,
+		}
+	case alexamodels.NotificationsSendMobilePushPayload:
+		node = alexamodels.NotificationsSendMobilePushOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    alexamodels.NotificationsSendMobilePushOperationTypeSendMobilePush,
+			OperationPayload: typed,
+		}
+	case alexamodels.AnnouncementPayload:
+		node = alexamodels.AnnouncementOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    alexamodels.AnnouncementOperationTypeAlexaAnnouncement,
+			OperationPayload: typed,
+		}
+	case alexamodels.SpeakPayload:
+		node = alexamodels.SpeakOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    alexamodels.SpeakOperationTypeAlexaSpeak,
+			OperationPayload: typed,
+		}
+	case alexamodels.CannedTTSSpeakPayload:
+		node = alexamodels.CannedTTSSpeakOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    alexamodels.CannedTTSSpeakOperationTypeCannedTtsSpeak,
+			OperationPayload: typed,
+		}
+	case alexamodels.MusicPlaySearchPhrasePayload:
+		node = alexamodels.MusicPlaySearchPhraseOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    alexamodels.MusicPlaySearchPhraseOperationTypePlaySearchPhrase,
+			OperationPayload: typed,
+		}
+	case alexamodels.SoundPayload:
+		node = alexamodels.SoundOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    alexamodels.SoundOperationTypeAlexaSound,
+			OperationPayload: typed,
+		}
+	case alexamodels.VideoPlaySearchPhrasePayload:
+		node = alexamodels.VideoPlaySearchPhraseOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    alexamodels.VideoPlaySearchPhraseOperationTypePlaySearchPhrase,
+			OperationPayload: typed,
+		}
+	case alexamodels.FireTVOperationPayload:
+		node = alexamodels.FireTVOperationNode{
+			Type:             alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode,
+			OperationType:    sequenceType,
+			OperationPayload: typed,
+		}
+	default:
+		return &alexaapimodels.BadRequestError{Message: "unsupported generated behavior payload type"}
+	}
+
+	return c.runBehaviorSequence(ctx, node)
+}
+
+func (c *Client) runBehaviorSequence(ctx context.Context, startNode any) error {
 	sequence := alexamodels.Sequence{
 		Type:      alexamodels.ModelTypeSequence,
-		StartNode: node,
+		StartNode: startNode,
 	}
 
 	sequenceJSON, err := json.Marshal(sequence)
@@ -487,15 +556,15 @@ func (c *Client) StopPlayback(ctx context.Context, req *alexamodels.StopPlayback
 		customerID = c.customerID
 	}
 
-	payload := map[string]interface{}{
-		alexamodels.PayloadKeyDeviceType:         deviceType,
-		alexamodels.PayloadKeyDeviceSerialNumber: deviceSerialNumber,
-		alexamodels.PayloadKeyLocale:             alexamodels.DefaultLocale,
-		alexamodels.PayloadKeyCustomerID:         customerID,
-		alexamodels.PayloadKeySkillID:            alexamodels.SkillIDAlexaDeviceControls,
+	payload := alexamodels.DeviceControlsStopPayload{
+		DeviceType:         deviceType,
+		DeviceSerialNumber: deviceSerialNumber,
+		Locale:             alexamodels.DefaultLocale,
+		CustomerID:         customerID,
+		SkillID:            alexamodels.BehaviorSkillIDAlexaDeviceControls,
 	}
 
-	return c.SendSequence(ctx, alexamodels.OperationTypeDeviceControlsStop, payload)
+	return c.sendTypedSequence(ctx, alexamodels.OperationTypeDeviceControlsStop, payload)
 }
 
 // SetVolume sets the volume on a device
@@ -522,16 +591,16 @@ func (c *Client) SetVolume(ctx context.Context, req *alexamodels.VolumeControlRe
 		customerID = c.customerID
 	}
 
-	payload := map[string]interface{}{
-		alexamodels.PayloadKeyDeviceType:         deviceType,
-		alexamodels.PayloadKeyDeviceSerialNumber: deviceSerialNumber,
-		alexamodels.PayloadKeyLocale:             alexamodels.DefaultLocale,
-		alexamodels.PayloadKeyCustomerID:         customerID,
-		alexamodels.PayloadKeyValue:              req.Volume,
-		alexamodels.PayloadKeySkillID:            alexamodels.SkillIDAlexaDeviceControls,
+	payload := alexamodels.DeviceControlsVolumePayload{
+		DeviceType:         deviceType,
+		DeviceSerialNumber: deviceSerialNumber,
+		Locale:             alexamodels.DefaultLocale,
+		CustomerID:         customerID,
+		Value:              req.Volume,
+		SkillID:            alexamodels.BehaviorSkillIDAlexaDeviceControls,
 	}
 
-	return c.SendSequence(ctx, alexamodels.OperationTypeDeviceControlsVolume, payload)
+	return c.sendTypedSequence(ctx, alexamodels.OperationTypeDeviceControlsVolume, payload)
 }
 
 // PausePlayback pauses playback on a device
@@ -548,8 +617,10 @@ func (c *Client) PausePlayback(ctx context.Context, req *alexamodels.MediaContro
 
 	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
-	command := wire.WireMediaCommand{
-		Type: wire.PauseCommand,
+	command := alexamodels.WireMediaCommand{
+		Repeat:  nil,
+		Shuffle: nil,
+		Type:    alexamodels.WireMediaCommandTypePause,
 	}
 
 	params := url.Values{}
@@ -582,8 +653,10 @@ func (c *Client) ResumePlayback(ctx context.Context, req *alexamodels.MediaContr
 
 	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
-	command := wire.WireMediaCommand{
-		Type: wire.PlayCommand,
+	command := alexamodels.WireMediaCommand{
+		Repeat:  nil,
+		Shuffle: nil,
+		Type:    alexamodels.WireMediaCommandTypePlay,
 	}
 
 	params := url.Values{}
@@ -616,8 +689,10 @@ func (c *Client) NextTrack(ctx context.Context, req *alexamodels.MediaControlReq
 
 	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
-	command := wire.WireMediaCommand{
-		Type: wire.NextCommand,
+	command := alexamodels.WireMediaCommand{
+		Repeat:  nil,
+		Shuffle: nil,
+		Type:    alexamodels.WireMediaCommandTypeNext,
 	}
 
 	params := url.Values{}
@@ -650,8 +725,10 @@ func (c *Client) PreviousTrack(ctx context.Context, req *alexamodels.MediaContro
 
 	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
-	command := wire.WireMediaCommand{
-		Type: wire.PreviousCommand,
+	command := alexamodels.WireMediaCommand{
+		Repeat:  nil,
+		Shuffle: nil,
+		Type:    alexamodels.WireMediaCommandTypePrevious,
 	}
 
 	params := url.Values{}
@@ -689,7 +766,7 @@ func (c *Client) GetPlayerState(ctx context.Context, req *alexamodels.PlayerStat
 	params.Set(alexamodels.QueryParamDeviceType, deviceType)
 	baseURL += "?" + params.Encode()
 
-	var response wire.WirePlayerStateResponse
+	var response alexamodels.WirePlayerStateResponse
 
 	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodGetMediaPlayerState, baseURL, nil, nil, &response, true)
 	if err != nil {
@@ -716,8 +793,10 @@ func (c *Client) ForwardMedia(ctx context.Context, req *alexamodels.MediaControl
 
 	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
-	command := wire.WireMediaCommand{
-		Type: wire.ForwardCommand,
+	command := alexamodels.WireMediaCommand{
+		Repeat:  nil,
+		Shuffle: nil,
+		Type:    alexamodels.WireMediaCommandTypeForward,
 	}
 
 	params := url.Values{}
@@ -750,8 +829,10 @@ func (c *Client) RewindMedia(ctx context.Context, req *alexamodels.MediaControlR
 
 	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
-	command := wire.WireMediaCommand{
-		Type: wire.RewindCommand,
+	command := alexamodels.WireMediaCommand{
+		Repeat:  nil,
+		Shuffle: nil,
+		Type:    alexamodels.WireMediaCommandTypeRewind,
 	}
 
 	params := url.Values{}
@@ -784,9 +865,10 @@ func (c *Client) SetShuffle(ctx context.Context, req *alexamodels.MediaControlRe
 
 	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
-	command := wire.WireMediaCommand{
-		Type:    wire.ShuffleCommand,
+	command := alexamodels.WireMediaCommand{
+		Repeat:  nil,
 		Shuffle: &shuffle,
+		Type:    alexamodels.WireMediaCommandTypeShuffle,
 	}
 
 	params := url.Values{}
@@ -819,9 +901,10 @@ func (c *Client) SetRepeat(ctx context.Context, req *alexamodels.MediaControlReq
 
 	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathNPCommand
 
-	command := wire.WireMediaCommand{
-		Type:   wire.RepeatCommand,
-		Repeat: &repeat,
+	command := alexamodels.WireMediaCommand{
+		Repeat:  &repeat,
+		Shuffle: nil,
+		Type:    alexamodels.WireMediaCommandTypeRepeat,
 	}
 
 	params := url.Values{}
@@ -857,18 +940,18 @@ func (c *Client) SendNotification(ctx context.Context, req *alexamodels.SendNoti
 		customerID = c.customerID
 	}
 
-	payload := map[string]interface{}{
-		alexamodels.PayloadKeyDeviceType:          deviceType,
-		alexamodels.PayloadKeyDeviceSerialNumber:  deviceSerialNumber,
-		alexamodels.PayloadKeyLocale:              alexamodels.DefaultLocale,
-		alexamodels.PayloadKeyCustomerID:          customerID,
-		alexamodels.PayloadKeyNotificationMessage: req.Message,
-		alexamodels.PayloadKeyAlexaURL:            alexamodels.AlexaURLBehaviors,
-		alexamodels.PayloadKeyTitle:               req.Title,
-		alexamodels.PayloadKeySkillID:             alexamodels.SkillIDRoutinesMessaging,
+	payload := alexamodels.NotificationsSendMobilePushPayload{
+		DeviceType:          deviceType,
+		DeviceSerialNumber:  deviceSerialNumber,
+		Locale:              alexamodels.DefaultLocale,
+		CustomerID:          customerID,
+		NotificationMessage: req.Message,
+		AlexaURL:            alexamodels.BehaviorAlexaURLBehaviors,
+		Title:               req.Title,
+		SkillID:             alexamodels.BehaviorSkillIDRoutinesMessaging,
 	}
 
-	return c.SendSequence(ctx, alexamodels.OperationTypeNotificationsSendMobilePush, payload)
+	return c.sendTypedSequence(ctx, alexamodels.OperationTypeNotificationsSendMobilePush, payload)
 }
 
 // SendAnnouncement sends an announcement to Alexa devices
@@ -890,23 +973,26 @@ func (c *Client) SendAnnouncement(ctx context.Context, req *alexamodels.SendAnno
 	}
 
 	// Build display and speak content based on method
-	var display alexamodels.AnnouncementDisplay
+	var display alexamodels.BehaviorAnnouncementDisplay
 
-	speak := alexamodels.AnnouncementSpeak{Type: alexamodels.DefaultAnnouncementSpeakType}
+	speak := alexamodels.BehaviorAnnouncementSpeak{
+		Type:  alexamodels.BehaviorAnnouncementSpeakTypeText,
+		Value: "",
+	}
 
 	switch req.Method {
 	case alexamodels.AnnouncementMethodSpeak:
-		display = alexamodels.AnnouncementDisplay{Title: "", Body: ""}
+		display = alexamodels.BehaviorAnnouncementDisplay{Title: "", Body: ""}
 		speak.Value = req.Message
 	case alexamodels.AnnouncementMethodShow:
-		display = alexamodels.AnnouncementDisplay{Title: req.Title, Body: req.Message}
+		display = alexamodels.BehaviorAnnouncementDisplay{Title: req.Title, Body: req.Message}
 		speak.Value = ""
 	default: // "all"
-		display = alexamodels.AnnouncementDisplay{Title: req.Title, Body: req.Message}
+		display = alexamodels.BehaviorAnnouncementDisplay{Title: req.Title, Body: req.Message}
 		speak.Value = req.Message
 	}
 
-	content := []alexamodels.AnnouncementContent{
+	content := []alexamodels.BehaviorAnnouncementContent{
 		{
 			Locale:  locale,
 			Display: display,
@@ -933,18 +1019,18 @@ func (c *Client) SendAnnouncement(ctx context.Context, req *alexamodels.SendAnno
 		customerID = c.customerID
 	}
 
-	payload := map[string]interface{}{
-		alexamodels.PayloadKeyDeviceType:         deviceType,
-		alexamodels.PayloadKeyDeviceSerialNumber: deviceSerialNumber,
-		alexamodels.PayloadKeyLocale:             locale,
-		alexamodels.PayloadKeyCustomerID:         customerID,
-		alexamodels.PayloadKeyExpireAfter:        alexamodels.DefaultAnnouncementExpireAfter,
-		alexamodels.PayloadKeyContent:            content,
-		alexamodels.PayloadKeyTarget:             target,
-		alexamodels.PayloadKeySkillID:            alexamodels.SkillIDAlexaNotifications,
+	payload := alexamodels.AnnouncementPayload{
+		DeviceType:         deviceType,
+		DeviceSerialNumber: deviceSerialNumber,
+		Locale:             locale,
+		CustomerID:         customerID,
+		ExpireAfter:        alexamodels.BehaviorAnnouncementExpireAfterFiveSeconds,
+		Content:            content,
+		Target:             target,
+		SkillID:            alexamodels.BehaviorSkillIDAlexaNotifications,
 	}
 
-	return c.SendSequence(ctx, alexamodels.OperationTypeAnnouncement, payload)
+	return c.sendTypedSequence(ctx, alexamodels.OperationTypeAnnouncement, payload)
 }
 
 // SendTTS sends a text-to-speech message
@@ -956,39 +1042,21 @@ func (c *Client) SendTTS(ctx context.Context, req *alexamodels.SendTTSRequest) e
 		}
 	}
 
-	// // Check if it's a canned TTS message
-	// if len(req.Message) > 20 && req.Message[:20] == "alexa.cannedtts.speak" {
-	// 	customerID := req.CustomerID
-	// 	if c.customerID != "" {
-	// 		customerID = c.customerID
-	// 	}
-	// 	payload := map[string]interface{}{
-	// 		alexamodels.PayloadKeyDeviceType:         req.Endpoint.GetDeviceType(),
-	// 		alexamodels.PayloadKeyDeviceSerialNumber: req.Endpoint.GetDeviceSerialNumber(),
-	// 		alexamodels.PayloadKeyLocale:             alexamodels.DefaultLocale,
-	// 		alexamodels.PayloadKeyCustomerID:         customerID,
-	// 		alexamodels.PayloadKeyCannedTtsStringID: req.Message,
-	// 		alexamodels.PayloadKeySkillID:         alexamodels.SkillIDSaySomething,
-	// 	}
-	// 	return c.SendSequence(ctx, alexamodels.OperationTypeCannedTtsSpeak, payload)
-	// }
-
-	// Regular TTS
 	customerID := req.CustomerID
 	if c.customerID != "" {
 		customerID = c.customerID
 	}
 
-	payload := map[string]interface{}{
-		alexamodels.PayloadKeyDeviceType:         req.Endpoint.GetDeviceType(),
-		alexamodels.PayloadKeyDeviceSerialNumber: req.Endpoint.GetDeviceSerialNumber(),
-		alexamodels.PayloadKeyLocale:             alexamodels.DefaultLocale,
-		alexamodels.PayloadKeyCustomerID:         customerID,
-		alexamodels.PayloadKeyTextToSpeak:        req.Message,
-		alexamodels.PayloadKeySkillID:            alexamodels.SkillIDSaySomething,
+	payload := alexamodels.SpeakPayload{
+		DeviceType:         req.Endpoint.GetDeviceType(),
+		DeviceSerialNumber: req.Endpoint.GetDeviceSerialNumber(),
+		Locale:             alexamodels.DefaultLocale,
+		CustomerID:         customerID,
+		TextToSpeak:        req.Message,
+		SkillID:            alexamodels.BehaviorSkillIDSaySomething,
 	}
 
-	return c.SendSequence(ctx, alexamodels.OperationTypeSpeak, payload)
+	return c.sendTypedSequence(ctx, alexamodels.OperationTypeSpeak, payload)
 }
 
 // PlayMusic plays music based on a search query
@@ -1008,21 +1076,22 @@ func (c *Client) PlayMusic(ctx context.Context, req *alexamodels.PlayMusicReques
 		customerID = c.customerID
 	}
 
-	payload := map[string]interface{}{
-		alexamodels.PayloadKeyDeviceType:            deviceType,
-		alexamodels.PayloadKeyDeviceSerialNumber:    deviceSerialNumber,
-		alexamodels.PayloadKeyLocale:                alexamodels.DefaultLocale,
-		alexamodels.PayloadKeyCustomerID:            customerID,
-		alexamodels.PayloadKeySearchPhrase:          req.SearchPhrase,
-		alexamodels.PayloadKeySanitizedSearchPhrase: req.SearchPhrase,
-		alexamodels.PayloadKeyMusicProviderID:       req.ProviderID,
+	payload := alexamodels.MusicPlaySearchPhrasePayload{
+		DeviceType:            deviceType,
+		DeviceSerialNumber:    deviceSerialNumber,
+		Locale:                alexamodels.DefaultLocale,
+		CustomerID:            customerID,
+		SearchPhrase:          req.SearchPhrase,
+		SanitizedSearchPhrase: req.SearchPhrase,
+		MusicProviderID:       req.ProviderID,
+		WaitTimeInSeconds:     0,
 	}
 
 	if req.TimerSeconds != nil && *req.TimerSeconds > 0 {
-		payload[alexamodels.PayloadKeyWaitTimeInSeconds] = *req.TimerSeconds
+		payload.WaitTimeInSeconds = *req.TimerSeconds
 	}
 
-	return c.SendSequence(ctx, alexamodels.OperationTypeMusicPlaySearchPhrase, payload)
+	return c.sendTypedSequence(ctx, alexamodels.OperationTypeMusicPlaySearchPhrase, payload)
 }
 
 // PlayAudioURI plays audio from a public HTTPS URI on a device
@@ -1042,15 +1111,15 @@ func (c *Client) PlayAudioURI(ctx context.Context, req *alexamodels.PlayAudioURI
 		customerID = c.customerID
 	}
 
-	payload := map[string]interface{}{
-		alexamodels.PayloadKeyDeviceType:         deviceType,
-		alexamodels.PayloadKeyDeviceSerialNumber: deviceSerialNumber,
-		alexamodels.PayloadKeyLocale:             alexamodels.DefaultLocale,
-		alexamodels.PayloadKeyCustomerID:         customerID,
-		alexamodels.PayloadKeySoundStringID:      req.URI,
+	payload := alexamodels.SoundPayload{
+		DeviceType:         deviceType,
+		DeviceSerialNumber: deviceSerialNumber,
+		Locale:             alexamodels.DefaultLocale,
+		CustomerID:         customerID,
+		SoundStringID:      req.URI,
 	}
 
-	return c.SendSequence(ctx, alexamodels.OperationTypeSound, payload)
+	return c.sendTypedSequence(ctx, alexamodels.OperationTypeSound, payload)
 }
 
 // PlayVideo plays video based on a search query
@@ -1076,20 +1145,21 @@ func (c *Client) PlayVideo(ctx context.Context, req *alexamodels.PlayVideoReques
 		combinedSearchPhrase = fmt.Sprintf("%s on %s", req.SearchPhrase, req.VideoProviderID)
 	}
 
-	payload := map[string]interface{}{
-		alexamodels.PayloadKeyDeviceType:            deviceType,
-		alexamodels.PayloadKeyDeviceSerialNumber:    deviceSerialNumber,
-		alexamodels.PayloadKeyLocale:                alexamodels.DefaultLocale,
-		alexamodels.PayloadKeyCustomerID:            customerID,
-		alexamodels.PayloadKeySearchPhrase:          combinedSearchPhrase,
-		alexamodels.PayloadKeySanitizedSearchPhrase: combinedSearchPhrase,
+	payload := alexamodels.VideoPlaySearchPhrasePayload{
+		DeviceType:            deviceType,
+		DeviceSerialNumber:    deviceSerialNumber,
+		Locale:                alexamodels.DefaultLocale,
+		CustomerID:            customerID,
+		SearchPhrase:          combinedSearchPhrase,
+		SanitizedSearchPhrase: combinedSearchPhrase,
+		WaitTimeInSeconds:     0,
 	}
 
 	if req.TimerSeconds != nil && *req.TimerSeconds > 0 {
-		payload[alexamodels.PayloadKeyWaitTimeInSeconds] = *req.TimerSeconds
+		payload.WaitTimeInSeconds = *req.TimerSeconds
 	}
 
-	return c.SendSequence(ctx, alexamodels.OperationTypeVideoPlaySearchPhrase, payload)
+	return c.sendTypedSequence(ctx, alexamodels.OperationTypeVideoPlaySearchPhrase, payload)
 }
 
 // Fire TV operation functions
@@ -1097,45 +1167,12 @@ func (c *Client) PlayVideo(ctx context.Context, req *alexamodels.PlayVideoReques
 // SendFireTVSequence sends a Fire TV sequence command
 // This is a helper that builds the operation node and calls RunBehavior for Fire TV operations.
 func (c *Client) SendFireTVSequence(ctx context.Context, deviceAccountID, operationType string) error {
-	// Build the operation payload with only deviceAccountId and skillId
-	payload := map[string]interface{}{
-		alexamodels.PayloadKeyDeviceAccountID: deviceAccountID,
-		alexamodels.PayloadKeySkillID:         alexamodels.SkillIDRoutinesFireTV,
+	payload := alexamodels.FireTVOperationPayload{
+		DeviceAccountID: deviceAccountID,
+		SkillID:         alexamodels.BehaviorSkillIDRoutinesFireTV,
 	}
 
-	node := alexamodels.OpaquePayloadOperationNode{
-		Type:             alexamodels.ModelTypeOpaquePayloadOperationNode,
-		OperationType:    operationType,
-		OperationPayload: payload,
-	}
-
-	sequence := alexamodels.Sequence{
-		Type:      alexamodels.ModelTypeSequence,
-		StartNode: node,
-	}
-
-	sequenceJSON, err := json.Marshal(sequence)
-	if err != nil {
-		return &alexaapimodels.BadRequestError{
-			Message: "failed to marshal sequence",
-			Err:     err,
-		}
-	}
-
-	baseURL := c.alexaAmazonBaseURI + alexamodels.APIPathBehaviorsPreview
-
-	request := wire.WireBehaviorPreviewRequest{
-		BehaviorId:   alexamodels.DefaultBehaviorID,
-		SequenceJson: string(sequenceJSON),
-		Status:       alexamodels.DefaultBehaviorStatus,
-	}
-
-	err = c.doJSONRequestWithFullURL(ctx, apiroutes.MethodSubmitBehaviorPreview, baseURL, request, nil, nil, true)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.sendTypedSequence(ctx, operationType, payload)
 }
 
 // FireTVTurnOn turns on a Fire TV device

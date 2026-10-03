@@ -1,0 +1,6 @@
+package: alexamodels
+generate:
+  models: true
+output: pkg/dependencymodels/devices_v2.gen.go
+output-options:
+  include-tags: [First-party devices]

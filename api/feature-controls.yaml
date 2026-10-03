@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: Alexa GraphQL feature-control payloads
+  version: 0.1.0
+  description: >-
+    Implementation-derived wire payloads constructed by the GraphQL feature
+    control helpers. No sanitized live GraphQL captures are available.
+paths: {}
+components:
+  schemas:
+    FeatureEmptyPayload:
+      type: object
+      additionalProperties: false
+      x-go-type: struct{}
+      description: Empty object payload used by color-temperature adjustment.
+    SpeakerSetVolumePayload:
+      type: object
+      additionalProperties: false
+      required: [volume]
+      properties:
+        volume: {type: integer}
+    SpeakerAdjustVolumePayload:
+      type: object
+      additionalProperties: false
+      required: [volumeDelta]
+      properties:
+        volumeDelta: {type: integer}
+    BrightnessSetPayload:
+      type: object
+      additionalProperties: false
+      required: [brightness]
+      properties:
+        brightness: {type: integer}
+    BrightnessAdjustPayload:
+      type: object
+      additionalProperties: false
+      required: [brightnessDelta]
+      properties:
+        brightnessDelta: {type: integer}
+    FeatureColorValue:
+      type: object
+      additionalProperties: false
+      required: [hue, saturation, brightness]
+      properties:
+        hue: {type: number, x-go-type: float64}
+        saturation: {type: number, x-go-type: float64}
+        brightness: {type: number, x-go-type: float64}
+    ColorSetPayload:
+      type: object
+      additionalProperties: false
+      required: [color]
+      properties:
+        color: {$ref: '#/components/schemas/FeatureColorValue'}
+    ColorTemperatureSetPayload:
+      type: object
+      additionalProperties: false
+      required: [colorTemperatureInKelvin]
+      properties:
+        colorTemperatureInKelvin: {type: integer}
+    LockPayload:
+      type: object
+      additionalProperties: false
+      required: [lockState]
+      properties:
+        lockState: {type: string}
+    ModeSetPayload:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode: {type: string}
+    ModeAdjustPayload:
+      type: object
+      additionalProperties: false
+      required: [modeDelta]
+      properties:
+        modeDelta: {type: string}
+    RangeSetPayload:
+      type: object
+      additionalProperties: false
+      required: [rangeValue]
+      properties:
+        rangeValue: {type: number, x-go-type: float64}
+    RangeAdjustPayload:
+      type: object
+      additionalProperties: false
+      required: [rangeValueDelta]
+      properties:
+        rangeValueDelta: {type: number, x-go-type: float64}
+    TogglePayload:
+      type: object
+      additionalProperties: false
+      required: [toggleState]
+      properties:
+        toggleState: {type: string}
+    PercentageSetPayload:
+      type: object
+      additionalProperties: false
+      required: [percentage]
+      properties:
+        percentage: {type: number, x-go-type: float64}
+    PercentageAdjustPayload:
+      type: object
+      additionalProperties: false
+      required: [percentageDelta]
+      properties:
+        percentageDelta: {type: number, x-go-type: float64}
+    PowerLevelSetPayload:
+      type: object
+      additionalProperties: false
+      required: [powerLevel]
+      properties:
+        powerLevel: {type: integer}
+    PowerLevelAdjustPayload:
+      type: object
+      additionalProperties: false
+      required: [powerLevelDelta]
+      properties:
+        powerLevelDelta: {type: integer}
+    ActionPayload:
+      type: object
+      required: [action]
+      properties:
+        action: {type: string}
+      additionalProperties: true
+      description: >-
+        The action name is library-defined. Additional top-level fields are
+        caller-supplied action parameters and remain open by design.
+    ThermostatSetpoint:
+      type: object
+      additionalProperties: false
+      required: [value, scale]
+      properties:
+        value: {type: number, x-go-type: float64}
+        scale: {type: string}
+    ThermostatSetpointSetPayload:
+      type: object
+      additionalProperties: false
+      required: [targetSetpoint]
+      properties:
+        targetSetpoint: {$ref: '#/components/schemas/ThermostatSetpoint'}
+    ThermostatSetpointAdjustPayload:
+      type: object
+      additionalProperties: false
+      required: [targetSetpointDelta]
+      properties:
+        targetSetpointDelta: {$ref: '#/components/schemas/ThermostatSetpoint'}
+    ThermostatModePayload:
+      type: object
+      additionalProperties: false
+      required: [thermostatMode]
+      properties:
+        thermostatMode: {type: string}

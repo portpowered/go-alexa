@@ -19,7 +19,9 @@ func (c *Client) ControlPowerFeature(
 
 	featureReq := FeatureControlRequest{
 		EndpointId:           req.Endpoint.GetEndpointId(),
+		EntityId:             "",
 		FeatureName:          FeatureNamePower,
+		Instance:             "",
 		FeatureOperationName: operationName,
 		Payload:              nil,
 	}
@@ -34,20 +36,16 @@ func (c *Client) ControlSpeakerFeature(
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	var (
 		operationName FeatureOperationName
-		payload       map[string]interface{}
+		payload       interface{}
 	)
 
 	switch {
 	case req.SetVolume && req.Volume != nil:
 		operationName = FeatureOperationNameSetvolume
-		payload = map[string]interface{}{
-			"volume": *req.Volume,
-		}
+		payload = alexamodels.SpeakerSetVolumePayload{Volume: *req.Volume}
 	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustvolume
-		payload = map[string]interface{}{
-			"volumeDelta": *req.Delta,
-		}
+		payload = alexamodels.SpeakerAdjustVolumePayload{VolumeDelta: *req.Delta}
 	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either volume or delta must be specified",
@@ -59,6 +57,7 @@ func (c *Client) ControlSpeakerFeature(
 		EntityId:             req.EntityID,
 		FeatureName:          FeatureNameSpeaker,
 		FeatureOperationName: operationName,
+		Instance:             req.Instance,
 		Payload:              payload,
 	}
 
@@ -72,20 +71,16 @@ func (c *Client) ControlBrightnessFeature(
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	var (
 		operationName FeatureOperationName
-		payload       map[string]interface{}
+		payload       interface{}
 	)
 
 	switch {
 	case req.SetBrightness && req.Brightness != nil:
 		operationName = FeatureOperationNameSetbrightness
-		payload = map[string]interface{}{
-			"brightness": *req.Brightness,
-		}
+		payload = alexamodels.BrightnessSetPayload{Brightness: *req.Brightness}
 	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustbrightness
-		payload = map[string]interface{}{
-			"brightnessDelta": *req.Delta,
-		}
+		payload = alexamodels.BrightnessAdjustPayload{BrightnessDelta: *req.Delta}
 	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either brightness or delta must be specified",
@@ -109,11 +104,11 @@ func (c *Client) ControlColorFeature(
 	ctx context.Context,
 	req *alexamodels.ColorControlRequest,
 ) (*alexaapimodels.FeatureControlResponse, error) {
-	payload := map[string]interface{}{
-		"color": map[string]interface{}{
-			"hue":        req.Hue,
-			"saturation": req.Saturation,
-			"brightness": req.Brightness,
+	payload := alexamodels.ColorSetPayload{
+		Color: alexamodels.FeatureColorValue{
+			Hue:        req.Hue,
+			Saturation: req.Saturation,
+			Brightness: req.Brightness,
 		},
 	}
 
@@ -136,21 +131,19 @@ func (c *Client) ControlColorTemperatureFeature(
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	var (
 		operationName FeatureOperationName
-		payload       map[string]interface{}
+		payload       interface{}
 	)
 
 	switch {
 	case req.SetTemperature && req.ColorTemperature != nil:
 		operationName = FeatureOperationNameSetcolortemperature
-		payload = map[string]interface{}{
-			"colorTemperatureInKelvin": *req.ColorTemperature,
-		}
+		payload = alexamodels.ColorTemperatureSetPayload{ColorTemperatureInKelvin: *req.ColorTemperature}
 	case req.Increase:
 		operationName = FeatureOperationNameIncreasecolortemperature
-		payload = map[string]interface{}{}
+		payload = alexamodels.FeatureEmptyPayload{}
 	case !req.Increase:
 		operationName = FeatureOperationNameDecreasecolortemperature
-		payload = map[string]interface{}{}
+		payload = alexamodels.FeatureEmptyPayload{}
 	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either colorTemperature or delta must be specified",
@@ -179,9 +172,7 @@ func (c *Client) ControlLockFeature(
 		operationName = FeatureOperationNameLock
 	}
 
-	payload := map[string]interface{}{
-		"lockState": req.State,
-	}
+	payload := alexamodels.LockPayload{LockState: req.State}
 
 	featureReq := FeatureControlRequest{
 		EndpointId:           req.EndpointID,
@@ -202,20 +193,16 @@ func (c *Client) ControlModeFeature(
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	var (
 		operationName FeatureOperationName
-		payload       map[string]interface{}
+		payload       interface{}
 	)
 
 	switch {
 	case req.SetMode && req.Mode != nil:
 		operationName = FeatureOperationNameSetmode
-		payload = map[string]interface{}{
-			"mode": *req.Mode,
-		}
+		payload = alexamodels.ModeSetPayload{Mode: *req.Mode}
 	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustmode
-		payload = map[string]interface{}{
-			"modeDelta": *req.Delta,
-		}
+		payload = alexamodels.ModeAdjustPayload{ModeDelta: *req.Delta}
 	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either mode or delta must be specified",
@@ -241,20 +228,16 @@ func (c *Client) ControlRangeFeature(
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	var (
 		operationName FeatureOperationName
-		payload       map[string]interface{}
+		payload       interface{}
 	)
 
 	switch {
 	case req.SetValue && req.RangeValue != nil:
 		operationName = FeatureOperationNameSetrangevalue
-		payload = map[string]interface{}{
-			"rangeValue": *req.RangeValue,
-		}
+		payload = alexamodels.RangeSetPayload{RangeValue: *req.RangeValue}
 	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustrangevalue
-		payload = map[string]interface{}{
-			"rangeValueDelta": *req.Delta,
-		}
+		payload = alexamodels.RangeAdjustPayload{RangeValueDelta: *req.Delta}
 	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either rangeValue or delta must be specified",
@@ -283,9 +266,7 @@ func (c *Client) ControlToggleFeature(
 		operationName = FeatureOperationNameTurnon
 	}
 
-	payload := map[string]interface{}{
-		"toggleState": req.State,
-	}
+	payload := alexamodels.TogglePayload{ToggleState: req.State}
 
 	featureReq := FeatureControlRequest{
 		EndpointId:           req.EndpointID,
@@ -306,20 +287,16 @@ func (c *Client) ControlPercentageFeature(
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	var (
 		operationName FeatureOperationName
-		payload       map[string]interface{}
+		payload       interface{}
 	)
 
 	switch {
 	case req.SetPercentage && req.Percentage != nil:
 		operationName = FeatureOperationNameSetpercentage
-		payload = map[string]interface{}{
-			"percentage": *req.Percentage,
-		}
+		payload = alexamodels.PercentageSetPayload{Percentage: *req.Percentage}
 	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustpercentage
-		payload = map[string]interface{}{
-			"percentageDelta": *req.Delta,
-		}
+		payload = alexamodels.PercentageAdjustPayload{PercentageDelta: *req.Delta}
 	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either percentage or delta must be specified",
@@ -345,20 +322,16 @@ func (c *Client) ControlPowerLevelFeature(
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	var (
 		operationName FeatureOperationName
-		payload       map[string]interface{}
+		payload       interface{}
 	)
 
 	switch {
 	case req.SetPowerLevel && req.PowerLevel != nil:
 		operationName = FeatureOperationNameSetpercentage
-		payload = map[string]interface{}{
-			"powerLevel": *req.PowerLevel,
-		}
+		payload = alexamodels.PowerLevelSetPayload{PowerLevel: *req.PowerLevel}
 	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjustpercentage
-		payload = map[string]interface{}{
-			"powerLevelDelta": *req.Delta,
-		}
+		payload = alexamodels.PowerLevelAdjustPayload{PowerLevelDelta: *req.Delta}
 	default:
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "either powerLevel or delta must be specified",
@@ -382,14 +355,9 @@ func (c *Client) ControlActionFeature(
 	ctx context.Context,
 	req *alexamodels.ActionControlRequest,
 ) (*alexaapimodels.FeatureControlResponse, error) {
-	payload := map[string]interface{}{
-		"action": req.Action,
-	}
-
-	if req.Params != nil {
-		for k, v := range req.Params {
-			payload[k] = v
-		}
+	payload := alexamodels.ActionPayload{
+		Action:               req.Action,
+		AdditionalProperties: req.Params,
 	}
 
 	featureReq := FeatureControlRequest{
@@ -411,25 +379,19 @@ func (c *Client) ControlThermostatFeature(
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	var (
 		operationName FeatureOperationName
-		payload       map[string]interface{}
+		payload       interface{}
 	)
 
 	switch {
 	case req.SetSetpoint && req.Value != nil:
 		operationName = FeatureOperationNameSettargetsetpoint
-		payload = map[string]interface{}{
-			"targetSetpoint": map[string]interface{}{
-				"value": *req.Value,
-				"scale": req.Scale,
-			},
+		payload = alexamodels.ThermostatSetpointSetPayload{
+			TargetSetpoint: alexamodels.ThermostatSetpoint{Value: *req.Value, Scale: req.Scale},
 		}
 	case req.Delta != nil:
 		operationName = FeatureOperationNameAdjusttargetsetpoint
-		payload = map[string]interface{}{
-			"targetSetpointDelta": map[string]interface{}{
-				"value": *req.Delta,
-				"scale": req.Scale,
-			},
+		payload = alexamodels.ThermostatSetpointAdjustPayload{
+			TargetSetpointDelta: alexamodels.ThermostatSetpoint{Value: *req.Delta, Scale: req.Scale},
 		}
 	default:
 		return nil, &alexaapimodels.BadRequestError{
@@ -454,9 +416,7 @@ func (c *Client) ControlThermostatModeFeature(
 	ctx context.Context,
 	req *alexamodels.ThermostatModeControlRequest,
 ) (*alexaapimodels.FeatureControlResponse, error) {
-	payload := map[string]interface{}{
-		"thermostatMode": req.Mode,
-	}
+	payload := alexamodels.ThermostatModePayload{ThermostatMode: req.Mode}
 
 	featureReq := FeatureControlRequest{
 		EndpointId:           req.EndpointID,

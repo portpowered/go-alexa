@@ -20,7 +20,7 @@ const (
 	policyRelease            = "release"
 	policyReport             = "report"
 	defaultModulePath        = "github.com/portpowered/go-alexa"
-	defaultPublicPackages    = "pkg/alexa,pkg/alexaapimodels"
+	defaultPublicPackages    = "pkg/alexa,pkg/alexaapimodels,pkg/dependencymodels"
 	apiDiffTool              = "golang.org/x/exp/cmd/apidiff@v0.0.0-20260908205506-85c1c2202aba"
 	previousRelease          = "previous-release"
 	toolDirectoryPermissions = 0o755

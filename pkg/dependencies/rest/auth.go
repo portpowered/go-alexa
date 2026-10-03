@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
-	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
@@ -58,9 +57,9 @@ func (c *Client) RegisterWithEmailPassword(
 		}
 	}
 
-	req := wire.WireRegistrationRequest{
+	req := alexamodels.WireRegistrationRequest{
 		RequestedTokenType: []string{"bearer"},
-		RegistrationData: wire.WireRegistrationData{
+		RegistrationData: alexamodels.WireRegistrationData{
 			AppName:      config.AppName,
 			AppVersion:   config.AppVersion,
 			DeviceType:   config.DeviceType,
@@ -70,8 +69,9 @@ func (c *Client) RegisterWithEmailPassword(
 			DeviceSerial: config.DeviceSerial,
 			DeviceName:   config.DeviceName,
 		},
-		AuthData: wire.WireAuthData{
-			EmailPassword: &wire.WireEmailPasswordAuth{
+		AuthData: alexamodels.WireAuthData{
+			CodePair: nil,
+			EmailPassword: &alexamodels.WireEmailPasswordAuth{
 				Email:    email,
 				Password: password,
 			},
@@ -80,7 +80,7 @@ func (c *Client) RegisterWithEmailPassword(
 
 	url := c.amazonapiBaseURI + apiroutes.PathRegisterDevice
 
-	var response wire.WireRegistrationResponse
+	var response alexamodels.WireRegistrationResponse
 
 	err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodRegisterDevice, url, req, &response)
 	if err != nil {
@@ -117,9 +117,9 @@ func (c *Client) RegisterWithCodePair(
 		}
 	}
 
-	req := wire.WireRegistrationRequest{
+	req := alexamodels.WireRegistrationRequest{
 		RequestedTokenType: []string{"bearer"},
-		RegistrationData: wire.WireRegistrationData{
+		RegistrationData: alexamodels.WireRegistrationData{
 			AppName:      config.AppName,
 			AppVersion:   config.AppVersion,
 			DeviceType:   config.DeviceType,
@@ -129,8 +129,9 @@ func (c *Client) RegisterWithCodePair(
 			DeviceSerial: config.DeviceSerial,
 			DeviceName:   config.DeviceName,
 		},
-		AuthData: wire.WireAuthData{
-			CodePair: &wire.WireCodePairAuth{
+		AuthData: alexamodels.WireAuthData{
+			EmailPassword: nil,
+			CodePair: &alexamodels.WireCodePairAuth{
 				PublicCode:  publicCode,
 				PrivateCode: privateCode,
 			},
@@ -139,7 +140,7 @@ func (c *Client) RegisterWithCodePair(
 
 	url := c.amazonapiBaseURI + apiroutes.PathRegisterDevice
 
-	var response wire.WireRegistrationResponse
+	var response alexamodels.WireRegistrationResponse
 
 	{
 		err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodRegisterDevice, url, req, &response)
@@ -168,8 +169,8 @@ func (c *Client) GenerateCodePair(ctx context.Context, config *DeviceRegistratio
 		}
 	}
 
-	req := wire.WireCodePairRequest{
-		CodeData: wire.WireCodeData{
+	req := alexamodels.WireCodePairRequest{
+		CodeData: alexamodels.WireCodeData{
 			AppName:               config.AppName,
 			AppVersion:            config.AppVersion,
 			DeviceType:            config.DeviceType,
@@ -185,7 +186,7 @@ func (c *Client) GenerateCodePair(ctx context.Context, config *DeviceRegistratio
 
 	url := c.amazonapiBaseURI + apiroutes.PathCreateCodePair
 
-	var response wire.WireCodePairResponse
+	var response alexamodels.WireCodePairResponse
 
 	{
 		err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodCreateCodePair, url, req, &response)
@@ -214,22 +215,22 @@ func (c *Client) RefreshAccessToken(ctx context.Context, refreshToken string, co
 		}
 	}
 
-	req := wire.WireTokenRefreshRequest{
+	req := alexamodels.WireTokenRefreshRequest{
 		AppName:            config.AppName,
 		AppVersion:         config.AppVersion,
 		SourceTokenType:    "refresh_token",
 		SourceToken:        refreshToken,
 		RequestedTokenType: "access_token",
+		DeviceMetadata: alexamodels.WireDeviceMetadata{
+			DeviceType: config.DeviceType, DeviceModel: config.DeviceModel,
+			OsVersion: config.OSVersion, DeviceSerial: config.DeviceSerial,
+			Manufacturer: config.Manufacturer,
+		},
 	}
-	req.DeviceMetadata.DeviceType = config.DeviceType
-	req.DeviceMetadata.DeviceModel = config.DeviceModel
-	req.DeviceMetadata.OsVersion = config.OSVersion
-	req.DeviceMetadata.DeviceSerial = config.DeviceSerial
-	req.DeviceMetadata.Manufacturer = config.Manufacturer
 
 	url := c.amazonapiBaseURI + apiroutes.PathRefreshAccessToken
 
-	var response wire.WireTokenRefreshResponse
+	var response alexamodels.WireTokenRefreshResponse
 
 	{
 		err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodRefreshAccessToken, url, req, &response)
@@ -277,7 +278,7 @@ func (e *RegistrationChallengeError) IsAuthenticationFailed() bool {
 // ExchangeRefreshTokenForCookies exchanges a refresh token for session cookies
 // POST https://api.amazon.com/ap/exchangetoken/cookies
 func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToken, domain string) (map[string]*http.Cookie, error) {
-	req := wire.WireCookieExchangeRequest{
+	req := alexamodels.WireCookieExchangeRequest{
 		AppName:            "Amazon Alexa",
 		RequestedTokenType: "auth_cookies",
 		Domain:             domain,
@@ -287,7 +288,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 
 	url := fmt.Sprintf(apiroutes.ServerExchangeRefreshTokenForCookies, domain) + apiroutes.PathExchangeRefreshTokenForCookies
 
-	var response wire.WireCookieExchangeResponse
+	var response alexamodels.WireCookieExchangeResponse
 
 	// Create a temporary client without auth for this unauthenticated request
 	bodyBytes, err := json.Marshal(req)
@@ -385,7 +386,7 @@ func registrationChallengeFromError(err error) (RegistrationChallengeError, bool
 		return RegistrationChallengeError{ChallengeReason: "", RequiredAuthenticationMethod: ""}, false, nil
 	}
 
-	var response wire.WireChallengeResponse
+	var response alexamodels.WireChallengeResponse
 
 	parseErr := json.Unmarshal([]byte(requestErr.Body), &response)
 	if parseErr != nil {

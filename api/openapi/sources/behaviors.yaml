@@ -1,0 +1,108 @@
+openapi: 3.0.3
+info:
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: 'This is an implementation-derived description of HTTP routes, request shapes,
+
+    and response models used by the current go-alexa source. It is not an
+
+    Amazon-issued API contract. There are no sanitized live HTTP captures in
+
+    this repository, so these shapes have not been verified against current
+
+    service behavior. Synthetic test data is not evidence of provider behavior.
+
+    See the Alexa AsyncAPI document for the directive stream parsed by the
+
+    library, and the GraphQL schema for its GraphQL subset.
+
+    '
+servers:
+- url: https://api.amazonalexa.com
+  description: Default REST base URL in go-alexa.
+  x-go-alexa-region: na
+- url: https://api.eu.amazonalexa.com
+  description: EU REST base URL constant in go-alexa.
+  x-go-alexa-region: eu
+- url: https://api.jp.amazonalexa.com
+  description: Japan REST base URL constant in go-alexa.
+  x-go-alexa-region: jp
+security:
+- BearerToken: []
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
+tags:
+- name: Behaviors
+  description: Behavior preview operations and their serialized sequence payloads.
+paths:
+  /api/behaviors/preview:
+    post:
+      tags:
+      - Behaviors
+      operationId: submitBehaviorPreview
+      summary: Submit a behavior preview sequence
+      description: 'The sequence itself is JSON encoded into the `sequenceJson` string.
+
+        The library sets `behaviorId` to `PREVIEW` and `status` to `ENABLED`.
+
+        This describes serialization in the source, not the service''s current
+
+        acceptance rules.
+
+        '
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      security:
+      - BearerToken: []
+      - CookieHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireBehaviorPreviewRequest'
+      responses:
+        '200':
+          description: The implementation accepts a successful response without decoding a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: The client sends its supplied access token in the Authorization header.
+  schemas:
+    WireBehaviorPreviewRequest:
+      type: object
+      properties:
+        behaviorId:
+          type: string
+        sequenceJson:
+          type: string
+          description: JSON-encoded sequence serialized as a string by the client; the embedded object is modeled in api/behaviors.yaml.
+          contentMediaType: application/json
+          x-go-alexa-embedded-schema: behaviors.yaml#/components/schemas/Sequence
+        status:
+          type: string
+      required:
+      - behaviorId
+      - sequenceJson
+      - status
+  responses:
+    UnhandledResponse:
+      description: Response not decoded into a success model by this operation.

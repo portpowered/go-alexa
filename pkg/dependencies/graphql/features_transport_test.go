@@ -36,6 +36,7 @@ func featureControlTestCases(base alexamodels.BaseFeatureRequest) []featureContr
 	return cases
 }
 
+//nolint:dupl // These mirrored cases assert distinct generated feature payloads.
 func speakerFeatureCases(base alexamodels.BaseFeatureRequest) []featureControlTestCase {
 	return []featureControlTestCase{
 		{
@@ -48,6 +49,7 @@ func speakerFeatureCases(base alexamodels.BaseFeatureRequest) []featureControlTe
 					context.Background(),
 					&alexamodels.SpeakerControlRequest{
 						BaseFeatureRequest: base,
+						Delta:              nil,
 						SetVolume:          true,
 						Volume:             featureTestPointer(32),
 					},
@@ -64,7 +66,12 @@ func speakerFeatureCases(base alexamodels.BaseFeatureRequest) []featureControlTe
 			call: func(client *Client) error {
 				_, err := client.ControlSpeakerFeature(
 					context.Background(),
-					&alexamodels.SpeakerControlRequest{BaseFeatureRequest: base, Delta: featureTestPointer(-4)},
+					&alexamodels.SpeakerControlRequest{
+						BaseFeatureRequest: base,
+						Delta:              featureTestPointer(-4),
+						SetVolume:          false,
+						Volume:             nil,
+					},
 				)
 
 				return err
@@ -85,6 +92,7 @@ func brightnessFeatureCases(base alexamodels.BaseFeatureRequest) []featureContro
 					context.Background(),
 					&alexamodels.BrightnessControlRequest{
 						BaseFeatureRequest: base,
+						Delta:              nil,
 						SetBrightness:      true,
 						Brightness:         featureTestPointer(75),
 					},
@@ -101,7 +109,12 @@ func brightnessFeatureCases(base alexamodels.BaseFeatureRequest) []featureContro
 			call: func(client *Client) error {
 				_, err := client.ControlBrightnessFeature(
 					context.Background(),
-					&alexamodels.BrightnessControlRequest{BaseFeatureRequest: base, Delta: featureTestPointer(-15)},
+					&alexamodels.BrightnessControlRequest{
+						BaseFeatureRequest: base,
+						Brightness:         nil,
+						Delta:              featureTestPointer(-15),
+						SetBrightness:      false,
+					},
 				)
 
 				return err
@@ -141,6 +154,7 @@ func colorAndTemperatureFeatureCases(base alexamodels.BaseFeatureRequest) []feat
 					context.Background(),
 					&alexamodels.ColorTemperatureControlRequest{
 						BaseFeatureRequest: base,
+						Increase:           false,
 						SetTemperature:     true,
 						ColorTemperature:   featureTestPointer(3200),
 					},
@@ -157,7 +171,12 @@ func colorAndTemperatureFeatureCases(base alexamodels.BaseFeatureRequest) []feat
 			call: func(client *Client) error {
 				_, err := client.ControlColorTemperatureFeature(
 					context.Background(),
-					&alexamodels.ColorTemperatureControlRequest{BaseFeatureRequest: base, Increase: true},
+					&alexamodels.ColorTemperatureControlRequest{
+						BaseFeatureRequest: base,
+						ColorTemperature:   nil,
+						Increase:           true,
+						SetTemperature:     false,
+					},
 				)
 
 				return err
@@ -171,7 +190,12 @@ func colorAndTemperatureFeatureCases(base alexamodels.BaseFeatureRequest) []feat
 			call: func(client *Client) error {
 				_, err := client.ControlColorTemperatureFeature(
 					context.Background(),
-					&alexamodels.ColorTemperatureControlRequest{BaseFeatureRequest: base},
+					&alexamodels.ColorTemperatureControlRequest{
+						BaseFeatureRequest: base,
+						ColorTemperature:   nil,
+						Increase:           false,
+						SetTemperature:     false,
+					},
 				)
 
 				return err
@@ -220,6 +244,7 @@ func lockAndModeFeatureCases(base alexamodels.BaseFeatureRequest) []featureContr
 					context.Background(),
 					&alexamodels.ModeControlRequest{
 						BaseFeatureRequest: base,
+						Delta:              nil,
 						SetMode:            true,
 						Mode:               featureTestPointer("ECO"),
 					},
@@ -236,7 +261,12 @@ func lockAndModeFeatureCases(base alexamodels.BaseFeatureRequest) []featureContr
 			call: func(client *Client) error {
 				_, err := client.ControlModeFeature(
 					context.Background(),
-					&alexamodels.ModeControlRequest{BaseFeatureRequest: base, Delta: featureTestPointer("NEXT")},
+					&alexamodels.ModeControlRequest{
+						BaseFeatureRequest: base,
+						Delta:              featureTestPointer("NEXT"),
+						Mode:               nil,
+						SetMode:            false,
+					},
 				)
 
 				return err
@@ -257,6 +287,7 @@ func rangeAndToggleFeatureCases(base alexamodels.BaseFeatureRequest) []featureCo
 					context.Background(),
 					&alexamodels.RangeControlRequest{
 						BaseFeatureRequest: base,
+						Delta:              nil,
 						SetValue:           true,
 						RangeValue:         featureTestPointer(12.5),
 					},
@@ -273,7 +304,12 @@ func rangeAndToggleFeatureCases(base alexamodels.BaseFeatureRequest) []featureCo
 			call: func(client *Client) error {
 				_, err := client.ControlRangeFeature(
 					context.Background(),
-					&alexamodels.RangeControlRequest{BaseFeatureRequest: base, Delta: featureTestPointer(-2.5)},
+					&alexamodels.RangeControlRequest{
+						BaseFeatureRequest: base,
+						Delta:              featureTestPointer(-2.5),
+						RangeValue:         nil,
+						SetValue:           false,
+					},
 				)
 
 				return err
@@ -310,6 +346,7 @@ func rangeAndToggleFeatureCases(base alexamodels.BaseFeatureRequest) []featureCo
 	}
 }
 
+//nolint:dupl // These mirrored cases assert distinct generated feature payloads.
 func percentageFeatureCases(base alexamodels.BaseFeatureRequest) []featureControlTestCase {
 	return []featureControlTestCase{
 		{
@@ -322,6 +359,7 @@ func percentageFeatureCases(base alexamodels.BaseFeatureRequest) []featureContro
 					context.Background(),
 					&alexamodels.PercentageControlRequest{
 						BaseFeatureRequest: base,
+						Delta:              nil,
 						SetPercentage:      true,
 						Percentage:         featureTestPointer(25.0),
 					},
@@ -338,7 +376,12 @@ func percentageFeatureCases(base alexamodels.BaseFeatureRequest) []featureContro
 			call: func(client *Client) error {
 				_, err := client.ControlPercentageFeature(
 					context.Background(),
-					&alexamodels.PercentageControlRequest{BaseFeatureRequest: base, Delta: featureTestPointer(-5.0)},
+					&alexamodels.PercentageControlRequest{
+						BaseFeatureRequest: base,
+						Delta:              featureTestPointer(-5.0),
+						Percentage:         nil,
+						SetPercentage:      false,
+					},
 				)
 
 				return err
@@ -347,6 +390,7 @@ func percentageFeatureCases(base alexamodels.BaseFeatureRequest) []featureContro
 	}
 }
 
+//nolint:dupl // These mirrored cases assert distinct generated feature payloads.
 func powerLevelFeatureCases(base alexamodels.BaseFeatureRequest) []featureControlTestCase {
 	return []featureControlTestCase{
 		{
@@ -359,6 +403,7 @@ func powerLevelFeatureCases(base alexamodels.BaseFeatureRequest) []featureContro
 					context.Background(),
 					&alexamodels.PowerLevelControlRequest{
 						BaseFeatureRequest: base,
+						Delta:              nil,
 						SetPowerLevel:      true,
 						PowerLevel:         featureTestPointer(68),
 					},
@@ -375,7 +420,12 @@ func powerLevelFeatureCases(base alexamodels.BaseFeatureRequest) []featureContro
 			call: func(client *Client) error {
 				_, err := client.ControlPowerLevelFeature(
 					context.Background(),
-					&alexamodels.PowerLevelControlRequest{BaseFeatureRequest: base, Delta: featureTestPointer(-8)},
+					&alexamodels.PowerLevelControlRequest{
+						BaseFeatureRequest: base,
+						Delta:              featureTestPointer(-8),
+						PowerLevel:         nil,
+						SetPowerLevel:      false,
+					},
 				)
 
 				return err
@@ -394,7 +444,7 @@ func actionAndThermostatFeatureCases(base alexamodels.BaseFeatureRequest) []feat
 			call: func(client *Client) error {
 				_, err := client.ControlActionFeature(
 					context.Background(),
-					&alexamodels.ActionControlRequest{BaseFeatureRequest: base, Action: "open"},
+					&alexamodels.ActionControlRequest{BaseFeatureRequest: base, Action: "open", Params: nil},
 				)
 
 				return err
@@ -428,6 +478,7 @@ func actionAndThermostatFeatureCases(base alexamodels.BaseFeatureRequest) []feat
 					context.Background(),
 					&alexamodels.ThermostatControlRequest{
 						BaseFeatureRequest: base,
+						Delta:              nil,
 						SetSetpoint:        true,
 						Value:              featureTestPointer(21.5),
 						Scale:              "CELSIUS",
@@ -449,6 +500,8 @@ func actionAndThermostatFeatureCases(base alexamodels.BaseFeatureRequest) []feat
 						BaseFeatureRequest: base,
 						Delta:              featureTestPointer(-1.5),
 						Scale:              "CELSIUS",
+						SetSetpoint:        false,
+						Value:              nil,
 					},
 				)
 
@@ -547,6 +600,68 @@ func TestFeatureControlMethodsSerializeOperationPayloads(t *testing.T) {
 	}
 }
 
+func TestGeneratedFeaturePayloadsPreserveRequiredZeroValuesAndOpenActionFields(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		payload any
+		want    string
+	}{
+		{
+			name:    "empty payload",
+			payload: alexamodels.FeatureEmptyPayload{},
+			want:    `{}`,
+		},
+		{
+			name: "color values",
+			payload: alexamodels.ColorSetPayload{Color: alexamodels.FeatureColorValue{
+				Hue: 0, Saturation: 0, Brightness: 0,
+			}},
+			want: `{"color":{"brightness":0,"hue":0,"saturation":0}}`,
+		},
+		{
+			name:    "thermostat setpoint",
+			payload: alexamodels.ThermostatSetpointSetPayload{TargetSetpoint: alexamodels.ThermostatSetpoint{Scale: "", Value: 0}},
+			want:    `{"targetSetpoint":{"scale":"","value":0}}`,
+		},
+		{
+			name: "open action fields",
+			payload: alexamodels.ActionPayload{
+				Action: "",
+				AdditionalProperties: map[string]any{
+					"nullable": nil,
+					"metadata": map[string]any{"enabled": false},
+				},
+			},
+			want: `{"action":"","metadata":{"enabled":false},"nullable":null}`,
+		},
+		{
+			name: "caller action field keeps map override behavior",
+			payload: alexamodels.ActionPayload{
+				Action:               "open",
+				AdditionalProperties: map[string]any{"action": "caller-action"},
+			},
+			want: `{"action":"caller-action"}`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			data, err := json.Marshal(test.payload)
+			if err != nil {
+				t.Fatalf("marshal generated payload: %v", err)
+			}
+
+			if string(data) != test.want {
+				t.Errorf("generated payload = %s, want %s", data, test.want)
+			}
+		})
+	}
+}
+
 func TestFeatureControlMethodsRejectMissingSetOrDeltaValues(t *testing.T) {
 	t.Parallel()
 
@@ -557,37 +672,37 @@ func TestFeatureControlMethodsRejectMissingSetOrDeltaValues(t *testing.T) {
 		call func() error
 	}{
 		{name: "speaker", call: func() error {
-			_, err := client.ControlSpeakerFeature(context.Background(), &alexamodels.SpeakerControlRequest{})
+			_, err := client.ControlSpeakerFeature(context.Background(), new(alexamodels.SpeakerControlRequest))
 
 			return err
 		}},
 		{name: "brightness", call: func() error {
-			_, err := client.ControlBrightnessFeature(context.Background(), &alexamodels.BrightnessControlRequest{})
+			_, err := client.ControlBrightnessFeature(context.Background(), new(alexamodels.BrightnessControlRequest))
 
 			return err
 		}},
 		{name: "mode", call: func() error {
-			_, err := client.ControlModeFeature(context.Background(), &alexamodels.ModeControlRequest{})
+			_, err := client.ControlModeFeature(context.Background(), new(alexamodels.ModeControlRequest))
 
 			return err
 		}},
 		{name: "range", call: func() error {
-			_, err := client.ControlRangeFeature(context.Background(), &alexamodels.RangeControlRequest{})
+			_, err := client.ControlRangeFeature(context.Background(), new(alexamodels.RangeControlRequest))
 
 			return err
 		}},
 		{name: "percentage", call: func() error {
-			_, err := client.ControlPercentageFeature(context.Background(), &alexamodels.PercentageControlRequest{})
+			_, err := client.ControlPercentageFeature(context.Background(), new(alexamodels.PercentageControlRequest))
 
 			return err
 		}},
 		{name: "power level", call: func() error {
-			_, err := client.ControlPowerLevelFeature(context.Background(), &alexamodels.PowerLevelControlRequest{})
+			_, err := client.ControlPowerLevelFeature(context.Background(), new(alexamodels.PowerLevelControlRequest))
 
 			return err
 		}},
 		{name: "thermostat", call: func() error {
-			_, err := client.ControlThermostatFeature(context.Background(), &alexamodels.ThermostatControlRequest{})
+			_, err := client.ControlThermostatFeature(context.Background(), new(alexamodels.ThermostatControlRequest))
 
 			return err
 		}},
@@ -620,7 +735,7 @@ func TestFeatureControlClientErrorsPropagate(t *testing.T) {
 		_, err := client.ControlToggleFeature(
 			context.Background(),
 			&alexamodels.ToggleControlRequest{
-				BaseFeatureRequest: alexamodels.BaseFeatureRequest{EndpointID: syntheticEndpointID},
+				BaseFeatureRequest: alexamodels.BaseFeatureRequest{EndpointID: syntheticEndpointID, EntityID: "", Instance: ""},
 				State:              "ON",
 			},
 		)

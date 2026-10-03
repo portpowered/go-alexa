@@ -1,0 +1,38 @@
+openapi: 3.0.3
+info:
+  title: Alexa event Go compatibility projections
+  version: 0.1.0
+  description: |
+    These schemas preserve historical exported event helper shapes. They are
+    compatibility projections, not a provider event contract; the directive
+    stream contract is defined separately in api/asyncapi.yaml.
+paths: {}
+components:
+  schemas:
+    Event:
+      type: object
+      required: [id, type, timestamp]
+      properties:
+        id:
+          type: string
+          x-go-name: ID
+        type: {type: string}
+        timestamp: {type: string, format: date-time}
+        source:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        payload:
+          type: object
+          additionalProperties: true
+          x-go-type-skip-optional-pointer: true
+        device_id:
+          type: string
+          x-go-name: DeviceID
+          x-go-type-skip-optional-pointer: true
+    Message:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+          x-go-type-skip-optional-pointer: true

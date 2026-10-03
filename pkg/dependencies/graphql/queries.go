@@ -11,7 +11,7 @@ import (
 
 	genqlient "github.com/Khan/genqlient/graphql"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
-	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
+	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
@@ -183,7 +183,7 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 		}
 	}
 
-	var wireRequest wire.WireGraphQLRequest
+	var wireRequest alexamodels.WireGraphQLRequest
 	{
 		err := json.Unmarshal(bodyBytes, &wireRequest)
 		if err != nil {
@@ -238,7 +238,7 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 
 	// Decode through the schema-generated HTTP response model before adapting
 	// it to genqlient's response type.
-	var wireResponse wire.WireGraphQLResponse
+	var wireResponse alexamodels.WireGraphQLResponse
 	{
 		err := json.Unmarshal(bodyBytes, &wireResponse)
 		if err != nil {

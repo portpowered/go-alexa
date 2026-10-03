@@ -1,0 +1,237 @@
+openapi: 3.0.3
+info:
+  title: Alexa endpoint Go compatibility projections
+  version: 0.1.0
+  description: |
+    These schemas preserve legacy exported Go field types used by the endpoint
+    client. Required lists describe old Go JSON encoding only and do not assert
+    provider validation requirements.
+paths: {}
+components:
+  schemas:
+    Device:
+      type: object
+      required: [id, name, type]
+      properties:
+        id:
+          type: string
+          x-go-name: ID
+        name: {type: string}
+        type: {type: string}
+        capabilities:
+          type: array
+          items: {type: string}
+          x-go-type-skip-optional-pointer: true
+        state:
+          type: object
+          additionalProperties: true
+          x-go-type-skip-optional-pointer: true
+        metadata:
+          type: object
+          additionalProperties: true
+          x-go-type-skip-optional-pointer: true
+    Capability:
+      type: object
+      required: [type]
+      properties:
+        type: {type: string}
+        interface:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        version:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        properties:
+          type: object
+          additionalProperties: true
+          x-go-type-skip-optional-pointer: true
+    Command:
+      type: object
+      required: [type]
+      properties:
+        type: {type: string}
+        device_id:
+          type: string
+          x-go-name: DeviceID
+          x-go-type-skip-optional-pointer: true
+        payload:
+          x-go-type-skip-optional-pointer: true
+        namespace:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        name:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    EndpointListResponse:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/Device'}
+        nextToken:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    EndpointQueryRequest:
+      type: object
+      required: [query]
+      properties:
+        query: {$ref: '#/components/schemas/EndpointQuery'}
+    EndpointQuery:
+      type: object
+      properties:
+        and:
+          type: array
+          items: {$ref: '#/components/schemas/EndpointQueryClause'}
+          x-go-name: AND
+          x-go-type-skip-optional-pointer: true
+        or:
+          type: array
+          items: {$ref: '#/components/schemas/EndpointQueryClause'}
+          x-go-name: OR
+          x-go-type-skip-optional-pointer: true
+        includeFields: {$ref: '#/components/schemas/EndpointIncludeFields'}
+        paginationContext: {$ref: '#/components/schemas/PaginationContext'}
+    EndpointIncludeFields:
+      type: object
+      properties:
+        states:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+        capabilities:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+    PaginationContext:
+      type: object
+      properties:
+        nextToken:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        maxResults:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+        performPagination:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+    EndpointQueryClause:
+      type: object
+      properties:
+        associatedUnits: {$ref: '#/components/schemas/AssociatedUnitsFilter'}
+        manufacturer: {$ref: '#/components/schemas/StringFilter'}
+        model: {$ref: '#/components/schemas/StringFilter'}
+    AssociatedUnitsFilter:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          x-go-name: ID
+    StringFilter:
+      type: object
+      required: [value]
+      properties:
+        value: {$ref: '#/components/schemas/StringFilterValue'}
+    StringFilterValue:
+      type: object
+      required: [text]
+      properties:
+        text: {type: string}
+    FriendlyNameRequest:
+      type: object
+      required: [friendlyName]
+      properties:
+        friendlyName: {$ref: '#/components/schemas/FriendlyNameValue'}
+    FriendlyNameValue:
+      type: object
+      required: [type, value]
+      properties:
+        type: {type: string}
+        value: {$ref: '#/components/schemas/FriendlyNameText'}
+    FriendlyNameText:
+      type: object
+      required: [text]
+      properties:
+        text: {type: string}
+    SendNotificationRequest:
+      type: object
+      required: [message, title]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        message: {type: string}
+        title: {type: string}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+    SendAnnouncementRequest:
+      type: object
+      required: [message, method]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        message: {type: string}
+        method: {type: string}
+        title: {type: string, x-go-type-skip-optional-pointer: true}
+        locale: {type: string, x-go-type-skip-optional-pointer: true}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+        targetDevices:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: object
+            required: [deviceType, deviceSerialNumber]
+            properties:
+              deviceType: {type: string}
+              deviceSerialNumber: {type: string}
+            x-go-type: DeviceTarget
+    SendTTSRequest:
+      type: object
+      required: [message]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        message: {type: string}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+        targetDevices:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: object
+            required: [deviceType, deviceSerialNumber]
+            properties:
+              deviceType: {type: string}
+              deviceSerialNumber: {type: string}
+            x-go-type: DeviceTarget
+    FireTVRequest:
+      type: object
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+    FireTVOperationRequest:
+      type: object
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+    PlaybackControlRequest:
+      type: object
+      required: [operation]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+        operation: {type: string}
+    InterfaceMessageRequest:
+      type: object
+      required: [featureName, operationName]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        featureName: {type: string}
+        operationName: {type: string}
+        payload:
+          type: object
+          additionalProperties: true
+          x-go-type: interface{}
+          x-go-type-skip-optional-pointer: true
+    PowerControlRequest:
+      type: object
+      required: [state]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        state:
+          type: string
+          x-go-type: alexaapimodels.PowerState
+          x-go-type-import:
+            path: github.com/portpowered/go-alexa/pkg/alexaapimodels
+            name: alexaapimodels

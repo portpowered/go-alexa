@@ -1,0 +1,340 @@
+openapi: 3.0.3
+info:
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: 'This is an implementation-derived description of HTTP routes, request shapes,
+
+    and response models used by the current go-alexa source. It is not an
+
+    Amazon-issued API contract. There are no sanitized live HTTP captures in
+
+    this repository, so these shapes have not been verified against current
+
+    service behavior. Synthetic test data is not evidence of provider behavior.
+
+    See the Alexa AsyncAPI document for the directive stream parsed by the
+
+    library, and the GraphQL schema for its GraphQL subset.
+
+    '
+servers:
+- url: https://api.amazonalexa.com
+  description: Default REST base URL in go-alexa.
+  x-go-alexa-region: na
+- url: https://api.eu.amazonalexa.com
+  description: EU REST base URL constant in go-alexa.
+  x-go-alexa-region: eu
+- url: https://api.jp.amazonalexa.com
+  description: Japan REST base URL constant in go-alexa.
+  x-go-alexa-region: jp
+security:
+- BearerToken: []
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
+tags:
+- name: Media
+  description: First-party media routes used by go-alexa.
+paths:
+  /api/np/command:
+    post:
+      tags:
+      - Media
+      operationId: sendMediaCommand
+      summary: Submit a media command
+      description: 'The helper supplies device serial and type as query parameters and sends
+
+        a media command JSON body. The client currently uses the command values
+
+        PlayCommand, PauseCommand, NextCommand, PreviousCommand, ForwardCommand,
+
+        RewindCommand, ShuffleCommand, and RepeatCommand.
+
+        '
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      security:
+      - BearerToken: []
+      - CookieHeader: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceSerialNumber'
+      - $ref: '#/components/parameters/DeviceType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireMediaCommand'
+      responses:
+        '200':
+          description: The implementation accepts a successful response without decoding a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /api/np/player:
+    get:
+      tags:
+      - Media
+      operationId: getMediaPlayerState
+      summary: Read media player state
+      description: The response fields reflect the model currently decoded by go-alexa and may vary by account or device.
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      security:
+      - BearerToken: []
+      - CookieHeader: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceSerialNumber'
+      - $ref: '#/components/parameters/DeviceType'
+      responses:
+        '200':
+          description: Player state decoded by the current helper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WirePlayerStateResponse'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: The client sends its supplied access token in the Authorization header.
+  schemas:
+    WirePlayerStateResponse:
+      type: object
+      properties:
+        playerInfo:
+          $ref: '#/components/schemas/WirePlayerInfo'
+      additionalProperties: true
+    WirePlayerInfo:
+      type: object
+      properties:
+        hint:
+          type: string
+        infoText:
+          $ref: '#/components/schemas/WireInfoText'
+        isPlayingInLemur:
+          type: boolean
+        lemurVolume:
+          type: integer
+        lyrics:
+          type: string
+        mainArt:
+          $ref: '#/components/schemas/WireArt'
+        mediaId:
+          type: string
+        miniArt:
+          $ref: '#/components/schemas/WireArt'
+        miniInfoText:
+          $ref: '#/components/schemas/WireInfoText'
+        playbackSource:
+          type: string
+        playingInLemurId:
+          type: string
+        progress:
+          $ref: '#/components/schemas/WireProgress'
+        provider:
+          $ref: '#/components/schemas/WireProvider'
+        quality:
+          type: string
+        queueId:
+          type: string
+        state:
+          type: string
+        template:
+          $ref: '#/components/schemas/WireTemplate'
+        transport:
+          $ref: '#/components/schemas/WireTransport'
+        upNextItems: {}
+        volume:
+          $ref: '#/components/schemas/WireVolume'
+      additionalProperties: true
+    WireVolume:
+      type: object
+      properties:
+        muted:
+          type: boolean
+        volume:
+          type: integer
+      additionalProperties: true
+    WireTransport:
+      type: object
+      properties:
+        closedCaptions:
+          type: string
+        layoutType:
+          type: string
+        lyrics:
+          type: string
+        next:
+          type: string
+        playPause:
+          type: string
+        previous:
+          type: string
+        rateContentAction:
+          $ref: '#/components/schemas/WireRateContentAction'
+        thumbsDown:
+          type: string
+        thumbsUp:
+          type: string
+      additionalProperties: true
+    WireRateContentAction:
+      type: object
+      properties:
+        mediaOwnerCustomerId:
+          type: string
+        rating:
+          type: string
+        type:
+          type: string
+      additionalProperties: true
+    WireTemplate:
+      type: object
+      properties:
+        art:
+          $ref: '#/components/schemas/WireArt'
+        backgroundImageUrl:
+          type: string
+          format: uri
+        templateType:
+          type: string
+      additionalProperties: true
+    WireArt:
+      type: object
+      properties:
+        altText:
+          type: string
+        artType:
+          type: string
+        contentType:
+          type: string
+        url:
+          type: string
+          format: uri
+        iconId:
+          type: string
+        iconStyles:
+          type: string
+      additionalProperties: true
+    WireProvider:
+      type: object
+      properties:
+        artOverlay:
+          $ref: '#/components/schemas/WireArt'
+        fallbackMainArt:
+          $ref: '#/components/schemas/WireArt'
+        providerDisplayName:
+          type: string
+        providerLogo:
+          $ref: '#/components/schemas/WireArt'
+        providerName:
+          type: string
+      additionalProperties: true
+    WireProgress:
+      type: object
+      properties:
+        allowScrubbing:
+          type: boolean
+        locationInfo:
+          type: string
+        mediaLength:
+          type: integer
+        mediaProgress:
+          type: integer
+        showTiming:
+          type: boolean
+        visible:
+          type: boolean
+      additionalProperties: true
+    WireInfoText:
+      type: object
+      properties:
+        header:
+          type: string
+        headerSubtext1:
+          type: string
+        multiLineMode:
+          type: boolean
+        subText1:
+          type: string
+        subText2:
+          type: string
+        title:
+          type: string
+      additionalProperties: true
+    WireMediaCommand:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/WireMediaCommandType'
+        shuffle:
+          type: boolean
+        repeat:
+          type: boolean
+      required:
+      - type
+    WireMediaCommandType:
+      description: Implementation-derived media command values used by the client.
+      type: string
+      enum:
+      - PlayCommand
+      - PauseCommand
+      - NextCommand
+      - PreviousCommand
+      - ForwardCommand
+      - RewindCommand
+      - ShuffleCommand
+      - RepeatCommand
+      x-enum-varnames:
+      - WireMediaCommandTypePlay
+      - WireMediaCommandTypePause
+      - WireMediaCommandTypeNext
+      - WireMediaCommandTypePrevious
+      - WireMediaCommandTypeForward
+      - WireMediaCommandTypeRewind
+      - WireMediaCommandTypeShuffle
+      - WireMediaCommandTypeRepeat
+      x-go-compat-constant-names:
+      - MediaCommandTypePlay
+      - MediaCommandTypePause
+      - MediaCommandTypeNext
+      - MediaCommandTypePrevious
+      - MediaCommandTypeForward
+      - MediaCommandTypeRewind
+      - MediaCommandTypeShuffle
+      - MediaCommandTypeRepeat
+  responses:
+    UnhandledResponse:
+      description: Response not decoded into a success model by this operation.
+  parameters:
+    DeviceType:
+      name: deviceType
+      in: query
+      required: true
+      description: Derived from the endpoint object by the media helper.
+      schema:
+        type: string
+    DeviceSerialNumber:
+      name: deviceSerialNumber
+      in: query
+      required: true
+      description: Derived from the endpoint object by the media helper.
+      schema:
+        type: string

@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: Alexa GraphQL control input projections
+  version: 0.1.0
+  description: |
+    These schemas preserve the historical exported Go request fields accepted
+    by the control API. They describe SDK inputs and do not assert provider
+    validation requirements. Provider GraphQL transport models are generated
+    separately from the GraphQL operation documents.
+paths: {}
+components:
+  schemas:
+    BaseFeatureRequest:
+      type: object
+      required: [endpointId]
+      properties:
+        endpointId: {type: string, x-go-name: EndpointID}
+        entityId: {type: string, x-go-name: EntityID, x-go-type-skip-optional-pointer: true}
+        instance: {type: string, x-go-type-skip-optional-pointer: true}
+    SpeakerControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      properties:
+        volume: {type: integer}
+        delta: {type: integer}
+        setVolume: {type: boolean, x-go-type-skip-optional-pointer: true}
+    BrightnessControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      properties:
+        brightness: {type: integer}
+        delta: {type: integer}
+        setBrightness: {type: boolean, x-go-type-skip-optional-pointer: true}
+    ColorControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      required: [hue, saturation, brightness]
+      properties:
+        hue: {type: number, x-go-type: float64}
+        saturation: {type: number, x-go-type: float64}
+        brightness: {type: number, x-go-type: float64}
+    ColorTemperatureControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      properties:
+        colorTemperature: {type: integer}
+        increase: {type: boolean, x-go-type-skip-optional-pointer: true}
+        setTemperature: {type: boolean, x-go-type-skip-optional-pointer: true}
+    LockControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      required: [state]
+      properties:
+        state: {type: string}
+    ModeControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      properties:
+        mode: {type: string}
+        delta: {type: string}
+        setMode: {type: boolean, x-go-type-skip-optional-pointer: true}
+    RangeControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      properties:
+        rangeValue: {type: number, x-go-type: float64}
+        delta: {type: number, x-go-type: float64}
+        setValue: {type: boolean, x-go-type-skip-optional-pointer: true}
+    ToggleControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      required: [state]
+      properties:
+        state: {type: string}
+    PercentageControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      properties:
+        percentage: {type: number, x-go-type: float64}
+        delta: {type: number, x-go-type: float64}
+        setPercentage: {type: boolean, x-go-type-skip-optional-pointer: true}
+    PowerLevelControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      properties:
+        powerLevel: {type: integer}
+        delta: {type: integer}
+        setPowerLevel: {type: boolean, x-go-type-skip-optional-pointer: true}
+    ActionControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      required: [action]
+      properties:
+        action: {type: string}
+        params:
+          type: object
+          additionalProperties: true
+          x-go-type-skip-optional-pointer: true
+    ThermostatControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      required: [scale]
+      properties:
+        value: {type: number, x-go-type: float64}
+        delta: {type: number, x-go-type: float64}
+        scale: {type: string}
+        setSetpoint: {type: boolean, x-go-type-skip-optional-pointer: true}
+    ThermostatModeControlRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseFeatureRequest'
+      required: [mode]
+      properties:
+        mode: {type: string}

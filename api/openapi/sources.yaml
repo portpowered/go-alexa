@@ -1,0 +1,54 @@
+bundle: api/openapi.yaml
+sources:
+- file: api/openapi/sources/account-linking.yaml
+  responsibility: Account linking
+  tag: Account linking
+- file: api/openapi/sources/endpoints.yaml
+  responsibility: Endpoints
+  tag: Endpoints
+- file: api/openapi/sources/first-party-devices.yaml
+  responsibility: First-party devices
+  tag: First-party devices
+- file: api/openapi/sources/user-info.yaml
+  responsibility: User info
+  tag: User info
+- file: api/openapi/sources/language.yaml
+  responsibility: Language
+  tag: Language
+- file: api/openapi/sources/behaviors.yaml
+  responsibility: Behaviors
+  tag: Behaviors
+- file: api/openapi/sources/graphql.yaml
+  responsibility: GraphQL
+  tag: GraphQL
+- file: api/openapi/sources/media.yaml
+  responsibility: Media
+  tag: Media
+- file: api/openapi/sources/event-stream.yaml
+  responsibility: Event stream
+  tag: Event stream
+- file: api/openapi/sources/shared.yaml
+  responsibility: Shared API metadata
+standalone:
+- file: api/behaviors.yaml
+  responsibility: Behavior sequence payloads
+- file: api/feature-events.yaml
+  responsibility: Feature event payloads
+- file: api/feature-controls.yaml
+  responsibility: Feature control payloads
+- file: api/compat/auth.yaml
+  responsibility: Authentication compatibility projections
+- file: api/compat/behaviors.yaml
+  responsibility: Behavior compatibility projections
+- file: api/compat/controls.yaml
+  responsibility: Control compatibility projections
+- file: api/compat/devices.yaml
+  responsibility: Device compatibility projections
+- file: api/compat/endpoints.yaml
+  responsibility: Endpoint compatibility projections
+- file: api/compat/events.yaml
+  responsibility: Event compatibility projections
+- file: api/compat/media.yaml
+  responsibility: Media compatibility projections
+- file: api/compat/user-info.yaml
+  responsibility: User info compatibility projections

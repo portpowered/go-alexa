@@ -1,0 +1,6 @@
+package: alexamodels
+generate:
+  models: true
+output: pkg/dependencymodels/media.gen.go
+output-options:
+  include-tags: [Media]

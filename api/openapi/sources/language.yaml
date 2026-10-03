@@ -1,0 +1,87 @@
+openapi: 3.0.3
+info:
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: 'This is an implementation-derived description of HTTP routes, request shapes,
+
+    and response models used by the current go-alexa source. It is not an
+
+    Amazon-issued API contract. There are no sanitized live HTTP captures in
+
+    this repository, so these shapes have not been verified against current
+
+    service behavior. Synthetic test data is not evidence of provider behavior.
+
+    See the Alexa AsyncAPI document for the directive stream parsed by the
+
+    library, and the GraphQL schema for its GraphQL subset.
+
+    '
+servers:
+- url: https://api.amazonalexa.com
+  description: Default REST base URL in go-alexa.
+  x-go-alexa-region: na
+- url: https://api.eu.amazonalexa.com
+  description: EU REST base URL constant in go-alexa.
+  x-go-alexa-region: eu
+- url: https://api.jp.amazonalexa.com
+  description: Japan REST base URL constant in go-alexa.
+  x-go-alexa-region: jp
+security:
+- BearerToken: []
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
+tags:
+- name: Language
+  description: Cookie-backed language preference operations implemented by go-alexa.
+paths:
+  /api/language:
+    get:
+      tags:
+      - Language
+      operationId: fetchCsrfCookie
+      summary: Request the language route while looking for a CSRF cookie
+      description: 'This helper sends its stored cookies and checks the response cookies
+
+        for a cookie named `csrf`. It does not decode the response body or
+
+        validate a provider status code in this path.
+
+        '
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      security:
+      - CookieHeader: []
+      responses:
+        '200':
+          description: The client only inspects response cookies; the body shape is unknown to this implementation.
+          headers:
+            Set-Cookie:
+              description: The helper looks for a cookie whose name is `csrf`.
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: The client sends its supplied access token in the Authorization header.
+  responses:
+    UnhandledResponse:
+      description: Response not decoded into a success model by this operation.

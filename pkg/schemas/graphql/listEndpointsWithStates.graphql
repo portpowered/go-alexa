@@ -284,6 +284,7 @@ query ListEndpointsWithStates(
 							message
 						}
 						rangeValue {
+							__typename
 							value
 						}
 					}
@@ -659,4 +660,3 @@ query ListEndpointsWithStates(
 		}
 	}
 }
-

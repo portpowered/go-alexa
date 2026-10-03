@@ -38,6 +38,14 @@ const (
 	requestArgumentCount            = 2
 )
 
+const (
+	apiRoutesImportPath        = "github.com/portpowered/go-alexa/pkg/internal/apiroutes"
+	dependencyModelsImportPath = "github.com/portpowered/go-alexa/pkg/dependencymodels"
+	netHTTPImportPath          = "net/http"
+	netURLImportPath           = "net/url"
+	fmtImportPath              = "fmt"
+)
+
 type openAPIDocument struct {
 	Servers        []regionalServer `yaml:"servers"`
 	RequestHeaders []string         `yaml:"x-go-alexa-request-headers"`
@@ -102,6 +110,25 @@ type streamFraming struct {
 	AuthenticationFailureMarker string `yaml:"authentication-failure-marker"`
 }
 
+type externalHTTP2Inventory struct {
+	Dependency string                  `yaml:"dependency"`
+	Module     string                  `yaml:"module"`
+	Version    string                  `yaml:"version"`
+	Exchanges  []externalHTTP2Exchange `yaml:"exchanges"`
+}
+
+type externalHTTP2Exchange struct {
+	Operation string `yaml:"operation"`
+	Schema    string `yaml:"schema"`
+	Channel   string `yaml:"channel"`
+	Framing   string `yaml:"framing"`
+	Callsite  string `yaml:"callsite"`
+}
+
+type externalHTTP2Contract struct {
+	path, method, channel, framing, callsite string
+}
+
 var pathLiteralPattern = regexp.MustCompile(`^(?:/|https?://[^/]+/)`)
 
 func main() {
@@ -127,6 +154,11 @@ func run(root string, check bool) error {
 	var asyncAPI asyncAPIDocument
 
 	err = readYAML(filepath.Join(root, "api", "asyncapi.yaml"), &asyncAPI)
+	if err != nil {
+		return err
+	}
+
+	err = checkExternalHTTP2Inventory(root, openAPI, asyncAPI)
 	if err != nil {
 		return err
 	}
@@ -197,6 +229,116 @@ func readYAML(path string, target any) error {
 	}
 
 	return nil
+}
+
+func checkExternalHTTP2Inventory(root string, openAPI openAPIDocument, asyncAPI asyncAPIDocument) error {
+	inventoryPath := filepath.Join(root, "api", "external", "http2.yaml")
+
+	var inventory externalHTTP2Inventory
+
+	err := readYAML(inventoryPath, &inventory)
+	if err != nil {
+		return err
+	}
+
+	if inventory.Dependency != "golang.org/x/net/http2" || inventory.Module != "golang.org/x/net" || inventory.Version == "" {
+		return errors.New("external HTTP/2 inventory must name the pinned golang.org/x/net/http2 module and version")
+	}
+
+	err = checkExternalHTTP2Version(root, inventory)
+	if err != nil {
+		return err
+	}
+
+	expected := externalHTTP2Contracts()
+	if len(inventory.Exchanges) != len(expected) {
+		return fmt.Errorf("external HTTP/2 inventory must contain exactly %d schema-backed exchanges", len(expected))
+	}
+
+	seen := make(map[string]bool, len(expected))
+
+	for _, exchange := range inventory.Exchanges {
+		contract, exists := expected[exchange.Operation]
+		if !exists || seen[exchange.Operation] {
+			return fmt.Errorf("external HTTP/2 inventory contains unregistered or duplicate operation %q", exchange.Operation)
+		}
+
+		err := validateExternalHTTP2Exchange(openAPI, exchange, contract)
+		if err != nil {
+			return err
+		}
+
+		seen[exchange.Operation] = true
+	}
+
+	if !seen["openDirectiveStream"] || !seen["pingDirectiveStream"] {
+		return errors.New("external HTTP/2 inventory is missing the stream or ping operation")
+	}
+
+	if _, exists := asyncAPI.Channels["directives"]; !exists {
+		return errors.New("external HTTP/2 inventory references an unknown AsyncAPI directives channel")
+	}
+
+	return nil
+}
+
+func checkExternalHTTP2Version(root string, inventory externalHTTP2Inventory) error {
+	//nolint:gosec // root is the explicit local repository root passed to the validator.
+	goMod, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	if err != nil {
+		return fmt.Errorf("read Go module versions for external HTTP/2 inventory: %w", err)
+	}
+
+	moduleRequirement := regexp.MustCompile(`(?m)^\s*` + regexp.QuoteMeta(inventory.Module) + `\s+([^\s]+)`)
+
+	versionMatch := moduleRequirement.FindSubmatch(goMod)
+	if len(versionMatch) != 2 || string(versionMatch[1]) != inventory.Version {
+		return fmt.Errorf("external HTTP/2 inventory version %s does not match %s in go.mod", inventory.Version, inventory.Module)
+	}
+
+	return nil
+}
+
+func externalHTTP2Contracts() map[string]externalHTTP2Contract {
+	return map[string]externalHTTP2Contract{
+		"openDirectiveStream": {
+			path: "/v20160207/directives", method: "get", channel: "../asyncapi.yaml#/channels/directives",
+			framing: "../asyncapi.yaml#/channels/directives/x-go-alexa-stream-framing", callsite: "pkg/alexa/http2.go#Connect",
+		},
+		"pingDirectiveStream": {
+			path: "/ping", method: "get", channel: "", framing: "", callsite: "pkg/alexa/http2.go#ping",
+		},
+	}
+}
+
+func validateExternalHTTP2Exchange(openAPI openAPIDocument, exchange externalHTTP2Exchange, contract externalHTTP2Contract) error {
+	operationPath, operationMethod, ok := openAPIOperation(openAPI, exchange.Operation)
+	if !ok || operationPath != contract.path || !strings.EqualFold(operationMethod, contract.method) {
+		return fmt.Errorf("external HTTP/2 exchange %s does not match an inventoried OpenAPI route", exchange.Operation)
+	}
+
+	wantSchema := "../openapi.yaml#/paths/" + strings.ReplaceAll(contract.path, "/", "~1") + "/" + contract.method
+	if exchange.Schema != wantSchema || exchange.Channel != contract.channel || exchange.Framing != contract.framing || exchange.Callsite != contract.callsite {
+		return fmt.Errorf("external HTTP/2 exchange %s does not match its generated route, channel, framing, and network callsite", exchange.Operation)
+	}
+
+	if !allowedNetworkFunctions[exchange.Callsite] {
+		return fmt.Errorf("external HTTP/2 exchange %s references an unregistered network function %s", exchange.Operation, exchange.Callsite)
+	}
+
+	return nil
+}
+
+func openAPIOperation(doc openAPIDocument, operationID string) (string, string, bool) {
+	for path, operations := range doc.Paths {
+		for method, operation := range operations {
+			if operation.OperationID == operationID {
+				return path, method, true
+			}
+		}
+	}
+
+	return "", "", false
 }
 
 func collectRoutes(doc openAPIDocument) ([]route, error) {
@@ -630,6 +772,7 @@ func routeAliases(path string) (map[string]string, error) {
 	}
 
 	aliases := make(map[string]string)
+	imports := packageImportsFromFile(file)
 
 	ast.Inspect(file, func(node ast.Node) bool {
 		value, ok := node.(*ast.ValueSpec)
@@ -642,9 +785,12 @@ func routeAliases(path string) (map[string]string, error) {
 				continue
 			}
 
-			if selector, ok := value.Values[i].(*ast.SelectorExpr); ok && strings.HasPrefix(selector.Sel.Name, "Path") {
-				aliases[name.Name] = strings.TrimPrefix(selector.Sel.Name, "Path")
+			selector, ok := value.Values[i].(*ast.SelectorExpr)
+			if !ok || !imports.hasQualifier(selector.X, apiRoutesImportPath) || !strings.HasPrefix(selector.Sel.Name, "Path") {
+				continue
 			}
+
+			aliases[name.Name] = strings.TrimPrefix(selector.Sel.Name, "Path")
 		}
 
 		return true
@@ -662,7 +808,8 @@ func checkWireCallsites(
 	violations *[]string,
 ) {
 	checker := wireCallsiteChecker{
-		fset: fset, aliases: aliases, methods: methods, serverTemplateArity: serverTemplateArity, violations: violations,
+		fset: fset, imports: packageImportsFromFile(file), aliases: aliases, methods: methods,
+		serverTemplateArity: serverTemplateArity, violations: violations,
 	}
 
 	checkProtectedPackageImports(file, fset, violations)
@@ -674,7 +821,7 @@ func checkWireCallsites(
 			return true
 		}
 
-		analysis := analyzeWireFunction(decl.Body)
+		analysis := analyzeWireFunction(decl.Body, checker.imports)
 		checker.checkFunction(decl, analysis)
 
 		return false
@@ -686,23 +833,26 @@ type wireFunctionAnalysis struct {
 	queryValues    map[any]bool
 	headerAliases  map[string]bool
 	addressEscapes map[any][]token.Pos
+	imports        packageImports
 }
 
 type wireCallsiteChecker struct {
 	fset                *token.FileSet
+	imports             packageImports
 	aliases             map[string]string
 	methods             map[string]string
 	serverTemplateArity int
 	violations          *[]string
 }
 
-func analyzeWireFunction(body *ast.BlockStmt) wireFunctionAnalysis {
+func analyzeWireFunction(body *ast.BlockStmt, imports packageImports) wireFunctionAnalysis {
 	conditional := conditionalAssignmentPositions(body)
 	analysis := wireFunctionAnalysis{
 		assignments:    make(map[string][]routeAssignment),
 		queryValues:    make(map[any]bool),
 		headerAliases:  make(map[string]bool),
 		addressEscapes: make(map[any][]token.Pos),
+		imports:        imports,
 	}
 
 	ast.Inspect(body, func(node ast.Node) bool {
@@ -714,7 +864,7 @@ func analyzeWireFunction(body *ast.BlockStmt) wireFunctionAnalysis {
 
 		if declaration, ok := node.(*ast.ValueSpec); ok {
 			analyzeHeaderDeclarations(declaration, analysis.headerAliases)
-			analyzeQueryDeclarations(declaration, analysis.queryValues)
+			analyzeQueryDeclarations(declaration, analysis.queryValues, analysis.imports)
 			analyzeWireDeclarations(declaration, analysis.assignments)
 		}
 
@@ -750,8 +900,15 @@ func unparenthesizedExpr(value ast.Expr) ast.Expr {
 	}
 }
 
-func conditionalAssignmentPositions(body ast.Node) map[token.Pos]token.Pos {
-	positions := make(map[token.Pos]token.Pos)
+type conditionalAssignment struct {
+	scopeEnd   token.Pos
+	controlPos token.Pos
+	controlEnd token.Pos
+	branch     int
+}
+
+func conditionalAssignmentPositions(body ast.Node) map[token.Pos]conditionalAssignment {
+	positions := make(map[token.Pos]conditionalAssignment)
 
 	var parents []ast.Node
 
@@ -763,7 +920,7 @@ func conditionalAssignmentPositions(body ast.Node) map[token.Pos]token.Pos {
 		}
 
 		if assignment, ok := node.(*ast.AssignStmt); ok {
-			positions[assignment.Pos()] = conditionalScopeEnd(parents, assignment.Pos())
+			positions[assignment.Pos()] = conditionalAssignmentFor(parents, assignment.Pos())
 		}
 
 		parents = append(parents, node)
@@ -772,6 +929,33 @@ func conditionalAssignmentPositions(body ast.Node) map[token.Pos]token.Pos {
 	})
 
 	return positions
+}
+
+func conditionalAssignmentFor(parents []ast.Node, assignment token.Pos) conditionalAssignment {
+	result := conditionalAssignment{
+		scopeEnd: conditionalScopeEnd(parents, assignment), controlPos: token.NoPos, controlEnd: token.NoPos, branch: 0,
+	}
+
+	for index := len(parents) - 1; index >= 0; index-- {
+		conditional, ok := parents[index].(*ast.IfStmt)
+		if !ok {
+			continue
+		}
+
+		result.controlPos = conditional.Pos()
+		result.controlEnd = conditional.End()
+
+		switch {
+		case assignment >= conditional.Body.Pos() && assignment <= conditional.Body.End():
+			result.branch = 1
+		case conditional.Else != nil && assignment >= conditional.Else.Pos() && assignment <= conditional.Else.End():
+			result.branch = 2
+		}
+
+		return result
+	}
+
+	return result
 }
 
 func conditionalScopeEnd(parents []ast.Node, assignment token.Pos) token.Pos {
@@ -852,7 +1036,7 @@ func analyzeWireDeclarations(declaration *ast.ValueSpec, assignments map[string]
 			name := declaration.Names[index].Name
 			assignments[name] = append(assignments[name], routeAssignment{
 				value: value, position: declaration.Pos(), op: token.ASSIGN, object: declaration.Names[index].Obj,
-				scopeEnd: token.NoPos,
+				scopeEnd: token.NoPos, controlPos: token.NoPos, controlEnd: token.NoPos, branch: 0,
 			})
 		}
 	}
@@ -866,15 +1050,15 @@ func analyzeHeaderDeclarations(declaration *ast.ValueSpec, aliases map[string]bo
 	}
 }
 
-func analyzeQueryDeclarations(declaration *ast.ValueSpec, aliases map[any]bool) {
+func analyzeQueryDeclarations(declaration *ast.ValueSpec, aliases map[any]bool, imports packageImports) {
 	for index, value := range declaration.Values {
-		if index < len(declaration.Names) && isQueryValuesExpression(value, aliases) {
+		if index < len(declaration.Names) && isQueryValuesExpression(value, aliases, imports) {
 			aliases[declaration.Names[index].Obj] = true
 		}
 	}
 }
 
-func analyzeWireAssignments(assignment *ast.AssignStmt, analysis *wireFunctionAnalysis, scopeEnd token.Pos) {
+func analyzeWireAssignments(assignment *ast.AssignStmt, analysis *wireFunctionAnalysis, conditional conditionalAssignment) {
 	for i, right := range assignment.Rhs {
 		if i >= len(assignment.Lhs) {
 			continue
@@ -886,17 +1070,20 @@ func analyzeWireAssignments(assignment *ast.AssignStmt, analysis *wireFunctionAn
 		}
 
 		analysis.assignments[name.Name] = append(analysis.assignments[name.Name], routeAssignment{
-			value:    right,
-			position: assignment.Pos(),
-			op:       assignment.Tok,
-			object:   name.Obj,
-			scopeEnd: scopeEnd,
+			value:      right,
+			position:   assignment.Pos(),
+			op:         assignment.Tok,
+			object:     name.Obj,
+			scopeEnd:   conditional.scopeEnd,
+			controlPos: conditional.controlPos,
+			controlEnd: conditional.controlEnd,
+			branch:     conditional.branch,
 		})
 		if isHeaderExpression(right, analysis.headerAliases) {
 			analysis.headerAliases[name.Name] = true
 		}
 
-		if isQueryValuesExpression(right, analysis.queryValues) {
+		if isQueryValuesExpression(right, analysis.queryValues, analysis.imports) {
 			analysis.queryValues[name.Obj] = true
 		}
 	}
@@ -1193,7 +1380,7 @@ func (checker *wireCallsiteChecker) checkHeaderMapExpression(
 	case *ast.CompositeLit:
 		for _, element := range value.Elts {
 			pair, hasKey := element.(*ast.KeyValueExpr)
-			if hasKey && !generatedParameter(pair.Key, requestHeaderFieldName) {
+			if hasKey && !generatedParameter(pair.Key, requestHeaderFieldName, checker.imports) {
 				*checker.violations = append(*checker.violations, fmt.Sprintf(
 					"%s: custom request header map key must use a schema-generated Header constant",
 					checker.fset.Position(pair.Key.Pos()),
@@ -1220,13 +1407,13 @@ func (checker *wireCallsiteChecker) addUnverifiedHeaderMap(position token.Pos) {
 
 func (checker *wireCallsiteChecker) checkQueryComposite(node ast.Node) {
 	composite, isComposite := node.(*ast.CompositeLit)
-	if !isComposite || !isURLValuesType(composite.Type) {
+	if !isComposite || !isURLValuesType(composite.Type, checker.imports) {
 		return
 	}
 
 	for _, element := range composite.Elts {
 		pair, hasKey := element.(*ast.KeyValueExpr)
-		if hasKey && !generatedParameter(pair.Key, "QueryParam") {
+		if hasKey && !generatedParameter(pair.Key, "QueryParam", checker.imports) {
 			*checker.violations = append(*checker.violations, fmt.Sprintf(
 				"%s: query parameter map key must use a schema-generated QueryParam constant",
 				checker.fset.Position(pair.Key.Pos()),
@@ -1235,10 +1422,10 @@ func (checker *wireCallsiteChecker) checkQueryComposite(node ast.Node) {
 	}
 }
 
-func isURLValuesType(expr ast.Expr) bool {
+func isURLValuesType(expr ast.Expr, imports packageImports) bool {
 	selector, isSelector := expr.(*ast.SelectorExpr)
 
-	return isSelector && isPackageQualifier(selector.X, "url") && selector.Sel.Name == "Values"
+	return isSelector && imports.hasQualifier(selector.X, netURLImportPath) && selector.Sel.Name == "Values"
 }
 
 func (checker *wireCallsiteChecker) checkIndex(node ast.Node, analysis wireFunctionAnalysis) {
@@ -1249,7 +1436,7 @@ func (checker *wireCallsiteChecker) checkIndex(node ast.Node, analysis wireFunct
 
 	receiver := unparenthesizedExpr(index.X)
 
-	if isIdentifier(receiver, "customHeaders") && !generatedParameter(index.Index, requestHeaderFieldName) {
+	if isIdentifier(receiver, "customHeaders") && !generatedParameter(index.Index, requestHeaderFieldName, checker.imports) {
 		*checker.violations = append(*checker.violations, fmt.Sprintf(
 			"%s: custom request header name must use a schema-generated Header constant",
 			checker.fset.Position(index.Pos()),
@@ -1258,7 +1445,7 @@ func (checker *wireCallsiteChecker) checkIndex(node ast.Node, analysis wireFunct
 		return
 	}
 
-	if isHeaderExpression(receiver, analysis.headerAliases) && !generatedParameter(index.Index, requestHeaderFieldName) {
+	if isHeaderExpression(receiver, analysis.headerAliases) && !generatedParameter(index.Index, requestHeaderFieldName, checker.imports) {
 		*checker.violations = append(*checker.violations, fmt.Sprintf(
 			"%s: request header map key must use a schema-generated Header constant",
 			checker.fset.Position(index.Pos()),
@@ -1266,7 +1453,7 @@ func (checker *wireCallsiteChecker) checkIndex(node ast.Node, analysis wireFunct
 	}
 
 	if variable, isIdent := receiver.(*ast.Ident); isIdent && analysis.queryValues[variable.Obj] &&
-		!generatedParameter(index.Index, "QueryParam") {
+		!generatedParameter(index.Index, "QueryParam", checker.imports) {
 		*checker.violations = append(*checker.violations, fmt.Sprintf(
 			"%s: query parameter map key must use a schema-generated QueryParam constant",
 			checker.fset.Position(index.Pos()),
@@ -1284,7 +1471,7 @@ func (checker *wireCallsiteChecker) checkRequestCall(
 		return
 	}
 
-	operation := generatedMethod(method)
+	operation := generatedMethod(method, checker.imports)
 
 	_, knownMethod := checker.methods[operation]
 	if operation == "" || !knownMethod {
@@ -1297,7 +1484,7 @@ func (checker *wireCallsiteChecker) checkRequestCall(
 	}
 
 	found := routeNames(target, analysis.assignments, checker.aliases, analysis.queryValues, analysis.addressEscapes,
-		checker.methods, checker.serverTemplateArity, receiverObject(decl), call.Pos())
+		checker.methods, checker.serverTemplateArity, receiverObject(decl), call.Pos(), checker.imports)
 
 	expected := operation
 	if operation == "OpenDirectiveStream" {
@@ -1331,14 +1518,14 @@ func (checker *wireCallsiteChecker) checkParameterCall(
 	}
 
 	if receiver, ok := unparenthesizedIdent(selector.X); ok && analysis.queryValues[receiver.Obj] {
-		if !generatedParameter(call.Args[0], "QueryParam") {
+		if !generatedParameter(call.Args[0], "QueryParam", checker.imports) {
 			checker.addParameterViolation(call, "query parameter key must use a schema-generated QueryParam constant")
 		}
 	}
 
 	if isHeaderExpression(selector.X, analysis.headerAliases) {
 		allowedDynamicHeader := decl.Name.Name == fullURLRequestHelperName && isIdentifier(call.Args[0], "key")
-		if !generatedParameter(call.Args[0], requestHeaderFieldName) && !allowedDynamicHeader {
+		if !generatedParameter(call.Args[0], requestHeaderFieldName, checker.imports) && !allowedDynamicHeader {
 			checker.addParameterViolation(call, "request header name must use a schema-generated Header constant")
 		}
 	}
@@ -1404,17 +1591,32 @@ var allowedNetworkImports = map[string]map[string]bool{
 }
 
 func checkProtectedPackageImports(file *ast.File, fset *token.FileSet, violations *[]string) {
+	protectedPackagePaths := map[string]bool{
+		apiRoutesImportPath: true, dependencyModelsImportPath: true, fmtImportPath: true,
+		netHTTPImportPath: true, netURLImportPath: true,
+	}
 	protectedPackageImports := map[string]string{
-		apiRoutesPackage: "github.com/portpowered/go-alexa/pkg/internal/apiroutes",
-		"alexamodels":    "github.com/portpowered/go-alexa/pkg/dependencymodels",
-		"fmt":            "fmt",
-		"http":           "net/http",
-		"url":            "net/url",
+		apiRoutesPackage: apiRoutesImportPath,
+		"alexamodels":    dependencyModelsImportPath,
+		"fmt":            fmtImportPath,
+		"http":           netHTTPImportPath,
+		"url":            netURLImportPath,
 	}
 
 	for _, spec := range file.Imports {
 		importPath, err := strconv.Unquote(spec.Path.Value)
 		if err != nil {
+			continue
+		}
+
+		if spec.Name != nil && spec.Name.Name == "." {
+			if _, protected := protectedPackagePaths[importPath]; protected {
+				*violations = append(*violations, fmt.Sprintf(
+					"%s: protected package import must not be dot-imported",
+					fset.Position(spec.Pos()),
+				))
+			}
+
 			continue
 		}
 
@@ -1429,6 +1631,39 @@ func checkProtectedPackageImports(file *ast.File, fset *token.FileSet, violation
 			))
 		}
 	}
+}
+
+type packageImports map[string]string
+
+func packageImportsFromFile(file *ast.File) packageImports {
+	imports := make(packageImports, len(file.Imports))
+
+	for _, specification := range file.Imports {
+		importPath, err := strconv.Unquote(specification.Path.Value)
+		if err != nil {
+			continue
+		}
+
+		name := importPath[strings.LastIndex(importPath, "/")+1:]
+		if specification.Name != nil {
+			name = specification.Name.Name
+		}
+
+		if name != "_" && name != "." {
+			imports[name] = importPath
+		}
+	}
+
+	return imports
+}
+
+func (imports packageImports) hasQualifier(expression ast.Expr, importPath string) bool {
+	identifier, ok := expression.(*ast.Ident)
+	if !ok || identifier.Obj != nil {
+		return false
+	}
+
+	return imports[identifier.Name] == importPath
 }
 
 func isNetworkImport(path string) bool {
@@ -1450,7 +1685,9 @@ func networkPrimitive(call *ast.CallExpr) string {
 
 func networkPrimitiveSelector(selector *ast.SelectorExpr) string {
 	switch selector.Sel.Name {
-	case "Get", "Post", "PostForm", "Head", "Do", "RoundTrip", "Dial", "DialContext", "DialTLS", "Upgrade", "NewRequest", newRequestWithContextName:
+	case "Get", "Post", "PostForm", "Head", "Do", "RoundTrip",
+		"Dial", "DialContext", "DialTLS", "DialTLSContext", "Upgrade",
+		"NewRequest", newRequestWithContextName:
 		return selector.Sel.Name
 	default:
 		return ""
@@ -1464,6 +1701,7 @@ type networkSend struct {
 
 type networkFunctionScan struct {
 	fset               *token.FileSet
+	imports            packageImports
 	functionKey        string
 	receiver           any
 	allowed            bool
@@ -1487,7 +1725,7 @@ func checkNetworkInventory(file *ast.File, fset *token.FileSet, path string, vio
 			continue
 		}
 
-		checkNetworkFunction(decl, fset, path, violations)
+		checkNetworkFunction(decl, fset, path, packageImportsFromFile(file), violations)
 	}
 }
 
@@ -1500,9 +1738,10 @@ func checkNetworkImports(file *ast.File, fset *token.FileSet, path string, viola
 	}
 }
 
-func checkNetworkFunction(decl *ast.FuncDecl, fset *token.FileSet, path string, violations *[]string) {
+func checkNetworkFunction(decl *ast.FuncDecl, fset *token.FileSet, path string, imports packageImports, violations *[]string) {
 	scan := networkFunctionScan{
 		fset:               fset,
+		imports:            imports,
 		functionKey:        path + "#" + decl.Name.Name,
 		receiver:           receiverObject(decl),
 		allowed:            allowedNetworkFunctions[path+"#"+decl.Name.Name],
@@ -1568,7 +1807,7 @@ func (scan *networkFunctionScan) inspectNode(node ast.Node) {
 	primitive := networkPrimitive(call)
 	if primitive != "Do" {
 		if selector, ok := call.Fun.(*ast.SelectorExpr); ok && !isDirectRequestHeaderMethod(selector) {
-			for _, variable := range routeMutableArgumentSources(selector.X) {
+			for _, variable := range routeMutableArgumentSources(selector.X, scan.imports) {
 				scan.requestEscapes[variable] = append(scan.requestEscapes[variable], call.Pos())
 			}
 		}
@@ -1578,7 +1817,7 @@ func (scan *networkFunctionScan) inspectNode(node ast.Node) {
 				continue
 			}
 
-			for _, variable := range routeMutableArgumentSources(argument) {
+			for _, variable := range routeMutableArgumentSources(argument, scan.imports) {
 				scan.requestEscapes[variable] = append(scan.requestEscapes[variable], call.Pos())
 			}
 		}
@@ -1623,12 +1862,12 @@ func isDirectRequestHeaderMethod(selector *ast.SelectorExpr) bool {
 	return ok && header.Sel.Name == requestHeaderFieldName
 }
 
-func routeMutableArgumentSources(expr ast.Expr) []string {
+func routeMutableArgumentSources(expr ast.Expr, imports packageImports) []string {
 	if variable := rootIdentifier(expr); variable != "" {
 		return []string{variable}
 	}
 
-	return requestAliasSources(expr)
+	return requestAliasSources(expr, imports)
 }
 
 func (scan *networkFunctionScan) recordRequestAssignments(node ast.Node) {
@@ -1638,7 +1877,7 @@ func (scan *networkFunctionScan) recordRequestAssignments(node ast.Node) {
 
 			if index < len(declaration.Values) {
 				scan.requestAliases[variable.Name] = append(
-					scan.requestAliases[variable.Name], requestAliasSources(declaration.Values[index])...,
+					scan.requestAliases[variable.Name], requestAliasSources(declaration.Values[index], scan.imports)...,
 				)
 			}
 		}
@@ -1660,7 +1899,7 @@ func (scan *networkFunctionScan) recordRequestAssignments(node ast.Node) {
 	for index, value := range assignment.Rhs {
 		if index < len(assignment.Lhs) {
 			if variable := rootIdentifier(assignment.Lhs[index]); variable != "" && scan.constructors[variable] == token.NoPos {
-				scan.requestAliases[variable] = append(scan.requestAliases[variable], requestAliasSources(value)...)
+				scan.requestAliases[variable] = append(scan.requestAliases[variable], requestAliasSources(value, scan.imports)...)
 			}
 		}
 
@@ -1677,7 +1916,7 @@ func (scan *networkFunctionScan) recordRequestAssignments(node ast.Node) {
 
 // A request or its URL can be changed through a local alias after construction.
 // Reject creating such aliases instead of trying to prove every later use safe.
-func requestAliasSources(expr ast.Expr) []string {
+func requestAliasSources(expr ast.Expr, imports packageImports) []string {
 	switch value := expr.(type) {
 	case *ast.Ident:
 		return []string{value.Name}
@@ -1687,20 +1926,20 @@ func requestAliasSources(expr ast.Expr) []string {
 		}
 	case *ast.CallExpr:
 		selector, isSelector := value.Fun.(*ast.SelectorExpr)
-		if isSelector && isIdentifier(selector.X, "http") && selector.Sel.Name == requestHeaderFieldName && len(value.Args) == 1 {
-			return requestAliasSources(value.Args[0])
+		if isSelector && imports.hasQualifier(selector.X, netHTTPImportPath) && selector.Sel.Name == requestHeaderFieldName && len(value.Args) == 1 {
+			return requestAliasSources(value.Args[0], imports)
 		}
 	case *ast.UnaryExpr:
-		return requestAliasSources(value.X)
+		return requestAliasSources(value.X, imports)
 	case *ast.ParenExpr:
-		return requestAliasSources(value.X)
+		return requestAliasSources(value.X, imports)
 	case *ast.KeyValueExpr:
-		return requestAliasSources(value.Value)
+		return requestAliasSources(value.Value, imports)
 	case *ast.CompositeLit:
 		var sources []string
 
 		for _, element := range value.Elts {
-			sources = append(sources, requestAliasSources(element)...)
+			sources = append(sources, requestAliasSources(element, imports)...)
 		}
 
 		return sources
@@ -1728,7 +1967,7 @@ func rootIdentifier(expr ast.Expr) string {
 
 func (scan *networkFunctionScan) checkRequestConstructor(call *ast.CallExpr) {
 	selector, ok := call.Fun.(*ast.SelectorExpr)
-	if !ok || isPackageQualifier(selector.X, "http") {
+	if !ok || scan.imports.hasQualifier(selector.X, netHTTPImportPath) && selector.Sel.Name == newRequestWithContextName {
 		return
 	}
 
@@ -1857,13 +2096,7 @@ func isIdentifier(expr ast.Expr, name string) bool {
 	return ok && identifier.Name == name
 }
 
-func isPackageQualifier(expr ast.Expr, name string) bool {
-	identifier, ok := expr.(*ast.Ident)
-
-	return ok && identifier.Name == name && identifier.Obj == nil
-}
-
-func generatedParameter(expr ast.Expr, prefix string) bool {
+func generatedParameter(expr ast.Expr, prefix string, imports packageImports) bool {
 	selector, isSelector := expr.(*ast.SelectorExpr)
 	if !isSelector || !strings.HasPrefix(selector.Sel.Name, prefix) {
 		return false
@@ -1871,18 +2104,22 @@ func generatedParameter(expr ast.Expr, prefix string) bool {
 
 	qualifier, isQualifier := selector.X.(*ast.Ident)
 
-	return isQualifier && qualifier.Obj == nil &&
-		(qualifier.Name == apiRoutesPackage || qualifier.Name == "alexamodels")
+	return isQualifier && imports.hasQualifier(qualifier, apiRoutesImportPath) ||
+		isQualifier && imports.hasQualifier(qualifier, dependencyModelsImportPath)
 }
 
-func generatedMethod(expr ast.Expr) string {
+func isPackageQualifier(expression ast.Expr, imports packageImports, importPath string) bool {
+	return imports.hasQualifier(expression, importPath)
+}
+
+func generatedMethod(expr ast.Expr, imports packageImports) string {
 	selector, isSelector := expr.(*ast.SelectorExpr)
 	if !isSelector || !strings.HasPrefix(selector.Sel.Name, "Method") {
 		return ""
 	}
 
 	qualifier, isQualifier := selector.X.(*ast.Ident)
-	if !isQualifier || qualifier.Name != apiRoutesPackage || qualifier.Obj != nil {
+	if !isQualifier || !imports.hasQualifier(qualifier, apiRoutesImportPath) {
 		return ""
 	}
 
@@ -1911,11 +2148,14 @@ func requestTarget(call *ast.CallExpr) (ast.Expr, ast.Expr, bool) {
 }
 
 type routeAssignment struct {
-	value    ast.Expr
-	position token.Pos
-	op       token.Token
-	object   any
-	scopeEnd token.Pos
+	value      ast.Expr
+	position   token.Pos
+	op         token.Token
+	object     any
+	scopeEnd   token.Pos
+	controlPos token.Pos
+	controlEnd token.Pos
+	branch     int
 }
 
 func routeNames(
@@ -1928,6 +2168,7 @@ func routeNames(
 	serverTemplateArity int,
 	receiver any,
 	before token.Pos,
+	imports packageImports,
 ) map[string]bool {
 	scan := routeNameScan{
 		assignments:         assignments,
@@ -1937,6 +2178,7 @@ func routeNames(
 		routeTemplates:      routeTemplates,
 		serverTemplateArity: serverTemplateArity,
 		receiver:            receiver,
+		imports:             imports,
 	}
 
 	name := scan.expression(expr, before)
@@ -1955,6 +2197,7 @@ type routeNameScan struct {
 	routeTemplates      map[string]string
 	serverTemplateArity int
 	receiver            any
+	imports             packageImports
 }
 
 func (scan *routeNameScan) expression(value ast.Expr, cutoff token.Pos) string {
@@ -1977,12 +2220,7 @@ func (scan *routeNameScan) expression(value ast.Expr, cutoff token.Pos) string {
 			return ""
 		}
 
-		if latest.scopeEnd != token.NoPos && cutoff > latest.scopeEnd ||
-			(latest.op != token.ASSIGN && latest.op != token.DEFINE) {
-			return ""
-		}
-
-		return scan.expression(latest.value, latest.position)
+		return scan.routeAssignmentName(part, latest, cutoff)
 	case *ast.SelectorExpr:
 		return scan.selectorName(part)
 	case *ast.ParenExpr:
@@ -2017,6 +2255,56 @@ func (scan *routeNameScan) routeAddressEscaped(variable *ast.Ident, before token
 	return addressEscapedBefore(variable.Obj, before, scan.addressEscapes)
 }
 
+func (scan *routeNameScan) routeAssignmentName(variable *ast.Ident, assignment routeAssignment, cutoff token.Pos) string {
+	if assignment.scopeEnd != token.NoPos && cutoff > assignment.scopeEnd {
+		return scan.commonConditionalRoute(variable.Name, variable.Obj, assignment, cutoff)
+	}
+
+	if assignment.op != token.ASSIGN && assignment.op != token.DEFINE {
+		return ""
+	}
+
+	return scan.expression(assignment.value, assignment.position)
+}
+
+func (scan *routeNameScan) commonConditionalRoute(name string, object any, latest routeAssignment, before token.Pos) string {
+	if latest.controlPos == token.NoPos || latest.controlEnd >= before || latest.branch == 0 {
+		return ""
+	}
+
+	branches := map[int]routeAssignment{}
+
+	for _, candidate := range scan.assignments[name] {
+		if candidate.object != object || candidate.controlPos != latest.controlPos ||
+			candidate.position >= before || candidate.branch == 0 {
+			continue
+		}
+
+		current, exists := branches[candidate.branch]
+		if !exists || candidate.position > current.position {
+			branches[candidate.branch] = candidate
+		}
+	}
+
+	thenAssignment, hasThen := branches[1]
+
+	elseAssignment, hasElse := branches[2]
+
+	if !hasThen || !hasElse {
+		return ""
+	}
+
+	thenRoute := scan.expression(thenAssignment.value, thenAssignment.position)
+
+	elseRoute := scan.expression(elseAssignment.value, elseAssignment.position)
+
+	if thenRoute == "" || thenRoute != elseRoute {
+		return ""
+	}
+
+	return thenRoute
+}
+
 func addressEscapedBefore(object any, before token.Pos, addressEscapes map[any][]token.Pos) bool {
 	for _, address := range addressEscapes[object] {
 		if address < before {
@@ -2044,19 +2332,14 @@ func latestScopedRouteAssignment(assignments []routeAssignment, cutoff token.Pos
 }
 
 func (scan *routeNameScan) selectorName(selector *ast.SelectorExpr) string {
-	qualifier, ok := selector.X.(*ast.Ident)
-	if !ok || qualifier.Obj != nil {
-		return ""
-	}
-
-	switch qualifier.Name {
-	case apiRoutesPackage:
+	switch {
+	case scan.imports.hasQualifier(selector.X, apiRoutesImportPath):
 		if strings.HasPrefix(selector.Sel.Name, "Path") {
 			return strings.TrimPrefix(selector.Sel.Name, "Path")
 		} else if selector.Sel.Name == "ChannelDirectivesAddress" {
 			return "channel:directives"
 		}
-	case "alexamodels":
+	case scan.imports.hasQualifier(selector.X, dependencyModelsImportPath):
 		if routeName, ok := scan.aliases[selector.Sel.Name]; ok {
 			return routeName
 		}
@@ -2071,7 +2354,7 @@ func (scan *routeNameScan) callName(call *ast.CallExpr, cutoff token.Pos) string
 	}
 
 	selector, isSelector := call.Fun.(*ast.SelectorExpr)
-	if !isSelector || !isPackageQualifier(selector.X, "fmt") || selector.Sel.Name != "Sprintf" {
+	if !isSelector || !isPackageQualifier(selector.X, scan.imports, fmtImportPath) || selector.Sel.Name != "Sprintf" {
 		return ""
 	}
 
@@ -2127,13 +2410,13 @@ func (scan *routeNameScan) routePrefix(expr ast.Expr) bool {
 	}
 
 	formatter, isFormatter := call.Fun.(*ast.SelectorExpr)
-	if !isFormatter || !isPackageQualifier(formatter.X, "fmt") || formatter.Sel.Name != "Sprintf" {
+	if !isFormatter || !isPackageQualifier(formatter.X, scan.imports, fmtImportPath) || formatter.Sel.Name != "Sprintf" {
 		return false
 	}
 
 	format, isSelector := call.Args[0].(*ast.SelectorExpr)
 
-	return isSelector && isPackageQualifier(format.X, apiRoutesPackage) &&
+	return isSelector && isPackageQualifier(format.X, scan.imports, apiRoutesImportPath) &&
 		format.Sel.Name == "ServerExchangeRefreshTokenForCookies" && len(call.Args)-1 == scan.serverTemplateArity
 }
 
@@ -2160,11 +2443,11 @@ func (scan *routeNameScan) querySuffix(expr ast.Expr) bool {
 
 	receiver, isIdent := selector.X.(*ast.Ident)
 
-	return isIdent && trustedQueryMapAt(receiver, call.Pos(), scan.assignments, scan.addressEscapes)
+	return isIdent && trustedQueryMapAt(receiver, call.Pos(), scan.assignments, scan.addressEscapes, scan.imports)
 }
 
 func trustedQueryMapAt(variable *ast.Ident, before token.Pos, assignments map[string][]routeAssignment,
-	addressEscapes map[any][]token.Pos,
+	addressEscapes map[any][]token.Pos, imports packageImports,
 ) bool {
 	if addressEscapedBefore(variable.Obj, before, addressEscapes) {
 		return false
@@ -2178,29 +2461,29 @@ func trustedQueryMapAt(variable *ast.Ident, before token.Pos, assignments map[st
 
 	switch value := latest.value.(type) {
 	case *ast.Ident:
-		return trustedQueryMapAt(value, latest.position, assignments, addressEscapes)
+		return trustedQueryMapAt(value, latest.position, assignments, addressEscapes, imports)
 	case *ast.ParenExpr:
-		return trustedQueryMapExpression(value.X, latest.position, assignments, addressEscapes)
+		return trustedQueryMapExpression(value.X, latest.position, assignments, addressEscapes, imports)
 	default:
-		return trustedQueryMapExpression(value, latest.position, assignments, addressEscapes)
+		return trustedQueryMapExpression(value, latest.position, assignments, addressEscapes, imports)
 	}
 }
 
 func trustedQueryMapExpression(value ast.Expr, before token.Pos, assignments map[string][]routeAssignment,
-	addressEscapes map[any][]token.Pos,
+	addressEscapes map[any][]token.Pos, imports packageImports,
 ) bool {
 	if variable, ok := value.(*ast.Ident); ok {
-		return trustedQueryMapAt(variable, before, assignments, addressEscapes)
+		return trustedQueryMapAt(variable, before, assignments, addressEscapes, imports)
 	}
 
 	if composite, ok := value.(*ast.CompositeLit); ok {
-		if !isURLValuesType(composite.Type) {
+		if !isURLValuesType(composite.Type, imports) {
 			return false
 		}
 
 		for _, element := range composite.Elts {
 			pair, isPair := element.(*ast.KeyValueExpr)
-			if !isPair || !generatedParameter(pair.Key, "QueryParam") {
+			if !isPair || !generatedParameter(pair.Key, "QueryParam", imports) {
 				return false
 			}
 		}
@@ -2209,27 +2492,27 @@ func trustedQueryMapExpression(value ast.Expr, before token.Pos, assignments map
 	}
 
 	if call, ok := value.(*ast.CallExpr); ok && isIdentifier(call.Fun, "make") && len(call.Args) == 1 {
-		return isURLValuesType(call.Args[0])
+		return isURLValuesType(call.Args[0], imports)
 	}
 
 	return false
 }
 
-func isQueryValuesExpression(value ast.Expr, aliases map[any]bool) bool {
+func isQueryValuesExpression(value ast.Expr, aliases map[any]bool, imports packageImports) bool {
 	if variable, ok := value.(*ast.Ident); ok {
 		return variable.Obj != nil && aliases[variable.Obj]
 	}
 
 	if parenthesized, ok := value.(*ast.ParenExpr); ok {
-		return isQueryValuesExpression(parenthesized.X, aliases)
+		return isQueryValuesExpression(parenthesized.X, aliases, imports)
 	}
 
 	if composite, ok := value.(*ast.CompositeLit); ok {
-		return isURLValuesType(composite.Type)
+		return isURLValuesType(composite.Type, imports)
 	}
 
 	if call, ok := value.(*ast.CallExpr); ok && isIdentifier(call.Fun, "make") && len(call.Args) > 0 {
-		return isURLValuesType(call.Args[0])
+		return isURLValuesType(call.Args[0], imports)
 	}
 
 	return false
@@ -2249,7 +2532,7 @@ func nonRouteURLLiterals(file *ast.File) map[token.Pos]bool {
 			return true
 		}
 
-		if !generatedParameter(call.Args[0], "HeaderReferer") {
+		if !generatedParameter(call.Args[0], "HeaderReferer", packageImportsFromFile(file)) {
 			return true
 		}
 

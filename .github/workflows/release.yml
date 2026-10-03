@@ -15,6 +15,7 @@ jobs:
     env:
       GOWORK: 'off'
       GOTOOLCHAIN: auto
+      GOLANGCI_LINT: golangci-lint
       GOPROXY: https://proxy.golang.org
       GOSUMDB: sum.golang.org
       PUBLIC_MODULE: github.com/portpowered/go-alexa
@@ -34,8 +35,10 @@ jobs:
         run: |
           make generate
           go run ./tools/apiroutes --check
-          git diff --exit-code -- pkg/dependencies/graphql/generated.go pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencies/internal/wire/models.gen.go pkg/dependencymodels/embedded_wire.gen.go pkg/alexa/internal/wire pkg/internal/apiroutes
-          untracked="$(git ls-files --others --exclude-standard -- pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencies/internal/wire pkg/dependencymodels/embedded_wire.gen.go pkg/alexa/internal/wire pkg/internal/apiroutes)"
+          go run ./tools/modelinventory -check
+          go run ./tools/openapibundle -check
+          git diff --exit-code -- api/openapi.yaml pkg/dependencies/graphql/generated.go pkg/dependencies/graphql/model_aliases.gen.go pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencymodels pkg/internal/apiroutes docs/model-inventory.md
+          untracked="$(git ls-files --others --exclude-standard -- pkg/dependencies/graphql/generated.go pkg/dependencies/graphql/model_aliases.gen.go pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencymodels pkg/internal/apiroutes docs/model-inventory.md)"
           if [ -n "$untracked" ]; then
             echo "Untracked generated files: $untracked"
             exit 1
@@ -44,6 +47,12 @@ jobs:
         run: |
           go test -race -coverpkg=./pkg/... -coverprofile=coverage.out ./pkg/...
           go run ./tools/coverage -profile coverage.out -min 80
+      - name: Install pinned golangci-lint
+        run: |
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Run golangci-lint gate on the tag
+        run: make lint
       - name: Check public API compatibility and release version
         env:
           VERSION: ${{ github.ref_name }}
@@ -83,11 +92,21 @@ jobs:
               "context"
               "${PUBLIC_MODULE}/pkg/alexa"
               "${PUBLIC_MODULE}/pkg/alexaapimodels"
+              dependencymodels "${PUBLIC_MODULE}/pkg/dependencymodels"
           )
 
           var _ interface {
               ListEndpoints(context.Context, alexaapimodels.EndpointQuery) (*alexaapimodels.UnifiedEndpointListResponse, error)
           } = (*alexa.Session)(nil)
+
+          var _ dependencymodels.Endpoint = (*alexaapimodels.Endpoint)(nil)
+          var _ = dependencymodels.FriendlyNameValue{
+              Type: "text",
+              Value: dependencymodels.FriendlyNameText{Text: "release-check"},
+          }
+          var _ = dependencymodels.BrightnessControlRequest{
+              BaseFeatureRequest: dependencymodels.BaseFeatureRequest{EndpointID: "release-check"},
+          }
 
           func main() {
               client, _ := alexa.NewClient()
@@ -109,5 +128,16 @@ jobs:
           VERSION: ${{ github.ref_name }}
           REPOSITORY: ${{ github.repository }}
         run: |
+          notes_file="$(mktemp)"
+          trap 'rm -f "$notes_file"' EXIT
+          if [ "$VERSION" = "v0.4.0" ]; then
+            cat >> "$notes_file" <<'NOTES'
+          Review the [upgrade guide](https://portpowered.github.io/go-alexa/docs/guides/upgrading/) before updating from v0.3. Nested dependency types and event payload types changed; action durations are now strings.
+
+          NOTES
+          fi
+          cat >> "$notes_file" <<EOF
+          Provider contracts remain implementation-derived. See [verification guidance](https://github.com/$REPOSITORY/blob/$VERSION/docs/verification.md) for the available evidence.
+          EOF
           gh release create "$VERSION" --repo "$REPOSITORY" --verify-tag --generate-notes \
-            --notes "Provider behavior: the maintainer reports successful tests with their own Alexa accounts, but operation-level results and sanitized captures were not recorded. The REST and event-stream schemas are implementation-derived, not current Amazon wire specifications. See [verification notes](https://github.com/$REPOSITORY/blob/$VERSION/docs/verification.md)."
+            --notes-file "$notes_file"

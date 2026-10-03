@@ -3,11 +3,13 @@
   "pages": [
     "index",
     "authentication",
+    "client-configuration",
+    "cli",
     "endpoint-enumeration",
     "endpoint-control",
     "events",
-    "wire-contracts",
-    "independent-review",
-    "quality-of-service"
+    "quality-of-service",
+    "player-state",
+    "upgrading"
   ]
 }

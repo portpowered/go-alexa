@@ -1,9 +1,27 @@
 # Releasing
 
-The [release workflow](../.github/workflows/release.yml) runs when a `vMAJOR.MINOR.PATCH` tag is pushed. It validates the tag even when no prior release exists, checks the public API against the previous stable tag when one exists, runs race tests, vet, and build, verifies the tagged module from a fresh consumer using `proxy.golang.org`, then creates a GitHub Release with generated notes. Only the publishing job has `contents: write` permission.
+Work through [the checklist](template-checklist.md) and obtain two independent
+reviews of every item at the exact implementation commit. Run `make generate`,
+`make lint`, and `make check`; verify generation drift, the complete wire-model
+and endpoint inventories, non-generated coverage, and documentation links.
 
-The first clean-history release is `v0.1.0`. Review the provider evidence limits and current wire inventory in [the migration checklist](template-checklist.md), item 4, before each release. The maintainer reports that the APIs worked with their own accounts, but those tests were not documented with an operation list, dates, results, or sanitized captures. The REST and HTTP/2 schemas are implementation-derived, not provider-verified contracts. Describe the account testing as maintainer-reported in release material; synthetic fixtures do not establish provider behavior. The first release had no prior stable tag, so its API comparison reported that there was no baseline.
+The [release workflow](../.github/workflows/release.yml) runs on version tags.
+It repeats checks, compares the public API with the previous stable tag,
+compiles a separate consumer fetched through the public Go proxy, and publishes
+a GitHub Release. Verify the exact tag's workflow and published module before
+recording the release as complete.
 
-The `v0.2.0` migration changes the account API boundary: account operations move from `Client` to `Session`, while `Client` retains reusable service and transport configuration. Token refresh and refresh-token cookie exchange are explicit and return their results to the caller. Before publishing, review the documented breaking changes against the `v0.1.0` compatibility baseline, run the checklist's coverage gate and `make lint`/`make check`, regenerate artifacts, and follow the provider-evidence limits above. Because the module is still pre-1.0, this breaking release uses a minor version increase.
+The standalone CLI is a nested Go module with its own tags in the
+`cmd/go-alexa/vX.Y.Z` form. Publish the SDK release it requires first. Before
+tagging the CLI module, remove development-only `replace` directives and verify
+the nested module through the public Go proxy; the CLI release workflow rejects
+replacements and checks `go install` for the tag.
 
-Choose a semantic version tag after review. Breaking API changes are allowed with a major version increase, and before v1 also with a minor version increase. Patch releases and stable minor releases must preserve compatibility. The `v0.3.0` release used a pre-1.0 minor version because generated nested event property types changed the exported `pkg/dependencymodels` API. The release compatibility check covers that package as well as the top-level client and API models. The workflow does not create or push tags.
+Use a semantic version that permits the reported API changes. Patch releases
+must preserve compatibility. Before v1, an intentional breaking change needs
+a minor version increase. Review `pkg/alexa`, `pkg/alexaapimodels`, and
+`pkg/dependencymodels` when model definitions move.
+
+Release notes must not present synthetic fixtures as observed provider
+exchanges. Link to [verification guidance](verification.md#fixture-provenance)
+for the evidence available with the release.

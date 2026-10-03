@@ -4,11 +4,10 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
 )
 
 const expandAll = "all"
@@ -23,7 +22,7 @@ func TestGenerateCodePairUsesGeneratedWireModels(t *testing.T) {
 			t.Errorf("unexpected request: %s %s", httpRequest.Method, httpRequest.URL.Path)
 		}
 
-		var codePairRequest wire.WireCodePairRequest
+		var codePairRequest alexamodels.WireCodePairRequest
 
 		err := json.NewDecoder(httpRequest.Body).Decode(&codePairRequest)
 		if err != nil {
@@ -125,7 +124,7 @@ func TestConvertWireModelRetainsAdditionalProperties(t *testing.T) {
 		}},
 	}
 
-	converted, err := convertWireModel[wire.WireEndpointListResponse](input)
+	converted, err := convertWireModel[alexamodels.WireEndpointListResponse](input)
 	if err != nil {
 		t.Fatalf("convertWireModel failed: %v", err)
 	}

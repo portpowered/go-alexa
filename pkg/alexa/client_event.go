@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	directivewire "github.com/portpowered/go-alexa/pkg/alexa/internal/wire"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
@@ -18,120 +17,120 @@ type eventParserMetadata[T any] struct {
 
 // eventParserRegistry maps metric names to their parsing metadata.
 var eventParserRegistry = map[string]eventParserMetadata[any]{
-	"EndpointColorTemperature": {
+	alexamodels.EventMetricNameEndpointColorTemperature: {
 		namespace: alexaapimodels.FeatureNameColorTemperature.EventNamespace(),
 		name:      alexaapimodels.EventNameColorTemperatureState,
-		converter: parsePayload[alexamodels.ColorTemperatureProperty],
+		converter: eventPayloadConverter(convertColorTemperaturePayload),
 	},
-	"EndpointPower": {
+	alexamodels.EventMetricNameEndpointPower: {
 		namespace: alexaapimodels.FeatureNamePower.EventNamespace(),
 		name:      alexaapimodels.EventNamePowerState,
-		converter: parsePayload[alexamodels.PowerProperty],
+		converter: eventPayloadConverter(convertPowerPayload),
 	},
-	"EndpointSpeaker": {
+	alexamodels.EventMetricNameEndpointSpeaker: {
 		namespace: alexaapimodels.FeatureNameSpeaker.EventNamespace(),
 		name:      alexaapimodels.EventNameSpeakerState,
-		converter: parsePayload[alexamodels.SpeakerProperty],
+		converter: eventPayloadConverter(convertSpeakerPayload),
 	},
-	"EndpointBrightness": {
+	alexamodels.EventMetricNameEndpointBrightness: {
 		namespace: alexaapimodels.FeatureNameBrightness.EventNamespace(),
 		name:      alexaapimodels.EventNameBrightnessState,
-		converter: parsePayload[alexamodels.BrightnessProperty],
+		converter: eventPayloadConverter(convertBrightnessPayload),
 	},
-	"EndpointColor": {
+	alexamodels.EventMetricNameEndpointColor: {
 		namespace: alexaapimodels.FeatureNameColor.EventNamespace(),
 		name:      alexaapimodels.EventNameColorState,
-		converter: parsePayload[alexamodels.ColorProperty],
+		converter: eventPayloadConverter(convertColorPayload),
 	},
-	"EndpointLock": {
+	alexamodels.EventMetricNameEndpointLock: {
 		namespace: alexaapimodels.FeatureNameLock.EventNamespace(),
 		name:      alexaapimodels.EventNameLockState,
-		converter: parsePayload[alexamodels.LockProperty],
+		converter: eventPayloadConverter(convertLockPayload),
 	},
-	"EndpointMode": {
+	alexamodels.EventMetricNameEndpointMode: {
 		namespace: alexaapimodels.FeatureNameMode.EventNamespace(),
 		name:      alexaapimodels.EventNameModeState,
-		converter: parsePayload[alexamodels.ModeProperty],
+		converter: eventPayloadConverter(convertModePayload),
 	},
-	"EndpointRange": {
+	alexamodels.EventMetricNameEndpointRange: {
 		namespace: alexaapimodels.FeatureNameRange.EventNamespace(),
 		name:      alexaapimodels.EventNameRangeState,
-		converter: parsePayload[alexamodels.RangeProperty],
+		converter: eventPayloadConverter(convertRangePayload),
 	},
-	"EndpointToggle": {
+	alexamodels.EventMetricNameEndpointToggle: {
 		namespace: alexaapimodels.FeatureNameToggle.EventNamespace(),
 		name:      alexaapimodels.EventNameToggleState,
-		converter: parsePayload[alexamodels.ToggleProperty],
+		converter: eventPayloadConverter(convertTogglePayload),
 	},
-	"EndpointPercentage": {
+	alexamodels.EventMetricNameEndpointPercentage: {
 		namespace: alexaapimodels.FeatureNamePercentage.EventNamespace(),
 		name:      alexaapimodels.EventNamePercentageState,
-		converter: parsePayload[alexamodels.PercentageProperty],
+		converter: eventPayloadConverter(convertPercentagePayload),
 	},
-	"EndpointPowerLevel": {
+	alexamodels.EventMetricNameEndpointPowerLevel: {
 		namespace: alexaapimodels.FeatureNamePowerLevel.EventNamespace(),
 		name:      alexaapimodels.EventNamePowerLevelState,
-		converter: parsePayload[alexamodels.PowerLevelProperty],
+		converter: eventPayloadConverter(convertPowerLevelPayload),
 	},
-	"EndpointThermostat": {
+	alexamodels.EventMetricNameEndpointThermostat: {
 		namespace: alexaapimodels.FeatureNameThermostat.EventNamespace(),
 		name:      alexaapimodels.EventNameThermostatModeState,
-		converter: parsePayload[alexamodels.ThermostatModeProperty],
+		converter: eventPayloadConverter(convertThermostatModePayload),
 	},
-	"EndpointTemperatureSensor": {
+	alexamodels.EventMetricNameEndpointTemperatureSensor: {
 		namespace: alexaapimodels.FeatureNameTemperatureSensor.EventNamespace(),
 		name:      alexaapimodels.EventNameTemperatureState,
-		converter: parsePayload[alexamodels.TemperatureSensorProperty],
+		converter: eventPayloadConverter(convertTemperatureSensorPayload),
 	},
-	"EndpointMotionSensor": {
+	alexamodels.EventMetricNameEndpointMotionSensor: {
 		namespace: alexaapimodels.FeatureNameMotionSensor.EventNamespace(),
 		name:      alexaapimodels.EventNameDetectionState,
-		converter: parsePayload[alexamodels.DetectionStateProperty],
+		converter: eventPayloadConverter(convertDetectionStatePayload),
 	},
-	"EndpointContactSensor": {
+	alexamodels.EventMetricNameEndpointContactSensor: {
 		namespace: alexaapimodels.FeatureNameContactSensor.EventNamespace(),
 		name:      alexaapimodels.EventNameDetectionState,
-		converter: parsePayload[alexamodels.DetectionStateProperty],
+		converter: eventPayloadConverter(convertDetectionStatePayload),
 	},
-	"EndpointAction": {
+	alexamodels.EventMetricNameEndpointAction: {
 		namespace: alexaapimodels.FeatureNameAction.EventNamespace(),
 		name:      alexaapimodels.EventNameActionState,
-		converter: parsePayload[alexamodels.ActionStateProperty],
+		converter: eventPayloadConverter(convertActionStatePayload),
 	},
-	"EndpointConnectivity": {
+	alexamodels.EventMetricNameEndpointConnectivity: {
 		namespace: alexaapimodels.FeatureNameConnectivity.EventNamespace(),
 		name:      alexaapimodels.EventNameReachabilityState,
-		converter: parsePayload[alexamodels.ReachabilityProperty],
+		converter: eventPayloadConverter(convertReachabilityPayload),
 	},
-	"EndpointEndpointHealth": {
+	alexamodels.EventMetricNameEndpointEndpointHealth: {
 		namespace: alexaapimodels.FeatureNameEndpointHealth.EventNamespace(),
 		name:      alexaapimodels.EventNameBatteryState,
-		converter: parsePayload[alexamodels.BatteryProperty],
+		converter: eventPayloadConverter(convertBatteryPayload),
 	},
-	"EndpointLightSensor": {
+	alexamodels.EventMetricNameEndpointLightSensor: {
 		namespace: alexaapimodels.FeatureNameLightSensor.EventNamespace(),
 		name:      alexaapimodels.EventNameIlluminanceState,
-		converter: parsePayload[alexamodels.IlluminanceProperty],
+		converter: eventPayloadConverter(convertIlluminancePayload),
 	},
-	"EndpointLocation": {
+	alexamodels.EventMetricNameEndpointLocation: {
 		namespace: alexaapimodels.FeatureNameLocation.EventNamespace(),
 		name:      alexaapimodels.EventNameGeolocationState,
-		converter: parsePayload[alexamodels.GeolocationProperty],
+		converter: eventPayloadConverter(convertGeolocationPayload),
 	},
-	"EndpointStatusCode": {
+	alexamodels.EventMetricNameEndpointStatusCode: {
 		namespace: alexaapimodels.FeatureNameStatusCode.EventNamespace(),
 		name:      alexaapimodels.EventNameStatusCodeState,
-		converter: parsePayload[alexamodels.StatusCodeProperty],
+		converter: eventPayloadConverter(convertStatusCodePayload),
 	},
-	"EndpointSecurityPanel": {
+	alexamodels.EventMetricNameEndpointSecurityPanel: {
 		namespace: alexaapimodels.FeatureNameSecurityPanel.EventNamespace(),
 		name:      alexaapimodels.EventNameArmState,
-		converter: parsePayload[alexamodels.ArmStateProperty],
+		converter: eventPayloadConverter(convertArmStatePayload),
 	},
-	"EndpointHumiditySensor": {
+	alexamodels.EventMetricNameEndpointHumiditySensor: {
 		namespace: alexaapimodels.FeatureNameHumiditySensor.EventNamespace(),
 		name:      alexaapimodels.EventNameRelativeHumidityState,
-		converter: parsePayload[alexamodels.RelativeHumidityProperty],
+		converter: eventPayloadConverter(convertRelativeHumidityPayload),
 	},
 }
 
@@ -142,27 +141,27 @@ func ParseEvent(msg *alexamodels.Message) (*alexaapimodels.Event, error) {
 	}
 
 	// Extract directive
-	directiveRaw, directiveValid := msg.Data["directive"].(map[string]interface{})
+	directiveRaw, directiveValid := msg.Data[alexamodels.EventDirectiveKey].(map[string]interface{})
 	if !directiveValid {
 		return nil, errDirectiveInvalid
 	}
 
 	// Extract header
-	headerRaw, headerValid := directiveRaw["header"].(map[string]interface{})
+	headerRaw, headerValid := directiveRaw[alexamodels.EventHeaderKey].(map[string]interface{})
 	if !headerValid {
 		return nil, errHeaderInvalid
 	}
 
-	messageID, _ := headerRaw["messageId"].(string)
+	messageID, _ := headerRaw[alexamodels.EventMessageIDKey].(string)
 
 	// Extract payload
-	payloadRaw, payloadValid := directiveRaw["payload"].(map[string]interface{})
+	payloadRaw, payloadValid := directiveRaw[alexamodels.EventPayloadKey].(map[string]interface{})
 	if !payloadValid {
 		return nil, errPayloadInvalid
 	}
 
 	// Extract renderingUpdates
-	renderingUpdatesRaw, updatesValid := payloadRaw["renderingUpdates"].([]interface{})
+	renderingUpdatesRaw, updatesValid := payloadRaw[alexamodels.EventRenderingUpdatesKey].([]interface{})
 	if !updatesValid || len(renderingUpdatesRaw) == 0 {
 		return nil, errRenderingUpdatesEmpty
 	}
@@ -173,7 +172,7 @@ func ParseEvent(msg *alexamodels.Message) (*alexaapimodels.Event, error) {
 		return nil, errRenderingUpdateInvalid
 	}
 
-	resourceMetadataStr, metadataValid := updateRaw["resourceMetadata"].(string)
+	resourceMetadataStr, metadataValid := updateRaw[alexamodels.EventResourceMetadataKey].(string)
 	if !metadataValid {
 		return nil, errResourceMetadataInvalid
 	}
@@ -183,7 +182,7 @@ func ParseEvent(msg *alexamodels.Message) (*alexaapimodels.Event, error) {
 
 // parseDirectiveMessage converts the generated representation of the current
 // HTTP/2 parser input into the public event model.
-func parseDirectiveMessage(message *directivewire.DirectiveMessage) (*alexaapimodels.Event, error) {
+func parseDirectiveMessage(message *alexamodels.DirectiveMessage) (*alexaapimodels.Event, error) {
 	if message == nil || message.Directive == nil {
 		return nil, errDirectiveInvalid
 	}
@@ -262,32 +261,53 @@ func parseEventResourceMetadata(messageID, resourceMetadataStr string) (*alexaap
 }
 
 // parsePayload extracts and parses a property from the payload data.
-func parsePayload[T any](data *alexamodels.ResourceMetadataPayloadData) (any, error) {
-	if len(data.Data.Features) == 0 {
-		return nil, errNoFeaturesFound
+func parsePayload[T any](data *alexamodels.ResourceMetadataPayloadData) (*T, *string, error) {
+	if data == nil || len(data.Data.Features) == 0 {
+		return nil, nil, errNoFeaturesFound
 	}
 
 	feature := data.Data.Features[0]
+	if len(feature.Properties) == 0 {
+		return nil, nil, errNoPropertiesFound
+	}
 
-	var props []T
+	property, arrayPayload, arrayErr := parsePayloadArray[T](feature.Properties)
+	if arrayErr != nil {
+		return nil, nil, arrayErr
+	}
 
-	err := json.Unmarshal(feature.Properties, &props)
-	if err != nil {
-		var prop T
+	if arrayPayload {
+		return property, cloneString(feature.Instance), nil
+	}
 
-		err := json.Unmarshal(feature.Properties, &prop)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse properties: %w", err)
+	property = new(T)
+
+	propertyErr := json.Unmarshal(feature.Properties, property)
+	if propertyErr != nil {
+		return nil, nil, fmt.Errorf("failed to parse properties: %w", propertyErr)
+	}
+
+	return property, cloneString(feature.Instance), nil
+}
+
+func parsePayloadArray[T any](raw json.RawMessage) (*T, bool, error) {
+	var properties []json.RawMessage
+
+	propertiesErr := json.Unmarshal(raw, &properties)
+	if propertiesErr == nil {
+		if len(properties) == 0 {
+			return nil, true, errNoPropertiesFound
 		}
 
-		props = []T{prop}
+		property := new(T)
+
+		propertyErr := json.Unmarshal(properties[0], property)
+		if propertyErr != nil {
+			return nil, true, fmt.Errorf("failed to parse properties: %w", propertyErr)
+		}
+
+		return property, true, nil
 	}
 
-	if len(props) == 0 {
-		return nil, errNoPropertiesFound
-	}
-
-	prop := props[0]
-
-	return &prop, nil
+	return nil, false, nil
 }

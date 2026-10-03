@@ -1,0 +1,31 @@
+version: "2"
+
+linters:
+  default: all
+  settings:
+    cyclop:
+      max-complexity: 20
+    funlen:
+      lines: 100
+      statements: 60
+    lll:
+      line-length: 160
+    depguard:
+      rules:
+        cli-dependencies:
+          list-mode: strict
+          allow:
+            - $gostd
+            - github.com/portpowered/go-alexa/cmd/go-alexa/internal/cli
+            - github.com/portpowered/go-alexa/pkg/alexa
+            - github.com/portpowered/go-alexa/pkg/alexaapimodels
+            - github.com/portpowered/go-alexa/pkg/testing
+            - golang.org/x/sys/windows
+  exclusions:
+    # Local source replace keeps the nested module testable until the required SDK tag is public.
+    # The CLI release workflow rejects any replace directive before tagging.
+    rules:
+      - path: ^go\.mod$
+        text: '^local replacement are not allowed: github.com/portpowered/go-alexa$'
+        linters:
+          - gomoddirectives

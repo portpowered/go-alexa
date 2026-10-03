@@ -7,6 +7,7 @@ import (
 )
 
 // AuthenticationError represents an authentication failure.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type AuthenticationError struct {
 	Message string
 	Status  int
@@ -37,6 +38,7 @@ func IsAuthenticationError(err error) bool {
 }
 
 // ConnectionError represents a connection failure.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type ConnectionError struct {
 	Message string
 	Err     error
@@ -71,6 +73,7 @@ func IsConnectionError(err error) bool {
 }
 
 // NetworkError represents a network-level error.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type NetworkError struct {
 	Message string
 	Err     error
@@ -105,6 +108,7 @@ func IsNetworkError(err error) bool {
 }
 
 // TokenError represents a token retrieval or validation error.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type TokenError struct {
 	Message string
 	Err     error
@@ -139,6 +143,7 @@ func IsTokenError(err error) bool {
 }
 
 // SdkError represents an error reported by the Alexa SDK layer.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type SdkError struct {
 	Message string
 	Err     error
@@ -161,12 +166,14 @@ func (e *ServerError) Unwrap() error {
 }
 
 // ServerError represents an error returned by an Alexa service.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type ServerError struct {
 	Message string
 	Err     error
 }
 
 // BadRequestError represents a request rejected as invalid by the service.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type BadRequestError struct {
 	Message string
 	Err     error
@@ -189,6 +196,7 @@ func IsBadRequestError(err error) bool {
 }
 
 // UnauthorizedError represents a request rejected for missing or invalid authorization.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type UnauthorizedError struct {
 	Message string
 	Err     error
@@ -211,6 +219,7 @@ func IsUnauthorizedError(err error) bool {
 }
 
 // NotFoundError represents a resource that the service could not find.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type NotFoundError struct {
 	Message string
 	Err     error
@@ -229,6 +238,7 @@ func (e *NotFoundError) Unwrap() error {
 }
 
 // InternalServerError represents an unexpected failure in the service.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type InternalServerError struct {
 	Message string
 	Err     error
@@ -251,6 +261,7 @@ func IsInternalServerError(err error) bool {
 }
 
 // HTTPError represents an HTTP-level error with status code.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type HTTPError struct {
 	StatusCode int
 	Status     string
@@ -300,6 +311,7 @@ func IsHTTPStatusCode(err error, code int) bool {
 }
 
 // ClosedError represents an error when trying to use a closed connection.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type ClosedError struct {
 	Message string
 }
@@ -328,6 +340,7 @@ func IsClosedError(err error) bool {
 }
 
 // PingError represents an error during ping operations.
+//modelinventory:semantic Public SDK input or output projection; provider transport types are generated under pkg/dependencymodels.
 type PingError struct {
 	StatusCode int
 	Message    string

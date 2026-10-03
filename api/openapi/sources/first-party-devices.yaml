@@ -1,0 +1,184 @@
+openapi: 3.0.3
+info:
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: 'This is an implementation-derived description of HTTP routes, request shapes,
+
+    and response models used by the current go-alexa source. It is not an
+
+    Amazon-issued API contract. There are no sanitized live HTTP captures in
+
+    this repository, so these shapes have not been verified against current
+
+    service behavior. Synthetic test data is not evidence of provider behavior.
+
+    See the Alexa AsyncAPI document for the directive stream parsed by the
+
+    library, and the GraphQL schema for its GraphQL subset.
+
+    '
+servers:
+- url: https://api.amazonalexa.com
+  description: Default REST base URL in go-alexa.
+  x-go-alexa-region: na
+- url: https://api.eu.amazonalexa.com
+  description: EU REST base URL constant in go-alexa.
+  x-go-alexa-region: eu
+- url: https://api.jp.amazonalexa.com
+  description: Japan REST base URL constant in go-alexa.
+  x-go-alexa-region: jp
+security:
+- BearerToken: []
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
+tags:
+- name: First-party devices
+  description: Cookie-backed devices-v2 inventory operations implemented by go-alexa.
+paths:
+  /api/devices-v2/device:
+    get:
+      tags:
+      - First-party devices
+      operationId: listFirstPartyDevices
+      summary: List first-party device records
+      description: 'The REST helper sends either a bearer authorization header or a cookie
+
+        header. A supplied CSRF option is serialized as a `Cookie` header.
+
+        The response model is based on the Go fields currently decoded by the
+
+        client and is not verified against a live response.
+
+        '
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      security:
+      - BearerToken: []
+      - CookieHeader: []
+      parameters:
+      - name: csrf
+        in: header
+        required: false
+        description: The helper can send this value in its Cookie header.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Device list decoded by the current helper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireDevicesV2Response'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: The client sends its supplied access token in the Authorization header.
+  schemas:
+    WireDevicesV2Response:
+      type: object
+      properties:
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/WireDeviceV2'
+      required:
+      - devices
+      additionalProperties: true
+    WireDeviceV2:
+      type: object
+      properties:
+        accountName:
+          type: string
+        appDeviceList:
+          type: array
+          items:
+            $ref: '#/components/schemas/WireAppDevice'
+        associatedUnitIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        charging:
+          type: boolean
+          nullable: true
+        clusterMembers:
+          type: array
+          items:
+            type: string
+        deviceAccountId:
+          type: string
+        deviceFamily:
+          type: string
+          x-go-compat-constant-values:
+            DeviceFamilyFireTV: FIRE_TV
+        deviceOwnerCustomerId:
+          type: string
+        deviceType:
+          type: string
+        deviceTypeFriendlyName:
+          type: string
+          nullable: true
+        essid:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        macAddress:
+          type: string
+          nullable: true
+        online:
+          type: boolean
+        parentClusters:
+          type: array
+          items:
+            type: string
+        postalCode:
+          type: string
+          nullable: true
+        registrationId:
+          type: string
+          nullable: true
+        remainingBatteryLevel:
+          type: integer
+          nullable: true
+        serialNumber:
+          type: string
+        softwareVersion:
+          type: string
+      additionalProperties: true
+    WireAppDevice:
+      type: object
+      properties:
+        deviceAccountId:
+          type: string
+        deviceType:
+          type: string
+        serialNumber:
+          type: string
+      additionalProperties: true
+  responses:
+    UnhandledResponse:
+      description: Response not decoded into a success model by this operation.

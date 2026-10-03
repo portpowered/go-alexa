@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: 'This is an implementation-derived description of HTTP routes, request shapes,
+
+    and response models used by the current go-alexa source. It is not an
+
+    Amazon-issued API contract. There are no sanitized live HTTP captures in
+
+    this repository, so these shapes have not been verified against current
+
+    service behavior. Synthetic test data is not evidence of provider behavior.
+
+    See the Alexa AsyncAPI document for the directive stream parsed by the
+
+    library, and the GraphQL schema for its GraphQL subset.
+
+    '
+servers:
+- url: https://api.amazonalexa.com
+  description: Default REST base URL in go-alexa.
+  x-go-alexa-region: na
+- url: https://api.eu.amazonalexa.com
+  description: EU REST base URL constant in go-alexa.
+  x-go-alexa-region: eu
+- url: https://api.jp.amazonalexa.com
+  description: Japan REST base URL constant in go-alexa.
+  x-go-alexa-region: jp
+security:
+- BearerToken: []
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
+tags:
+- name: Event stream
+  description: Long-lived HTTP/2 connection and keepalive operations.
+paths:
+  /v20160207/directives:
+    get:
+      tags:
+      - Event stream
+      operationId: openDirectiveStream
+      summary: Open the long-lived directive response
+      description: 'The implementation uses an HTTP/2 transport and a bearer token, then
+
+        reads the response as newline-delimited text. It skips lines beginning
+
+        with `------` and `Content-Type:` and parses other JSON lines as
+
+        directives. The exact response media type, boundary syntax, and current
+
+        provider payloads are not established by a live capture. See the
+
+        AsyncAPI reference for the shape required by the current parser.
+
+        '
+      servers:
+      - url: https://alexa.na.gateway.devices.a2z.com
+        description: Default authority in go-alexa.
+      - url: https://alexa.eu.gateway.devices.a2z.com
+        description: EU authority constant in go-alexa.
+      - url: https://alexa.fe.gateway.devices.a2z.com
+        description: Japan authority constant in go-alexa.
+      security:
+      - BearerToken: []
+      responses:
+        '200':
+          description: Long-lived response consumed by the current HTTP/2 line parser; media type is not asserted.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /ping:
+    get:
+      tags:
+      - Event stream
+      operationId: pingDirectiveStream
+      summary: Send a directive stream keepalive request
+      description: The HTTP/2 connection sends this GET with the same bearer token; the code expects 204 No Content.
+      servers:
+      - url: https://alexa.na.gateway.devices.a2z.com
+      - url: https://alexa.eu.gateway.devices.a2z.com
+      - url: https://alexa.fe.gateway.devices.a2z.com
+      security:
+      - BearerToken: []
+      responses:
+        '204':
+          description: Expected keepalive response; no body is decoded.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: The client sends its supplied access token in the Authorization header.
+  responses:
+    UnhandledResponse:
+      description: Response not decoded into a success model by this operation.

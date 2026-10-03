@@ -33,8 +33,10 @@ jobs:
         run: |
           make generate
           go run ./tools/apiroutes --check
-          git diff --exit-code -- pkg/dependencies/graphql/generated.go pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencies/internal/wire/models.gen.go pkg/dependencymodels/embedded_wire.gen.go pkg/dependencies/rest/internal/wire pkg/alexa/internal/wire pkg/internal/apiroutes
-          untracked="$(git ls-files --others --exclude-standard -- pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencies/internal/wire pkg/dependencymodels/embedded_wire.gen.go pkg/alexa/internal/wire pkg/internal/apiroutes)"
+          go run ./tools/modelinventory -check
+          go run ./tools/openapibundle -check
+          git diff --exit-code -- api/openapi.yaml pkg/dependencies/graphql/generated.go pkg/dependencies/graphql/model_aliases.gen.go pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencymodels pkg/internal/apiroutes docs/model-inventory.md
+          untracked="$(git ls-files --others --exclude-standard -- pkg/dependencies/graphql/generated.go pkg/dependencies/graphql/model_aliases.gen.go pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencymodels pkg/internal/apiroutes docs/model-inventory.md)"
           if [ -n "$untracked" ]; then
             echo "Untracked generated files: $untracked"
             exit 1

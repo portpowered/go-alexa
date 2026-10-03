@@ -1,0 +1,162 @@
+openapi: 3.0.3
+info:
+  title: Alexa device Go compatibility projections
+  version: 0.1.0
+  description: |
+    These schemas preserve historical exported Go shapes. Required lists
+    describe the former serialization shape, not provider validation rules.
+paths: {}
+components:
+  schemas:
+    DeviceFamily:
+      type: string
+      enum: [WHA, FIRE_TV, ECHO, KNIGHT]
+      x-enum-varnames:
+        - WholeHomeDeviceFamily
+        - FireTVDeviceFamily
+        - EchoDeviceFamily
+        - KnightDeviceFamily
+    CapabilityInterface:
+      type: string
+      description: Open capability-name alias; unknown names remain accepted.
+      x-go-type: string
+      x-go-compat-constant-type: CapabilityInterface
+      x-go-compat-constant-values:
+        TemperatureSensorCapability: TEMPERATURE_SENSOR
+        FlashBriefingCapability: FLASH_BRIEFING
+        AlexaPresenceCapability: ALEXA_PRESENCE
+        MotionSensorRangeStringCapability: MOTION_SENSOR_RANGE_STRING
+        AdaptiveListeningCapability: ADAPTIVE_LISTENING
+        EfdcardsCapability: EFDCARDS
+        MotionDetectionCapability: MOTION_DETECTION
+        AlexaVoiceCapability: ALEXA_VOICE
+        MusicSkillCapability: MUSIC_SKILL
+        AudioControlsCapability: AUDIO_CONTROLS
+        UpdateWifiCapability: UPDATE_WIFI
+        RemindersCapability: REMINDERS
+        MultiWakewordsSupportedCapability: MULTI_WAKEWORDS_SUPPORTED
+        EarconsCapability: EARCONS
+        AudioPlayerCapability: AUDIO_PLAYER
+        TahoeByodCapability: TAHOE_BYOD
+        PairBtSourceCapability: PAIR_BT_SOURCE
+        SleepCapability: SLEEP
+        IHeartRadioCapability: I_HEART_RADIO
+        AudibleCapability: AUDIBLE
+        SpeechRecognizerUssCapability: SPEECH_RECOGNIZER_USS
+        PoptartCapability: POPTART
+        TupleCategoryACapability: TUPLE_CATEGORY_A
+        ChangeNameCapability: CHANGE_NAME
+        TupleCapability: TUPLE
+        DeezerCapability: DEEZER
+        AlexaDeviceRebootCapability: ALEXA_DEVICE_REBOOT
+        DeregisterDeviceCapability: DEREGISTER_DEVICE
+        TimersAndAlarmsCapability: TIMERS_AND_ALARMS
+        SupportsConnectedHomeCloudOnlyCapability: SUPPORTS_CONNECTED_HOME_CLOUD_ONLY
+        KindleBooksCapability: KINDLE_BOOKS
+        FaceToTalkCapability: FACE_TO_TALK
+        GadgetsCapability: GADGETS
+        EqualizerControllerTrebleCapability: EQUALIZER_CONTROLLER_TREBLE
+        VoiceTrainingCapability: VOICE_TRAINING
+        TapGesturesResumeMediaCapability: TAP_GESTURES_RESUME_MEDIA
+        EqualizerControllerMidrangeCapability: EQUALIZER_CONTROLLER_MIDRANGE
+        WakeWordSensitivityCapability: WAKE_WORD_SENSITIVITY
+        FarFieldWakeWordCapability: FAR_FIELD_WAKE_WORD
+        DreamTrainingCapability: DREAM_TRAINING
+        AppleMusicCapability: APPLE_MUSIC
+        VolumeSettingCapability: VOLUME_SETTING
+        SetLocaleCapability: SET_LOCALE
+        PairBtSinkCapability: PAIR_BT_SINK
+        SupportsLocaleCapability: SUPPORTS_LOCALE
+        TimersAlarmsNotificationsVolumeCapability: TIMERS_ALARMS_NOTIFICATIONS_VOLUME
+        AmazonMusicCapability: AMAZON_MUSIC
+        EqualizerControllerBassCapability: EQUALIZER_CONTROLLER_BASS
+        AlexaNetworkingCapability: ALEXA_NETWORKING
+        GuardEarconCapability: GUARD_EARCON
+        TuneInCapability: TUNE_IN
+        SupportCalendarAlertCapability: SUPPORT_CALENDAR_ALERT
+        AscendingAlarmVolumeCapability: ASCENDING_ALARM_VOLUME
+        TapGesturesCapability: TAP_GESTURES
+        LemurAlphaCapability: LEMUR_ALPHA
+        PandoraCapability: PANDORA
+        GoldfishCapability: GOLDFISH
+        SoundSettingsCapability: SOUND_SETTINGS
+        SiriusxmCapability: SIRIUSXM
+        TapGesturesSingleTapCapability: TAP_GESTURES_SINGLE_TAP
+        SupportsLocaleSwitchCapability: SUPPORTS_LOCALE_SWITCH
+        CustomAlarmToneCapability: CUSTOM_ALARM_TONE
+        AlexaNetworkingWifiCapability: ALEXA_NETWORKING_WIFI
+        PersistentConnectionCapability: PERSISTENT_CONNECTION
+        SetTimeZoneCapability: SET_TIME_ZONE
+        SupportsSoftwareVersionCapability: SUPPORTS_SOFTWARE_VERSION
+        BtPairingFlowV2Capability: BT_PAIRING_FLOW_V2
+        DialogInterfaceVersionCapability: DIALOG_INTERFACE_VERSION
+        RequiresOobeForSetupCapability: REQUIRES_OOBE_FOR_SETUP
+        MicrophoneCapability: MICROPHONE
+        ActiveAfterFroCapability: ACTIVE_AFTER_FRO
+        DsVolumeSettingCapability: DS_VOLUME_SETTING
+        TidalCapability: TIDAL
+        AdaptiveVolumeCapability: ADAPTIVE_VOLUME
+        SalmonCapability: SALMON
+        AlexaNetworkingSpeedtestCapability: ALEXA_NETWORKING_SPEEDTEST
+        LocalVoiceCapability: LOCAL_VOICE
+        DeregisterFactoryResetCapability: DEREGISTER_FACTORY_RESET
+        LocalizationCapability: LOCALIZATION
+        PairRemoteCapability: PAIR_REMOTE
+        AuxSettingsCapability: AUX_SETTINGS
+        AlexaCaptioningPreferencesCapability: ALEXA_CAPTIONING_PREFERENCES
+        ClockFormat24HrCapability: CLOCK_FORMAT_24_HR
+        LiveViewCapability: LIVE_VIEW
+        AlexaCaptioningCapability: ALEXA_CAPTIONING
+        SharknadoCapability: SHARKNADO
+        TupleCategoryBCapability: TUPLE_CATEGORY_B
+        MediaPlayerAnimationCapability: MEDIA_PLAYER_ANIMATION
+        TimezoneCapability: TIMEZONE
+        ArthurTargetCapability: ARTHUR_TARGET
+        SupportsConnectedHomeAllCapability: SUPPORTS_CONNECTED_HOME_ALL
+    AppDevice:
+      type: object
+      required: [deviceAccountId, deviceType, serialNumber]
+      properties:
+        deviceAccountId: {type: string}
+        deviceType: {type: string}
+        serialNumber: {type: string}
+    DeviceV2:
+      type: object
+      required: [accountName, appDeviceList, associatedUnitIds, capabilities, charging, clusterMembers, deviceAccountId, deviceFamily, deviceOwnerCustomerId, deviceType, deviceTypeFriendlyName, essid, language, macAddress, online, parentClusters, postalCode, registrationId, remainingBatteryLevel, serialNumber, softwareVersion]
+      properties:
+        accountName: {type: string}
+        appDeviceList:
+          type: array
+          items: {$ref: '#/components/schemas/AppDevice'}
+        associatedUnitIds: {}
+        capabilities:
+          type: array
+          items: {$ref: '#/components/schemas/CapabilityInterface'}
+        charging: {type: boolean, nullable: true}
+        clusterMembers:
+          type: array
+          items: {type: string}
+        deviceAccountId: {type: string}
+        deviceFamily: {type: string}
+        deviceOwnerCustomerId: {type: string}
+        deviceType: {type: string}
+        deviceTypeFriendlyName: {type: string, nullable: true}
+        essid: {type: string, nullable: true}
+        language: {type: string, nullable: true}
+        macAddress: {type: string, nullable: true}
+        online: {type: boolean}
+        parentClusters:
+          type: array
+          items: {type: string}
+        postalCode: {type: string, nullable: true}
+        registrationId: {type: string, nullable: true}
+        remainingBatteryLevel: {type: integer, nullable: true}
+        serialNumber: {type: string}
+        softwareVersion: {type: string}
+    DevicesV2Response:
+      type: object
+      required: [devices]
+      properties:
+        devices:
+          type: array
+          items: {$ref: '#/components/schemas/DeviceV2'}

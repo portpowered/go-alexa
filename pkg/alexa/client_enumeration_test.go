@@ -4,6 +4,7 @@ package alexa
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -277,6 +278,73 @@ func TestListEndpointsWithStates_PreservesAirQualityMonitorRangeInstancesAndValu
 
 	if pm10.Properties[0].StateValue != nil {
 		t.Fatalf("expected NOT_FOUND pm10 state value to be nil, got %#v", pm10.Properties[0].StateValue)
+	}
+}
+
+func TestExtractRangeStateValuePreservesPresentZeroAndOmitsMissingValues(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		wireJSON  string
+		wantNil   bool
+		wantValue float64
+	}{
+		{
+			name:      "present zero",
+			wireJSON:  `{"rangeValue":{"__typename":"RangeValueNumber","value":0}}`,
+			wantNil:   false,
+			wantValue: 0,
+		},
+		{
+			name:      "present nonzero",
+			wireJSON:  `{"rangeValue":{"__typename":"RangeValueNumber","value":12.5}}`,
+			wantNil:   false,
+			wantValue: 12.5,
+		},
+		{
+			name:      "explicit null",
+			wireJSON:  `{"rangeValue":null}`,
+			wantNil:   true,
+			wantValue: 0,
+		},
+		{
+			name:      "omitted",
+			wireJSON:  `{}`,
+			wantNil:   true,
+			wantValue: 0,
+		},
+		{
+			name:      "provider error",
+			wireJSON:  `{"error":{"type":"NOT_FOUND","message":"missing"},"rangeValue":{"__typename":"RangeValueNumber","value":0}}`,
+			wantNil:   true,
+			wantValue: 0,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			var property gqlStatePropertyRangeValue
+
+			err := json.Unmarshal([]byte(test.wireJSON), &property)
+			if err != nil {
+				t.Fatalf("decode generated GraphQL property: %v", err)
+			}
+
+			got := extractRangeStateValue(&property)
+			if test.wantNil {
+				if got != nil {
+					t.Fatalf("extractRangeStateValue() = %#v, want nil", got)
+				}
+
+				return
+			}
+
+			if got == nil || got.Value != test.wantValue {
+				t.Fatalf("extractRangeStateValue() = %#v, want value %v", got, test.wantValue)
+			}
+		})
 	}
 }
 

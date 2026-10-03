@@ -86,7 +86,9 @@ func restEndpointReplayCases(
 			return err
 		}},
 		{"queryRestEndpoints", "{}", 200, nil, func(c *Client) error {
-			_, err := c.QueryEndpoints(ctx, &alexamodels.EndpointQueryRequest{}, nil)
+			_, err := c.QueryEndpoints(ctx, &alexamodels.EndpointQueryRequest{
+				Query: alexamodels.EndpointQuery{AND: nil, OR: nil, IncludeFields: nil, PaginationContext: nil},
+			}, nil)
 
 			return err
 		}},
@@ -98,6 +100,7 @@ func restEndpointReplayCases(
 				ctx,
 				"synthetic-endpoint",
 				alexamodels.Command{
+					DeviceID: "", Type: "",
 					Namespace: "Alexa.PowerController",
 					Name:      "TurnOn",
 					Payload:   map[string]any{"powerState": "ON"},

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -392,6 +393,86 @@ func TestSyntheticRESTControlDispatch(t *testing.T) {
 						DeviceFamily:       test.family,
 						DeviceAccountId:    test.account,
 					},
+					Namespace: test.feature,
+					Name:      test.operation,
+					Payload:   test.payload,
+				},
+			)
+			if err != nil || response == nil {
+				t.Fatalf("Control(%s, %s) = %+v, %v", test.feature, test.operation, response, err)
+			}
+
+			if requests != 1 {
+				t.Fatalf("request count = %d", requests)
+			}
+		})
+	}
+}
+
+func TestSyntheticRESTFeatureWireBodies(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		feature   m.FeatureName
+		operation m.FeatureOperationName
+		payload   any
+		path      string
+		want      map[string]any
+	}{
+		{
+			name:      "volume set includes zero",
+			feature:   m.FeatureNameSpeaker,
+			operation: m.FeatureOperationNameSetVolume,
+			payload:   m.ControlVolumeSetPayload{Volume: 0},
+			path:      "/v2/endpoints/synthetic-endpoint/interfaces/speaker/setVolume/",
+			want:      map[string]any{"volume": float64(0)},
+		},
+		{
+			name:      "playback pause sends empty object",
+			feature:   m.FeatureNamePlayback,
+			operation: m.FeatureOperationNamePause,
+			payload:   m.ControlPlaybackPayload{},
+			path:      "/v2/endpoints/synthetic-endpoint/interfaces/playback/pause/",
+			want:      map[string]any{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			requests := 0
+			session := newTestSession(
+				t,
+				&http.Client{Transport: syntheticEventTransport(func(request *http.Request) (*http.Response, error) {
+					requests++
+					if request.Method != http.MethodPost || request.URL.Path != test.path {
+						t.Errorf("REST request = %s %s, want POST %s", request.Method, request.URL.Path, test.path)
+					}
+
+					var body map[string]any
+					err := json.NewDecoder(request.Body).Decode(&body)
+					if err != nil {
+						t.Errorf("decode REST feature message: %v", err)
+					}
+					if !reflect.DeepEqual(body, test.want) {
+						t.Errorf("REST payload = %#v, want %#v", body, test.want)
+					}
+
+					return &http.Response{
+						StatusCode: http.StatusOK,
+						Body:       io.NopCloser(strings.NewReader(`{}`)),
+						Header:     make(http.Header),
+					}, nil
+				})},
+				WithBearerToken("synthetic-token"),
+			)
+
+			response, err := session.Control(
+				context.Background(),
+				m.ControlRequest{
+					Target:    &m.Endpoint{EndpointID: "synthetic-endpoint"},
 					Namespace: test.feature,
 					Name:      test.operation,
 					Payload:   test.payload,

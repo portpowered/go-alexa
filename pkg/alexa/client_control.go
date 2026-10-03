@@ -95,9 +95,10 @@ func (c *Session) controlNotification(
 	}
 
 	notificationReq := &alexamodels.SendNotificationRequest{
-		Endpoint: req.Target,
-		Message:  payload.Message,
-		Title:    payload.Title,
+		Endpoint:   req.Target,
+		CustomerID: "",
+		Message:    payload.Message,
+		Title:      payload.Title,
 	}
 
 	err = c.restClient.SendNotification(ctx, notificationReq)
@@ -177,11 +178,13 @@ func (c *Session) controlAnnouncement(
 	}
 
 	announcementReq := &alexamodels.SendAnnouncementRequest{
-		Endpoint: req.Target,
-		Message:  payload.Message,
-		Method:   payload.Method,
-		Title:    payload.Title,
-		Locale:   payload.Locale,
+		Endpoint:      req.Target,
+		CustomerID:    "",
+		Locale:        payload.Locale,
+		Message:       payload.Message,
+		Method:        payload.Method,
+		TargetDevices: nil,
+		Title:         payload.Title,
 	}
 
 	err = c.restClient.SendAnnouncement(ctx, announcementReq)
@@ -206,8 +209,10 @@ func (c *Session) controlTTS(
 	}
 
 	ttsReq := &alexamodels.SendTTSRequest{
-		Endpoint: req.Target,
-		Message:  payload.Message,
+		Endpoint:      req.Target,
+		CustomerID:    "",
+		Message:       payload.Message,
+		TargetDevices: nil,
 	}
 
 	err = c.restClient.SendTTS(ctx, ttsReq)
@@ -233,6 +238,7 @@ func (c *Session) controlMusic(
 
 	musicReq := &alexamodels.PlayMusicRequest{
 		Endpoint:     req.Target,
+		CustomerID:   "",
 		ProviderID:   string(payload.ProviderID),
 		SearchPhrase: payload.SearchPhrase,
 		TimerSeconds: payload.TimerSeconds,
@@ -262,8 +268,10 @@ func (c *Session) controlAudioPlayerURI(
 	messageString := fmt.Sprintf("<audio src='%s'/>", payload.URI)
 
 	uriReq := &alexamodels.SendTTSRequest{
-		Endpoint: req.Target,
-		Message:  messageString,
+		Endpoint:      req.Target,
+		CustomerID:    "",
+		Message:       messageString,
+		TargetDevices: nil,
 	}
 
 	err = c.restClient.SendTTS(ctx, uriReq)
@@ -306,7 +314,12 @@ func (c *Session) controlBrightness(
 	brightnessReq := &alexamodels.BrightnessControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
+			Instance:   "",
 		},
+		Brightness:    nil,
+		Delta:         nil,
+		SetBrightness: false,
 	}
 
 	err := setOrAdjustControl(
@@ -347,6 +360,8 @@ func (c *Session) controlColor(
 	colorReq := &alexamodels.ColorControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
+			Instance:   "",
 		},
 		Hue:        payload.Hue,
 		Saturation: payload.Saturation,
@@ -380,7 +395,12 @@ func (c *Session) controlColorTemperature(
 	colorTempReq := &alexamodels.ColorTemperatureControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
+			Instance:   "",
 		},
+		ColorTemperature: nil,
+		Increase:         false,
+		SetTemperature:   false,
 	}
 
 	//nolint:exhaustive // This handler intentionally supports only selected operations.
@@ -446,6 +466,8 @@ func (c *Session) controlLock(
 	lockReq := &alexamodels.LockControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
+			Instance:   "",
 		},
 		State: payload.State,
 	}
@@ -460,8 +482,12 @@ func (c *Session) controlMode(
 	modeReq := &alexamodels.ModeControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
 			Instance:   req.Instance,
 		},
+		Delta:   nil,
+		Mode:    nil,
+		SetMode: false,
 	}
 
 	err := setOrAdjustControl(
@@ -493,8 +519,12 @@ func (c *Session) controlRange(
 	rangeReq := &alexamodels.RangeControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
 			Instance:   req.Instance,
 		},
+		Delta:      nil,
+		RangeValue: nil,
+		SetValue:   false,
 	}
 
 	err := setOrAdjustControl(
@@ -535,6 +565,7 @@ func (c *Session) controlToggle(
 	toggleReq := &alexamodels.ToggleControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
 			Instance:   req.Instance,
 		},
 		State: payload.State,
@@ -550,8 +581,12 @@ func (c *Session) controlPercentage(
 	percentageReq := &alexamodels.PercentageControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
 			Instance:   req.Instance,
 		},
+		Delta:         nil,
+		Percentage:    nil,
+		SetPercentage: false,
 	}
 
 	err := setOrAdjustControl(
@@ -583,7 +618,12 @@ func (c *Session) controlPowerLevel(
 	powerLevelReq := &alexamodels.PowerLevelControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
+			Instance:   "",
 		},
+		Delta:         nil,
+		PowerLevel:    nil,
+		SetPowerLevel: false,
 	}
 
 	err := setOrAdjustControl(
@@ -624,6 +664,8 @@ func (c *Session) controlAction(
 	actionReq := &alexamodels.ActionControlRequest{
 		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 			EndpointID: req.Target.GetEndpointId(),
+			EntityID:   "",
+			Instance:   "",
 		},
 		Action: payload.Action,
 		Params: payload.Params,
@@ -779,6 +821,8 @@ func (c *Session) controlThermostat(
 		modeReq := &alexamodels.ThermostatModeControlRequest{
 			BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 				EndpointID: req.Target.GetEndpointId(),
+				EntityID:   "",
+				Instance:   "",
 			},
 			Mode: payload.Mode,
 		}
@@ -798,10 +842,13 @@ func (c *Session) controlThermostat(
 		thermostatReq := &alexamodels.ThermostatControlRequest{
 			BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 				EndpointID: req.Target.GetEndpointId(),
+				EntityID:   "",
+				Instance:   "",
 			},
-			Value:       &payload.Value,
+			Delta:       nil,
 			Scale:       payload.Scale,
 			SetSetpoint: true,
+			Value:       &payload.Value,
 		}
 
 		return c.graphqlClient.ControlThermostatFeature(ctx, thermostatReq)
@@ -819,10 +866,13 @@ func (c *Session) controlThermostat(
 		thermostatReq := &alexamodels.ThermostatControlRequest{
 			BaseFeatureRequest: alexamodels.BaseFeatureRequest{
 				EndpointID: req.Target.GetEndpointId(),
+				EntityID:   "",
+				Instance:   "",
 			},
 			Delta:       &payload.Delta,
 			Scale:       payload.Scale,
 			SetSetpoint: false,
+			Value:       nil,
 		}
 
 		return c.graphqlClient.ControlThermostatFeature(ctx, thermostatReq)
@@ -873,7 +923,11 @@ func (c *Session) controlEchoPlayback(
 	case alexaapimodels.FeatureOperationNamePrevious:
 		err = c.restClient.PreviousTrack(ctx, mediaRequest)
 	case alexaapimodels.FeatureOperationNameStop:
-		err = c.restClient.StopPlayback(ctx, &alexamodels.StopPlaybackRequest{Endpoint: req.Target})
+		err = c.restClient.StopPlayback(ctx, &alexamodels.StopPlaybackRequest{
+			Endpoint:   req.Target,
+			AllDevices: false,
+			CustomerID: "",
+		})
 	case alexaapimodels.FeatureOperationNameForward:
 		err = c.restClient.ForwardMedia(ctx, mediaRequest)
 	case alexaapimodels.FeatureOperationNameRewind:
@@ -951,7 +1005,7 @@ func (c *Session) sendThirdPartyPlaybackMessage(ctx context.Context, req alexaap
 		Endpoint:      req.Target,
 		FeatureName:   string(alexaapimodels.FeatureNamePlayback),
 		OperationName: string(operation),
-		Payload:       map[string]interface{}{},
+		Payload:       alexamodels.FeatureEmptyPayload{},
 	})
 }
 
@@ -973,7 +1027,13 @@ func volumeRequestFromControl(
 	ctx context.Context,
 	req alexaapimodels.ControlRequest,
 ) (*alexamodels.VolumeControlRequest, error) {
-	volumeReq := &alexamodels.VolumeControlRequest{Endpoint: req.Target}
+	volumeReq := &alexamodels.VolumeControlRequest{
+		Endpoint:   req.Target,
+		CustomerID: "",
+		Delta:      nil,
+		SetVolume:  false,
+		Volume:     nil,
+	}
 
 	//nolint:exhaustive // The volume handler supports only set and adjust operations.
 	switch req.Name {
@@ -1019,10 +1079,14 @@ func (c *Session) controlGraphQLVolume(
 	}
 
 	speakerReq := &alexamodels.SpeakerControlRequest{
-		BaseFeatureRequest: alexamodels.BaseFeatureRequest{EndpointID: endpointID},
-		Volume:             volumeReq.Volume,
-		Delta:              volumeReq.Delta,
-		SetVolume:          volumeReq.SetVolume,
+		BaseFeatureRequest: alexamodels.BaseFeatureRequest{
+			EndpointID: endpointID,
+			EntityID:   "",
+			Instance:   "",
+		},
+		Volume:    volumeReq.Volume,
+		Delta:     volumeReq.Delta,
+		SetVolume: volumeReq.SetVolume,
 	}
 
 	return c.graphqlClient.ControlSpeakerFeature(ctx, speakerReq)
@@ -1041,8 +1105,10 @@ func (c *Session) controlRESTVolume(
 
 	restRequest := &alexamodels.VolumeControlRequest{
 		Endpoint:   endpoint,
-		Volume:     volumeReq.Volume,
 		CustomerID: volumeReq.CustomerID,
+		Delta:      nil,
+		SetVolume:  false,
+		Volume:     volumeReq.Volume,
 	}
 
 	err := c.restClient.SetVolume(ctx, restRequest)
@@ -1068,7 +1134,7 @@ func (c *Session) controlInterfaceVolume(
 		Endpoint:      endpoint,
 		FeatureName:   string(alexaapimodels.FeatureNameSpeaker),
 		OperationName: string(operation),
-		Payload:       map[string]interface{}{"volume": value},
+		Payload:       alexamodels.SpeakerSetVolumePayload{Volume: value},
 	}
 
 	err = c.restClient.SendInterfaceMessage(ctx, request)

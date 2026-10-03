@@ -1,0 +1,6 @@
+package: alexamodels
+generate:
+  models: true
+output: pkg/dependencymodels/user_info.gen.go
+output-options:
+  include-tags: [User info]

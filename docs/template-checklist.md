@@ -1,64 +1,116 @@
-# Template migration checklist: go-alexa
+# go-alexa checklist
 
-Source checklist: `go-third-party-template/docs/library-standards.md`, `docs/verification.md`, and `docs/releasing.md`. Sign-offs below describe this repository's evidence and remaining release work.
+Requirements copied from the shared template at `843ec3f2ef2d28920c39ddbfef63d6a857c6fe05`.
+The current follow-up is open until its final implementation commit and CI are
+independently reviewed in [the review record](independent-review.md).
 
-## All-linter policy follow-up
+The earlier item-4 and item-7 signoffs were too broad: they verified generated
+transport models and selected embedded payloads without inventorying the
+handwritten exported dependency models. Those signoffs do not prove complete
+model generation. The old review also appeared in customer guide navigation.
+The current requirements below replace those claims; previous release and CI
+records remain in Git history and GitHub Actions.
 
-The checked items below record the completed `v0.3.1` migration. The shared
-standard added a stricter lint gate after that release; its new sign-off is
-tracked separately so historical checks are not presented as current proof.
+- [ ] **1.** Keep the public client, examples, README, and site independent of any consuming application. Put application adapters and rollout plans in the consuming repository.
+- [ ] **2.** Document supported operations, authentication, errors, and transport injection with examples that match the exported API. Add customer-facing operation guides for important workflows, and distinguish verified behavior from synthetic examples and historical references.
+- [ ] **3.** Show Go version, CI, coverage, release, Go Reference, license, and documentation badges in the README. Replace every example repository value and point badges to live reports.
+- [ ] **4.** Generate the API reference in CI with the shared Fumadocs action and publish it to GitHub Pages.
+   Inventory **ALL** outbound wire endpoints and exchanges, including private, encrypted, event, and
+   signaling routes. Every endpoint must be represented in a checked-in protocol schema. Generate
+   **ALL** endpoint definitions, method/path pairs, parameter and header names, channel names, and
+   wire request/response types from those schemas. Include nested event properties and payloads
+   serialized inside strings or encrypted wrappers; use generated artifacts at every wire boundary,
+   and do not sign off while a handwritten wire definition or model remains.
+   Inventory concrete payload variants and library-defined map keys, operation values, and skill
+   or message identifiers as well as structs. Generate known nested payloads and their wire
+   constants from schema; a generated outer envelope around a handwritten map does not satisfy
+   this requirement. Keep genuinely caller-defined open fields explicit in the schema and
+   distinguish them from payload shapes constructed by the library. Add a negative gate test
+   for an unregistered nested payload or library-defined wire key.
+   Build a complete model inventory as well as an endpoint inventory. For every production
+   struct encoded, decoded, or embedded in a wire exchange, record its schema component,
+   generated Go type, generator command, and conversion call site. Include exported dependency
+   structs, primitive enums and constants, unused legacy exports, anonymous objects, nested
+   feature payloads, and custom decoders. A generated file marker or passing route gate is not proof that the remaining
+   structs are generated. Remove unused wire definitions; generate active ones. Test the
+   model gate with an unreferenced exported handwritten JSON struct and an anonymous nested wire
+   object; unused compatibility exports must not escape the scan.
+   For GraphQL, trace generated models to SDL components and actual emitted operation selections.
+   Validate generator-added discriminators and exact generated decoder branches against schema
+   possible types. Label type-only implementations with no selected subtype fields explicitly;
+   comments naming implementations do not prove the decoder or the outbound selection. Test
+   missing, extra, and mismatched decoder cases, possible-type drift, and a missing discriminator.
+   Include active network calls made by pinned third-party dependencies, even when the library only
+   supplies a transport wrapper. Keep their contracts in separate checked-in external schemas and
+   source-matched protocol files; inventory the exact dependency version, host, method, path, framed
+   message, and call site. A narrow source-gate exception may identify a verified wrapper, but it
+   must reject unlisted dependency traffic and must not bypass schema or paired replay checks.
+   Audit non-HTTP sockets separately from HTTP RoundTrippers. Fail CI on generation
+   drift or an uncovered method-and-path pair, channel, or call site. The source gate must pair each
+   generated operation or channel with the target at the actual wire call site after evaluating
+   supported route transformations; checking only a constructor or raw literals is insufficient.
+   Resolve route assignments by lexical binding and control flow; trust only values proven on every
+   path to the send, not a generated assignment made in just one conditional branch. Test negative
+   cases for unschematized endpoints and channels, mismatched methods and paths, and targets changed
+   after schema-bound construction, including appended or wrapped paths and invalid formatting. A
+   generated path does not approve an arbitrary authority in a formatted full URL; accept only an
+   explicitly configured or inventoried authority, and require REST base prefixes to come from
+   configured or inventoried origins. Exercise lexical shadowing so a same-named local variable
+   cannot inherit another scope's generated route. Require generated `QueryParam` and `Header` keys
+   for query setters and direct or aliased map writes, map literals, request headers, and
+   custom-header maps. Normalize parenthesized map receivers and indexed expressions before checking
+   query/header keys, and reject aliases to query or header `Set`/`Add` method values that could
+   bypass key validation. Preserve request-header provenance through `http.Header(req.Header)`
+   conversions and aliases. Reject request Header map escapes except to a named, inventoried helper
+   whose header writes are schema-checked. Resolve custom-header maps by lexical binding; a nested
+   same-named map with generated keys must not hide an outer raw-key map that is sent. Reject
+   custom-header maps returned from or passed through unverified helpers. Recursively inspect
+   aggregate helper arguments for embedded schema-keyed maps; allow only a direct handoff to a
+   verified wire helper whose writes are schema-checked. Reject schema-bound `url.Values` maps and
+   their aliases when they escape as arguments or receivers to unverified helpers that could add
+   handwritten query keys. Track `url.Values` provenance by lexical binding and assignment; discard
+   generated-map trust after reassignment from an untrusted source, and never accept `URL.Query` or
+   `url.ParseQuery` results as outbound generated-key sources. Reject storing schema-keyed query or
+   header maps in aggregate fields or indexed elements, even without a helper call; later field or
+   index writes must not regain trust. Retain query/header map provenance only through aliases
+   proven local to the current function; reject storing those maps in package-level or other
+   cross-function state. Reject unresolved address-taking or pointer/helper escapes for route
+   strings, query maps, and header maps that could permit mutation; accept them only when the gate
+   proves the value remains safe. Resolve generated selector qualifiers such as `apiroutes`, the
+   model-constant package, and `fmt` to their exact expected import paths, not just matching local
+   import names; `http.NewRequestWithContext` must resolve through the exact `net/http` import.
+   Treat `len(params)` as a built-in call only when `len` resolves to
+   the Go builtin. An approved authority or base URL field must resolve to the actual Client
+   receiver declared by the method. An inventoried `Client.Do` must use that receiver's actual
+   injected client field object, not a same-spelled shadowing local. Exercise direct outbound
+   network primitives, imports, method values and method expressions, including local and file-scope
+   aliases such as package-level references to transport helpers and injected client methods. Cover
+   request and URL aliases, mutations after construction, aggregate fields and indexed storage, and
+   values escaping to helpers; each uncovered route, channel, or network edge must fail. Distinguish
+   provider-verified contracts from implementation-derived contracts and never present the latter as
+   official behavior. Replace the template's clearly synthetic widget schema before presenting a
+   provider API as supported behavior.
+- [ ] **5.** Run offline build, lint, race, and replay checks before release. Configure golangci-lint v2 with the literal `linters.default: all`, pin its version in CI, and make the full-repository lint run a blocking gate. Do not set `--issues-exit-code=0`, continue after lint failures, or limit CI to new issues. Keep all linters enabled; any exception must name the narrow rule and affected path, give its reason in a config exclusion or beside a source annotation, and receive independent review. Style fixes must preserve persisted example/config JSON keys; lock them with a regression test or document an intentional key migration. A reviewer who did not implement the migration must confirm passing blocking CI on the exact commit before checking item 5. Keep real captures sanitized and separate from synthetic fixtures.
+- [ ] **6.** Add deterministic synthetic request, response, error, and session fixtures for supported behavior. Measure coverage of non-generated production code by public and transport package and in combination; enforce at least 80% combined coverage in CI and target 90%. Report generated-code exclusions and remaining uncovered behavior rather than adding tests solely to raise a number.
+- [ ] **7.** Put the reusable public provider package under `pkg/<provider>`, generated provider wire models under `pkg/dependencymodels`, and transport behavior under `pkg/dependencies/<transport>`. Use distinct schema and generated Go files for each API responsibility, such as authentication, behaviors, devices, and feature payloads; a compatible shared Go package is allowed. Keep related request, response, and nested component definitions together rather than a monolithic model file or a second catch-all `internal/models` or `internal/wire` model bucket. Keep public semantic projections separate from provider wire contracts. Handwritten model companions may supply conversion or decoding behavior but must not redefine wire fields. Use compatibility aliases when moving existing exported types; when old field shapes differ, generate their compatibility definitions from a separate projection schema. Verify public import paths from a separate consumer module.
+- [ ] **8.** Initialize clients through explicit functional options (for example `NewClient(WithBaseURL(...), WithHTTPClient(...))`) with sensible defaults and validation. Keep account credentials out of reusable client configuration when the client serves multiple accounts.
+- [ ] **9.** Keep the reusable client stateless with respect to accounts and connections. Return explicit session objects for login, event streams, sockets, RTC, or other stateful lifecycles; make ownership, close, errors, and token state visible to callers.
+- [ ] **10.** Allow callers to inject the transport at every network edge the library uses, including HTTP, HTTP/2, WebSocket, MQTT, RTC signaling, and sockets opened by dependencies as applicable. A configurable concrete dialer is insufficient when it cannot substitute an offline connection; provide a connection-producing dial hook or equivalent seam and test the actual framed request and response through it without real credentials or network access.
+- [ ] **11.** Expose token exchange and refresh as explicit operations that return the current credentials to the caller. Do not silently refresh or retain updated tokens inside a reusable client; document caller storage and renewal responsibilities.
+- [ ] **12.** Publish all customer-facing guides as MDX files under `docs/guides/` in the GitHub Pages site. Link guides to the matching generated reference pages. Keep separate repository Markdown only for contributor and release process notes; check internal links from **all** rendered pages, including the site root and generated references, and review external destinations and release-note links after a docs migration.
+- [ ] **13.** Before release, edit every published page for concise copy: remove repeated caveats, stale claims, and links to duplicate repository documents; keep each page's purpose, evidence status, and next action clear. Keep the README focused on installation, a short authenticated example, supported capabilities, caller configuration and lifecycle obligations, and links to user guides. Put wire inventories, generation details, fixture provenance audits, coverage mechanics, migration history, and reviewer evidence in contributor material, not the README or customer guide navigation. Delete obsolete internal reports and duplicate process documents; keep one current checklist and independent review record plus contributor instructions needed to maintain the library. Review every tracked documentation file for audience, purpose, duplication, and incoming links, then review the rendered Pages site. Check release-note copy and URLs against the published guide locations.
+- [ ] **14.** Before signing off a library migration or release, have two independent reviewers who did not implement the change audit the library against every item in this checklist and the linked standards. Have both reviewers write their separate verdicts and concrete evidence for every numbered item in one current repository review document, including the reviewed commit, discrepancies, and the disposition of every finding; link it from the library's checklist. Keep this item unchecked while any finding or other checklist item remains open; recording or tracking a finding does not resolve it. Re-run affected checks and have both reviewers verify every fix at the final commit before checking this item. Do not accept an implementer's own checklist sign-off as independent verification.
+    For items 4 and 7, attach the complete wire-model inventory and verify every entry against
+    its generated definition and actual use. Search independently for types missing from the
+    inventory; do not accept the implementer's generated-file list as the full population.
+    For items 12 and 13, inspect the README and every tracked documentation file as well as
+    rendered pages. A successful build or link check does not establish appropriate audience
+    or absence of redundant internal documents. Missing inventory entries or unexamined files
+    keep the corresponding verdict open.
+- [ ] **15.** Store and replay each wire exchange as a paired request and response (or an ordered bidirectional message transcript). Include method, origin, escaped path, repeated query values, relevant headers, and body or frame payload in the request expectation; include response status, relevant headers, and body. Match the outbound request before returning its response, reject unexpected or duplicate calls, and assert that every expected exchange was consumed in order where order matters. Never fall back to a response when request matching fails. Represent volatile IDs, timestamps, signatures, and redacted credentials with explicit match rules that still validate their format or decoded meaning. Apply this to every supported transport and classify each pair as captured or synthetic; a response-only fixture does not satisfy replay verification.
 
-- [x] **5, new lint gate.** Run golangci-lint v2 with the literal
-  `linters.default: all` over the full module in blocking CI. Resolve findings,
-  run `make lint` and `make check`, and cite CI on the exact implementation commit.
-  golangci-lint v2.3.0's default strict generated-file filter excludes ten Go
-  files with standard generated markers: five Modelina files under
-  `pkg/alexa/internal/wire`, plus `pkg/dependencies/internal/wire/models.gen.go`,
-  `pkg/dependencymodels/embedded_wire.gen.go`, `pkg/dependencies/graphql/generated.go`,
-  `pkg/dependencies/graphql/allowed_operations.gen.go`, and
-  `pkg/internal/apiroutes/routes.gen.go`. `make generate` regenerates them;
-  generated files are outside the lint issue scan. Narrow configuration and
-  source exceptions, the preserved terminal-UI `customerID` JSON key, and its
-  regression test are independently reviewed in the [current sign-off](guides/independent-review.mdx).
-  [CI 36560832492](https://github.com/portpowered/go-alexa/actions/runs/36560832492)
-  and [Documentation 36560832467](https://github.com/portpowered/go-alexa/actions/runs/36560832467)
-  passed on implementation commit `aa161cbefc172b0a1f62d627d7b87244bf674566`.
-- [x] **14, independent re-review.** [The current MDX report](guides/independent-review.mdx)
-  records separate verdicts and evidence for all 15 standards, findings and
-  dispositions, and the reviewed implementation SHA. Exact implementation
-  [CI 36560832492](https://github.com/portpowered/go-alexa/actions/runs/36560832492)
-  and [Documentation 36560832467](https://github.com/portpowered/go-alexa/actions/runs/36560832467)
-  passed at `aa161cbefc172b0a1f62d627d7b87244bf674566`.
+- [ ] **16.** Provide an installable standalone CLI that consumes the public SDK so customers can test the library without a consuming application. Use a separate module under `cmd/go-<provider>`; keep CLI concerns out of the SDK. Cover authentication and explicit token exchange, device or endpoint discovery, important read/control workflows, and event/session lifecycles where supported. Include useful help, machine-readable output, nonzero failures, cancellation, and session cleanup. Accept credentials through documented environment, stdin, or explicit file inputs; keep secrets out of arguments and ordinary output, and make credential export an explicit action. Require explicit commands for device changes. Document installation and customer examples in an MDX guide. Test CLI commands offline through injected paired request/response transports, including authentication errors and lifecycle cleanup, and run blocking pinned all-linter, build, test, and module checks for the CLI in CI. Verify a separate consumer installation from the published CLI module and release its module tags with the SDK.
 
-- [x] **1.** Keep the public client, examples, README, and site independent of any consuming application. Port OS plugin mappings and backend rollout notes were removed from this repository; examples use only this module's public packages.
-- [x] **2.** Document supported operations, authentication, errors, and HTTP client injection with the current exported API. Added guides for authentication, endpoint enumeration, control, events, and quality-of-service. Label the fixture suite as synthetic and avoid presenting it as live-service evidence.
-- [x] **3.** Show Go version, CI, coverage, release, Go Reference, license, and documentation badges in the README, with repository-specific links. **Signed off at v0.2.0:** CI, documentation, release verification, the public Go proxy consumer, and versioned Go Reference passed. The exact `aa161cb` Documentation build publishes current non-generated coverage of 83.0%.
-- [x] **4.** Inventory **ALL** outbound wire endpoints and exchanges in checked-in schemas. Generate **ALL** endpoint definitions, parameter names, and nested wire request/response types from those schemas and use them in the client; do not sign off while any handwritten wire definition or model remains. Fail CI on drift or an unschematized endpoint. Publish the generated reference and label implementation-derived contracts. Local gates, published CI/Documentation at `ef54acb`, and the exact `v0.3.0` release gate passed; final independent review remains item 14.
-  - [x] Inventory 22 OpenAPI HTTP operations: 21 dispatched routes plus caller-facing OAuth navigation, including GraphQL POST and directive stream/keepalive; also inventory the AsyncAPI directive channel and seven generated GraphQL operations. Method/path, server, framing, query keys, and request header names come from the schemas. `tools/apiroutes` pairs actual inventoried request/send callsites. Its bounded evaluator accepts generated route constants, local assignments, inventoried URL bases, schema-arity-checked formatting, and encoded schema-keyed query additions; it rejects unknown transforms, branch-only values, shadowing, untrusted package aliases, path/request/map escapes, handwritten query/header keys, and direct or aliased outbound primitives. The network inventory binds each send to its injected receiver. Negative cases in `tools/apiroutes/main_test.go` cover route/method mutation, suffixes and wrappers, conditional/pointer/helper/aggregate/global escapes, query/header setter and map aliases, fake imports, and transport method values. This source gate is not a general whole-program alias proof. Exact generation and drift checks passed in [CI 36560832492](https://github.com/portpowered/go-alexa/actions/runs/36560832492).
-  - [x] Generate and consume nested wire payloads. `api/embedded-wire.yaml` models event metric properties and the JSON-in-string behavior sequence. oapi-codegen emits their exported compatibility types into `pkg/dependencymodels`; `RunBehavior` validates sequences against generated node types before dispatch. The eight media command callsites and FireTV behavior preview callsite now send generated wire request types. Generic GraphQL execution accepts only the seven generated operation documents, with its allowlist generated from genqlient output. Unknown operation and malformed-sequence tests assert rejection before network I/O.
-  - [x] Verify regeneration, generated references, and Pages deployment in published CI. [CI run 36495290648](https://github.com/portpowered/go-alexa/actions/runs/36495290648) and [Documentation run 36495290674](https://github.com/portpowered/go-alexa/actions/runs/36495290674) passed on reviewer commit `e301dc3`, including the generated-file and callsite gates, full-site links, and Pages deployment. The maintainer reports successful account tests without documented sanitized exchanges or operation-level provenance; synthetic tests are not provider verification.
-  - [x] Verify generation, endpoint inventory, and the 80% coverage gate on the exact release tag. [Release run 36495544663](https://github.com/portpowered/go-alexa/actions/runs/36495544663) passed generation/drift, the route/channel gate, non-generated coverage, compatibility, race tests, vet, build, and a fresh public-proxy consumer at `v0.3.0` (`ef54acb`).
-- [x] **5.** Run offline build, lint, race, and synthetic fixture checks. Removed the old captured player-state replay test and its capture files; replaced that coverage with a synthetic response transport test. Added synthetic generated-model regressions for auth, endpoint enumeration, unknown wire fields, and directive parsing. No real captures remain in the tree. Synthetic fixtures do not establish live Alexa behavior.
-- [x] **6.** Generate synthetic inputs for public client behavior and reach at least 80% statement coverage of non-generated production code (90% target). Report each public/transport package and the combined result; exclude generated wire files and test-only helpers from the denominator, and enforce the minimum in CI. The exact `aa161cb` race profile reports **83.0% combined** (2,179/2,625 non-generated statements): `pkg/alexa` 79.7% (1,059/1,328), `pkg/alexaapimodels` 86.5% (90/104), `pkg/dependencies/graphql` 93.7% (282/301), `pkg/dependencies/rest` 83.8% (745/889), and `pkg/dependencymodels` 100% (3/3). [CI 36560832492](https://github.com/portpowered/go-alexa/actions/runs/36560832492) passed the 80% combined floor. Earlier `v0.3.0` release evidence remains at [run 36495544663](https://github.com/portpowered/go-alexa/actions/runs/36495544663). The gate enforces the 80% combined floor; 90% remains a target.
-- [x] **7.** Keep the library's public and implementation Go packages under `pkg/`; keep only executable examples and developer tooling under `cmd/` and `tools/`. All library APIs and implementations live under `pkg/`, examples under `cmd/examples/`, and developer tools under `tools/`. Private REST and directive wire models live under `internal` packages. `pkg/dependencymodels` remains exported because its event and behavior types already form a caller-visible compatibility surface; their wire fields are now generated.
-- [x] **8.** Initialize clients with validated named options for service regions, base URLs, timeouts, and transports. Reject invalid and conflicting configuration before network operations. `NewClient` applies functional options with validation for supported regions, URL shape, event authority, positive timeouts, nil clients/transports, and conflicting values; synthetic tests cover accepted, invalid, and conflicting combinations.
-- [x] **9.** Keep the reusable service client free of account and connection state. Put credentials and account session data on an explicit session object, and return long-running connections as caller-owned sessions with documented close behavior. `Client` stores service configuration only; `Session` owns credentials and account clients. Session and event connection close behavior is documented and covered by synthetic stream tests, including cancellation that unblocks a pending read and terminal errors that remain observable when the error queue is full.
-- [x] **10.** Make each network edge injectable, including REST, GraphQL, and event streaming, so callers can provide HTTP/2 or other protocol-capable transports without changing API models. REST and GraphQL accept independent cloned `http.Client` configurations; event streams accept an independent `http.Client` or `RoundTripper`. Synthetic transport tests exercise each edge, including event stream lifecycle.
-- [x] **11.** Make credential exchange explicit and return refreshed access tokens or cookie/CSRF material to the caller for storage. Ordinary requests must not refresh credentials or exchange refresh tokens implicitly; expose configured session tokens to the caller. Explicit refresh and cookie exchange return credentials to the caller, `Session.Credentials` returns a copy, and CSRF retrieval returns its value. Requests use only configured credentials and return an error when CSRF material is missing; they do not refresh or exchange credentials implicitly. Synthetic tests verify returned values and that token rotation occurs only when the caller installs a token.
-- [x] **12.** Publish customer-facing guides as MDX under `docs/guides/` on GitHub Pages, link operation guides to matching generated references, and remove duplicate standalone customer docs. The wire-contract inventory guide is included in the seven MDX guides. Its GraphQL operation link uses the SDL field slug `query/endpoint/`; Documentation run `36488991580` passed rendered links and deployed Pages at `af15579`.
-- [x] **13. Finalize.** Reviewed the artifact from [Documentation run 36494989405](https://github.com/portpowered/go-alexa/actions/runs/36494989405): 248 rendered HTML pages (246 index pages), including the root, all seven guides, and generated OpenAPI, GraphQL, and AsyncAPI references. The authored guides are 89–279 words each in the rendered output; a full article-text scan found no TODO, widget-template copy, or stale repository names. `tools/check_site_links.py` passed 44,869 internal links across 248 pages. The root, inventory guide, and representative OpenAPI, GraphQL, and AsyncAPI pages, plus the guide's external schema link, returned HTTP 200 on the published site. Repeated caveats were reduced to one evidence statement per relevant page, and implementation-derived behavior remains labelled.
-- [x] **14. Independent verification.** Reviewer `alexa_independent_review`, independent of implementation, re-audited all 15 standards at `b04ff67` in the [final itemized report](independent-verification-final.md). The review found stale README/release copy, corrected in `f10664a` and `b04ff67`; final CI, Documentation, and the exact-tag `v0.3.1` Release passed. Every item now has an independent evidence-backed verdict. The earlier [review history](independent-verification.md) remains available.
-- [x] **15. Paired replay.** Independently verified at `12d713d` in the [paired-replay review](paired-replay-review.md). The checked-in synthetic fixture set records 26 ordered REST pairs covering all 18 dispatched REST routes and registration/media variants, seven generated GraphQL operation pairs, and an ordered directive stream frame plus keepalive ping. `pkg/testing.SyntheticReplay` matches method, origin, escaped path, complete repeated query multimap, headers, and body before returning status, headers, and body; every test asserts consumption. Negative tests reject mismatch, out-of-order, duplicate, and exhausted calls. The schema inventory test rejects missing OpenAPI or generated GraphQL operations. Synthetic fields use fixed, exact IDs and credential placeholders; the fixture README specifies the rule for future volatile/redacted fields. Response-only `pkg/alexa/testdata` JSON remains model test data and is not counted as paired replay.
-
-## Release and history sign-off
-
-- [x] Inspect the exported API and compile a separate temporary consumer module against the public module path. `go get github.com/portpowered/go-alexa@main`, `go mod tidy`, and `go test ./...` passed against the rewritten remote history and updated REST/directive commit.
-- [x] Run `make lint` and `make check`; both passed after the REST and directive model changes. `make generate` was byte-stable locally, and remote CI passed its regeneration and drift checks.
-- [x] Review the working tree: token-marker scan found no token-shaped values, and no capture/config data files remain. This checks the current tree only; the `main` rewrite and old-tag deletion are recorded below. GitHub's cached views of old commit IDs require a separate Support request.
-- [x] Replace `main` history and remove old tags that retain the old commits. **Signed off:** a new root commit replaced `main`; v1.0.0 through v1.0.7 were deleted. A remote ref check found only the rewritten `main`, and its CI and documentation runs passed.
-- [x] Publish the client/session migration as `v0.2.0`. **Signed off:** CI and documentation passed on `612019b`; the tag's release workflow passed API compatibility, race tests, vet, build, and a fresh public Go proxy consumer compile before publishing the GitHub Release. The published coverage badge reports 81.8%, and the versioned Go Reference page for `pkg/alexa` is available.
-- [x] Publish paired replay and full schema inventory as `v0.3.0`. [CI](https://github.com/portpowered/go-alexa/actions/runs/36495524214), [Documentation](https://github.com/portpowered/go-alexa/actions/runs/36495524083), and the exact-tag [Release](https://github.com/portpowered/go-alexa/actions/runs/36495544663) passed at `ef54acb`; GitHub published the release and the public Go proxy serves the version. The version-specific Go Reference page was still indexing at the time of this sign-off; the unversioned package page and README badge resolve.
-- [x] Publish final copy and independent release verification as `v0.3.1`. [CI](https://github.com/portpowered/go-alexa/actions/runs/36496561197), [Documentation](https://github.com/portpowered/go-alexa/actions/runs/36496561189), and exact-tag [Release](https://github.com/portpowered/go-alexa/actions/runs/36496774440) passed at `b04ff67`; the GitHub Release, public Go proxy, and versioned Go Reference serve the version.
-
-The independent standards review is complete. Cached GitHub views of old commit IDs still require the separate Support request
-noted above.
+See [verification](verification.md), the shared template's
+[client design](https://github.com/portpowered/go-third-party-template/blob/843ec3f2ef2d28920c39ddbfef63d6a857c6fe05/docs/client-design.md), and
+[website publishing](https://github.com/portpowered/go-third-party-template/blob/843ec3f2ef2d28920c39ddbfef63d6a857c6fe05/docs/website.md).

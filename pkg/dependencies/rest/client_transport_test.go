@@ -293,6 +293,7 @@ func TestControlEndpointUsesPathAndWireCommand(t *testing.T) {
 	)
 
 	err := client.ControlEndpoint(context.Background(), "endpoint-7", alexamodels.Command{
+		DeviceID: "", Type: "",
 		Namespace: "Alexa.PowerController",
 		Name:      "TurnOn",
 		Payload:   map[string]any{"powerState": "ON"},

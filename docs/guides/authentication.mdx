@@ -22,7 +22,20 @@ Pass an access token to `WithBearerToken`. The session uses it for authenticated
 
 ## Refresh a token
 
-Create a session with `WithRefreshToken` and call `Session.RefreshAccessToken` when you choose. It returns new credentials without changing session state. Store the new token in your credential store, then install it with `Session.SetAccessToken` or create a new session.
+Create a session with `WithRefreshToken`. Pass the same device registration settings used when you linked the account to `Session.RefreshAccessToken`:
+
+```go
+refreshed, err := session.RefreshAccessToken(ctx, registrationConfig)
+if err != nil {
+    return err
+}
+// Store refreshed.AccessToken and refreshed.ExpiresInSeconds in your credential store.
+if err := session.SetAccessToken(refreshed.AccessToken); err != nil {
+    return err
+}
+```
+
+Refresh is explicit and leaves session state unchanged until you install the returned access token. The response contains an access token and its expiry interval; it does not replace your stored refresh token.
 
 ## Link an account with a code
 
@@ -37,4 +50,4 @@ Call `Session.ExchangeRefreshTokenForCookies` explicitly, store the result, and 
 ## API reference
 
 - [Create a code pair](../../openapi/account-linking/createCodePair/), [register a device](../../openapi/account-linking/registerDevice/), and [refresh a token](../../openapi/account-linking/refreshAccessToken/).
-- [Exchange a refresh token for cookies](../../openapi/account-linking/exchangeRefreshTokenForCookies/) and [retrieve CSRF material](../../openapi/alexa-web-apis/fetchCsrfCookie/).
+- [Exchange a refresh token for cookies](../../openapi/account-linking/exchangeRefreshTokenForCookies/) and [retrieve CSRF material](../../openapi/language/fetchCsrfCookie/).

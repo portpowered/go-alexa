@@ -79,9 +79,21 @@ func (c *Session) ListEndpoints(
 
 	// Build GraphQL input from query parameters
 	graphqlInput := graphql.ListEndpointsInput{
+		MaxAgeInMillis:          0,
+		LatencyTolerance:        "",
+		DisplayCategory:         "",
+		AllDisplayCategories:    "",
+		Enablement:              "",
+		Filters:                 nil,
+		FilterExpressions:       nil,
+		QueryExpression:         nil,
+		MaxPagesToFetch:         0,
+		EndpointIds:             nil,
+		IncludeHouseholdDevices: false,
 		PaginationParams: graphql.PaginationParams{
 			PageSize:          defaultEndpointPageSize,
 			DisablePagination: true,
+			NextToken:         "",
 		},
 	}
 
@@ -108,7 +120,10 @@ func (c *Session) ListEndpoints(
 			PaginationParams: graphql.PaginationParams{
 				PageSize:          defaultEndpointPageSize,
 				DisablePagination: true,
+				NextToken:         "",
 			},
+			Filters:                 nil,
+			IncludeHouseholdDevices: false,
 		})
 		if err != nil {
 			return nil, err
@@ -841,29 +856,11 @@ func extractRangeStateValue(
 		return nil
 	}
 
-	data, err := json.Marshal(prop)
-	if err != nil {
+	if prop.RangeValue.Typename == "" {
 		return nil
 	}
 
-	var raw struct {
-		RangeValue *struct {
-			Value *float64 `json:"value"`
-		} `json:"rangeValue"`
-	}
-
-	{
-		err := json.Unmarshal(data, &raw)
-		if err != nil {
-			return nil
-		}
-	}
-
-	if raw.RangeValue == nil || raw.RangeValue.Value == nil {
-		return nil
-	}
-
-	return &alexaapimodels.RangeValueState{Value: *raw.RangeValue.Value}
+	return &alexaapimodels.RangeValueState{Value: prop.RangeValue.Value}
 }
 
 // extractError extracts error information from a property using type assertion.
