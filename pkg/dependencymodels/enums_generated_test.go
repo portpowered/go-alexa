@@ -1,6 +1,7 @@
 package alexamodels_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
@@ -68,5 +69,35 @@ func TestCapabilityInterfaceRemainsOpenStringAlias(t *testing.T) {
 	var unknown = alexamodels.CapabilityInterface("SYNTHETIC_UNKNOWN_CAPABILITY")
 	if unknown != "SYNTHETIC_UNKNOWN_CAPABILITY" {
 		t.Errorf("unknown capability = %q", unknown)
+	}
+}
+
+func TestGeneratedWireStateBindingsPreserveFutureValues(t *testing.T) {
+	t.Parallel()
+
+	var control alexamodels.LockPayload
+
+	err := json.Unmarshal([]byte(`{"lockState":"FUTURE_LOCK_STATE"}`), &control)
+	if err != nil || control.LockState != "FUTURE_LOCK_STATE" {
+		t.Fatalf("future control state = %+v, %v", control, err)
+	}
+
+	var event alexamodels.PowerProperty
+
+	err = json.Unmarshal([]byte(`{"powerStateValue":"FUTURE_POWER_STATE","accuracy":"FUTURE_ACCURACY"}`), &event)
+	if err != nil || event.PowerStateValue != "FUTURE_POWER_STATE" || event.Accuracy != "FUTURE_ACCURACY" {
+		t.Fatalf("future event state = %+v, %v", event, err)
+	}
+
+	encoded, err := json.Marshal(event)
+	if err != nil {
+		t.Fatalf("encode future event state: %v", err)
+	}
+
+	var roundTrip alexamodels.PowerProperty
+
+	err = json.Unmarshal(encoded, &roundTrip)
+	if err != nil || roundTrip.PowerStateValue != event.PowerStateValue || roundTrip.Accuracy != event.Accuracy {
+		t.Fatalf("future state round trip = %+v, %v", roundTrip, err)
 	}
 }

@@ -252,3 +252,26 @@ func assertPowerPayload(t *testing.T, payload interface{}) {
 		t.Errorf("Expected type 'RETRIEVABLE', got %s", property.Type)
 	}
 }
+
+func TestCompatibilityEventRejectsMalformedGeneratedDirectiveShapes(t *testing.T) {
+	t.Parallel()
+
+	for _, input := range []string{
+		`{}`, `{"directive":null}`, `{"directive":{"header":null}}`,
+		`{"directive":{"header":{},"payload":null}}`,
+		`{"directive":{"header":{},"payload":{"renderingUpdates":[]}}}`,
+		`{"directive":{"header":{},"payload":{"renderingUpdates":[{"resourceMetadata":4}]}}}`,
+	} {
+		var message alexamodels.Message
+
+		err := json.Unmarshal([]byte(`{"data":`+input+`}`), &message)
+		if err != nil {
+			t.Fatalf("decode synthetic compatibility input: %v", err)
+		}
+
+		_, err = ParseEvent(&message)
+		if err == nil {
+			t.Fatalf("malformed directive accepted: %s", input)
+		}
+	}
+}

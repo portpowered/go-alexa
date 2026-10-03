@@ -4,6 +4,9 @@
 package alexamodels
 
 import (
+	"encoding/json"
+	"fmt"
+
 	alexaapimodels "github.com/portpowered/go-alexa/pkg/alexaapimodels"
 )
 
@@ -71,6 +74,12 @@ type EndpointQueryRequest struct {
 	Query EndpointQuery `json:"query"`
 }
 
+// FeatureDefaultOperationName Implementation-derived known discovery descriptor names. Caller extensions remain open.
+type FeatureDefaultOperationName = string
+
+// FeatureDefaultPropertyName Implementation-derived known discovery descriptor names. Caller extensions remain open.
+type FeatureDefaultPropertyName = string
+
 // FireTVOperationRequest defines model for FireTVOperationRequest.
 type FireTVOperationRequest struct {
 	Endpoint Endpoint `json:"-,omitempty"`
@@ -105,6 +114,12 @@ type InterfaceMessageRequest struct {
 	Payload       interface{} `json:"payload,omitempty"`
 }
 
+// LegacyCapabilityPayload Known object members consumed from the LegacyAppliance capabilities JSON scalar. Unknown provider members remain open.
+type LegacyCapabilityPayload struct {
+	InterfaceName        *string                `json:"interfaceName,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
 // PaginationContext defines model for PaginationContext.
 type PaginationContext struct {
 	MaxResults        int    `json:"maxResults,omitempty"`
@@ -124,6 +139,21 @@ type PowerControlRequest struct {
 	Endpoint Endpoint                  `json:"-,omitempty"`
 	State    alexaapimodels.PowerState `json:"state"`
 }
+
+// SDKKnownEndpointDisplayCategory Known library EndpointDisplayCategory values. Caller-supplied extensions remain open.
+type SDKKnownEndpointDisplayCategory = string
+
+// SDKKnownEndpointPrefix Prefixes used to adapt known endpoint IDs and feature event namespaces.
+type SDKKnownEndpointPrefix = string
+
+// SDKKnownFeatureName Known library FeatureName values. Caller-supplied extensions remain open.
+type SDKKnownFeatureName = string
+
+// SDKKnownFeatureOperationName Known library FeatureOperationName values. Caller-supplied extensions remain open.
+type SDKKnownFeatureOperationName = string
+
+// SDKKnownPowerState Known library PowerState values. Caller-supplied extensions remain open.
+type SDKKnownPowerState = string
 
 // SendAnnouncementRequest defines model for SendAnnouncementRequest.
 type SendAnnouncementRequest struct {
@@ -160,4 +190,72 @@ type StringFilter struct {
 // StringFilterValue defines model for StringFilterValue.
 type StringFilterValue struct {
 	Text string `json:"text"`
+}
+
+// Getter for additional properties for LegacyCapabilityPayload. Returns the specified
+// element and whether it was found
+func (a LegacyCapabilityPayload) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for LegacyCapabilityPayload
+func (a *LegacyCapabilityPayload) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for LegacyCapabilityPayload to handle AdditionalProperties
+func (a *LegacyCapabilityPayload) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["interfaceName"]; found {
+		err = json.Unmarshal(raw, &a.InterfaceName)
+		if err != nil {
+			return fmt.Errorf("error reading 'interfaceName': %w", err)
+		}
+		delete(object, "interfaceName")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for LegacyCapabilityPayload to handle AdditionalProperties
+func (a LegacyCapabilityPayload) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.InterfaceName != nil {
+		object["interfaceName"], err = json.Marshal(a.InterfaceName)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'interfaceName': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
 }

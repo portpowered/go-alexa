@@ -134,50 +134,25 @@ var eventParserRegistry = map[string]eventParserMetadata[any]{
 	},
 }
 
-// ParseEvent decomposes a raw Message into a structured Event.
+// ParseEvent converts a compatibility Message through the generated directive model.
 func ParseEvent(msg *alexamodels.Message) (*alexaapimodels.Event, error) {
 	if msg == nil || msg.Data == nil {
 		return nil, errEventMessageMissing
 	}
 
-	// Extract directive
-	directiveRaw, directiveValid := msg.Data[alexamodels.EventDirectiveKey].(map[string]interface{})
-	if !directiveValid {
-		return nil, errDirectiveInvalid
+	data, err := json.Marshal(msg.Data)
+	if err != nil {
+		return nil, fmt.Errorf("encode compatibility event: %w", err)
 	}
 
-	// Extract header
-	headerRaw, headerValid := directiveRaw[alexamodels.EventHeaderKey].(map[string]interface{})
-	if !headerValid {
-		return nil, errHeaderInvalid
+	var directive alexamodels.DirectiveMessage
+
+	err = json.Unmarshal(data, &directive)
+	if err != nil {
+		return nil, fmt.Errorf("decode compatibility event: %w", err)
 	}
 
-	messageID, _ := headerRaw[alexamodels.EventMessageIDKey].(string)
-
-	// Extract payload
-	payloadRaw, payloadValid := directiveRaw[alexamodels.EventPayloadKey].(map[string]interface{})
-	if !payloadValid {
-		return nil, errPayloadInvalid
-	}
-
-	// Extract renderingUpdates
-	renderingUpdatesRaw, updatesValid := payloadRaw[alexamodels.EventRenderingUpdatesKey].([]interface{})
-	if !updatesValid || len(renderingUpdatesRaw) == 0 {
-		return nil, errRenderingUpdatesEmpty
-	}
-
-	// Process the first rendering update (most common case)
-	updateRaw, updateValid := renderingUpdatesRaw[0].(map[string]interface{})
-	if !updateValid {
-		return nil, errRenderingUpdateInvalid
-	}
-
-	resourceMetadataStr, metadataValid := updateRaw[alexamodels.EventResourceMetadataKey].(string)
-	if !metadataValid {
-		return nil, errResourceMetadataInvalid
-	}
-
-	return parseEventResourceMetadata(messageID, resourceMetadataStr)
+	return parseDirectiveMessage(&directive)
 }
 
 // parseDirectiveMessage converts the generated representation of the current

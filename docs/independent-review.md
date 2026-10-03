@@ -77,12 +77,14 @@ describe the committed SHA.
 
 7. **FAIL.** Public API, generated wire models, and transport are located in
    `pkg/alexa`, `pkg/dependencymodels`, and `pkg/dependencies/` respectively;
-   schemas and generated files are split by responsibility. Independent struct
-   search did not find another handwritten production wire struct or anonymous
-   provider object missing from the inventory. However, primitive/library
-   constants listed under item 4 remain manually declared or absent from
-   schema-generated definitions. Resolve that gap and verify imports from the
-   separate consumer module.
+   schemas and generated files are split by responsibility. The independent
+   type scan found no additional standalone handwritten production wire struct.
+   A follow-up raw-object scan did find `LegacyAppliance.capabilities` modeled
+   as `[JSON!]` in the GraphQL SDL although production code reads its
+   `interfaceName` key; this unmodeled nested shape is recorded as F6 below.
+   Primitive/library constants listed under item 4 also remain manually
+   declared or absent from schema-generated definitions. Resolve those gaps
+   and verify imports from the separate consumer module.
 
 8. **PASS (preliminary).** `pkg/alexa/client.go` uses validated functional
    options and sensible defaults. Account credentials are passed through
@@ -146,9 +148,10 @@ describe the committed SHA.
 ### Findings and disposition at this SHA
 
 - **F1 — open (items 4, 7):** library-built playback/speaker values,
-  registration device IDs, and behavior provider IDs are not yet represented
-  by schema-generated constants. Root was notified; planned changes are not
-  counted as resolved.
+  registration device IDs, behavior provider IDs, recognized legacy
+  capability aliases, and supported event namespace/name values are not yet
+  fully represented by schema-generated constants. Root was notified; planned
+  changes are not counted as resolved.
 - **F2 — open (items 2, 12, 13):** rendered API pages do not consistently say
   that the contracts are implementation-derived, not provider-issued. Add
   visible labels and inspect final output.
@@ -159,3 +162,81 @@ describe the committed SHA.
   CLI consumer installation remain pending.
 - **F5 — open (item 14):** second reviewer and final-SHA joint verification
   remain outstanding.
+- **F6 — open (items 4, 7):** GraphQL
+  `LegacyAppliance.capabilities: [JSON!]` contains the fixed nested
+  `interfaceName` key consumed by
+  `pkg/alexa/client_enumeration.go#extractLegacyCapabilityInterfaces`; the
+  current schema/generator does not type or generate that shape/key. The same
+  source contains raw map lookups for `timeOfSample` and `timeOfLastChange`
+  instead of generated accessors. Model the known nested object while
+  retaining explicitly open additional fields, and route property access
+  through generated types/accessors before re-review.
+- **F7 — open (items 4, 7):** The exported legacy `ParseEvent` path in
+  `pkg/alexa/client_event.go` walks the known `directive`, `header`, `payload`,
+  `renderingUpdates`, and `resourceMetadata` structure through nested
+  `map[string]interface{}` values from the compatibility `Message.Data` field.
+  The key constants are generated from AsyncAPI, and the HTTP/2 path uses the
+  generated `DirectiveMessage`, but this compatibility parser still does not
+  decode that recognized event shape through the generated type. Convert it
+  through `DirectiveMessage` or document and gate a narrower compatibility
+  boundary.
+- **F8 — open (items 4, 7):** A supplemental scan found additional known
+  primitive values and manual projections not tied to generated constants:
+  `client_enumeration.go` builds `NameValueObject` with raw `"PLAIN"` although
+  `DefaultFriendlyNameType` is generated; GraphQL feature control compares
+  states to raw `"ON"`/`"LOCKED"`; `feature-controls.yaml` models known lock,
+  toggle, thermostat mode, and temperature scale values as plain strings
+  despite corresponding GraphQL enums. The public compatibility enums for
+  feature names/operations, endpoint display categories, QoS experience, and
+  subscription entity types also need schema-backed values or explicit
+  documented open-string treatment. Add call-site checks that reject raw
+  library-selected wire values; generating constants alone does not prove
+  their use.
+
+## Reviewer 2 — preliminary independent audit at `9a6edceecc02163766d54fbc05e0a136ce487561`
+
+I did not implement this SDK or CLI. I independently reviewed this commit against checklist items 1–16 and the shared standards pinned at `843ec3f2ef2d28920c39ddbfef63d6a857c6fe05`. This is a preliminary review of that source snapshot; findings remain open until root’s fixes and the final SHA are reviewed.
+
+### Item verdicts
+
+1. **PASS (preliminary).** The public packages are provider-focused under `pkg/alexa`; README and customer guides do not depend on a consuming application. Application secret stores are referenced generically.
+
+2. **OPEN.** README and MDX guides document supported operations, session authentication, errors, transport injection, control behavior, and synthetic evidence. Generated reference pages still lack visible evidence labels on many operations; see R2-F3.
+
+3. **PASS.** README shows Go version, CI, coverage, release, Go Reference, license, and GitHub Pages badges, all pointing to project reports or destinations.
+
+4. **FAIL.** Route/schema generation and the route/model negative gates run in CI, and REST, GraphQL, behavior, event, and pinned HTTP/2 responsibilities have separate checked-in schemas. My source scan nevertheless found library-selected values and recognized wire shapes that remain handwritten, open strings, or raw maps; see R2-F1 and R2-F2.
+
+5. **PASS (preliminary).** Exact-commit CI run [37110976620](https://github.com/portpowered/go-alexa/actions/runs/37110976620) passed both `verify` and `cli-windows`. Root and nested `.golangci.yml` set `linters.default: all`; CI pins golangci-lint v2.3.0, and the run reports 0 issues for both modules. The earlier 105c3c3 Windows module check differed only in go.sum line endings; `.gitattributes` fixes LF on 9a, and the exact-9a Windows job passes.
+
+6. **PASS (preliminary, minimum met).** The exact-9a race-enabled coverage gate reports `pkg/alexa` 82.1%, `pkg/alexaapimodels` 86.5%, `pkg/dependencies/graphql` 94.2%, `pkg/dependencies/rest` 83.8%, `pkg/dependencymodels` 100.0% over its 3 non-generated statements, and combined non-generated package coverage 84.1% (2394/2847), above the enforced 80% minimum. The 90% target is not met. `tools/coverage` excludes generated Go files and `pkg/testing` helpers.
+
+7. **OPEN.** Public and dependency packages are separated, but the source/model gaps in R2-F1 and R2-F2 remain. A public consumer compile through the proxy is not yet evidenced: `cmd/go-alexa/go.mod` still has `replace ... => ../..`, and the CLI’s separate install is also pending.
+
+8. **PASS (preliminary).** `alexa.NewClient` uses validated options and defaults; credentials are supplied to `NewSession`, not stored in reusable client configuration.
+
+9. **PASS (preliminary).** Session owns account credentials and open event connections. `Session.Close` is explicit, repeated close is safe, and the reusable client does not silently swap account or connection state.
+
+10. **PASS (preliminary).** REST, GraphQL, and event-stream HTTP clients/transports are injectable. `TestEventNativeHTTP2PairedReplay` injects a `net.Pipe` beneath the pinned HTTP/2 transport and checks framed requests, directive parsing, keepalive, consumption, and close without provider access.
+
+11. **PASS (preliminary).** `RefreshAccessToken` returns caller-visible credentials without installing the new access token; `SetAccessToken` is explicit. Cookie exchange and CSRF retrieval are explicit calls too.
+
+12. **OPEN.** The customer guides are MDX under `docs/guides/` and link to generated pages. Exact-9a Documentation run [37110976619](https://github.com/portpowered/go-alexa/actions/runs/37110976619) built 250 pages and checked 44,910 internal links successfully. Its deploy job was skipped for this pull request; Pages deploys from `main`, so final publication remains unverified.
+
+13. **OPEN.** I reviewed every tracked Markdown/MDX document and the rendered site artifact. The README is focused, customer navigation excludes contributor audits, and provenance notes distinguish synthetic fixtures. However, rendered evidence labels remain inconsistent (R2-F3), so the published pages are not ready for sign-off.
+
+14. **OPEN.** Reviewer 1’s section is preliminary at f22de7d, and this section is preliminary at 9a6edce. Neither review verifies the eventual final commit; both reviewers must recheck the same final SHA and close every finding.
+
+15. **PASS (preliminary).** `pkg/testing.SyntheticReplay` matches each request before returning its paired response and checks method, origin, escaped path, repeated query, headers, and body. REST, GraphQL, event, native HTTP/2, and CLI tests assert consumption; mismatch and unconsumed-pair negative cases are present. Fixtures are explicitly synthetic.
+
+16. **OPEN.** `cmd/go-alexa` is a separate module over the public SDK. It has offline paired command tests for account linking, refresh failures, endpoint listing/control, player state, and event cancellation/close; help, JSON output, nonzero errors, explicit credential export, protected credential files, and all-linter CI are present. But the SDK v0.4.0 dependency is not yet published, the development `replace` remains, and no `cmd/go-alexa/v*` release tag or separate public `go install` proof exists.
+
+### Reviewer 2 findings
+
+- **R2-F1 — open (items 4, 7):** Library-defined wire values are not consistently schema-derived or checked at use sites. `FeatureNamePlayback`/`FeatureNameSpeaker` and the operation string from `FeatureOperationName` flow through `pkg/alexa/client_control.go#sendThirdPartyPlaybackMessage` and `#controlInterfaceVolume` into `pkg/dependencies/rest/endpoints.go#SendInterfaceMessage`, which inserts them into the actual REST path. `api/compat/endpoints.yaml` models these fields as open strings. Public `ProviderID` constants flow from `controlMusic` into `MusicPlaySearchPhrasePayload.musicProviderId`, whose schema is string; `DeviceTypeIphone`/`DeviceTypeSimulator` flow into registration bodies while the auth schema also says string. `api/asyncapi.yaml` leaves directive `namespace`/`name` open strings while `client_event.go` matches manually declared supported names/namespaces. Additional source-selected values include legacy capability aliases, `"PLAIN"` despite generated `DefaultFriendlyNameType`, raw `"ON"`/`"LOCKED"` state comparisons, and feature-control lock/toggle/mode/scale strings despite corresponding GraphQL enums. Put each known library-selected value in its responsibility schema, generate the public semantic projections from those sources without introducing an import cycle, and gate the actual call sites while preserving genuinely open caller values.
+
+- **R2-F2 — open (items 4, 7):** Known nested wire shapes still pass through raw JSON maps. `LegacyAppliance.capabilities` is `[JSON!]` in the GraphQL SDL although `extractLegacyCapabilityInterfaces` reads `interfaceName`; generated `FeatureProperty` implementations carry `timeOfSample` and `timeOfLastChange`, but enumeration marshals them to maps and indexes raw keys; the exported `ParseEvent` compatibility path walks the known directive/header/payload/rendering-update/resource-metadata tree through nested maps even though `DirectiveMessage` is generated. Type these known portions in schemas and route reads through generated types, retaining explicit open extra fields where required.
+
+- **R2-F3 — open (items 2, 12, 13):** In the exact-9a rendered artifact, 16 of 22 OpenAPI operation pages, the AsyncAPI event page, all 212 GraphQL pages, and the site root do not visibly label the contract as implementation-derived and not provider-verified. Examples include `sendEndpointInterfaceMessage`, `sendMediaCommand`, `getUserInfo`, and `deregisterEndpoint`. Add evidence-status copy where customers see each contract, rebuild the site, and inspect the final artifact.
+
+- **R2-F4 — open (items 7, 12, 14, 16):** At this review snapshot, GitHub Pages is configured to publish from `main`, while the exact-9a pull-request run skipped deploy. The GitHub release list has SDK v0.3.2 as the latest release and no `cmd/go-alexa/v*` tag; the nested module still requires unpublished v0.4.0 with a local `replace`. Publish and verify the SDK first, then verify a clean public CLI install and the final Pages artifact. Both reviewers must recheck that same final commit.

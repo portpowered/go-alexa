@@ -398,3 +398,47 @@ func assertRangeFeature(
 		t.Fatalf("state value for %s = %v, want %v", expectedLabel, value.Value, expectedValue)
 	}
 }
+
+func TestGeneratedPropertyTimesPreserveMissingAndTypedNilValues(t *testing.T) {
+	t.Parallel()
+
+	session := &Session{}
+
+	var property gqlStatePropertyPower
+
+	property.TimeOfSample = "2026-10-03T00:00:00Z"
+
+	property.TimeOfLastChange = "2026-10-02T23:59:00Z"
+
+	if got := session.extractTimeOfSample(&property); got != property.TimeOfSample {
+		t.Fatalf("sample = %q", got)
+	}
+
+	if got := session.extractTimeOfLastChange(&property); got != property.TimeOfLastChange {
+		t.Fatalf("last change = %q", got)
+	}
+
+	var missing *gqlStatePropertyPower
+	for _, absent := range []gqlStatePropertyFeatureProperty{nil, missing} {
+		if session.extractTimeOfSample(absent) != "" || session.extractTimeOfLastChange(absent) != "" {
+			t.Fatal("missing generated property has a time")
+		}
+	}
+}
+
+func TestLegacyCapabilityJSONScalarUsesGeneratedKnownMembers(t *testing.T) {
+	t.Parallel()
+
+	inputs := []interface{}{
+		map[string]interface{}{"interfaceName": "Alexa.Speaker", "future": true},
+		map[string]interface{}{"interfaceName": ""},
+		map[string]interface{}{"interfaceName": 1},
+		map[string]interface{}{"future": true},
+		"not an object", nil, make(chan int),
+	}
+
+	got := extractLegacyCapabilityInterfaces(inputs)
+	if len(got) != 1 || got[0] != "Alexa.Speaker" {
+		t.Fatalf("legacy interfaces = %v", got)
+	}
+}

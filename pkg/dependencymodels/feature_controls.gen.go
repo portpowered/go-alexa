@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-// ActionPayload The action name is library-defined. Additional top-level fields are caller-supplied action parameters and remain open by design.
+// ActionPayload The action name is caller- or device-defined. Additional top-level fields are caller-supplied action parameters and remain open by design.
 type ActionPayload struct {
 	Action               string                 `json:"action"`
 	AdditionalProperties map[string]interface{} `json:"-"`
@@ -34,6 +34,18 @@ type ColorTemperatureSetPayload struct {
 	ColorTemperatureInKelvin int `json:"colorTemperatureInKelvin"`
 }
 
+// ControlKnownLockStateValue Known LockStateValue values from the checked-in GraphQL schema. Future string values remain open.
+type ControlKnownLockStateValue = string
+
+// ControlKnownTemperatureScale Known TemperatureScale values from the checked-in GraphQL schema. Future string values remain open.
+type ControlKnownTemperatureScale = string
+
+// ControlKnownThermostatModeValue Known ThermostatModeValue values from the checked-in GraphQL schema. Future string values remain open.
+type ControlKnownThermostatModeValue = string
+
+// ControlKnownToggleStateValue Known ToggleStateValue values from the checked-in GraphQL schema. Future string values remain open.
+type ControlKnownToggleStateValue = string
+
 // FeatureColorValue defines model for FeatureColorValue.
 type FeatureColorValue struct {
 	Brightness float64 `json:"brightness"`
@@ -46,16 +58,19 @@ type FeatureEmptyPayload = struct{}
 
 // LockPayload defines model for LockPayload.
 type LockPayload struct {
-	LockState string `json:"lockState"`
+	// LockState Known LockStateValue values from the checked-in GraphQL schema. Future string values remain open.
+	LockState ControlKnownLockStateValue `json:"lockState"`
 }
 
 // ModeAdjustPayload defines model for ModeAdjustPayload.
 type ModeAdjustPayload struct {
+	// ModeDelta Device-specific adjustment supplied by the caller; no fixed provider-wide enum is assumed.
 	ModeDelta string `json:"modeDelta"`
 }
 
 // ModeSetPayload defines model for ModeSetPayload.
 type ModeSetPayload struct {
+	// Mode Device-specific mode supplied by the caller; no fixed provider-wide enum is assumed.
 	Mode string `json:"mode"`
 }
 
@@ -101,13 +116,15 @@ type SpeakerSetVolumePayload struct {
 
 // ThermostatModePayload defines model for ThermostatModePayload.
 type ThermostatModePayload struct {
-	ThermostatMode string `json:"thermostatMode"`
+	// ThermostatMode Known ThermostatModeValue values from the checked-in GraphQL schema. Future string values remain open.
+	ThermostatMode ControlKnownThermostatModeValue `json:"thermostatMode"`
 }
 
 // ThermostatSetpoint defines model for ThermostatSetpoint.
 type ThermostatSetpoint struct {
-	Scale string  `json:"scale"`
-	Value float64 `json:"value"`
+	// Scale Known TemperatureScale values from the checked-in GraphQL schema. Future string values remain open.
+	Scale ControlKnownTemperatureScale `json:"scale"`
+	Value float64                      `json:"value"`
 }
 
 // ThermostatSetpointAdjustPayload defines model for ThermostatSetpointAdjustPayload.
@@ -122,7 +139,8 @@ type ThermostatSetpointSetPayload struct {
 
 // TogglePayload defines model for TogglePayload.
 type TogglePayload struct {
-	ToggleState string `json:"toggleState"`
+	// ToggleState Known ToggleStateValue values from the checked-in GraphQL schema. Future string values remain open.
+	ToggleState ControlKnownToggleStateValue `json:"toggleState"`
 }
 
 // Getter for additional properties for ActionPayload. Returns the specified

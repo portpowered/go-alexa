@@ -255,11 +255,15 @@ components:
         app_version:
           type: string
         source_token_type:
+          x-go-compat-constant-values:
+            AuthTokenTypeRefresh: "refresh_token"
           type: string
         source_token:
           type: string
           format: password
         requested_token_type:
+          x-go-compat-constant-values:
+            AuthTokenTypeAccess: "access_token"
           type: string
         device_metadata:
           $ref: '#/components/schemas/WireDeviceMetadata'
@@ -282,6 +286,8 @@ components:
         device_serial:
           type: string
         manufacturer:
+          x-go-compat-constant-values:
+            SDKDefaultManufacturer: "Amazon"
           type: string
       required:
       - device_type
@@ -322,6 +328,8 @@ components:
       type: object
       properties:
         requested_token_type:
+          x-go-compat-constant-values:
+            AuthTokenTypeBearer: "bearer"
           type: array
           items:
             type: string
@@ -365,16 +373,26 @@ components:
       type: object
       properties:
         app_name:
+          x-go-compat-constant-values:
+            SDKDefaultAppName: "Client SDK"
           type: string
         app_version:
+          x-go-compat-constant-values:
+            SDKDefaultAppVersion: "1.0"
           type: string
         device_type:
           type: string
         domain:
+          x-go-compat-constant-values:
+            SDKDefaultRegistrationDomain: "Device"
           type: string
         device_model:
+          x-go-compat-constant-values:
+            SDKDefaultDeviceModel: "Client SDK"
           type: string
         os_version:
+          x-go-compat-constant-values:
+            SDKDefaultOSVersion: "0"
           type: string
         device_serial:
           type: string
@@ -412,6 +430,8 @@ components:
       type: object
       properties:
         Name:
+          x-go-compat-constant-values:
+            AuthCSRFCookieName: "csrf"
           type: string
         Value:
           type: string
@@ -428,8 +448,12 @@ components:
       type: object
       properties:
         app_name:
+          x-go-compat-constant-values:
+            AuthCookieExchangeAppName: "Amazon Alexa"
           type: string
         requested_token_type:
+          x-go-compat-constant-values:
+            AuthTokenTypeCookies: "auth_cookies"
           type: string
         domain:
           type: string
@@ -483,6 +507,8 @@ components:
         device_name:
           type: string
         secondary_registration:
+          x-go-compat-constant-values:
+            AuthSecondaryRegistrationFalse: "False"
           type: string
       required:
       - app_name
@@ -508,8 +534,14 @@ components:
       type: object
       properties:
         challenge_reason:
+          x-go-compat-constant-values:
+            AuthChallengeMissingData: "MissingRequiredAuthenticationData"
+            AuthChallengeWebView: "HandleOnWebView"
+            AuthChallengeFailed: "AuthenticationFailed"
           type: string
         required_authentication_method:
+          x-go-compat-constant-values:
+            AuthChallengePasswordMethod: "GenericClaimPassword"
           type: string
   responses:
     UnhandledResponse:

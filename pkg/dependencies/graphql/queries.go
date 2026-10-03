@@ -125,7 +125,7 @@ func (c *Client) SetEndpointFeatures(ctx context.Context, input SetEndpointFeatu
 	// The entity seemingly needs to be set for the operation to work.
 	for i := range input.FeatureControlRequests {
 		if input.FeatureControlRequests[i].EntityId == "" {
-			trimmedID := strings.TrimPrefix(input.FeatureControlRequests[i].EndpointId, "amzn1.alexa.endpoint.")
+			trimmedID := strings.TrimPrefix(input.FeatureControlRequests[i].EndpointId, alexaapimodels.EndpointIDPrefix)
 			input.FeatureControlRequests[i].EntityId = trimmedID
 		}
 	}

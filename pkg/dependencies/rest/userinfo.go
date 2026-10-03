@@ -40,7 +40,7 @@ func (c *Client) GetUserInfo(ctx context.Context, opts *GetUserInfoOptions) (*al
 	// Build custom headers
 	customHeaders := make(map[string]string)
 	if opts.CSRFToken != "" {
-		customHeaders[apiroutes.HeaderCookie] = "csrf=" + opts.CSRFToken
+		customHeaders[apiroutes.HeaderCookie] = alexamodels.AuthCSRFCookieName + "=" + opts.CSRFToken
 	}
 
 	// Use the client's helper method to perform the request

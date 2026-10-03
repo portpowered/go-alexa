@@ -21,3 +21,9 @@ type Event struct {
 type Message struct {
 	Data map[string]interface{} `json:"data,omitempty"`
 }
+
+// SDKKnownEntityType Known library EntityType values. Caller-supplied extensions remain open.
+type SDKKnownEntityType = string
+
+// SDKKnownQualityOfServiceExperience Known library QualityOfServiceExperience values. Caller-supplied extensions remain open.
+type SDKKnownQualityOfServiceExperience = string

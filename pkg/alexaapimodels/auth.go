@@ -36,15 +36,15 @@ type TokenRefreshResponse struct {
 // This is a convenience function for creating a DeviceRegistrationConfig with sensible defaults.
 func DefaultDeviceRegistrationConfig(deviceSerial, deviceName string) DeviceRegistrationConfig {
 	return DeviceRegistrationConfig{
-		AppName:      "Client SDK",
-		AppVersion:   "1.0",
+		AppName:      DefaultAppName,
+		AppVersion:   DefaultAppVersion,
 		DeviceType:   DeviceTypeIphone, // DeviceTypeSimulator
-		Domain:       "Device",
-		DeviceModel:  "Client SDK",
-		OSVersion:    "0",
+		Domain:       DefaultRegistrationDomain,
+		DeviceModel:  DefaultDeviceModel,
+		OSVersion:    DefaultOSVersion,
 		DeviceSerial: deviceSerial,
 		DeviceName:   deviceName,
-		Manufacturer: "Amazon",
+		Manufacturer: DefaultManufacturer,
 	}
 }
 

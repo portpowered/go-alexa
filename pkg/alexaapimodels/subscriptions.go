@@ -3,15 +3,6 @@ package alexaapimodels
 // QualityOfServiceExperience represents the type of quality of service experience.
 type QualityOfServiceExperience string
 
-const (
-	// QualityOfServiceExperienceBackgroundEphemeral prioritizes short-lived background polling.
-	QualityOfServiceExperienceBackgroundEphemeral QualityOfServiceExperience = "BACKGROUND_EPHEMERAL"
-	// QualityOfServiceExperienceBackgroundPersistent keeps background polling active.
-	QualityOfServiceExperienceBackgroundPersistent QualityOfServiceExperience = "BACKGROUND_PERSISTENT"
-	// QualityOfServiceExperienceForegroundPersistent keeps foreground polling active.
-	QualityOfServiceExperienceForegroundPersistent QualityOfServiceExperience = "FOREGROUND_PERSISTENT"
-)
-
 // QualityOfServiceRequest represents a request to request quality of service for endpoints.
 //
 //modelinventory:client-input QualityOfServiceRequest: endpoint list and experience settings converted to the generated GraphQL request.
@@ -49,13 +40,6 @@ type SubscribeEntity struct {
 
 // EntityType identifies the kind of events requested by a subscription.
 type EntityType string
-
-const (
-	// EntityTypeEndpoint selects endpoint lifecycle events.
-	EntityTypeEndpoint EntityType = "Endpoint"
-	// EntityTypeState selects endpoint state-change events.
-	EntityTypeState EntityType = "State"
-)
 
 // QualityOfServiceResponse represents the response from a quality of service request.
 //

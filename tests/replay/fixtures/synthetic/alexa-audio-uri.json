@@ -1,0 +1,29 @@
+[
+  {
+    "source": "synthetic",
+    "operation": "audioURI_escaped",
+    "request": {
+      "method": "POST",
+      "origin": "https://alexa.amazon.com",
+      "escaped_path": "/api/behaviors/preview",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer test-token"
+        ],
+        "Content-Type": [
+          "application/json; charset=UTF-8"
+        ]
+      },
+      "body": "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"operationPayload\\\":{\\\"customerId\\\":\\\"\\\",\\\"deviceSerialNumber\\\":\\\"synthetic-device-serial\\\",\\\"deviceType\\\":\\\"synthetic-device-type\\\",\\\"locale\\\":\\\"en-US\\\",\\\"skillId\\\":\\\"amzn1.ask.1p.saysomething\\\",\\\"textToSpeak\\\":\\\"\\\\u003caudio src='https://example.com/audio.mp3?name=\\\\u0026#39;quoted\\\\u0026#39;\\\\u0026amp;next=\\\\u0026lt;track\\\\u0026gt;'/\\\\u003e\\\"},\\\"type\\\":\\\"Alexa.Speak\\\"}}\",\"status\":\"ENABLED\"}"
+    },
+    "response": {
+      "status": 200,
+      "headers": {},
+      "body": "{}"
+    }
+  }
+]

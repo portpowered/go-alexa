@@ -16,6 +16,22 @@ Use the named nested types from `pkg/dependencymodels` when constructing these f
 | `RegistrationResponse.Response` | `RegistrationResponseEnvelope` |
 | `FriendlyNameValue.Value` | `FriendlyNameText` |
 | `StringFilter.Value` | `StringFilterValue` |
+| `ColorProperty.ColorStateValue` | `EventColorValue` |
+| `ModeProperty.ModeValue` | `EventModeValue` |
+| `RangeProperty.RangeValue` | `EventRangeValueNumber` |
+| `SetpointProperty.Value`, `TemperatureSensorProperty.Value` | `EventTemperature` |
+| `ActionStateProperty.ActionStateValue` | `EventActionStateValue` |
+| `EventActionStateValue.TimeInterval` | `EventTimeInterval` |
+| `BatteryProperty.BatteryValue` | `EventBatteryValue` |
+| `EventBatteryValue.Health`, `.ChargingHealth` | `EventBatteryHealth`, `EventBatteryChargingHealth` |
+| `IlluminanceProperty.IlluminanceValue` | `EventIlluminanceStateValue` |
+| `GeolocationProperty.GeolocationValue` | `EventGeolocationValue` |
+| `EventGeolocationValue.Coordinate`, `.Altitude`, `.Heading`, `.Speed` | `EventGeolocationCoordinate`, `EventGeolocationAltitude`, `EventGeolocationHeading`, `EventGeolocationSpeed` |
+| `StatusCodeProperty.StatusCodeValue` | `EventStatusCodeValues` |
+| `EventStatusCodeValues.Value` items | `EventStatusCodeValue` |
+| `RelativeHumidityProperty.RelativeHumidityValue` | `EventRelativeHumidityStateValue` |
+| `ResourceMetadataPayloadData.Data`, `.Entity` | `EventResourceMetadataPayloadDataData`, `EventResourceMetadataPayloadDataEntity` |
+| `EventResourceMetadataPayloadDataData.Features` items | `EventResourceMetadataPayloadDataDataFeatures` |
 
 For example, a name value can be constructed as:
 
@@ -27,6 +43,8 @@ name := dependencymodels.FriendlyNameValue{
     Value: dependencymodels.FriendlyNameText{Text: "Living room"},
 }
 ```
+
+State fields remain open strings, including unknown future provider values. Audio URI playback now escapes quotes, ampersands, and angle brackets before embedding the URI in speech markup.
 
 Existing embedded control-request fields and `float64` control values remain available.
 

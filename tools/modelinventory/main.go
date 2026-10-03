@@ -84,19 +84,30 @@ type parameterNode struct {
 }
 
 type schemaNode struct {
-	Ref                  string                `yaml:"$ref"`
-	Type                 string                `yaml:"type"`
-	Format               string                `yaml:"format"`
-	GoName               string                `yaml:"x-go-name"`      //nolint:tagliatelle // OpenAPI extension spelling is fixed by the schema.
-	GoTypeName           string                `yaml:"x-go-type-name"` //nolint:tagliatelle // OpenAPI extension spelling is fixed by the schema.
-	GoType               string                `yaml:"x-go-type"`      //nolint:tagliatelle // OpenAPI extension spelling is fixed by the schema.
-	Properties           map[string]schemaNode `yaml:"properties"`
-	Items                *schemaNode           `yaml:"items"`
-	AdditionalProperties any                   `yaml:"additionalProperties"`
-	AllOf                []schemaNode          `yaml:"allOf"`
-	Enum                 []any                 `yaml:"enum"`
-	OneOf                []schemaNode          `yaml:"oneOf"`
-	AnyOf                []schemaNode          `yaml:"anyOf"`
+	Ref                    string                `yaml:"$ref"`
+	Type                   string                `yaml:"type"`
+	Format                 string                `yaml:"format"`
+	GoName                 string                `yaml:"x-go-name"`      //nolint:tagliatelle // OpenAPI extension spelling is fixed by the schema.
+	GoTypeName             string                `yaml:"x-go-type-name"` //nolint:tagliatelle // OpenAPI extension spelling is fixed by the schema.
+	GoType                 string                `yaml:"x-go-type"`      //nolint:tagliatelle // OpenAPI extension spelling is fixed by the schema.
+	Properties             map[string]schemaNode `yaml:"properties"`
+	Items                  *schemaNode           `yaml:"items"`
+	AdditionalProperties   any                   `yaml:"additionalProperties"`
+	AllOf                  []schemaNode          `yaml:"allOf"`
+	Enum                   []any                 `yaml:"enum"`
+	OneOf                  []schemaNode          `yaml:"oneOf"`
+	AnyOf                  []schemaNode          `yaml:"anyOf"`
+	GraphQLEnum            string                `yaml:"x-go-graphql-enum"`       //nolint:tagliatelle // Fixed schema metadata key.
+	GraphQLJSONField       string                `yaml:"x-go-graphql-json-field"` //nolint:tagliatelle // Fixed schema metadata key.
+	ExtensibleEnum         []string              `yaml:"x-extensible-enum"`       //nolint:tagliatelle // Fixed schema metadata key.
+	Default                string                `yaml:"default"`
+	CompatibilityNames     []string              `yaml:"x-go-compat-constant-names"`  //nolint:tagliatelle // Fixed schema metadata key.
+	CompatibilityName      string                `yaml:"x-go-compat-constant-name"`   //nolint:tagliatelle // Fixed schema metadata key.
+	CompatibilityType      string                `yaml:"x-go-compat-constant-type"`   //nolint:tagliatelle // Fixed schema metadata key.
+	WireKeyName            string                `yaml:"x-go-wire-key-constant-name"` //nolint:tagliatelle // Fixed schema metadata key.
+	CompatibilityConstants map[string]string     `yaml:"x-go-compat-constant-values"` //nolint:tagliatelle // Schema extension spelling is fixed.
+	SDKGraphQLValues       map[string]string     `yaml:"x-go-sdk-graphql-values"`     //nolint:tagliatelle // Preserve the checked-in schema extension name.
+	SDKType                string                `yaml:"x-go-sdk-constant-type"`      //nolint:tagliatelle // Schema extension spelling is fixed.
 }
 
 type generatedSet struct {
@@ -253,6 +264,11 @@ func run(write bool) error {
 		return err
 	}
 
+	err = checkGeneratedWireConstructions(models)
+	if err != nil {
+		return err
+	}
+
 	rows, err := checkSchemas(models)
 	if err != nil {
 		return err
@@ -262,6 +278,20 @@ func run(write bool) error {
 	if err != nil {
 		return err
 	}
+
+	primitiveRows, err := checkSDKPrimitiveInventory()
+	if err != nil {
+		return err
+	}
+
+	rows = append(rows, primitiveRows...)
+
+	wireRows, err := checkWirePrimitiveInventory()
+	if err != nil {
+		return err
+	}
+
+	rows = append(rows, wireRows...)
 
 	handwritten, err := scanHandwrittenModels()
 	if err != nil {
@@ -435,6 +465,7 @@ func registeredGeneratedFiles() map[string]bool {
 	}
 
 	files[filepath.ToSlash(graphQLGeneratedSet().Output)] = true
+	files[sdkPrimitiveOutput] = true
 
 	return files
 }
@@ -1494,6 +1525,9 @@ func additionalPropertiesSchema(value any) (schemaNode, bool) {
 
 func emptySchemaNode() schemaNode {
 	return schemaNode{
+		GraphQLEnum: "", GraphQLJSONField: "", ExtensibleEnum: nil,
+		Default: "", CompatibilityNames: nil, CompatibilityName: "", CompatibilityType: "", WireKeyName: "",
+		CompatibilityConstants: nil, SDKGraphQLValues: nil, SDKType: "",
 		Ref: "", Type: "", Format: "", GoName: "", GoTypeName: "", GoType: "",
 		Properties: nil, Items: nil, AdditionalProperties: nil, AllOf: nil, Enum: nil, OneOf: nil, AnyOf: nil,
 	}
@@ -2608,8 +2642,8 @@ func renderInventory(rows []inventoryRow, handwritten []handwrittenModel) []byte
 
 	out.WriteString("# Alexa wire-model inventory\n\n")
 	out.WriteString(generatedInventoryIntro)
-	out.WriteString("## Generated models\n\n")
-	out.WriteString("| Schema / source | Component or model | Generated Go definition | Generator | Call site or use |\n|---|---|---|---|---|\n")
+	out.WriteString("## Models and primitive projections\n\n")
+	out.WriteString("| Schema / source | Component or model | Go definition | Generator | Call site or use |\n|---|---|---|---|---|\n")
 
 	for _, row := range rows {
 		callSites := strings.Join(row.CallSites, ", ")

@@ -197,3 +197,29 @@ components:
         scope:
           type: string
           x-go-type-skip-optional-pointer: true
+
+    SDKKnownDeviceType:
+      type: string
+      x-go-type: string
+      description: Known library DeviceType values. Caller-supplied extensions remain open.
+      x-go-compat-constant-values:
+        SDKDeviceTypeIphone: "A2IVLV5VM2W81"
+        SDKDeviceTypeSimulator: "A3UMCOIO3URGGU"
+
+    SDKKnownRegion:
+      type: string
+      x-go-type: string
+      description: Known library Region values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: Region
+      x-go-compat-constant-values:
+        SDKRegionUS: "us"
+        SDKRegionEU: "eu"
+        SDKRegionJP: "jp"
+
+    AuthCookieDomain:
+      type: string
+      x-go-type: string
+      description: Known domains recognized by the compatibility cookie-jar lookup. Other caller cookies remain open.
+      x-go-compat-constant-values:
+        AuthCSRFCookieDomain: alexa.amazon.com
+        AuthCSRFCookieSubdomain: .alexa.amazon.com

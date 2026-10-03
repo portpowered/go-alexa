@@ -67,6 +67,19 @@ selected subtype fields explicitly. Negative controls must reject unregistered
 nested payloads or wire keys, mismatched decoder branches, possible-type drift,
 and missing discriminators.
 
+The primitive inventory records generated wire constants, SDK constant projections,
+and their semantic types. SDK and GraphQL uses are resolved through exact imports.
+Shared values are bound to the SDL, with negative tests for drift and missing
+bindings. Open feature-state strings list known SDL values and preserve future
+values. Legacy capability JSON is bound to its known component while retaining the
+original scalar selection. Wire-construction tests reject new literal values and
+keys, local aliases, and later field mutations; separate tests reject forged
+constant output. String templates, authentication choices, and cookie names also
+have schema owners. Named event components bind enum fields to the SDL, with
+negative checks for dropped bindings and inline nested objects. The flat speaker
+volume/muted event is implementation-derived and has no direct SDL counterpart. SDK constants are generated in their semantic package because
+compatibility wire types import that package; both projections share schema values.
+
 The generic GraphQL `Execute`, `Query`, and `Mutate` methods accept only the seven generated operation documents. The allowlist is generated from genqlient output; an unknown document returns an error before any request. `RunBehavior` accepts a JSON sequence string for compatibility and validates its sequence and node types before sending. Caller-supplied feature names and operation payload fields remain open within the schema's documented path parameters and object fields; they cannot create an unlisted HTTP method or route.
 
 ## Documentation review

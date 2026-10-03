@@ -294,6 +294,8 @@ components:
       enum: [en-US]
       x-enum-varnames: [BehaviorDefaultLocaleEnglishUS]
       x-go-compat-constant-names: [DefaultLocale]
+      x-go-compat-constant-values:
+        SDKDefaultLocale: en-US
     BehaviorDefaultID:
       type: string
       enum: [PREVIEW]
@@ -408,7 +410,11 @@ components:
         deviceSerialNumber: {type: string}
         locale: {type: string}
         customerId: {type: string, x-go-name: CustomerID}
-        textToSpeak: {type: string}
+        textToSpeak:
+          type: string
+          description: Caller speech text, including the library audio-URI SSML wrapper. The URI is escaped before interpolation.
+          x-go-compat-constant-values:
+            BehaviorAudioSSMLTemplate: "<audio src='%s'/>"
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
       required: [deviceType, deviceSerialNumber, locale, customerId, textToSpeak, skillId]
     CannedTTSSpeakPayload:
@@ -580,3 +586,14 @@ components:
         type: {type: string, x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/FireTVOperationPayload'}
       required: ['@type', type, operationPayload]
+
+    SDKKnownProviderID:
+      type: string
+      x-go-type: string
+      description: Known library ProviderID values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: ProviderID
+      x-go-compat-constant-values:
+        SDKProviderIDAmazon: "AMAZON_MUSIC"
+        SDKProviderIdDefault: "DEFAULT"
+        SDKProviderIDSpotify: "SPOTIFY"
+        SDKProviderIDAudible: "AUDIBLE"

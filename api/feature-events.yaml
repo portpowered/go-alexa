@@ -2,8 +2,7 @@ openapi: 3.0.3
 info:
   title: Alexa feature event payloads
   version: 0.1.0
-  description: Implementation-derived nested event JSON. No sanitized live
-    captures are available.
+  description: Implementation-derived nested event JSON. No sanitized live captures are available.
 paths: {}
 components:
   schemas:
@@ -41,7 +40,7 @@ components:
           $ref: '#/components/schemas/RawJSON'
           x-go-name: Payload
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         timestamp:
           type: string
@@ -55,49 +54,10 @@ components:
       type: object
       properties:
         data:
-          type: object
-          properties:
-            __typename:
-              type: string
-              x-go-name: TypeName
-            features:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                    x-go-name: Name
-                  __typename:
-                    type: string
-                    x-go-name: TypeName
-                  properties:
-                    $ref: '#/components/schemas/RawJSON'
-                    x-go-name: Properties
-                  instance:
-                    type: string
-                    x-go-name: Instance
-                required:
-                - name
-                - __typename
-                - properties
-              x-go-name: Features
-          required:
-          - __typename
-          - features
+          $ref: '#/components/schemas/EventResourceMetadataPayloadDataData'
           x-go-name: Data
         entity:
-          type: object
-          properties:
-            __typename:
-              type: string
-              x-go-name: TypeName
-            id:
-              type: string
-              x-go-name: ID
-          required:
-          - __typename
-          - id
+          $ref: '#/components/schemas/EventResourceMetadataPayloadDataEntity'
           x-go-name: Entity
       required:
       - data
@@ -118,10 +78,10 @@ components:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -142,16 +102,16 @@ components:
           type: string
           x-go-name: Name
         powerStateValue:
-          type: string
+          $ref: '#/components/schemas/EventKnownPowerStateValue'
           x-go-name: PowerStateValue
         timeOfSample:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -182,10 +142,10 @@ components:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -212,10 +172,10 @@ components:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -236,33 +196,16 @@ components:
           type: string
           x-go-name: Name
         colorStateValue:
-          type: object
-          properties:
-            hue:
-              type: number
-              format: double
-              x-go-name: Hue
-            saturation:
-              type: number
-              format: double
-              x-go-name: Saturation
-            brightness:
-              type: number
-              format: double
-              x-go-name: Brightness
-          required:
-          - hue
-          - saturation
-          - brightness
+          $ref: '#/components/schemas/EventColorValue'
           x-go-name: ColorStateValue
         timeOfSample:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -283,16 +226,16 @@ components:
           type: string
           x-go-name: Name
         lockState:
-          type: string
+          $ref: '#/components/schemas/EventKnownLockStateValue'
           x-go-name: LockState
         timeOfSample:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -314,22 +257,16 @@ components:
           type: string
           x-go-name: Name
         modeValue:
-          type: object
-          properties:
-            value:
-              type: string
-              x-go-name: Value
-          required:
-          - value
+          $ref: '#/components/schemas/EventModeValue'
           x-go-name: ModeValue
         timeOfSample:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -350,23 +287,16 @@ components:
           type: string
           x-go-name: Name
         rangeValue:
-          type: object
-          properties:
-            value:
-              type: number
-              format: double
-              x-go-name: Value
-          required:
-          - value
+          $ref: '#/components/schemas/EventRangeValueNumber'
           x-go-name: RangeValue
         timeOfSample:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -387,16 +317,16 @@ components:
           type: string
           x-go-name: Name
         toggleStateValue:
-          type: string
+          $ref: '#/components/schemas/EventKnownToggleStateValue'
           x-go-name: ToggleStateValue
         timeOfSample:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -424,10 +354,10 @@ components:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -454,10 +384,10 @@ components:
           type: string
           x-go-name: TimeOfSample
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -478,7 +408,7 @@ components:
           type: string
           x-go-name: Name
         thermostatModeValue:
-          type: string
+          $ref: '#/components/schemas/EventKnownThermostatModeValue'
           x-go-name: ThermostatModeValue
         timeOfSample:
           type: string
@@ -487,10 +417,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -513,21 +443,10 @@ components:
           type: string
           x-go-name: Name
         deviceNativeScaleValue:
-          type: string
+          $ref: '#/components/schemas/EventKnownTemperatureScale'
           x-go-name: DeviceNativeScaleValue
         value:
-          type: object
-          properties:
-            value:
-              type: number
-              format: double
-              x-go-name: Value
-            scale:
-              type: string
-              x-go-name: Scale
-          required:
-          - value
-          - scale
+          $ref: '#/components/schemas/EventTemperature'
           x-go-name: Value
         timeOfSample:
           type: string
@@ -536,10 +455,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -562,18 +481,7 @@ components:
           type: string
           x-go-name: Name
         value:
-          type: object
-          properties:
-            value:
-              type: number
-              format: double
-              x-go-name: Value
-            scale:
-              type: string
-              x-go-name: Scale
-          required:
-          - value
-          - scale
+          $ref: '#/components/schemas/EventTemperature'
           x-go-name: Value
         timeOfSample:
           type: string
@@ -582,10 +490,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -607,7 +515,7 @@ components:
           type: string
           x-go-name: Name
         detectionStateValue:
-          type: string
+          $ref: '#/components/schemas/EventKnownDetectionStateValue'
           x-go-name: DetectionStateValue
         timeOfSample:
           type: string
@@ -616,10 +524,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -642,35 +550,7 @@ components:
           type: string
           x-go-name: Name
         actionStateValue:
-          type: object
-          properties:
-            status:
-              type: string
-              x-go-name: Status
-            timeInterval:
-              type: object
-              properties:
-                start:
-                  type: string
-                  x-go-name: Start
-                end:
-                  type: string
-                  x-go-name: End
-                duration:
-                  type: string
-                  x-go-name: Duration
-              required: []
-              x-go-name: TimeInterval
-            actionId:
-              type: string
-              x-go-name: ActionID
-            targetIds:
-              type: array
-              items:
-                type: string
-              x-go-name: TargetIDs
-          required:
-          - status
+          $ref: '#/components/schemas/EventActionStateValue'
           x-go-name: ActionStateValue
         timeOfSample:
           type: string
@@ -679,10 +559,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -704,7 +584,7 @@ components:
           type: string
           x-go-name: Name
         reachabilityStatusValue:
-          type: string
+          $ref: '#/components/schemas/EventKnownReachabilityStatusValue'
           x-go-name: ReachabilityStatusValue
         timeOfSample:
           type: string
@@ -713,10 +593,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -739,39 +619,7 @@ components:
           type: string
           x-go-name: Name
         batteryValue:
-          type: object
-          properties:
-            levelPercentage:
-              type: integer
-              x-go-name: LevelPercentage
-            health:
-              type: object
-              properties:
-                state:
-                  type: string
-                  x-go-name: State
-                reasons:
-                  type: array
-                  items:
-                    type: string
-                  x-go-name: Reasons
-              required:
-              - state
-              - reasons
-              x-go-name: Health
-            chargingHealth:
-              type: object
-              properties:
-                state:
-                  type: string
-                  x-go-name: State
-                reason:
-                  type: string
-                  x-go-name: Reason
-              required:
-              - state
-              x-go-name: ChargingHealth
-          required: []
+          $ref: '#/components/schemas/EventBatteryValue'
           x-go-name: BatteryValue
         timeOfSample:
           type: string
@@ -780,10 +628,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -805,13 +653,7 @@ components:
           type: string
           x-go-name: Name
         illuminanceValue:
-          type: object
-          properties:
-            value:
-              type: number
-              format: double
-              x-go-name: Value
-          required: []
+          $ref: '#/components/schemas/EventIlluminanceStateValue'
           x-go-name: IlluminanceValue
         timeOfSample:
           type: string
@@ -820,10 +662,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -845,73 +687,7 @@ components:
           type: string
           x-go-name: Name
         geolocationValue:
-          type: object
-          properties:
-            coordinate:
-              type: object
-              properties:
-                latitudeInDegrees:
-                  type: number
-                  format: double
-                  x-go-name: LatitudeInDegrees
-                longitudeInDegrees:
-                  type: number
-                  format: double
-                  x-go-name: LongitudeInDegrees
-                accuracyInMeters:
-                  type: number
-                  format: double
-                  x-go-name: AccuracyInMeters
-              required:
-              - latitudeInDegrees
-              - longitudeInDegrees
-              x-go-name: Coordinate
-            altitude:
-              type: object
-              properties:
-                altitudeInMeters:
-                  type: number
-                  format: double
-                  x-go-name: AltitudeInMeters
-                accuracyInMeters:
-                  type: number
-                  format: double
-                  x-go-name: AccuracyInMeters
-              required:
-              - altitudeInMeters
-              x-go-name: Altitude
-            heading:
-              type: object
-              properties:
-                directionInDegrees:
-                  type: number
-                  format: double
-                  x-go-name: DirectionInDegrees
-                accuracyInDegrees:
-                  type: number
-                  format: double
-                  x-go-name: AccuracyInDegrees
-              required:
-              - directionInDegrees
-              x-go-name: Heading
-            speed:
-              type: object
-              properties:
-                speedInMetersPerSecond:
-                  type: number
-                  format: double
-                  x-go-name: SpeedInMetersPerSecond
-                accuracyInMetersPerSecond:
-                  type: number
-                  format: double
-                  x-go-name: AccuracyInMetersPerSecond
-              required:
-              - speedInMetersPerSecond
-              x-go-name: Speed
-            source:
-              type: string
-              x-go-name: Source
-          required: []
+          $ref: '#/components/schemas/EventGeolocationValue'
           x-go-name: GeolocationValue
         timeOfSample:
           type: string
@@ -920,10 +696,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -945,23 +721,7 @@ components:
           type: string
           x-go-name: Name
         statusCodeValue:
-          type: object
-          properties:
-            value:
-              type: array
-              items:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    x-go-name: Code
-                  timeOfDetection:
-                    type: string
-                    x-go-name: TimeOfDetection
-                required: []
-              x-go-name: Value
-          required:
-          - value
+          $ref: '#/components/schemas/EventStatusCodeValues'
           x-go-name: StatusCodeValue
         timeOfSample:
           type: string
@@ -970,10 +730,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -995,7 +755,7 @@ components:
           type: string
           x-go-name: Name
         armStateValue:
-          type: string
+          $ref: '#/components/schemas/EventKnownArmStateValue'
           x-go-name: ArmStateValue
         timeOfSample:
           type: string
@@ -1004,10 +764,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -1030,13 +790,7 @@ components:
           type: string
           x-go-name: Name
         relativeHumidityValue:
-          type: object
-          properties:
-            value:
-              type: number
-              format: double
-              x-go-name: Value
-          required: []
+          $ref: '#/components/schemas/EventRelativeHumidityStateValue'
           x-go-name: RelativeHumidityValue
         timeOfSample:
           type: string
@@ -1045,10 +799,10 @@ components:
           type: string
           x-go-name: TimeOfLastChange
         accuracy:
-          type: string
+          $ref: '#/components/schemas/EventKnownAccuracy'
           x-go-name: Accuracy
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
           x-go-name: Type
         error:
           $ref: '#/components/schemas/EventPropertyError'
@@ -1064,8 +818,471 @@ components:
       type: object
       properties:
         type:
-          type: string
+          $ref: '#/components/schemas/EventKnownPropertyType'
       required:
       - type
     RawJSON:
       x-go-type: json.RawMessage
+    SDKKnownEventName:
+      type: string
+      x-go-type: string
+      description: Known library EventName values. Caller-supplied extensions remain open.
+      x-go-compat-constant-values:
+        SDKEventNameColorTemperatureState: colorTemperatureState
+        SDKEventNamePowerState: powerstate
+        SDKEventNameSpeakerState: speakerState
+        SDKEventNameBrightnessState: brightnessState
+        SDKEventNameColorState: colorState
+        SDKEventNameLockState: lockState
+        SDKEventNameModeState: modeState
+        SDKEventNameRangeState: rangeState
+        SDKEventNameToggleState: toggleState
+        SDKEventNamePercentageState: percentageState
+        SDKEventNamePowerLevelState: powerLevelState
+        SDKEventNameThermostatModeState: thermostatModeState
+        SDKEventNameSetpointState: setpointState
+        SDKEventNameTemperatureState: temperatureState
+        SDKEventNameDetectionState: detectionState
+        SDKEventNameActionState: actionState
+        SDKEventNameReachabilityState: reachabilityState
+        SDKEventNameBatteryState: batteryState
+        SDKEventNameIlluminanceState: illuminanceState
+        SDKEventNameGeolocationState: geolocationState
+        SDKEventNameStatusCodeState: statusCodeState
+        SDKEventNameArmState: armState
+        SDKEventNameRelativeHumidityState: relativeHumidityState
+    EventKnownAccuracy:
+      type: string
+      x-go-type: string
+      description: Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+      x-go-graphql-enum: Accuracy
+      x-extensible-enum:
+      - HIGH
+      - LOW
+      - UNKNOWN
+    EventKnownActionStatus:
+      type: string
+      x-go-type: string
+      description: Known ActionStatus values from the checked-in GraphQL schema. Future string values remain open.
+      x-go-graphql-enum: ActionStatus
+      x-extensible-enum:
+      - IDLE
+      - UNAVAILABLE
+      - RUNNING
+      - PAUSED
+      - COMPLETED
+      - INCOMPLETE
+      - UNKNOWN
+    EventKnownBatteryChargingHealthReason:
+      type: string
+      x-go-type: string
+      description: Known BatteryChargingHealthReason values from the checked-in GraphQL schema. Future string values
+        remain open.
+      x-go-graphql-enum: BatteryChargingHealthReason
+      x-extensible-enum:
+      - LOW_POWER
+      - INCOMPATIBLE_CHARGER
+      - UNKNOWN
+    EventKnownBatteryHealthReason:
+      type: string
+      x-go-type: string
+      description: Known BatteryHealthReason values from the checked-in GraphQL schema. Future string values remain
+        open.
+      x-go-graphql-enum: BatteryHealthReason
+      x-extensible-enum:
+      - COLD
+      - DEAD
+      - LOW_CHARGE
+      - NO_BATTERY
+      - OVERHEATED
+      - OVER_VOLTAGE
+      - WIRED
+      - UNKNOWN
+    EventKnownBatteryHealthState:
+      type: string
+      x-go-type: string
+      description: Known BatteryHealthState values from the checked-in GraphQL schema. Future string values remain
+        open.
+      x-go-graphql-enum: BatteryHealthState
+      x-extensible-enum:
+      - OK
+      - WARNING
+      - CRITICAL
+      - UNKNOWN
+    EventKnownDetectionStateValue:
+      type: string
+      x-go-type: string
+      description: Known DetectionStateValue values from the checked-in GraphQL schema. Future string values remain
+        open.
+      x-go-graphql-enum: DetectionStateValue
+      x-extensible-enum:
+      - DETECTED
+      - NOT_DETECTED
+      - UNKNOWN
+    EventKnownPowerStateValue:
+      type: string
+      x-go-type: string
+      description: Known PowerStateValue values from the checked-in GraphQL schema. Future string values remain
+        open.
+      x-go-graphql-enum: PowerStateValue
+      x-extensible-enum:
+      - 'ON'
+      - 'OFF'
+      - UNKNOWN
+    EventKnownPropertyType:
+      type: string
+      x-go-type: string
+      description: Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+      x-go-graphql-enum: PropertyType
+      x-extensible-enum:
+      - RETRIEVABLE
+      - NOT_RETRIEVABLE
+      - ERROR
+    EventKnownReachabilityStatusValue:
+      type: string
+      x-go-type: string
+      description: Known ReachabilityStatusValue values from the checked-in GraphQL schema. Future string values
+        remain open.
+      x-go-graphql-enum: ReachabilityStatusValue
+      x-extensible-enum:
+      - REACHABLE
+      - UNREACHABLE
+      - UNKNOWN
+    EventKnownTemperatureScale:
+      type: string
+      x-go-type: string
+      description: Known TemperatureScale values from the checked-in GraphQL schema. Future string values remain
+        open.
+      x-go-graphql-enum: TemperatureScale
+      x-extensible-enum:
+      - FAHRENHEIT
+      - CELSIUS
+      - KELVIN
+    EventKnownThermostatModeValue:
+      type: string
+      x-go-type: string
+      description: Known ThermostatModeValue values from the checked-in GraphQL schema. Future string values remain
+        open.
+      x-go-graphql-enum: ThermostatModeValue
+      x-extensible-enum:
+      - COOL
+      - HEAT
+      - 'OFF'
+      - AUTO
+      - ECO
+      - EM_HEAT
+    EventKnownToggleStateValue:
+      type: string
+      x-go-type: string
+      description: Known ToggleStateValue values from the checked-in GraphQL schema. Future string values remain
+        open.
+      x-go-graphql-enum: ToggleStateValue
+      x-extensible-enum:
+      - 'ON'
+      - 'OFF'
+    EventKnownLockStateValue:
+      type: string
+      x-go-type: string
+      description: Known LockStateValue values from the checked-in GraphQL schema. Future string values remain open.
+      x-go-graphql-enum: LockStateValue
+      x-extensible-enum:
+      - LOCKED
+      - UNLOCKED
+      - UNKNOWN
+    EventKnownGeolocationSource:
+      type: string
+      x-go-type: string
+      description: Known GeolocationSource values from the checked-in GraphQL schema. Future string values remain
+        open.
+      x-go-graphql-enum: GeolocationSource
+      x-extensible-enum:
+      - SELF_REPORTED
+      - CUSTOMER_SET
+      - UNKNOWN
+    EventKnownArmStateValue:
+      type: string
+      x-go-type: string
+      description: Known ArmStateValue values from the checked-in GraphQL schema. Future string values remain open.
+      x-go-graphql-enum: ArmStateValue
+      x-extensible-enum:
+      - ARMED_AWAY
+      - ARMED_STAY
+      - ARMED_NIGHT
+      - DISARMED
+      - UNKNOWN
+    EventResourceMetadataPayloadDataDataFeatures:
+      type: object
+      properties:
+        name:
+          type: string
+          x-go-name: Name
+        __typename:
+          type: string
+          x-go-name: TypeName
+        properties:
+          $ref: '#/components/schemas/RawJSON'
+          x-go-name: Properties
+        instance:
+          type: string
+          x-go-name: Instance
+      required:
+      - name
+      - __typename
+      - properties
+    EventResourceMetadataPayloadDataData:
+      type: object
+      properties:
+        __typename:
+          type: string
+          x-go-name: TypeName
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResourceMetadataPayloadDataDataFeatures'
+          x-go-name: Features
+      required:
+      - __typename
+      - features
+    EventResourceMetadataPayloadDataEntity:
+      type: object
+      properties:
+        __typename:
+          type: string
+          x-go-name: TypeName
+        id:
+          type: string
+          x-go-name: ID
+      required:
+      - __typename
+      - id
+    EventColorValue:
+      type: object
+      properties:
+        hue:
+          type: number
+          format: double
+          x-go-name: Hue
+        saturation:
+          type: number
+          format: double
+          x-go-name: Saturation
+        brightness:
+          type: number
+          format: double
+          x-go-name: Brightness
+      required:
+      - hue
+      - saturation
+      - brightness
+    EventModeValue:
+      type: object
+      properties:
+        value:
+          type: string
+          x-go-name: Value
+      required:
+      - value
+    EventRangeValueNumber:
+      type: object
+      properties:
+        value:
+          type: number
+          format: double
+          x-go-name: Value
+      required:
+      - value
+    EventTemperature:
+      type: object
+      properties:
+        value:
+          type: number
+          format: double
+          x-go-name: Value
+        scale:
+          $ref: '#/components/schemas/EventKnownTemperatureScale'
+          x-go-name: Scale
+      required:
+      - value
+      - scale
+    EventTimeInterval:
+      type: object
+      properties:
+        start:
+          type: string
+          x-go-name: Start
+        end:
+          type: string
+          x-go-name: End
+        duration:
+          type: string
+          x-go-name: Duration
+      required: []
+    EventActionStateValue:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/EventKnownActionStatus'
+          x-go-name: Status
+        timeInterval:
+          $ref: '#/components/schemas/EventTimeInterval'
+          x-go-name: TimeInterval
+        actionId:
+          type: string
+          x-go-name: ActionID
+        targetIds:
+          type: array
+          items:
+            type: string
+          x-go-name: TargetIDs
+      required:
+      - status
+    EventBatteryHealth:
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/EventKnownBatteryHealthState'
+          x-go-name: State
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventKnownBatteryHealthReason'
+          x-go-name: Reasons
+      required:
+      - state
+      - reasons
+    EventBatteryChargingHealth:
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/EventKnownBatteryHealthState'
+          x-go-name: State
+        reason:
+          $ref: '#/components/schemas/EventKnownBatteryChargingHealthReason'
+          x-go-name: Reason
+      required:
+      - state
+    EventBatteryValue:
+      type: object
+      properties:
+        levelPercentage:
+          type: integer
+          x-go-name: LevelPercentage
+        health:
+          $ref: '#/components/schemas/EventBatteryHealth'
+          x-go-name: Health
+        chargingHealth:
+          $ref: '#/components/schemas/EventBatteryChargingHealth'
+          x-go-name: ChargingHealth
+      required: []
+    EventIlluminanceStateValue:
+      type: object
+      properties:
+        value:
+          type: number
+          format: double
+          x-go-name: Value
+      required: []
+    EventGeolocationCoordinate:
+      type: object
+      properties:
+        latitudeInDegrees:
+          type: number
+          format: double
+          x-go-name: LatitudeInDegrees
+        longitudeInDegrees:
+          type: number
+          format: double
+          x-go-name: LongitudeInDegrees
+        accuracyInMeters:
+          type: number
+          format: double
+          x-go-name: AccuracyInMeters
+      required:
+      - latitudeInDegrees
+      - longitudeInDegrees
+    EventGeolocationAltitude:
+      type: object
+      properties:
+        altitudeInMeters:
+          type: number
+          format: double
+          x-go-name: AltitudeInMeters
+        accuracyInMeters:
+          type: number
+          format: double
+          x-go-name: AccuracyInMeters
+      required:
+      - altitudeInMeters
+    EventGeolocationHeading:
+      type: object
+      properties:
+        directionInDegrees:
+          type: number
+          format: double
+          x-go-name: DirectionInDegrees
+        accuracyInDegrees:
+          type: number
+          format: double
+          x-go-name: AccuracyInDegrees
+      required:
+      - directionInDegrees
+    EventGeolocationSpeed:
+      type: object
+      properties:
+        speedInMetersPerSecond:
+          type: number
+          format: double
+          x-go-name: SpeedInMetersPerSecond
+        accuracyInMetersPerSecond:
+          type: number
+          format: double
+          x-go-name: AccuracyInMetersPerSecond
+      required:
+      - speedInMetersPerSecond
+    EventGeolocationValue:
+      type: object
+      properties:
+        coordinate:
+          $ref: '#/components/schemas/EventGeolocationCoordinate'
+          x-go-name: Coordinate
+        altitude:
+          $ref: '#/components/schemas/EventGeolocationAltitude'
+          x-go-name: Altitude
+        heading:
+          $ref: '#/components/schemas/EventGeolocationHeading'
+          x-go-name: Heading
+        speed:
+          $ref: '#/components/schemas/EventGeolocationSpeed'
+          x-go-name: Speed
+        source:
+          $ref: '#/components/schemas/EventKnownGeolocationSource'
+          x-go-name: Source
+      required: []
+    EventStatusCodeValue:
+      type: object
+      properties:
+        code:
+          type: string
+          x-go-name: Code
+        timeOfDetection:
+          type: string
+          x-go-name: TimeOfDetection
+      required: []
+    EventStatusCodeValues:
+      type: object
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventStatusCodeValue'
+          x-go-name: Value
+      required:
+      - value
+    EventRelativeHumidityStateValue:
+      type: object
+      properties:
+        value:
+          type: number
+          format: double
+          x-go-name: Value
+      required: []

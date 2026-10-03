@@ -9,226 +9,434 @@ import (
 
 // ActionStateProperty defines model for ActionStateProperty.
 type ActionStateProperty struct {
-	TypeName         string `json:"__typename"`
-	Accuracy         string `json:"accuracy"`
-	ActionStateValue *struct {
-		ActionID     *string   `json:"actionId,omitempty"`
-		Status       string    `json:"status"`
-		TargetIDs    *[]string `json:"targetIds,omitempty"`
-		TimeInterval *struct {
-			Duration *string `json:"duration,omitempty"`
-			End      *string `json:"end,omitempty"`
-			Start    *string `json:"start,omitempty"`
-		} `json:"timeInterval,omitempty"`
-	} `json:"actionStateValue,omitempty"`
-	Error            *EventPropertyError `json:"error,omitempty"`
-	Name             string              `json:"name"`
-	TimeOfLastChange string              `json:"timeOfLastChange"`
-	TimeOfSample     string              `json:"timeOfSample"`
-	Type             string              `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy         EventKnownAccuracy     `json:"accuracy"`
+	ActionStateValue *EventActionStateValue `json:"actionStateValue,omitempty"`
+	Error            *EventPropertyError    `json:"error,omitempty"`
+	Name             string                 `json:"name"`
+	TimeOfLastChange string                 `json:"timeOfLastChange"`
+	TimeOfSample     string                 `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // ArmStateProperty defines model for ArmStateProperty.
 type ArmStateProperty struct {
-	TypeName         string              `json:"__typename"`
-	Accuracy         string              `json:"accuracy"`
-	ArmStateValue    string              `json:"armStateValue"`
-	Error            *EventPropertyError `json:"error,omitempty"`
-	Name             string              `json:"name"`
-	TimeOfLastChange string              `json:"timeOfLastChange"`
-	TimeOfSample     string              `json:"timeOfSample"`
-	Type             string              `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy EventKnownAccuracy `json:"accuracy"`
+
+	// ArmStateValue Known ArmStateValue values from the checked-in GraphQL schema. Future string values remain open.
+	ArmStateValue    EventKnownArmStateValue `json:"armStateValue"`
+	Error            *EventPropertyError     `json:"error,omitempty"`
+	Name             string                  `json:"name"`
+	TimeOfLastChange string                  `json:"timeOfLastChange"`
+	TimeOfSample     string                  `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // BatteryProperty defines model for BatteryProperty.
 type BatteryProperty struct {
-	TypeName     string `json:"__typename"`
-	Accuracy     string `json:"accuracy"`
-	BatteryValue *struct {
-		ChargingHealth *struct {
-			Reason *string `json:"reason,omitempty"`
-			State  string  `json:"state"`
-		} `json:"chargingHealth,omitempty"`
-		Health *struct {
-			Reasons []string `json:"reasons"`
-			State   string   `json:"state"`
-		} `json:"health,omitempty"`
-		LevelPercentage *int `json:"levelPercentage,omitempty"`
-	} `json:"batteryValue,omitempty"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy         EventKnownAccuracy  `json:"accuracy"`
+	BatteryValue     *EventBatteryValue  `json:"batteryValue,omitempty"`
 	Error            *EventPropertyError `json:"error,omitempty"`
 	Name             string              `json:"name"`
 	TimeOfLastChange string              `json:"timeOfLastChange"`
 	TimeOfSample     string              `json:"timeOfSample"`
-	Type             string              `json:"type"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // BrightnessProperty defines model for BrightnessProperty.
 type BrightnessProperty struct {
-	TypeName             string              `json:"__typename"`
-	Accuracy             string              `json:"accuracy"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy             EventKnownAccuracy  `json:"accuracy"`
 	BrightnessStateValue *int                `json:"brightnessStateValue,omitempty"`
 	Error                *EventPropertyError `json:"error,omitempty"`
 	Name                 string              `json:"name"`
 	TimeOfSample         string              `json:"timeOfSample"`
-	Type                 string              `json:"type"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // ColorProperty defines model for ColorProperty.
 type ColorProperty struct {
-	TypeName        string `json:"__typename"`
-	Accuracy        string `json:"accuracy"`
-	ColorStateValue *struct {
-		Brightness float64 `json:"brightness"`
-		Hue        float64 `json:"hue"`
-		Saturation float64 `json:"saturation"`
-	} `json:"colorStateValue,omitempty"`
-	Error        *EventPropertyError `json:"error,omitempty"`
-	Name         string              `json:"name"`
-	TimeOfSample string              `json:"timeOfSample"`
-	Type         string              `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy        EventKnownAccuracy  `json:"accuracy"`
+	ColorStateValue *EventColorValue    `json:"colorStateValue,omitempty"`
+	Error           *EventPropertyError `json:"error,omitempty"`
+	Name            string              `json:"name"`
+	TimeOfSample    string              `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // ColorTemperatureProperty defines model for ColorTemperatureProperty.
 type ColorTemperatureProperty struct {
-	TypeName                           string              `json:"__typename"`
-	Accuracy                           string              `json:"accuracy"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy                           EventKnownAccuracy  `json:"accuracy"`
 	ColorTemperatureInKelvinStateValue *int                `json:"colorTemperatureInKelvinStateValue,omitempty"`
 	Error                              *EventPropertyError `json:"error,omitempty"`
 	Name                               string              `json:"name"`
 	TimeOfSample                       string              `json:"timeOfSample"`
-	Type                               string              `json:"type"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // DetectionStateProperty defines model for DetectionStateProperty.
 type DetectionStateProperty struct {
-	TypeName            string              `json:"__typename"`
-	Accuracy            string              `json:"accuracy"`
-	DetectionStateValue string              `json:"detectionStateValue"`
-	Error               *EventPropertyError `json:"error,omitempty"`
-	Name                string              `json:"name"`
-	TimeOfLastChange    string              `json:"timeOfLastChange"`
-	TimeOfSample        string              `json:"timeOfSample"`
-	Type                string              `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy EventKnownAccuracy `json:"accuracy"`
+
+	// DetectionStateValue Known DetectionStateValue values from the checked-in GraphQL schema. Future string values remain open.
+	DetectionStateValue EventKnownDetectionStateValue `json:"detectionStateValue"`
+	Error               *EventPropertyError           `json:"error,omitempty"`
+	Name                string                        `json:"name"`
+	TimeOfLastChange    string                        `json:"timeOfLastChange"`
+	TimeOfSample        string                        `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
+}
+
+// EventActionStateValue defines model for EventActionStateValue.
+type EventActionStateValue struct {
+	ActionID *string `json:"actionId,omitempty"`
+
+	// Status Known ActionStatus values from the checked-in GraphQL schema. Future string values remain open.
+	Status       EventKnownActionStatus `json:"status"`
+	TargetIDs    *[]string              `json:"targetIds,omitempty"`
+	TimeInterval *EventTimeInterval     `json:"timeInterval,omitempty"`
+}
+
+// EventBatteryChargingHealth defines model for EventBatteryChargingHealth.
+type EventBatteryChargingHealth struct {
+	// Reason Known BatteryChargingHealthReason values from the checked-in GraphQL schema. Future string values remain open.
+	Reason *EventKnownBatteryChargingHealthReason `json:"reason,omitempty"`
+
+	// State Known BatteryHealthState values from the checked-in GraphQL schema. Future string values remain open.
+	State EventKnownBatteryHealthState `json:"state"`
+}
+
+// EventBatteryHealth defines model for EventBatteryHealth.
+type EventBatteryHealth struct {
+	Reasons []EventKnownBatteryHealthReason `json:"reasons"`
+
+	// State Known BatteryHealthState values from the checked-in GraphQL schema. Future string values remain open.
+	State EventKnownBatteryHealthState `json:"state"`
+}
+
+// EventBatteryValue defines model for EventBatteryValue.
+type EventBatteryValue struct {
+	ChargingHealth  *EventBatteryChargingHealth `json:"chargingHealth,omitempty"`
+	Health          *EventBatteryHealth         `json:"health,omitempty"`
+	LevelPercentage *int                        `json:"levelPercentage,omitempty"`
+}
+
+// EventColorValue defines model for EventColorValue.
+type EventColorValue struct {
+	Brightness float64 `json:"brightness"`
+	Hue        float64 `json:"hue"`
+	Saturation float64 `json:"saturation"`
+}
+
+// EventGeolocationAltitude defines model for EventGeolocationAltitude.
+type EventGeolocationAltitude struct {
+	AccuracyInMeters *float64 `json:"accuracyInMeters,omitempty"`
+	AltitudeInMeters float64  `json:"altitudeInMeters"`
+}
+
+// EventGeolocationCoordinate defines model for EventGeolocationCoordinate.
+type EventGeolocationCoordinate struct {
+	AccuracyInMeters   *float64 `json:"accuracyInMeters,omitempty"`
+	LatitudeInDegrees  float64  `json:"latitudeInDegrees"`
+	LongitudeInDegrees float64  `json:"longitudeInDegrees"`
+}
+
+// EventGeolocationHeading defines model for EventGeolocationHeading.
+type EventGeolocationHeading struct {
+	AccuracyInDegrees  *float64 `json:"accuracyInDegrees,omitempty"`
+	DirectionInDegrees float64  `json:"directionInDegrees"`
+}
+
+// EventGeolocationSpeed defines model for EventGeolocationSpeed.
+type EventGeolocationSpeed struct {
+	AccuracyInMetersPerSecond *float64 `json:"accuracyInMetersPerSecond,omitempty"`
+	SpeedInMetersPerSecond    float64  `json:"speedInMetersPerSecond"`
+}
+
+// EventGeolocationValue defines model for EventGeolocationValue.
+type EventGeolocationValue struct {
+	Altitude   *EventGeolocationAltitude   `json:"altitude,omitempty"`
+	Coordinate *EventGeolocationCoordinate `json:"coordinate,omitempty"`
+	Heading    *EventGeolocationHeading    `json:"heading,omitempty"`
+
+	// Source Known GeolocationSource values from the checked-in GraphQL schema. Future string values remain open.
+	Source *EventKnownGeolocationSource `json:"source,omitempty"`
+	Speed  *EventGeolocationSpeed       `json:"speed,omitempty"`
+}
+
+// EventIlluminanceStateValue defines model for EventIlluminanceStateValue.
+type EventIlluminanceStateValue struct {
+	Value *float64 `json:"value,omitempty"`
+}
+
+// EventKnownAccuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownAccuracy = string
+
+// EventKnownActionStatus Known ActionStatus values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownActionStatus = string
+
+// EventKnownArmStateValue Known ArmStateValue values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownArmStateValue = string
+
+// EventKnownBatteryChargingHealthReason Known BatteryChargingHealthReason values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownBatteryChargingHealthReason = string
+
+// EventKnownBatteryHealthReason Known BatteryHealthReason values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownBatteryHealthReason = string
+
+// EventKnownBatteryHealthState Known BatteryHealthState values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownBatteryHealthState = string
+
+// EventKnownDetectionStateValue Known DetectionStateValue values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownDetectionStateValue = string
+
+// EventKnownGeolocationSource Known GeolocationSource values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownGeolocationSource = string
+
+// EventKnownLockStateValue Known LockStateValue values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownLockStateValue = string
+
+// EventKnownPowerStateValue Known PowerStateValue values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownPowerStateValue = string
+
+// EventKnownPropertyType Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownPropertyType = string
+
+// EventKnownReachabilityStatusValue Known ReachabilityStatusValue values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownReachabilityStatusValue = string
+
+// EventKnownTemperatureScale Known TemperatureScale values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownTemperatureScale = string
+
+// EventKnownThermostatModeValue Known ThermostatModeValue values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownThermostatModeValue = string
+
+// EventKnownToggleStateValue Known ToggleStateValue values from the checked-in GraphQL schema. Future string values remain open.
+type EventKnownToggleStateValue = string
+
+// EventModeValue defines model for EventModeValue.
+type EventModeValue struct {
+	Value string `json:"value"`
 }
 
 // EventPropertyError defines model for EventPropertyError.
 type EventPropertyError struct {
-	Type string `json:"type"`
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
+}
+
+// EventRangeValueNumber defines model for EventRangeValueNumber.
+type EventRangeValueNumber struct {
+	Value float64 `json:"value"`
+}
+
+// EventRelativeHumidityStateValue defines model for EventRelativeHumidityStateValue.
+type EventRelativeHumidityStateValue struct {
+	Value *float64 `json:"value,omitempty"`
+}
+
+// EventResourceMetadataPayloadDataData defines model for EventResourceMetadataPayloadDataData.
+type EventResourceMetadataPayloadDataData struct {
+	TypeName string                                         `json:"__typename"`
+	Features []EventResourceMetadataPayloadDataDataFeatures `json:"features"`
+}
+
+// EventResourceMetadataPayloadDataDataFeatures defines model for EventResourceMetadataPayloadDataDataFeatures.
+type EventResourceMetadataPayloadDataDataFeatures struct {
+	TypeName   string  `json:"__typename"`
+	Instance   *string `json:"instance,omitempty"`
+	Name       string  `json:"name"`
+	Properties RawJSON `json:"properties"`
+}
+
+// EventResourceMetadataPayloadDataEntity defines model for EventResourceMetadataPayloadDataEntity.
+type EventResourceMetadataPayloadDataEntity struct {
+	TypeName string `json:"__typename"`
+	ID       string `json:"id"`
+}
+
+// EventStatusCodeValue defines model for EventStatusCodeValue.
+type EventStatusCodeValue struct {
+	Code            *string `json:"code,omitempty"`
+	TimeOfDetection *string `json:"timeOfDetection,omitempty"`
+}
+
+// EventStatusCodeValues defines model for EventStatusCodeValues.
+type EventStatusCodeValues struct {
+	Value []EventStatusCodeValue `json:"value"`
+}
+
+// EventTemperature defines model for EventTemperature.
+type EventTemperature struct {
+	// Scale Known TemperatureScale values from the checked-in GraphQL schema. Future string values remain open.
+	Scale EventKnownTemperatureScale `json:"scale"`
+	Value float64                    `json:"value"`
+}
+
+// EventTimeInterval defines model for EventTimeInterval.
+type EventTimeInterval struct {
+	Duration *string `json:"duration,omitempty"`
+	End      *string `json:"end,omitempty"`
+	Start    *string `json:"start,omitempty"`
 }
 
 // GeolocationProperty defines model for GeolocationProperty.
 type GeolocationProperty struct {
-	TypeName         string              `json:"__typename"`
-	Accuracy         string              `json:"accuracy"`
-	Error            *EventPropertyError `json:"error,omitempty"`
-	GeolocationValue *struct {
-		Altitude *struct {
-			AccuracyInMeters *float64 `json:"accuracyInMeters,omitempty"`
-			AltitudeInMeters float64  `json:"altitudeInMeters"`
-		} `json:"altitude,omitempty"`
-		Coordinate *struct {
-			AccuracyInMeters   *float64 `json:"accuracyInMeters,omitempty"`
-			LatitudeInDegrees  float64  `json:"latitudeInDegrees"`
-			LongitudeInDegrees float64  `json:"longitudeInDegrees"`
-		} `json:"coordinate,omitempty"`
-		Heading *struct {
-			AccuracyInDegrees  *float64 `json:"accuracyInDegrees,omitempty"`
-			DirectionInDegrees float64  `json:"directionInDegrees"`
-		} `json:"heading,omitempty"`
-		Source *string `json:"source,omitempty"`
-		Speed  *struct {
-			AccuracyInMetersPerSecond *float64 `json:"accuracyInMetersPerSecond,omitempty"`
-			SpeedInMetersPerSecond    float64  `json:"speedInMetersPerSecond"`
-		} `json:"speed,omitempty"`
-	} `json:"geolocationValue,omitempty"`
-	Name             string `json:"name"`
-	TimeOfLastChange string `json:"timeOfLastChange"`
-	TimeOfSample     string `json:"timeOfSample"`
-	Type             string `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy         EventKnownAccuracy     `json:"accuracy"`
+	Error            *EventPropertyError    `json:"error,omitempty"`
+	GeolocationValue *EventGeolocationValue `json:"geolocationValue,omitempty"`
+	Name             string                 `json:"name"`
+	TimeOfLastChange string                 `json:"timeOfLastChange"`
+	TimeOfSample     string                 `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // IlluminanceProperty defines model for IlluminanceProperty.
 type IlluminanceProperty struct {
-	TypeName         string              `json:"__typename"`
-	Accuracy         string              `json:"accuracy"`
-	Error            *EventPropertyError `json:"error,omitempty"`
-	IlluminanceValue *struct {
-		Value *float64 `json:"value,omitempty"`
-	} `json:"illuminanceValue,omitempty"`
-	Name             string `json:"name"`
-	TimeOfLastChange string `json:"timeOfLastChange"`
-	TimeOfSample     string `json:"timeOfSample"`
-	Type             string `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy         EventKnownAccuracy          `json:"accuracy"`
+	Error            *EventPropertyError         `json:"error,omitempty"`
+	IlluminanceValue *EventIlluminanceStateValue `json:"illuminanceValue,omitempty"`
+	Name             string                      `json:"name"`
+	TimeOfLastChange string                      `json:"timeOfLastChange"`
+	TimeOfSample     string                      `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // LockProperty defines model for LockProperty.
 type LockProperty struct {
-	TypeName     string              `json:"__typename"`
-	Accuracy     string              `json:"accuracy"`
-	Error        *EventPropertyError `json:"error,omitempty"`
-	LockState    string              `json:"lockState"`
-	Name         string              `json:"name"`
-	TimeOfSample string              `json:"timeOfSample"`
-	Type         string              `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy EventKnownAccuracy  `json:"accuracy"`
+	Error    *EventPropertyError `json:"error,omitempty"`
+
+	// LockState Known LockStateValue values from the checked-in GraphQL schema. Future string values remain open.
+	LockState    EventKnownLockStateValue `json:"lockState"`
+	Name         string                   `json:"name"`
+	TimeOfSample string                   `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // ModeProperty defines model for ModeProperty.
 type ModeProperty struct {
-	TypeName  string              `json:"__typename"`
-	Accuracy  string              `json:"accuracy"`
-	Error     *EventPropertyError `json:"error,omitempty"`
-	ModeValue *struct {
-		Value string `json:"value"`
-	} `json:"modeValue,omitempty"`
-	Name         string `json:"name"`
-	TimeOfSample string `json:"timeOfSample"`
-	Type         string `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy     EventKnownAccuracy  `json:"accuracy"`
+	Error        *EventPropertyError `json:"error,omitempty"`
+	ModeValue    *EventModeValue     `json:"modeValue,omitempty"`
+	Name         string              `json:"name"`
+	TimeOfSample string              `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // PercentageProperty defines model for PercentageProperty.
 type PercentageProperty struct {
-	TypeName        string              `json:"__typename"`
-	Accuracy        string              `json:"accuracy"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy        EventKnownAccuracy  `json:"accuracy"`
 	Error           *EventPropertyError `json:"error,omitempty"`
 	Name            string              `json:"name"`
 	PercentageValue *int                `json:"percentageValue,omitempty"`
 	TimeOfSample    string              `json:"timeOfSample"`
-	Type            string              `json:"type"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // PowerLevelProperty defines model for PowerLevelProperty.
 type PowerLevelProperty struct {
-	TypeName        string              `json:"__typename"`
-	Accuracy        string              `json:"accuracy"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy        EventKnownAccuracy  `json:"accuracy"`
 	Error           *EventPropertyError `json:"error,omitempty"`
 	Name            string              `json:"name"`
 	PowerLevelValue *int                `json:"powerLevelValue,omitempty"`
 	TimeOfSample    string              `json:"timeOfSample"`
-	Type            string              `json:"type"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // PowerProperty defines model for PowerProperty.
 type PowerProperty struct {
-	TypeName        string              `json:"__typename"`
-	Accuracy        string              `json:"accuracy"`
-	Error           *EventPropertyError `json:"error,omitempty"`
-	Name            string              `json:"name"`
-	PowerStateValue string              `json:"powerStateValue"`
-	TimeOfSample    string              `json:"timeOfSample"`
-	Type            string              `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy EventKnownAccuracy  `json:"accuracy"`
+	Error    *EventPropertyError `json:"error,omitempty"`
+	Name     string              `json:"name"`
+
+	// PowerStateValue Known PowerStateValue values from the checked-in GraphQL schema. Future string values remain open.
+	PowerStateValue EventKnownPowerStateValue `json:"powerStateValue"`
+	TimeOfSample    string                    `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // RangeProperty defines model for RangeProperty.
 type RangeProperty struct {
-	TypeName   string              `json:"__typename"`
-	Accuracy   string              `json:"accuracy"`
-	Error      *EventPropertyError `json:"error,omitempty"`
-	Name       string              `json:"name"`
-	RangeValue *struct {
-		Value float64 `json:"value"`
-	} `json:"rangeValue,omitempty"`
-	TimeOfSample string `json:"timeOfSample"`
-	Type         string `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy     EventKnownAccuracy     `json:"accuracy"`
+	Error        *EventPropertyError    `json:"error,omitempty"`
+	Name         string                 `json:"name"`
+	RangeValue   *EventRangeValueNumber `json:"rangeValue,omitempty"`
+	TimeOfSample string                 `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // RawJSON defines model for RawJSON.
@@ -236,28 +444,36 @@ type RawJSON = json.RawMessage
 
 // ReachabilityProperty defines model for ReachabilityProperty.
 type ReachabilityProperty struct {
-	TypeName                string              `json:"__typename"`
-	Accuracy                string              `json:"accuracy"`
-	Error                   *EventPropertyError `json:"error,omitempty"`
-	Name                    string              `json:"name"`
-	ReachabilityStatusValue string              `json:"reachabilityStatusValue"`
-	TimeOfLastChange        string              `json:"timeOfLastChange"`
-	TimeOfSample            string              `json:"timeOfSample"`
-	Type                    string              `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy EventKnownAccuracy  `json:"accuracy"`
+	Error    *EventPropertyError `json:"error,omitempty"`
+	Name     string              `json:"name"`
+
+	// ReachabilityStatusValue Known ReachabilityStatusValue values from the checked-in GraphQL schema. Future string values remain open.
+	ReachabilityStatusValue EventKnownReachabilityStatusValue `json:"reachabilityStatusValue"`
+	TimeOfLastChange        string                            `json:"timeOfLastChange"`
+	TimeOfSample            string                            `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // RelativeHumidityProperty defines model for RelativeHumidityProperty.
 type RelativeHumidityProperty struct {
-	TypeName              string              `json:"__typename"`
-	Accuracy              string              `json:"accuracy"`
-	Error                 *EventPropertyError `json:"error,omitempty"`
-	Name                  string              `json:"name"`
-	RelativeHumidityValue *struct {
-		Value *float64 `json:"value,omitempty"`
-	} `json:"relativeHumidityValue,omitempty"`
-	TimeOfLastChange string `json:"timeOfLastChange"`
-	TimeOfSample     string `json:"timeOfSample"`
-	Type             string `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy              EventKnownAccuracy               `json:"accuracy"`
+	Error                 *EventPropertyError              `json:"error,omitempty"`
+	Name                  string                           `json:"name"`
+	RelativeHumidityValue *EventRelativeHumidityStateValue `json:"relativeHumidityValue,omitempty"`
+	TimeOfLastChange      string                           `json:"timeOfLastChange"`
+	TimeOfSample          string                           `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // ResourceMetadataPayload defines model for ResourceMetadataPayload.
@@ -265,105 +481,118 @@ type ResourceMetadataPayload struct {
 	MetricName string  `json:"metricName"`
 	Payload    RawJSON `json:"payload"`
 	Timestamp  string  `json:"timestamp"`
-	Type       string  `json:"type"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // ResourceMetadataPayloadData defines model for ResourceMetadataPayloadData.
 type ResourceMetadataPayloadData struct {
-	Data struct {
-		TypeName string `json:"__typename"`
-		Features []struct {
-			TypeName   string  `json:"__typename"`
-			Instance   *string `json:"instance,omitempty"`
-			Name       string  `json:"name"`
-			Properties RawJSON `json:"properties"`
-		} `json:"features"`
-	} `json:"data"`
-	Entity struct {
-		TypeName string `json:"__typename"`
-		ID       string `json:"id"`
-	} `json:"entity"`
+	Data   EventResourceMetadataPayloadDataData   `json:"data"`
+	Entity EventResourceMetadataPayloadDataEntity `json:"entity"`
 }
+
+// SDKKnownEventName Known library EventName values. Caller-supplied extensions remain open.
+type SDKKnownEventName = string
 
 // SetpointProperty defines model for SetpointProperty.
 type SetpointProperty struct {
-	TypeName               string              `json:"__typename"`
-	Accuracy               string              `json:"accuracy"`
-	DeviceNativeScaleValue string              `json:"deviceNativeScaleValue"`
-	Error                  *EventPropertyError `json:"error,omitempty"`
-	Name                   string              `json:"name"`
-	TimeOfLastChange       string              `json:"timeOfLastChange"`
-	TimeOfSample           string              `json:"timeOfSample"`
-	Type                   string              `json:"type"`
-	Value                  *struct {
-		Scale string  `json:"scale"`
-		Value float64 `json:"value"`
-	} `json:"value,omitempty"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy EventKnownAccuracy `json:"accuracy"`
+
+	// DeviceNativeScaleValue Known TemperatureScale values from the checked-in GraphQL schema. Future string values remain open.
+	DeviceNativeScaleValue EventKnownTemperatureScale `json:"deviceNativeScaleValue"`
+	Error                  *EventPropertyError        `json:"error,omitempty"`
+	Name                   string                     `json:"name"`
+	TimeOfLastChange       string                     `json:"timeOfLastChange"`
+	TimeOfSample           string                     `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type  EventKnownPropertyType `json:"type"`
+	Value *EventTemperature      `json:"value,omitempty"`
 }
 
 // SpeakerProperty defines model for SpeakerProperty.
 type SpeakerProperty struct {
-	TypeName     string              `json:"__typename"`
-	Accuracy     string              `json:"accuracy"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy     EventKnownAccuracy  `json:"accuracy"`
 	Error        *EventPropertyError `json:"error,omitempty"`
 	Muted        *bool               `json:"muted,omitempty"`
 	Name         string              `json:"name"`
 	TimeOfSample string              `json:"timeOfSample"`
-	Type         string              `json:"type"`
-	Volume       *int                `json:"volume,omitempty"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type   EventKnownPropertyType `json:"type"`
+	Volume *int                   `json:"volume,omitempty"`
 }
 
 // StatusCodeProperty defines model for StatusCodeProperty.
 type StatusCodeProperty struct {
-	TypeName        string              `json:"__typename"`
-	Accuracy        string              `json:"accuracy"`
-	Error           *EventPropertyError `json:"error,omitempty"`
-	Name            string              `json:"name"`
-	StatusCodeValue *struct {
-		Value []struct {
-			Code            *string `json:"code,omitempty"`
-			TimeOfDetection *string `json:"timeOfDetection,omitempty"`
-		} `json:"value"`
-	} `json:"statusCodeValue,omitempty"`
-	TimeOfLastChange string `json:"timeOfLastChange"`
-	TimeOfSample     string `json:"timeOfSample"`
-	Type             string `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy         EventKnownAccuracy     `json:"accuracy"`
+	Error            *EventPropertyError    `json:"error,omitempty"`
+	Name             string                 `json:"name"`
+	StatusCodeValue  *EventStatusCodeValues `json:"statusCodeValue,omitempty"`
+	TimeOfLastChange string                 `json:"timeOfLastChange"`
+	TimeOfSample     string                 `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // TemperatureSensorProperty defines model for TemperatureSensorProperty.
 type TemperatureSensorProperty struct {
-	TypeName         string              `json:"__typename"`
-	Accuracy         string              `json:"accuracy"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy         EventKnownAccuracy  `json:"accuracy"`
 	Error            *EventPropertyError `json:"error,omitempty"`
 	Name             string              `json:"name"`
 	TimeOfLastChange string              `json:"timeOfLastChange"`
 	TimeOfSample     string              `json:"timeOfSample"`
-	Type             string              `json:"type"`
-	Value            *struct {
-		Scale string  `json:"scale"`
-		Value float64 `json:"value"`
-	} `json:"value,omitempty"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type  EventKnownPropertyType `json:"type"`
+	Value *EventTemperature      `json:"value,omitempty"`
 }
 
 // ThermostatModeProperty defines model for ThermostatModeProperty.
 type ThermostatModeProperty struct {
-	TypeName            string              `json:"__typename"`
-	Accuracy            string              `json:"accuracy"`
-	Error               *EventPropertyError `json:"error,omitempty"`
-	Name                string              `json:"name"`
-	ThermostatModeValue string              `json:"thermostatModeValue"`
-	TimeOfLastChange    string              `json:"timeOfLastChange"`
-	TimeOfSample        string              `json:"timeOfSample"`
-	Type                string              `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy EventKnownAccuracy  `json:"accuracy"`
+	Error    *EventPropertyError `json:"error,omitempty"`
+	Name     string              `json:"name"`
+
+	// ThermostatModeValue Known ThermostatModeValue values from the checked-in GraphQL schema. Future string values remain open.
+	ThermostatModeValue EventKnownThermostatModeValue `json:"thermostatModeValue"`
+	TimeOfLastChange    string                        `json:"timeOfLastChange"`
+	TimeOfSample        string                        `json:"timeOfSample"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }
 
 // ToggleProperty defines model for ToggleProperty.
 type ToggleProperty struct {
-	TypeName         string              `json:"__typename"`
-	Accuracy         string              `json:"accuracy"`
-	Error            *EventPropertyError `json:"error,omitempty"`
-	Name             string              `json:"name"`
-	TimeOfSample     string              `json:"timeOfSample"`
-	ToggleStateValue string              `json:"toggleStateValue"`
-	Type             string              `json:"type"`
+	TypeName string `json:"__typename"`
+
+	// Accuracy Known Accuracy values from the checked-in GraphQL schema. Future string values remain open.
+	Accuracy     EventKnownAccuracy  `json:"accuracy"`
+	Error        *EventPropertyError `json:"error,omitempty"`
+	Name         string              `json:"name"`
+	TimeOfSample string              `json:"timeOfSample"`
+
+	// ToggleStateValue Known ToggleStateValue values from the checked-in GraphQL schema. Future string values remain open.
+	ToggleStateValue EventKnownToggleStateValue `json:"toggleStateValue"`
+
+	// Type Known PropertyType values from the checked-in GraphQL schema. Future string values remain open.
+	Type EventKnownPropertyType `json:"type"`
 }

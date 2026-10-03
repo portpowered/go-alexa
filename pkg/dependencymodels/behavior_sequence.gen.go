@@ -733,6 +733,9 @@ type ParallelNode struct {
 // ParallelNodeType defines model for ParallelNode.Type.
 type ParallelNodeType string
 
+// SDKKnownProviderID Known library ProviderID values. Caller-supplied extensions remain open.
+type SDKKnownProviderID = string
+
 // Sequence defines model for Sequence.
 type Sequence struct {
 	Type SequenceType `json:"@type"`
@@ -794,8 +797,10 @@ type SpeakPayload struct {
 	Locale             string `json:"locale"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.
-	SkillID     BehaviorSkillID `json:"skillId"`
-	TextToSpeak string          `json:"textToSpeak"`
+	SkillID BehaviorSkillID `json:"skillId"`
+
+	// TextToSpeak Caller speech text, including the library audio-URI SSML wrapper. The URI is escaped before interpolation.
+	TextToSpeak string `json:"textToSpeak"`
 }
 
 // Target defines model for Target.

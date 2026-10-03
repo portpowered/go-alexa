@@ -170,7 +170,7 @@ func (e *Endpoint) GetDeviceSerialNumber() string {
 // GetLocale returns the locale.
 func (e *Endpoint) GetLocale() string {
 	if e.Locale == "" {
-		return "en-US"
+		return DefaultLocale
 	}
 
 	return e.Locale

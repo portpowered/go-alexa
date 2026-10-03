@@ -7,6 +7,9 @@ import (
 	"time"
 )
 
+// AuthCookieDomain Known domains recognized by the compatibility cookie-jar lookup. Other caller cookies remain open.
+type AuthCookieDomain = string
+
 // AuthData defines model for AuthData.
 type AuthData struct {
 	CodePairAuth      *CodePairAuth      `json:"code_pair,omitempty"`
@@ -129,6 +132,12 @@ type RegistrationSuccess struct {
 type RegistrationTokens struct {
 	Bearer BearerTokens `json:"bearer"`
 }
+
+// SDKKnownDeviceType Known library DeviceType values. Caller-supplied extensions remain open.
+type SDKKnownDeviceType = string
+
+// SDKKnownRegion Known library Region values. Caller-supplied extensions remain open.
+type SDKKnownRegion = string
 
 // Token Legacy caller-owned credential and expiration projection preserved for
 // Go API compatibility. This is not a provider response model.

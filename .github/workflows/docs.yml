@@ -43,7 +43,7 @@ jobs:
       - name: Build API documentation site
         uses: portpowered/api-docs-website-github-action@v0.3.0
         with:
-          title: Alexa API Reference
+          title: Alexa · implementation-derived
           openapi: api/openapi.yaml
           asyncapi: api/asyncapi.yaml
           graphql: pkg/schemas/graphql/endpoints-schema.graphql

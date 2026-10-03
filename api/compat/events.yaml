@@ -36,3 +36,26 @@ components:
           type: object
           additionalProperties: true
           x-go-type-skip-optional-pointer: true
+
+    SDKKnownEntityType:
+      type: string
+      x-go-type: string
+      description: Known library EntityType values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: EntityType
+      x-go-compat-constant-values:
+        SDKEntityTypeEndpoint: "Endpoint"
+        SDKEntityTypeState: "State"
+
+    SDKKnownQualityOfServiceExperience:
+      type: string
+      x-go-type: string
+      description: Known library QualityOfServiceExperience values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: QualityOfServiceExperience
+      x-go-sdk-graphql-values:
+        QualityOfServiceExperienceBackgroundEphemeral: QualityOfServiceExperience.BACKGROUND_EPHEMERAL
+        QualityOfServiceExperienceBackgroundPersistent: QualityOfServiceExperience.BACKGROUND_PERSISTENT
+        QualityOfServiceExperienceForegroundPersistent: QualityOfServiceExperience.FOREGROUND_PERSISTENT
+      x-go-compat-constant-values:
+        SDKQualityOfServiceExperienceBackgroundEphemeral: "BACKGROUND_EPHEMERAL"
+        SDKQualityOfServiceExperienceBackgroundPersistent: "BACKGROUND_PERSISTENT"
+        SDKQualityOfServiceExperienceForegroundPersistent: "FOREGROUND_PERSISTENT"

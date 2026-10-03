@@ -5,17 +5,6 @@ package alexaapimodels
 // ProviderID identifies a supported media provider.
 type ProviderID string
 
-const (
-	// ProviderIDAmazon identifies Amazon Music.
-	ProviderIDAmazon ProviderID = "AMAZON_MUSIC"
-	// ProviderIdDefault identifies the default media provider.
-	ProviderIdDefault ProviderID = "DEFAULT"
-	// ProviderIDSpotify identifies Spotify.
-	ProviderIDSpotify ProviderID = "SPOTIFY"
-	// ProviderIDAudible identifies Audible.
-	ProviderIDAudible ProviderID = "AUDIBLE"
-)
-
 // FeatureControlResponse represents a unified response for feature control operations.
 //
 //modelinventory:semantic FeatureControlResponse: public result of a feature-control GraphQL operation.

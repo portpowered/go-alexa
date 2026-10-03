@@ -3,6 +3,7 @@ package alexa
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -320,7 +321,7 @@ func (c *Session) mergeEndpointWithStates(
 	// For FriendlyName, prefer FriendlyNameObject if available, otherwise use the string field
 	if gqlEndpoint.FriendlyName != "" {
 		unified.FriendlyName = &alexaapimodels.NameValue{
-			Type:  "PLAIN", // Default type for string field
+			Type:  alexamodels.DefaultFriendlyNameType, // Default type for string field
 			Value: gqlEndpoint.FriendlyName,
 		}
 	}
@@ -420,7 +421,7 @@ func (c *Session) mergeEndpointWithoutStates(
 	// For FriendlyName, prefer FriendlyNameObject if available, otherwise use the string field
 	if gqlEndpoint.FriendlyName != "" {
 		unified.FriendlyName = &alexaapimodels.NameValue{
-			Type:  "PLAIN", // Default type for string field
+			Type:  alexamodels.DefaultFriendlyNameType, // Default type for string field
 			Value: gqlEndpoint.FriendlyName,
 		}
 	}
@@ -492,7 +493,7 @@ func (c *Session) convertListEndpoint(
 
 	if gqlEndpoint.FriendlyName != "" {
 		unified.FriendlyName = &alexaapimodels.NameValue{
-			Type:  "PLAIN",
+			Type:  alexamodels.DefaultFriendlyNameType,
 			Value: gqlEndpoint.FriendlyName,
 		}
 	}
@@ -709,52 +710,42 @@ func mapCategory(input string) alexaapimodels.EndpointDisplayCategory {
 	return alexaapimodels.EndpointDisplayCategory(input)
 }
 
-// extractTimeOfSample extracts timeOfSample from a property using map conversion.
-func (c *Session) extractTimeOfSample(
-	prop gqlStatePropertyFeatureProperty,
-) string {
-	data, err := json.Marshal(prop)
-	if err != nil {
+// extractTimeOfSample reads the schema-generated property accessor.
+func (c *Session) extractTimeOfSample(prop gqlStatePropertyFeatureProperty) string {
+	if isNilFeatureProperty(prop) {
 		return ""
 	}
 
-	var propertyMap map[string]interface{}
-	{
-		err := json.Unmarshal(data, &propertyMap)
-		if err != nil {
-			return ""
-		}
+	property, hasSample := prop.(interface{ GetTimeOfSample() string })
+	if !hasSample {
+		return ""
 	}
 
-	if val, ok := propertyMap["timeOfSample"].(string); ok {
-		return val
-	}
-
-	return ""
+	return property.GetTimeOfSample()
 }
 
-// extractTimeOfLastChange extracts timeOfLastChange from a property using map conversion.
-func (c *Session) extractTimeOfLastChange(
-	prop gqlStatePropertyFeatureProperty,
-) string {
-	data, err := json.Marshal(prop)
-	if err != nil {
+// extractTimeOfLastChange reads the schema-generated property accessor.
+func (c *Session) extractTimeOfLastChange(prop gqlStatePropertyFeatureProperty) string {
+	if isNilFeatureProperty(prop) {
 		return ""
 	}
 
-	var propertyMap map[string]interface{}
-	{
-		err := json.Unmarshal(data, &propertyMap)
-		if err != nil {
-			return ""
-		}
+	property, hasChange := prop.(interface{ GetTimeOfLastChange() string })
+	if !hasChange {
+		return ""
 	}
 
-	if val, ok := propertyMap["timeOfLastChange"].(string); ok {
-		return val
+	return property.GetTimeOfLastChange()
+}
+
+func isNilFeatureProperty(prop gqlStatePropertyFeatureProperty) bool {
+	if prop == nil {
+		return true
 	}
 
-	return ""
+	value := reflect.ValueOf(prop)
+
+	return value.Kind() == reflect.Pointer && value.IsNil()
 }
 
 // extractStateValue extracts the state value from a property using type assertion.
@@ -955,14 +946,14 @@ func (c *Session) determineSupportedFeatures(
 		string(alexaapimodels.FeatureNameLocation):          alexaapimodels.FeatureNameLocation,
 		string(alexaapimodels.FeatureNameLocationTracker):   alexaapimodels.FeatureNameLocationTracker,
 		string(alexaapimodels.FeatureNameSecurityPanel):     alexaapimodels.FeatureNameSecurityPanel,
-		"alexa.playbackcontroller":                          alexaapimodels.FeatureNamePlayback,
-		"alexa.lightsensor":                                 alexaapimodels.FeatureNameLightSensor,
-		"alexa.temperaturesensor":                           alexaapimodels.FeatureNameTemperatureSensor,
-		"alexa.humiditysensor":                              alexaapimodels.FeatureNameHumiditySensor,
-		"alexa.speaker":                                     alexaapimodels.FeatureNameSpeaker,
-		"alexa.location":                                    alexaapimodels.FeatureNameLocation,
-		"alexa.location.tracker":                            alexaapimodels.FeatureNameLocationTracker,
-		"alexa.securitypanelcontroller":                     alexaapimodels.FeatureNameSecurityPanel,
+		alexamodels.LegacyPlaybackControllerCapability:      alexaapimodels.FeatureNamePlayback,
+		alexamodels.LegacyLightSensorCapability:             alexaapimodels.FeatureNameLightSensor,
+		alexamodels.LegacyTemperatureSensorCapability:       alexaapimodels.FeatureNameTemperatureSensor,
+		alexamodels.LegacyHumiditySensorCapability:          alexaapimodels.FeatureNameHumiditySensor,
+		alexamodels.LegacySpeakerCapability:                 alexaapimodels.FeatureNameSpeaker,
+		alexamodels.LegacyLocationCapability:                alexaapimodels.FeatureNameLocation,
+		alexamodels.LegacyLocationTrackerCapability:         alexaapimodels.FeatureNameLocationTracker,
+		alexamodels.LegacySecurityPanelControllerCapability: alexaapimodels.FeatureNameSecurityPanel,
 	}
 
 	addDeviceFamilyFeatures(supported, featureSet, capabilitySet, isFireTV, isEcho)
@@ -1020,7 +1011,7 @@ func addCoreDeviceFeatures(
 
 	speakerFeature := string(alexaapimodels.FeatureNameSpeaker)
 	if featureSet[speakerFeature] || isFireTV || isEcho ||
-		capabilitySet["VOLUME_SETTING"] || capabilitySet["DS_VOLUME_SETTING"] {
+		capabilitySet[alexamodels.VolumeSettingCapability] || capabilitySet[alexamodels.DsVolumeSettingCapability] {
 		if !featureSet[speakerFeature] {
 			supported[speakerFeature] = true
 		}
@@ -1045,15 +1036,15 @@ func addFamilyDefaultFeatures(supported map[string]bool, isFireTV, isEcho bool) 
 }
 
 func hasAudioPlayerCapability(capabilitySet map[string]bool) bool {
-	return capabilitySet["AUDIO_PLAYER"] ||
-		capabilitySet["AMAZON_MUSIC"] ||
-		capabilitySet["TUNE_IN"] ||
-		capabilitySet["APPLE_MUSIC"] ||
-		capabilitySet["PANDORA"] ||
-		capabilitySet["I_HEART_RADIO"] ||
-		capabilitySet["SIRIUSXM"] ||
-		capabilitySet["DEEZER"] ||
-		capabilitySet["TIDAL"]
+	return capabilitySet[alexamodels.AudioPlayerCapability] ||
+		capabilitySet[alexamodels.AmazonMusicCapability] ||
+		capabilitySet[alexamodels.TuneInCapability] ||
+		capabilitySet[alexamodels.AppleMusicCapability] ||
+		capabilitySet[alexamodels.PandoraCapability] ||
+		capabilitySet[alexamodels.IHeartRadioCapability] ||
+		capabilitySet[alexamodels.SiriusxmCapability] ||
+		capabilitySet[alexamodels.DeezerCapability] ||
+		capabilitySet[alexamodels.TidalCapability]
 }
 
 func addMappedCapabilityFeatures(
@@ -1091,16 +1082,24 @@ func buildSupportedFeatureList(supported map[string]bool) []alexaapimodels.Featu
 	return result
 }
 
-// extractLegacyCapabilityInterfaces pulls interfaceName fields out of legacy capabilities for feature inference.
+// extractLegacyCapabilityInterfaces decodes known members of the legacy JSON scalar.
 func extractLegacyCapabilityInterfaces(capabilities []interface{}) []string {
-	var interfaces []string
+	interfaces := make([]string, 0, len(capabilities))
 
-	for _, cap := range capabilities {
-		if capMap, ok := cap.(map[string]interface{}); ok {
-			if iface, ok := capMap["interfaceName"].(string); ok && iface != "" {
-				interfaces = append(interfaces, iface)
-			}
+	for _, capability := range capabilities {
+		data, err := json.Marshal(capability)
+		if err != nil {
+			continue
 		}
+
+		var value alexamodels.LegacyCapabilityPayload
+
+		err = json.Unmarshal(data, &value)
+		if err != nil || value.InterfaceName == nil || *value.InterfaceName == "" {
+			continue
+		}
+
+		interfaces = append(interfaces, *value.InterfaceName)
 	}
 
 	return interfaces

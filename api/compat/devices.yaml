@@ -22,6 +22,14 @@ components:
       x-go-type: string
       x-go-compat-constant-type: CapabilityInterface
       x-go-compat-constant-values:
+        LegacyPlaybackControllerCapability: alexa.playbackcontroller
+        LegacyLightSensorCapability: alexa.lightsensor
+        LegacyTemperatureSensorCapability: alexa.temperaturesensor
+        LegacyHumiditySensorCapability: alexa.humiditysensor
+        LegacySpeakerCapability: alexa.speaker
+        LegacyLocationCapability: alexa.location
+        LegacyLocationTrackerCapability: alexa.location.tracker
+        LegacySecurityPanelControllerCapability: alexa.securitypanelcontroller
         TemperatureSensorCapability: TEMPERATURE_SENSOR
         FlashBriefingCapability: FLASH_BRIEFING
         AlexaPresenceCapability: ALEXA_PRESENCE

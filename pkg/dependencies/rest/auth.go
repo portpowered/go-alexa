@@ -31,15 +31,15 @@ type DeviceRegistrationConfig struct {
 // DefaultDeviceRegistrationConfig returns a default device registration config.
 func DefaultDeviceRegistrationConfig(deviceSerial, deviceName string) *DeviceRegistrationConfig {
 	return &DeviceRegistrationConfig{
-		AppName:      "Client SDK",
-		AppVersion:   "1.0",
+		AppName:      alexaapimodels.DefaultAppName,
+		AppVersion:   alexaapimodels.DefaultAppVersion,
 		DeviceType:   alexaapimodels.DeviceTypeSimulator,
-		Domain:       "Device",
-		DeviceModel:  "Client SDK",
-		OSVersion:    "0",
+		Domain:       alexaapimodels.DefaultRegistrationDomain,
+		DeviceModel:  alexaapimodels.DefaultDeviceModel,
+		OSVersion:    alexaapimodels.DefaultOSVersion,
 		DeviceSerial: deviceSerial,
 		DeviceName:   deviceName,
-		Manufacturer: "Amazon",
+		Manufacturer: alexaapimodels.DefaultManufacturer,
 	}
 }
 
@@ -58,7 +58,7 @@ func (c *Client) RegisterWithEmailPassword(
 	}
 
 	req := alexamodels.WireRegistrationRequest{
-		RequestedTokenType: []string{"bearer"},
+		RequestedTokenType: []string{alexamodels.AuthTokenTypeBearer},
 		RegistrationData: alexamodels.WireRegistrationData{
 			AppName:      config.AppName,
 			AppVersion:   config.AppVersion,
@@ -118,7 +118,7 @@ func (c *Client) RegisterWithCodePair(
 	}
 
 	req := alexamodels.WireRegistrationRequest{
-		RequestedTokenType: []string{"bearer"},
+		RequestedTokenType: []string{alexamodels.AuthTokenTypeBearer},
 		RegistrationData: alexamodels.WireRegistrationData{
 			AppName:      config.AppName,
 			AppVersion:   config.AppVersion,
@@ -179,7 +179,7 @@ func (c *Client) GenerateCodePair(ctx context.Context, config *DeviceRegistratio
 			OsVersion:             config.OSVersion,
 			DeviceSerial:          config.DeviceSerial,
 			DeviceName:            config.DeviceName,
-			SecondaryRegistration: "False",
+			SecondaryRegistration: alexamodels.AuthSecondaryRegistrationFalse,
 		},
 		Scopes: []string{},
 	}
@@ -218,9 +218,9 @@ func (c *Client) RefreshAccessToken(ctx context.Context, refreshToken string, co
 	req := alexamodels.WireTokenRefreshRequest{
 		AppName:            config.AppName,
 		AppVersion:         config.AppVersion,
-		SourceTokenType:    "refresh_token",
+		SourceTokenType:    alexamodels.AuthTokenTypeRefresh,
 		SourceToken:        refreshToken,
-		RequestedTokenType: "access_token",
+		RequestedTokenType: alexamodels.AuthTokenTypeAccess,
 		DeviceMetadata: alexamodels.WireDeviceMetadata{
 			DeviceType: config.DeviceType, DeviceModel: config.DeviceModel,
 			OsVersion: config.OSVersion, DeviceSerial: config.DeviceSerial,
@@ -262,27 +262,27 @@ func (e *RegistrationChallengeError) Error() string {
 
 // IsOTPRequired checks if the error indicates OTP is required.
 func (e *RegistrationChallengeError) IsOTPRequired() bool {
-	return e.ChallengeReason == "MissingRequiredAuthenticationData"
+	return e.ChallengeReason == alexamodels.AuthChallengeMissingData
 }
 
 // IsCBLRequired checks if the error indicates CBL is required.
 func (e *RegistrationChallengeError) IsCBLRequired() bool {
-	return e.ChallengeReason == "HandleOnWebView"
+	return e.ChallengeReason == alexamodels.AuthChallengeWebView
 }
 
 // IsAuthenticationFailed checks if authentication failed.
 func (e *RegistrationChallengeError) IsAuthenticationFailed() bool {
-	return e.ChallengeReason == "AuthenticationFailed" && e.RequiredAuthenticationMethod == "GenericClaimPassword"
+	return e.ChallengeReason == alexamodels.AuthChallengeFailed && e.RequiredAuthenticationMethod == alexamodels.AuthChallengePasswordMethod
 }
 
 // ExchangeRefreshTokenForCookies exchanges a refresh token for session cookies
 // POST https://api.amazon.com/ap/exchangetoken/cookies
 func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToken, domain string) (map[string]*http.Cookie, error) {
 	req := alexamodels.WireCookieExchangeRequest{
-		AppName:            "Amazon Alexa",
-		RequestedTokenType: "auth_cookies",
+		AppName:            alexamodels.AuthCookieExchangeAppName,
+		RequestedTokenType: alexamodels.AuthTokenTypeCookies,
 		Domain:             domain,
-		SourceTokenType:    "refresh_token",
+		SourceTokenType:    alexamodels.AuthTokenTypeRefresh,
 		SourceToken:        refreshToken,
 	}
 

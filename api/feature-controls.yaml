@@ -62,19 +62,23 @@ components:
       additionalProperties: false
       required: [lockState]
       properties:
-        lockState: {type: string}
+        lockState: {$ref: '#/components/schemas/ControlKnownLockStateValue'}
     ModeSetPayload:
       type: object
       additionalProperties: false
       required: [mode]
       properties:
-        mode: {type: string}
+        mode:
+          type: string
+          description: Device-specific mode supplied by the caller; no fixed provider-wide enum is assumed.
     ModeAdjustPayload:
       type: object
       additionalProperties: false
       required: [modeDelta]
       properties:
-        modeDelta: {type: string}
+        modeDelta:
+          type: string
+          description: Device-specific adjustment supplied by the caller; no fixed provider-wide enum is assumed.
     RangeSetPayload:
       type: object
       additionalProperties: false
@@ -92,7 +96,7 @@ components:
       additionalProperties: false
       required: [toggleState]
       properties:
-        toggleState: {type: string}
+        toggleState: {$ref: '#/components/schemas/ControlKnownToggleStateValue'}
     PercentageSetPayload:
       type: object
       additionalProperties: false
@@ -124,7 +128,7 @@ components:
         action: {type: string}
       additionalProperties: true
       description: >-
-        The action name is library-defined. Additional top-level fields are
+        The action name is caller- or device-defined. Additional top-level fields are
         caller-supplied action parameters and remain open by design.
     ThermostatSetpoint:
       type: object
@@ -132,7 +136,7 @@ components:
       required: [value, scale]
       properties:
         value: {type: number, x-go-type: float64}
-        scale: {type: string}
+        scale: {$ref: '#/components/schemas/ControlKnownTemperatureScale'}
     ThermostatSetpointSetPayload:
       type: object
       additionalProperties: false
@@ -150,4 +154,32 @@ components:
       additionalProperties: false
       required: [thermostatMode]
       properties:
-        thermostatMode: {type: string}
+        thermostatMode: {$ref: '#/components/schemas/ControlKnownThermostatModeValue'}
+
+    ControlKnownLockStateValue:
+      type: string
+      x-go-type: string
+      description: Known LockStateValue values from the checked-in GraphQL schema. Future string values remain open.
+      x-go-graphql-enum: LockStateValue
+      x-extensible-enum: ['LOCKED', 'UNLOCKED', 'UNKNOWN']
+
+    ControlKnownTemperatureScale:
+      type: string
+      x-go-type: string
+      description: Known TemperatureScale values from the checked-in GraphQL schema. Future string values remain open.
+      x-go-graphql-enum: TemperatureScale
+      x-extensible-enum: ['FAHRENHEIT', 'CELSIUS', 'KELVIN']
+
+    ControlKnownThermostatModeValue:
+      type: string
+      x-go-type: string
+      description: Known ThermostatModeValue values from the checked-in GraphQL schema. Future string values remain open.
+      x-go-graphql-enum: ThermostatModeValue
+      x-extensible-enum: ['COOL', 'HEAT', 'OFF', 'AUTO', 'ECO', 'EM_HEAT']
+
+    ControlKnownToggleStateValue:
+      type: string
+      x-go-type: string
+      description: Known ToggleStateValue values from the checked-in GraphQL schema. Future string values remain open.
+      x-go-graphql-enum: ToggleStateValue
+      x-extensible-enum: ['ON', 'OFF']

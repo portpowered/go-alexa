@@ -13,7 +13,7 @@ func (c *Client) ControlPowerFeature(
 	req *alexamodels.PowerControlRequest,
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	operationName := FeatureOperationNameTurnoff
-	if req.State == "ON" {
+	if req.State == alexaapimodels.PowerStateOn {
 		operationName = FeatureOperationNameTurnon
 	}
 
@@ -168,7 +168,7 @@ func (c *Client) ControlLockFeature(
 	req *alexamodels.LockControlRequest,
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	operationName := FeatureOperationNameUnlock
-	if req.State == "LOCKED" {
+	if req.State == string(alexamodels.LockStateValueLocked) {
 		operationName = FeatureOperationNameLock
 	}
 
@@ -262,7 +262,7 @@ func (c *Client) ControlToggleFeature(
 	req *alexamodels.ToggleControlRequest,
 ) (*alexaapimodels.FeatureControlResponse, error) {
 	operationName := FeatureOperationNameTurnoff
-	if req.State == "ON" {
+	if req.State == string(alexamodels.ToggleStateValueOn) {
 		operationName = FeatureOperationNameTurnon
 	}
 

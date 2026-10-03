@@ -3,6 +3,7 @@ package alexa
 import (
 	"context"
 	"fmt"
+	"html"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
@@ -265,7 +266,7 @@ func (c *Session) controlAudioPlayerURI(
 		return nil, err
 	}
 
-	messageString := fmt.Sprintf("<audio src='%s'/>", payload.URI)
+	messageString := fmt.Sprintf(alexamodels.BehaviorAudioSSMLTemplate, html.EscapeString(payload.URI))
 
 	uriReq := &alexamodels.SendTTSRequest{
 		Endpoint:      req.Target,
@@ -327,7 +328,7 @@ func (c *Session) controlBrightness(
 		req,
 		alexaapimodels.FeatureOperationNameSetBrightness,
 		alexaapimodels.FeatureOperationNameAdjustBrightness,
-		"brightness",
+		string(alexaapimodels.FeatureNameBrightness),
 		func(payload alexaapimodels.ControlBrightnessSetPayload) {
 			brightnessReq.Brightness = &payload.Brightness
 			brightnessReq.SetBrightness = true
@@ -495,7 +496,7 @@ func (c *Session) controlMode(
 		req,
 		alexaapimodels.FeatureOperationNameSetMode,
 		alexaapimodels.FeatureOperationNameAdjustMode,
-		"mode",
+		string(alexaapimodels.FeatureNameMode),
 		func(payload alexaapimodels.ControlModeSetPayload) {
 			modeReq.Mode = &payload.Mode
 			modeReq.SetMode = true
@@ -532,7 +533,7 @@ func (c *Session) controlRange(
 		req,
 		alexaapimodels.FeatureOperationNameSetRangeValue,
 		alexaapimodels.FeatureOperationNameAdjustRangeValue,
-		"range",
+		string(alexaapimodels.FeatureNameRange),
 		func(payload alexaapimodels.ControlRangeSetPayload) {
 			rangeReq.RangeValue = &payload.RangeValue
 			rangeReq.SetValue = true
@@ -594,7 +595,7 @@ func (c *Session) controlPercentage(
 		req,
 		alexaapimodels.FeatureOperationNameSetPercentage,
 		alexaapimodels.FeatureOperationNameAdjustPercentage,
-		"percentage",
+		string(alexaapimodels.FeatureNamePercentage),
 		func(payload alexaapimodels.ControlPercentageSetPayload) {
 			percentageReq.Percentage = &payload.Percentage
 			percentageReq.SetPercentage = true
@@ -631,7 +632,7 @@ func (c *Session) controlPowerLevel(
 		req,
 		alexaapimodels.FeatureOperationNameSetPowerLevel,
 		alexaapimodels.FeatureOperationNameAdjustPowerLevel,
-		"powerLevel",
+		string(alexaapimodels.FeatureNamePowerLevel),
 		func(payload alexaapimodels.ControlPowerLevelSetPayload) {
 			powerLevelReq.PowerLevel = &payload.PowerLevel
 			powerLevelReq.SetPowerLevel = true
@@ -736,7 +737,7 @@ func (c *Session) controlPower(
 	}
 
 	deviceAccountID := req.Target.GetDeviceAccountId()
-	isFireTV := deviceAccountID != "" && req.Target.GetDeviceFamily() == "FIRE_TV"
+	isFireTV := deviceAccountID != "" && req.Target.GetDeviceFamily() == alexamodels.DeviceFamilyFireTV
 
 	if isFireTV {
 		// Route to FireTV power operations
