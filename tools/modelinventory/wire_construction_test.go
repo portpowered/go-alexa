@@ -59,6 +59,12 @@ func request(caller string, input *wire.Payload) {
  _ = wire.Payload{Value: wire.RegisteredValue}
  input.Extra[caller] = caller
  input.Extra[wire.RegisteredValue] = caller
+ input.Extra[caller][wire.RegisteredValue] = caller
+ alias := input.Extra[caller]
+ alias[wire.RegisteredValue] = caller
+ (*input).Value = caller
+ var payloads []wire.Payload
+ payloads[:][0].Value = caller
 }
 `, 0)
 	if err != nil {
@@ -97,8 +103,15 @@ func TestWireMutationRejectsNewFixedValuesAfterInitialization(t *testing.T) {
 		`var alias *wire.Payload; alias = input; alias.Value = "brandNewValue"`,
 		`payloads := []wire.Payload{}; payloads[0].Value = "brandNewValue"`,
 		`var payloads []wire.Payload; payloads[0].Value = "brandNewValue"`,
+		`var payloads []wire.Payload; payloads[:][0].Value = "brandNewValue"`,
+		`(*input).Value = "brandNewValue"`,
+		`input.Extra[input.Value].(map[string]any)["brandNewKey"] = input.Value`,
 		`input.Extra[input.Value]["brandNewKey"] = input.Value`,
 		`input.Extra[input.Value][input.Value] = "brandNewValue"`,
+		`input.Extra["brandNewIntermediate"][wire.RegisteredValue] = input.Value`,
+		`key := "brandNewIntermediate"; input.Extra[key][input.Value] = input.Value`,
+		`alias := input.Extra["brandNewIntermediate"]; alias[input.Value] = input.Value`,
+		`var alias map[string]any; alias = input.Extra["brandNewIntermediate"]; alias[input.Value] = input.Value`,
 		`(input).Value = "brandNewValue"`,
 		`key := "brandNewKey"; input.Extra[key] = input.Value`,
 	} {

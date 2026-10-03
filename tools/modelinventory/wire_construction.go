@@ -73,6 +73,7 @@ func rejectRawGeneratedWireConstructions(file *ast.File, set *token.FileSet, pat
 						problems = append(problems, fmt.Sprintf("%s: fixed wire assignment %q must be generated from schema", set.Position(raw.Pos()), decoded))
 					}
 				}
+				inspectWireReceiverKeys(receiver, make(map[wireSourceVariable]bool), report, assignments)
 				inspectWireValueLiterals(key, make(map[wireSourceVariable]bool), report, assignments)
 				inspectWireValueLiterals(assignment.Rhs[index], make(map[wireSourceVariable]bool), report, assignments)
 			}
@@ -218,7 +219,13 @@ func generatedWireReceiver(
 		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
 	case *ast.UnaryExpr:
 		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
+	case *ast.StarExpr:
+		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
 	case *ast.IndexExpr:
+		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
+	case *ast.SliceExpr:
+		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
+	case *ast.TypeAssertExpr:
 		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
 	case *ast.ParenExpr:
 		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
