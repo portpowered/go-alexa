@@ -1167,64 +1167,69 @@ func (c *Client) PlayVideo(ctx context.Context, req *alexamodels.PlayVideoReques
 // SendFireTVSequence sends a Fire TV sequence command
 // This is a helper that builds the operation node and calls RunBehavior for Fire TV operations.
 func (c *Client) SendFireTVSequence(ctx context.Context, deviceAccountID, operationType string) error {
+	return c.sendFireTVSequence(ctx, c.customerID, deviceAccountID, operationType)
+}
+
+func (c *Client) sendFireTVSequence(ctx context.Context, customerID, deviceAccountID, operationType string) error {
+	if customerID == "" {
+		return &alexaapimodels.BadRequestError{Message: "device owner customer ID is required"}
+	}
+
+	if deviceAccountID == "" {
+		return &alexaapimodels.BadRequestError{Message: "device account ID is required"}
+	}
+
 	payload := alexamodels.FireTVOperationPayload{
 		DeviceAccountID: deviceAccountID,
+		CustomerID:      customerID,
 		SkillID:         alexamodels.BehaviorSkillIDRoutinesFireTV,
 	}
 
 	return c.sendTypedSequence(ctx, operationType, payload)
 }
 
+func fireTVRequestIdentity(req *alexamodels.FireTVRequest) (string, string, error) {
+	if req == nil || req.Endpoint == nil {
+		return "", "", &alexaapimodels.BadRequestError{Message: "endpoint is required"}
+	}
+
+	if req.Endpoint.GetDeviceFamily() != alexamodels.DeviceFamilyFireTV {
+		return "", "", &alexaapimodels.BadRequestError{Message: "device is not a Fire TV"}
+	}
+
+	deviceAccountID := req.Endpoint.GetDeviceAccountId()
+	if deviceAccountID == "" {
+		return "", "", &alexaapimodels.BadRequestError{Message: "deviceAccountId is required"}
+	}
+
+	owner, ok := req.Endpoint.(interface{ GetDeviceOwnerCustomerID() string })
+	if !ok || owner.GetDeviceOwnerCustomerID() == "" {
+		return "", "", &alexaapimodels.BadRequestError{Message: "device owner customer ID is required"}
+	}
+
+	return owner.GetDeviceOwnerCustomerID(), deviceAccountID, nil
+}
+
 // FireTVTurnOn turns on a Fire TV device
 // Uses Alexa.Operation.FireTV.TurnOn sequence.
 func (c *Client) FireTVTurnOn(ctx context.Context, req *alexamodels.FireTVRequest) error {
-	deviceAccountID := req.Endpoint.GetDeviceAccountId()
-	if deviceAccountID == "" && req.Endpoint != nil {
-		deviceAccountID = req.Endpoint.GetDeviceAccountId()
+	customerID, deviceAccountID, err := fireTVRequestIdentity(req)
+	if err != nil {
+		return err
 	}
 
-	if deviceAccountID == "" {
-		return &alexaapimodels.BadRequestError{
-			Message: "deviceAccountId is required",
-		}
-	}
-
-	if req.Endpoint != nil {
-		deviceFamily := req.Endpoint.GetDeviceFamily()
-		if deviceFamily != alexamodels.DeviceFamilyFireTV {
-			return &alexaapimodels.BadRequestError{
-				Message: "device is not a Fire TV",
-			}
-		}
-	}
-
-	return c.SendFireTVSequence(ctx, deviceAccountID, alexamodels.OperationTypeFireTVTurnOn)
+	return c.sendFireTVSequence(ctx, customerID, deviceAccountID, alexamodels.OperationTypeFireTVTurnOn)
 }
 
 // FireTVTurnOff turns off a Fire TV device
 // Uses Alexa.Operation.FireTV.TurnOff sequence.
 func (c *Client) FireTVTurnOff(ctx context.Context, req *alexamodels.FireTVRequest) error {
-	deviceAccountID := req.Endpoint.GetDeviceAccountId()
-	if deviceAccountID == "" && req.Endpoint != nil {
-		deviceAccountID = req.Endpoint.GetDeviceAccountId()
+	customerID, deviceAccountID, err := fireTVRequestIdentity(req)
+	if err != nil {
+		return err
 	}
 
-	if deviceAccountID == "" {
-		return &alexaapimodels.BadRequestError{
-			Message: "deviceAccountId is required",
-		}
-	}
-
-	if req.Endpoint != nil {
-		deviceFamily := req.Endpoint.GetDeviceFamily()
-		if deviceFamily != alexamodels.DeviceFamilyFireTV {
-			return &alexaapimodels.BadRequestError{
-				Message: "device is not a Fire TV",
-			}
-		}
-	}
-
-	return c.SendFireTVSequence(ctx, deviceAccountID, alexamodels.OperationTypeFireTVTurnOff)
+	return c.sendFireTVSequence(ctx, customerID, deviceAccountID, alexamodels.OperationTypeFireTVTurnOff)
 }
 
 // FireTVTurnOnOff turns on or off a Fire TV device based on the value parameter
@@ -1241,77 +1246,32 @@ func (c *Client) FireTVTurnOnOff(ctx context.Context, req *alexamodels.FireTVReq
 // FireTVPauseVideo pauses video playback on a Fire TV device
 // Uses Alexa.Operation.FireTV.PauseVideo sequence.
 func (c *Client) FireTVPauseVideo(ctx context.Context, req *alexamodels.FireTVRequest) error {
-	deviceAccountID := req.Endpoint.GetDeviceAccountId()
-	if deviceAccountID == "" && req.Endpoint != nil {
-		deviceAccountID = req.Endpoint.GetDeviceAccountId()
+	customerID, deviceAccountID, err := fireTVRequestIdentity(req)
+	if err != nil {
+		return err
 	}
 
-	if deviceAccountID == "" {
-		return &alexaapimodels.BadRequestError{
-			Message: "deviceAccountId is required",
-		}
-	}
-
-	if req.Endpoint != nil {
-		deviceFamily := req.Endpoint.GetDeviceFamily()
-		if deviceFamily != alexamodels.DeviceFamilyFireTV {
-			return &alexaapimodels.BadRequestError{
-				Message: "device is not a Fire TV",
-			}
-		}
-	}
-
-	return c.SendFireTVSequence(ctx, deviceAccountID, alexamodels.OperationTypeFireTVPauseVideo)
+	return c.sendFireTVSequence(ctx, customerID, deviceAccountID, alexamodels.OperationTypeFireTVPauseVideo)
 }
 
 // FireTVResumeVideo resumes video playback on a Fire TV device
 // Uses Alexa.Operation.FireTV.ResumeVideo sequence.
 func (c *Client) FireTVResumeVideo(ctx context.Context, req *alexamodels.FireTVRequest) error {
-	deviceAccountID := req.Endpoint.GetDeviceAccountId()
-	if deviceAccountID == "" && req.Endpoint != nil {
-		deviceAccountID = req.Endpoint.GetDeviceAccountId()
+	customerID, deviceAccountID, err := fireTVRequestIdentity(req)
+	if err != nil {
+		return err
 	}
 
-	if deviceAccountID == "" {
-		return &alexaapimodels.BadRequestError{
-			Message: "deviceAccountId is required",
-		}
-	}
-
-	if req.Endpoint != nil {
-		deviceFamily := req.Endpoint.GetDeviceFamily()
-		if deviceFamily != alexamodels.DeviceFamilyFireTV {
-			return &alexaapimodels.BadRequestError{
-				Message: "device is not a Fire TV",
-			}
-		}
-	}
-
-	return c.SendFireTVSequence(ctx, deviceAccountID, alexamodels.OperationTypeFireTVResumeVideo)
+	return c.sendFireTVSequence(ctx, customerID, deviceAccountID, alexamodels.OperationTypeFireTVResumeVideo)
 }
 
 // FireTVNavigateHome navigates to the home screen on a Fire TV device
 // Uses Alexa.Operation.FireTV.NavigateHome sequence.
 func (c *Client) FireTVNavigateHome(ctx context.Context, req *alexamodels.FireTVRequest) error {
-	deviceAccountID := req.Endpoint.GetDeviceAccountId()
-	if deviceAccountID == "" && req.Endpoint != nil {
-		deviceAccountID = req.Endpoint.GetDeviceAccountId()
+	customerID, deviceAccountID, err := fireTVRequestIdentity(req)
+	if err != nil {
+		return err
 	}
 
-	if deviceAccountID == "" {
-		return &alexaapimodels.BadRequestError{
-			Message: "deviceAccountId is required",
-		}
-	}
-
-	if req.Endpoint != nil {
-		deviceFamily := req.Endpoint.GetDeviceFamily()
-		if deviceFamily != alexamodels.DeviceFamilyFireTV {
-			return &alexaapimodels.BadRequestError{
-				Message: "device is not a Fire TV",
-			}
-		}
-	}
-
-	return c.SendFireTVSequence(ctx, deviceAccountID, alexamodels.OperationTypeFireTVNavigateHome)
+	return c.sendFireTVSequence(ctx, customerID, deviceAccountID, alexamodels.OperationTypeFireTVNavigateHome)
 }

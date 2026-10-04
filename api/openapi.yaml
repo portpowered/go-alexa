@@ -195,6 +195,15 @@ components:
       - public_code
       - private_code
       type: object
+    WireCodePairErrorResponse:
+      description: Error field parsed for pending, expired and denied code-link states;
+        provider messages are ignored.
+      properties:
+        error:
+          type: string
+      required:
+      - error
+      type: object
     WireCodePairRequest:
       properties:
         code_data:
@@ -1233,6 +1242,13 @@ paths:
               $ref: '#/components/schemas/WireRegistrationRequest'
         required: true
       responses:
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireCodePairErrorResponse'
+          description: Synthetic implementation-derived code-link error classification;
+            no live provider capture.
         4XX:
           content:
             application/json:

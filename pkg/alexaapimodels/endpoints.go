@@ -35,9 +35,10 @@ type Endpoint struct {
 	SoftwareVersion   *NameValue        `json:"softwareVersion,omitempty"`
 	DisplayCategories DisplayCategories `json:"displayCategories,omitempty"`
 	// Secondary data from DeviceV2 API (may be empty if no match found)
-	DeviceFamily    string
-	DeviceAccountId string
-	Locale          string
+	DeviceFamily          string
+	DeviceAccountId       string
+	DeviceOwnerCustomerID string `json:"-"`
+	Locale                string
 
 	// Features lists the features this endpoint supports
 	// This is computed by merging GraphQL features, REST capabilities, and device family information
@@ -200,4 +201,9 @@ func (e *Endpoint) HasFeature(featureName FeatureName) bool {
 	}
 
 	return false
+}
+
+// GetDeviceOwnerCustomerID returns the customer identity supplied by device metadata.
+func (e *Endpoint) GetDeviceOwnerCustomerID() string {
+	return e.DeviceOwnerCustomerID
 }

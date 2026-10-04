@@ -387,11 +387,12 @@ func TestSyntheticRESTControlDispatch(t *testing.T) {
 				context.Background(),
 				m.ControlRequest{
 					Target: &m.Endpoint{
-						EndpointID:         "synthetic-endpoint",
-						DeviceSerialNumber: "synthetic-serial",
-						DeviceType:         "synthetic-type",
-						DeviceFamily:       test.family,
-						DeviceAccountId:    test.account,
+						EndpointID:            "synthetic-endpoint",
+						DeviceSerialNumber:    "synthetic-serial",
+						DeviceType:            "synthetic-type",
+						DeviceFamily:          test.family,
+						DeviceAccountId:       test.account,
+						DeviceOwnerCustomerID: "synthetic-device-owner",
 					},
 					Namespace: test.feature,
 					Name:      test.operation,

@@ -471,8 +471,9 @@ components:
       type: object
       properties:
         deviceAccountId: {type: string, x-go-name: DeviceAccountID}
+        customerId: {type: string, x-go-name: CustomerID}
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
-      required: [deviceAccountId, skillId]
+      required: [deviceAccountId, customerId, skillId]
     DeviceControlsStopOperationType:
       type: string
       enum: [Alexa.DeviceControls.Stop]

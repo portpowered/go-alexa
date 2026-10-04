@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
@@ -149,8 +148,11 @@ func TestEmailRegistrationMapsChallengeAndCodePairErrors(t *testing.T) {
 	)
 
 	_, codePairErr := client.RegisterWithCodePair(context.Background(), "public", "private", config)
-	if !alexaapimodels.IsNetworkError(codePairErr) {
-		t.Fatalf("expected code-pair failure to return NetworkError, got %T: %v", codePairErr, codePairErr)
+
+	var registrationError *alexaapimodels.CodePairRegistrationError
+
+	if !errors.As(codePairErr, &registrationError) || registrationError.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected safe typed code-pair HTTP rejection, got %T: %v", codePairErr, codePairErr)
 	}
 
 	client = NewClient(
@@ -187,7 +189,17 @@ func TestRegistrationConfigurationDefaultsChallengePredicatesAndOptions(t *testi
 		{reason: "UnknownChallenge", method: "", otp: false, cbl: false, failure: false},
 	} {
 		err := &RegistrationChallengeError{ChallengeReason: testCase.reason, RequiredAuthenticationMethod: testCase.method}
-		if err.IsOTPRequired() != testCase.otp || err.IsCBLRequired() != testCase.cbl || err.IsAuthenticationFailed() != testCase.failure || !strings.Contains(err.Error(), testCase.reason) {
+
+		wantError := "registration challenge"
+		if testCase.reason != "UnknownChallenge" {
+			wantError += ": " + testCase.reason
+		}
+
+		if err.Error() != wantError {
+			t.Errorf("challenge diagnostic = %q, want %q", err.Error(), wantError)
+		}
+
+		if err.IsOTPRequired() != testCase.otp || err.IsCBLRequired() != testCase.cbl || err.IsAuthenticationFailed() != testCase.failure {
 			t.Errorf("challenge predicates returned the wrong result for %#v", testCase)
 		}
 	}

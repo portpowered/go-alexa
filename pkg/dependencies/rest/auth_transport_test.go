@@ -145,8 +145,8 @@ func TestExchangeRefreshTokenForCookiesHandlesEmptyAndInvalidResponses(t *testin
 		})}))
 
 		_, exchangeErr := client.ExchangeRefreshTokenForCookies(context.Background(), "synthetic-refresh-token", "synthetic.amazon.test")
-		if exchangeErr == nil || !strings.Contains(exchangeErr.Error(), "synthetic denial") {
-			t.Fatalf("expected exchange rejection details, got %v", exchangeErr)
+		if exchangeErr == nil || !strings.Contains(exchangeErr.Error(), "403") || strings.Contains(exchangeErr.Error(), "synthetic denial") {
+			t.Fatalf("expected safe exchange rejection status, got %v", exchangeErr)
 		}
 	})
 

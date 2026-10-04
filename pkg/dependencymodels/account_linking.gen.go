@@ -50,6 +50,11 @@ type WireCodePairAuth struct {
 	PublicCode  string `json:"public_code"`
 }
 
+// WireCodePairErrorResponse Error field parsed for pending, expired and denied code-link states; provider messages are ignored.
+type WireCodePairErrorResponse struct {
+	Error string `json:"error"`
+}
+
 // WireCodePairRequest defines model for WireCodePairRequest.
 type WireCodePairRequest struct {
 	CodeData WireCodeData `json:"code_data"`
