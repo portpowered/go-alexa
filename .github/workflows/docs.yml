@@ -43,7 +43,7 @@ jobs:
       - name: Build API documentation site
         uses: portpowered/api-docs-website-github-action@v0.3.0
         with:
-          title: Alexa · implementation-derived
+          title: Alexa - implementation-derived
           openapi: api/openapi.yaml
           asyncapi: api/asyncapi.yaml
           graphql: pkg/schemas/graphql/endpoints-schema.graphql
@@ -84,12 +84,12 @@ jobs:
           include-hidden-files: true
           retention-days: 14
       - name: Upload Pages artifact
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        if: (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') || github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v5
         with:
           path: site
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') || github.event_name == 'workflow_dispatch'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
