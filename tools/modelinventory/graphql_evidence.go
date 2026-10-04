@@ -991,7 +991,7 @@ func isJSONUnmarshalCall(call *goast.CallExpr, inputName, outputName string, add
 
 func isJSONUnmarshalSelector(call *goast.CallExpr) bool {
 	selector, isSelector := call.Fun.(*goast.SelectorExpr)
-	if !isSelector || selector.Sel.Name != "Unmarshal" {
+	if !isSelector || selector.Sel.Name != jsonUnmarshalMethod {
 		return false
 	}
 

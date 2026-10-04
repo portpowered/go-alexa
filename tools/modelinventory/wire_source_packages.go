@@ -78,10 +78,35 @@ func checkWireSourcePackage(files []wireSourceFile, set *token.FileSet, models m
 	assignments := wireSourceAssignments{
 		values:              make(map[wireSourceVariable][]ast.Expr),
 		generatedParameters: make(map[wireSourceVariable]bool),
+		sdkDependencies:     make(map[string]bool),
+		sdkOwner:            nil,
+		callableFields:      make(map[string][]ast.Expr),
+		functionBodies:      make(map[*ast.FuncType]*ast.BlockStmt),
+		methods:             make(map[string][]*ast.FuncDecl),
 	}
 
 	for _, source := range files {
 		local := indexWireSourceAssignments(source.file)
+		if local.sdkOwner != nil {
+			assignments.sdkOwner = local.sdkOwner
+		}
+
+		for function, body := range local.functionBodies {
+			assignments.functionBodies[function] = body
+		}
+
+		for name, values := range local.callableFields {
+			assignments.callableFields[name] = append(assignments.callableFields[name], values...)
+		}
+
+		for name, verified := range local.sdkDependencies {
+			assignments.sdkDependencies[name] = verified
+		}
+
+		for name, methods := range local.methods {
+			assignments.methods[name] = append(assignments.methods[name], methods...)
+		}
+
 		for variable, values := range local.values {
 			assignments.values[variable] = append(assignments.values[variable], values...)
 		}
@@ -103,14 +128,14 @@ func indexWirePackageHelperParameters(files []wireSourceFile, models map[string]
 	owner := primitivePackage{ImportPath: wireImportPath, Name: "alexamodels", Directory: "pkg/dependencymodels"}
 
 	for {
-		before := len(assignments.generatedParameters)
+		before := len(assignments.generatedParameters) + len(assignments.values)
 
 		for _, source := range files {
 			aliases := primitiveImportAliases(source.file, owner)
 			indexWireHelperParameters(source.file, aliases, source.path, models, assignments)
 		}
 
-		if before == len(assignments.generatedParameters) {
+		if before == len(assignments.generatedParameters)+len(assignments.values) {
 			return
 		}
 	}

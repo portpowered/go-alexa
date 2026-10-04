@@ -668,3 +668,15 @@ types:
     reason: "SyntheticResponse: hand-authored local status, headers, and body returned after a synthetic request matches."
     evidence:
       - "pkg/testing/synthetic_replay.go#RecordSyntheticExchange"
+  - file: pkg/dependencymodels/auth.go
+    name: AuthConfig
+    classification: legacy-nonwire
+    reason: "AuthConfig: unused caller configuration for source compatibility; no SDK consumer, JSON tags, or codec."
+    evidence:
+      - "pkg/dependencymodels/legacy_auth_test.go#TestLegacyOAuthConfigurationHasNoWireTags"
+  - file: pkg/dependencymodels/auth.go
+    name: DeviceAuthConfig
+    classification: legacy-nonwire
+    reason: "DeviceAuthConfig: unused caller configuration for source compatibility; no SDK consumer, JSON tags, or codec."
+    evidence:
+      - "pkg/dependencymodels/legacy_auth_test.go#TestLegacyOAuthConfigurationHasNoWireTags"

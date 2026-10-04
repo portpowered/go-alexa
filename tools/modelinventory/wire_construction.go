@@ -32,6 +32,10 @@ func rejectRawGeneratedWireConstructionsWithAssignments(
 
 	ast.Inspect(file, func(node ast.Node) bool {
 		if call, isCall := node.(*ast.CallExpr); isCall {
+			if unverifiedWireCallable(file, call, aliases, path, models, assignments) {
+				problems = append(problems, fmt.Sprintf("%s: generated wire value escapes to an unverified callable", set.Position(call.Pos())))
+			}
+
 			inspectWireCopyCall(file, call, aliases, path, models, assignments, func(raw *ast.BasicLit) {
 				decoded, err := strconv.Unquote(raw.Value)
 				if err == nil && decoded != "" {
@@ -198,6 +202,10 @@ func generatedWireReceiver(
 		return generatedWireDeclaredType(expression.Type, aliases, path, models)
 	case *ast.Ident:
 		return generatedWireIdentifier(expression, aliases, path, models, visiting, assignments)
+	case *ast.CallExpr:
+		if len(expression.Args) == 1 && wireTypeConversion(expression.Fun) {
+			return generatedWireReceiver(expression.Args[0], aliases, path, models, visiting, assignments)
+		}
 	}
 
 	return false

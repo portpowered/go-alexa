@@ -16,6 +16,8 @@ func (t *Token) IsExpired() bool {
 // SDK operations do not consume it or handle browser callbacks.
 //
 // Deprecated: configure browser authorization in the calling application.
+//
+//modelinventory:legacy-nonwire AuthConfig: unused caller configuration for source compatibility; no SDK consumer, JSON tags, or codec.
 type AuthConfig struct {
 	ClientID     string
 	ClientSecret string
@@ -29,6 +31,8 @@ type AuthConfig struct {
 // SDK operations do not consume it; account linking uses code-pair registration.
 //
 // Deprecated: use the session's code-pair registration methods for account linking.
+//
+//modelinventory:legacy-nonwire DeviceAuthConfig: unused caller configuration for source compatibility; no SDK consumer, JSON tags, or codec.
 type DeviceAuthConfig struct {
 	ClientID      string
 	ClientSecret  string

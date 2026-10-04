@@ -1791,7 +1791,11 @@ func scanHandwrittenModels() ([]handwrittenModel, error) {
 		}
 	}
 
-	for key := range allowances {
+	for key, allowance := range allowances {
+		if allowance.Classification == legacyNonwireClassification && len(findCallSites(allowance.Name, allowance.File)) > 0 {
+			problems = append(problems, key+" legacy nonwire type has acquired an SDK consumer")
+		}
+
 		if !seen[key] {
 			problems = append(problems, "stale handwritten model manifest entry "+key)
 		}
@@ -1861,6 +1865,8 @@ func scanHandwrittenSource(
 
 	return scan.models, scan.problems, scan.seen
 }
+
+const legacyNonwireClassification = "legacy-nonwire"
 
 type handwrittenSourceScan struct {
 	path          string
@@ -1935,11 +1941,15 @@ func (scan *handwrittenSourceScan) inspectAnonymousStruct(structType *ast.Struct
 
 func (scan *handwrittenSourceScan) inspectNamedStruct(structType *ast.StructType, declaration modelDeclaration) {
 	name := declaration.spec.Name.Name
-	if !hasTaggedJSONField(structType) && !scan.jsonTypes[name] {
-		return
-	}
 
 	key := scan.path + "::" + name
+
+	dependencyExport := ast.IsExported(name) && strings.HasPrefix(scan.path, "pkg/dependencymodels/")
+
+	if !hasTaggedJSONField(structType) && !scan.jsonTypes[name] && !dependencyExport &&
+		scan.allowances[key].Classification != legacyNonwireClassification {
+		return
+	}
 
 	scan.seen[key] = true
 	if scan.generated {
@@ -1969,6 +1979,10 @@ func (scan *handwrittenSourceScan) recordManifestModel(key string, structType *a
 		return
 	}
 
+	if classification == legacyNonwireClassification && hasTaggedJSONField(structType) {
+		scan.problems = append(scan.problems, key+" legacy nonwire type has acquired JSON fields")
+	}
+
 	scan.validateModelMarker(name, classification, reason, allowance, declaration)
 	scan.validateModelClassification(key, allowance)
 	scan.validateModelEvidence(key, name, allowance)
@@ -1991,7 +2005,15 @@ func (scan *handwrittenSourceScan) validateModelMarker(name, classification, rea
 }
 
 func (scan *handwrittenSourceScan) validateModelClassification(key string, allowance handwrittenAllowance) {
-	if allowance.Classification != "semantic" && allowance.Classification != "client-input" && allowance.Classification != "domain" {
+	if allowance.Classification == legacyNonwireClassification {
+		name := strings.Split(key, "::")[1]
+		if scan.jsonTypes[name] {
+			scan.problems = append(scan.problems, key+" legacy nonwire type has acquired an SDK consumer or codec")
+		}
+	}
+
+	if allowance.Classification != "semantic" && allowance.Classification != "client-input" && allowance.Classification != "domain" &&
+		allowance.Classification != legacyNonwireClassification {
 		scan.problems = append(scan.problems, fmt.Sprintf("%s manifest entry has unsupported classification %q", key, allowance.Classification))
 	}
 
@@ -2296,7 +2318,7 @@ func directJSONCodecArgument(method string) (string, int, bool) {
 	switch method {
 	case "Marshal":
 		return "marshal", 0, true
-	case "Unmarshal":
+	case jsonUnmarshalMethod:
 		return "unmarshal", 1, true
 	case "NewEncoder":
 		return "encoder", -1, false
@@ -2308,7 +2330,7 @@ func directJSONCodecArgument(method string) (string, int, bool) {
 }
 
 func jsonEncoderMethodArgument(selector *ast.SelectorExpr, importedName string) (string, int, bool) {
-	if selector.Sel.Name != "Encode" && selector.Sel.Name != "Decode" {
+	if selector.Sel.Name != jsonEncodeMethod && selector.Sel.Name != "Decode" {
 		return "", 0, false
 	}
 
@@ -2327,7 +2349,7 @@ func jsonEncoderMethodArgument(selector *ast.SelectorExpr, importedName string) 
 		return "", 0, false
 	}
 
-	if selector.Sel.Name == "Encode" {
+	if selector.Sel.Name == jsonEncodeMethod {
 		return "encoder", 0, true
 	}
 
@@ -2580,7 +2602,7 @@ func modelMarker(groups ...*ast.CommentGroup) (string, string) {
 		}
 
 		for _, comment := range group.List {
-			for _, classification := range []string{"client-input", "semantic", "domain"} {
+			for _, classification := range []string{"client-input", "semantic", "domain", legacyNonwireClassification} {
 				prefix := "//modelinventory:" + classification + " "
 				if strings.HasPrefix(comment.Text, prefix) {
 					return classification, strings.TrimPrefix(comment.Text, prefix)

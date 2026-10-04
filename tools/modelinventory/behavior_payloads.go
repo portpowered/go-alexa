@@ -807,7 +807,7 @@ func isDynamicMapIndex(expression ast.Expr, aliases map[string]bool, dynamicName
 
 func mutatesDynamicMap(call *ast.CallExpr, aliases map[string]bool, dynamicNames map[string]bool) bool {
 	function, isBuiltin := unparenthesize(call.Fun).(*ast.Ident)
-	if !isBuiltin || len(call.Args) == 0 || (function.Name != "delete" && function.Name != "clear") {
+	if !isBuiltin || len(call.Args) == 0 || (function.Name != builtinDeleteName && function.Name != "clear") {
 		return false
 	}
 
