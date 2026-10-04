@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
@@ -286,7 +287,7 @@ func assertPlayerStateRequest(t *testing.T, request *http.Request) {
 func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 	t.Parallel()
 
-	endpoint := syntheticEndpoint{id: "synthetic-endpoint", device: "synthetic-device-type", serial: "synthetic-device-serial", locale: "fr-FR", family: alexamodels.DeviceFamilyFireTV, account: "synthetic-account"}
+	endpoint := syntheticEndpoint{id: "synthetic-endpoint", device: "synthetic-device-type", serial: "synthetic-device-serial", locale: "fr-FR", family: alexamodels.DeviceFamilyFireTV, account: "synthetic-account", owner: "synthetic-device-owner"}
 
 	type behaviorCase struct {
 		name string
@@ -537,7 +538,7 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		{
 			name: "fire tv sequence", node: alexamodels.FireTVOperationNode{
 				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVPauseVideo,
-				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", CustomerID: "synthetic-client-customer", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
 			},
 			call: func(client *Client) error {
 				return client.SendFireTVSequence(context.Background(), "synthetic-account", alexamodels.OperationTypeFireTVPauseVideo)
@@ -546,7 +547,7 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		{
 			name: "fire tv sequence preserves arbitrary operation type", node: alexamodels.FireTVOperationNode{
 				Type: behaviorNodeType, OperationType: "synthetic.CustomFireTVOperation",
-				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", CustomerID: "synthetic-client-customer", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
 			},
 			call: func(client *Client) error {
 				return client.SendFireTVSequence(context.Background(), "synthetic-account", "synthetic.CustomFireTVOperation")
@@ -555,7 +556,7 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		{
 			name: "fire tv on", node: alexamodels.FireTVOperationNode{
 				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVTurnOn,
-				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", CustomerID: "synthetic-device-owner", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
 			},
 			call: func(client *Client) error {
 				return client.FireTVTurnOn(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
@@ -564,7 +565,7 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		{
 			name: "fire tv off", node: alexamodels.FireTVOperationNode{
 				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVTurnOff,
-				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", CustomerID: "synthetic-device-owner", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
 			},
 			call: func(client *Client) error {
 				return client.FireTVTurnOff(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
@@ -573,7 +574,7 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		{
 			name: "fire tv turn on/off true", node: alexamodels.FireTVOperationNode{
 				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVTurnOn,
-				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", CustomerID: "synthetic-device-owner", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
 			},
 			call: func(client *Client) error {
 				return client.FireTVTurnOnOff(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint}, true)
@@ -582,7 +583,7 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		{
 			name: "fire tv turn on/off false", node: alexamodels.FireTVOperationNode{
 				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVTurnOff,
-				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", CustomerID: "synthetic-device-owner", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
 			},
 			call: func(client *Client) error {
 				return client.FireTVTurnOnOff(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint}, false)
@@ -591,7 +592,7 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		{
 			name: "fire tv pause", node: alexamodels.FireTVOperationNode{
 				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVPauseVideo,
-				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", CustomerID: "synthetic-device-owner", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
 			},
 			call: func(client *Client) error {
 				return client.FireTVPauseVideo(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
@@ -600,7 +601,7 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		{
 			name: "fire tv resume", node: alexamodels.FireTVOperationNode{
 				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVResumeVideo,
-				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", CustomerID: "synthetic-device-owner", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
 			},
 			call: func(client *Client) error {
 				return client.FireTVResumeVideo(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
@@ -609,7 +610,7 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		{
 			name: "fire tv home", node: alexamodels.FireTVOperationNode{
 				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVNavigateHome,
-				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", CustomerID: "synthetic-device-owner", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
 			},
 			call: func(client *Client) error {
 				return client.FireTVNavigateHome(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
@@ -849,5 +850,29 @@ func TestEndpointQueryRejectsNilInput(t *testing.T) {
 		if !alexaapimodels.IsBadRequestError(err) {
 			t.Fatalf("expected nil query to return BadRequestError, got %v", err)
 		}
+	}
+}
+
+func TestFireTVMissingOwnerRejectsRequestWithoutAccountFallback(t *testing.T) {
+	t.Parallel()
+
+	requests := 0
+	client := NewClient(
+		WithHTTPClient(&http.Client{Transport: syntheticRoundTripper(func(_ *http.Request) (*http.Response, error) {
+			requests++
+
+			return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header)}, nil
+		})}),
+		WithCustomerID("synthetic-account-customer"),
+	)
+	endpoint := syntheticEndpoint{family: alexamodels.DeviceFamilyFireTV, account: "synthetic-device-account"}
+
+	err := client.FireTVPauseVideo(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
+	if err == nil || !strings.Contains(err.Error(), "device owner customer ID is required") {
+		t.Fatalf("expected missing-owner rejection, got %v", err)
+	}
+
+	if requests != 0 {
+		t.Fatalf("missing owner made %d network requests", requests)
 	}
 }

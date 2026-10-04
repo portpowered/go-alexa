@@ -78,25 +78,11 @@ func (c *Session) ListEndpoints(
 		includeCapabilities = true
 	}
 
-	// Build GraphQL input from query parameters
-	graphqlInput := graphql.ListEndpointsInput{
-		MaxAgeInMillis:          0,
-		LatencyTolerance:        "",
-		DisplayCategory:         "",
-		AllDisplayCategories:    "",
-		Enablement:              "",
-		Filters:                 nil,
-		FilterExpressions:       nil,
-		QueryExpression:         nil,
-		MaxPagesToFetch:         0,
-		EndpointIds:             nil,
-		IncludeHouseholdDevices: false,
-		PaginationParams: graphql.PaginationParams{
-			PageSize:          defaultEndpointPageSize,
-			DisablePagination: true,
-			NextToken:         "",
-		},
+	if includeStates && len(query.EndpointIDs) > 0 {
+		return c.selectedEndpointStates(ctx, query.EndpointIDs)
 	}
+
+	graphqlInput := listEndpointsInput(includeStates, query.EndpointIDs)
 
 	var (
 		graphqlEndpointsWithoutStates []graphql.EndpointsEndpointsEndpointsResponseItemsEndpoint
@@ -168,6 +154,7 @@ func (c *Session) ListEndpoints(
 		mergeData,
 	)
 	unifiedEndpoints = mergeDistinctEndpoints(unifiedEndpoints, airQualityMonitorEndpoints)
+	unifiedEndpoints = filterEndpointsByIDs(unifiedEndpoints, query.EndpointIDs)
 
 	return &alexaapimodels.UnifiedEndpointListResponse{
 		Results: unifiedEndpoints,
@@ -338,6 +325,9 @@ func (c *Session) mergeEndpointWithStates(
 		unified.DeviceFamily = deviceV2.DeviceFamily
 
 		unified.DeviceAccountId = deviceV2.DeviceAccountId
+
+		unified.DeviceOwnerCustomerID = deviceV2.DeviceOwnerCustomerId
+
 		if deviceV2.Language != nil {
 			unified.Locale = *deviceV2.Language
 		}
@@ -437,6 +427,9 @@ func (c *Session) mergeEndpointWithoutStates(
 		unified.DeviceFamily = deviceV2.DeviceFamily
 
 		unified.DeviceAccountId = deviceV2.DeviceAccountId
+
+		unified.DeviceOwnerCustomerID = deviceV2.DeviceOwnerCustomerId
+
 		if deviceV2.Language != nil {
 			unified.Locale = *deviceV2.Language
 		}

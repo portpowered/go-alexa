@@ -46,14 +46,16 @@ type syntheticEndpoint struct {
 	locale  string
 	family  string
 	account string
+	owner   string
 }
 
-func (endpoint syntheticEndpoint) GetDeviceType() string         { return endpoint.device }
-func (endpoint syntheticEndpoint) GetDeviceSerialNumber() string { return endpoint.serial }
-func (endpoint syntheticEndpoint) GetLocale() string             { return endpoint.locale }
-func (endpoint syntheticEndpoint) GetEndpointId() string         { return endpoint.id }
-func (endpoint syntheticEndpoint) GetDeviceFamily() string       { return endpoint.family }
-func (endpoint syntheticEndpoint) GetDeviceAccountId() string    { return endpoint.account }
+func (endpoint syntheticEndpoint) GetDeviceType() string            { return endpoint.device }
+func (endpoint syntheticEndpoint) GetDeviceSerialNumber() string    { return endpoint.serial }
+func (endpoint syntheticEndpoint) GetLocale() string                { return endpoint.locale }
+func (endpoint syntheticEndpoint) GetEndpointId() string            { return endpoint.id }
+func (endpoint syntheticEndpoint) GetDeviceFamily() string          { return endpoint.family }
+func (endpoint syntheticEndpoint) GetDeviceAccountId() string       { return endpoint.account }
+func (endpoint syntheticEndpoint) GetDeviceOwnerCustomerID() string { return endpoint.owner }
 
 func TestGetEndpointByIDUsesBearerAndDecodesSyntheticDevice(t *testing.T) {
 	t.Parallel()

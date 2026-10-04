@@ -658,6 +658,7 @@ type FireTVOperationNode struct {
 
 // FireTVOperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
 type FireTVOperationPayload struct {
+	CustomerID      string `json:"customerId"`
 	DeviceAccountID string `json:"deviceAccountId"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.

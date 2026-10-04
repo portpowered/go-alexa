@@ -35,8 +35,9 @@ func restAuthenticationFailureReplayCases(ctx context.Context, config *DeviceReg
 			headers:   nil,
 			call: func(client *Client) error {
 				_, err := client.RegisterWithCodePair(ctx, "synthetic-public", "synthetic-private", config)
-				if !alexaapimodels.IsNetworkError(err) {
-					return syntheticFailureError("expected rejected code-pair network error")
+				var registrationError *alexaapimodels.CodePairRegistrationError
+				if !errors.As(err, &registrationError) || registrationError.StatusCode != http.StatusUnauthorized {
+					return syntheticFailureError("expected safe typed code-pair HTTP rejection")
 				}
 
 				return nil

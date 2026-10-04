@@ -151,6 +151,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WireChallengeResponse'
+        401:
+          description: Synthetic implementation-derived code-link error classification; no live provider capture.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireCodePairErrorResponse'
         default:
           $ref: '#/components/responses/UnhandledResponse'
   /auth/token:
@@ -542,6 +548,13 @@ components:
         required_authentication_method:
           x-go-compat-constant-values:
             AuthChallengePasswordMethod: "GenericClaimPassword"
+          type: string
+    WireCodePairErrorResponse:
+      type: object
+      description: Error field parsed for pending, expired and denied code-link states; provider messages are ignored.
+      required: [error]
+      properties:
+        error:
           type: string
   responses:
     UnhandledResponse:

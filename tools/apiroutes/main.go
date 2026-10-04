@@ -1580,14 +1580,17 @@ var injectedClientReceivers = map[string]string{
 }
 
 var allowedNetworkImports = map[string]map[string]bool{
-	"pkg/alexa/client.go":                 {"net/http": true},
-	"pkg/alexa/interface.go":              {"net/http": true},
-	"pkg/alexa/http2.go":                  {"net/http": true, "golang.org/x/net/http2": true},
-	"pkg/alexaapimodels/errors.go":        {"net/http": true},
-	"pkg/dependencies/graphql/client.go":  {"net/http": true},
-	"pkg/dependencies/graphql/queries.go": {"net/http": true},
-	"pkg/dependencies/rest/auth.go":       {"net/http": true},
-	"pkg/dependencies/rest/client.go":     {"net/http": true, "net/http/cookiejar": true},
+	"pkg/dependencies/graphql/request_error.go": {"net/http": true},
+	"pkg/dependencies/rest/request_error.go":    {"net/http": true},
+	"pkg/dependencies/rest/code_pair_errors.go": {"net/http": true},
+	"pkg/alexa/client.go":                       {"net/http": true},
+	"pkg/alexa/interface.go":                    {"net/http": true},
+	"pkg/alexa/http2.go":                        {"net/http": true, "golang.org/x/net/http2": true},
+	"pkg/alexaapimodels/errors.go":              {"net/http": true},
+	"pkg/dependencies/graphql/client.go":        {"net/http": true},
+	"pkg/dependencies/graphql/queries.go":       {"net/http": true},
+	"pkg/dependencies/rest/auth.go":             {"net/http": true},
+	"pkg/dependencies/rest/client.go":           {"net/http": true, "net/http/cookiejar": true},
 }
 
 func checkProtectedPackageImports(file *ast.File, fset *token.FileSet, violations *[]string) {

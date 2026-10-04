@@ -8,7 +8,7 @@ export GOWORK := off
 .DEFAULT_GOAL := check
 .PHONY: check format-check vet build test lint fmt cli-check cli-vet cli-build cli-test cli-lint cli-fmt module cli-module generate generate-graphql generate-api model-inventory openapi-bundle openapi-bundle-check
 
-check: format-check lint vet build test model-inventory openapi-bundle-check module cli-module
+check: format-check lint vet build test api-routes-check model-inventory openapi-bundle-check module cli-module
 
 ifeq ($(OS),Windows_NT)
 format-check:
@@ -103,3 +103,7 @@ generate-api: openapi-bundle
 	cd tools/protocols && npm ci --ignore-scripts && node prepare-generated.mjs && node generate-directives.mjs && node stamp-generated.mjs
 	$(GO) run ./tools/apiroutes
 	$(GO) fmt ./pkg/dependencymodels ./pkg/internal/apiroutes
+
+.PHONY: api-routes-check
+api-routes-check:
+	$(GO) run ./tools/apiroutes --check

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -89,7 +88,7 @@ func (c *Client) Execute(
 ) error {
 	body, err := executionRequestBody(query, variables)
 	if err != nil {
-		return err
+		return graphQLRequestFailure(0, "request_encode", &alexaapimodels.BadRequestError{Message: "operation is not schema-backed or request could not be encoded"})
 	}
 
 	request, err := http.NewRequestWithContext(
@@ -99,12 +98,12 @@ func (c *Client) Execute(
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return &alexaapimodels.NetworkError{Message: "failed to create request", Err: err}
+		return graphQLRequestFailure(0, "request_create", &alexaapimodels.NetworkError{Message: "failed to create request"})
 	}
 
 	token, err := c.getToken(ctx)
 	if err != nil {
-		return &alexaapimodels.TokenError{Message: "failed to get token", Err: err}
+		return graphQLRequestFailure(0, "authentication", &alexaapimodels.TokenError{Message: "failed to get token", Err: ctx.Err()})
 	}
 
 	request.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
@@ -113,7 +112,7 @@ func (c *Client) Execute(
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
-		return &alexaapimodels.NetworkError{Message: "request failed", Err: err}
+		return graphQLRequestFailure(0, "transport", &alexaapimodels.NetworkError{Message: "request failed", Err: graphQLTransportCause(err)})
 	}
 
 	defer func() {
@@ -122,14 +121,15 @@ func (c *Client) Execute(
 
 	body, err = io.ReadAll(response.Body)
 	if err != nil {
-		return &alexaapimodels.NetworkError{Message: "failed to read response", Err: err}
+		return graphQLRequestFailure(response.StatusCode, "response_read", &alexaapimodels.NetworkError{Message: "failed to read response", Err: ctx.Err()})
 	}
 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		return alexaapimodels.NewHTTPError(response, string(body))
+		return graphQLRequestFailure(response.StatusCode, "provider_response",
+			&alexaapimodels.HTTPError{StatusCode: response.StatusCode, Status: http.StatusText(response.StatusCode)})
 	}
 
-	return decodeExecutionResponse(body, result)
+	return decodeExecutionResponse(body, result, response.StatusCode)
 }
 
 // Query executes a GraphQL query.
@@ -188,23 +188,16 @@ func executionRequestBody(
 	return body, nil
 }
 
-func decodeExecutionResponse(body []byte, result interface{}) error {
+func decodeExecutionResponse(body []byte, result interface{}, status int) error {
 	var wireResponse alexamodels.WireGraphQLResponse
 
 	err := json.Unmarshal(body, &wireResponse)
 	if err != nil {
-		return &alexaapimodels.BadRequestError{Message: "failed to decode response", Err: err}
+		return graphQLRequestFailure(status, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to decode response"})
 	}
 
 	if wireResponse.Errors != nil && len(*wireResponse.Errors) > 0 {
-		messages := make([]string, 0, len(*wireResponse.Errors))
-		for _, graphQLError := range *wireResponse.Errors {
-			messages = append(messages, graphQLError.Message)
-		}
-
-		return &alexaapimodels.BadRequestError{
-			Message: fmt.Sprintf("graphql errors: %v", messages),
-		}
+		return graphQLRequestFailure(status, "graphql_response", &alexaapimodels.BadRequestError{Message: "provider rejected GraphQL operation"})
 	}
 
 	if result == nil || wireResponse.Data == nil {
@@ -213,12 +206,12 @@ func decodeExecutionResponse(body []byte, result interface{}) error {
 
 	data, err := json.Marshal(wireResponse.Data)
 	if err != nil {
-		return &alexaapimodels.BadRequestError{Message: "failed to marshal data", Err: err}
+		return graphQLRequestFailure(status, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to marshal data"})
 	}
 
 	err = json.Unmarshal(data, result)
 	if err != nil {
-		return &alexaapimodels.BadRequestError{Message: "failed to unmarshal result", Err: err}
+		return graphQLRequestFailure(status, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to unmarshal result"})
 	}
 
 	return nil
