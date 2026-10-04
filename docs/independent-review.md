@@ -6,7 +6,9 @@ Standard: shared template `25aeb783126c4049b3bc49286ee7808069db28e9`.
 
 The two reports below are independently authored by `cli_inventory_plan` and
 `independent_tplink_tuya`; neither implemented the Alexa SDK or CLI.
-Both reviewers confirmed all sixteen requirements and the consolidated record.
+Both reviewers confirmed all sixteen requirements of template `25aeb78` and the consolidated record.
+The checklist now pins template `2f21da3`; items 4 and 14 are open pending
+independent cross-file and final request-object regression controls.
 SDK `v0.4.0` and CLI `cmd/go-alexa/v0.4.0` are published. Both reviewers verified
 public installation and the deployed site. Prior reports remain in Git history.
 

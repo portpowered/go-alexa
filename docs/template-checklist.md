@@ -1,15 +1,17 @@
 # go-alexa checklist
 
-Requirements copied from the shared template at `25aeb783126c4049b3bc49286ee7808069db28e9`.
+Requirements copied from the shared template at `2f21da33e8acc0f9f94e5b53e9c812140c9cee1c`.
 The reviewed implementation and publication evidence are recorded in
 [the independent review](independent-review.md). Coverage is 84.6%: above the
 80% floor and below the 90% target. Both reviewers verified the consolidated
-record; all sixteen requirements are signed off below.
+record for the prior template. Items 4 and 14 await independent regression
+verification of the new cross-file and final request-object controls; all other
+requirements retain their signoffs.
 
 - [x] **1.** Keep the public client, examples, README, and site independent of any consuming application. Put application adapters and rollout plans in the consuming repository.
 - [x] **2.** Document supported operations, authentication, errors, and transport injection with examples that match the exported API. Add customer-facing operation guides for important workflows, and distinguish verified behavior from synthetic examples and historical references.
 - [x] **3.** Show Go version, CI, coverage, release, Go Reference, license, and documentation badges in the README. Replace every example repository value and point badges to live reports.
-- [x] **4.** Generate the API reference in CI with the shared Fumadocs action and publish it to GitHub Pages.
+- [ ] **4.** Generate the API reference in CI with the shared Fumadocs action and publish it to GitHub Pages.
    Inventory **ALL** outbound wire endpoints and exchanges, including private, encrypted, event, and
    signaling routes. Every endpoint must be represented in a checked-in protocol schema. Generate
    **ALL** endpoint definitions, method/path pairs, parameter and header names, channel names, and
@@ -37,6 +39,11 @@ record; all sixteen requirements are signed off below.
    a generated map escaping through a named result to an unverified helper. Retain
    positive controls for caller-defined values; do not treat diagnostic or error
    return values as wire payloads merely because they share a helper.
+   Resolve helpers across every production file in their Go package, retaining each
+   file's import bindings. Add a compile-valid two-file negative where a sibling
+   helper returns an unregistered fixed value or mutates a generated map, plus
+   a caller-defined positive control. A per-file scan does not prove package-wide
+   provenance.
    Check all intermediate keys in indexed receiver paths and aliases, including slices,
    pointer dereferences, and type assertions. Test inferred nested composites and retain
    positive cases for explicitly caller-defined open keys.
@@ -69,7 +76,12 @@ record; all sixteen requirements are signed off below.
    generated path does not approve an arbitrary authority in a formatted full URL; accept only an
    explicitly configured or inventoried authority, and require REST base prefixes to come from
    configured or inventoried origins. Exercise lexical shadowing so a same-named local variable
-   cannot inherit another scope's generated route. Require generated `QueryParam` and `Header` keys
+   cannot inherit another scope's generated route.
+   Check the actual request object through the send: reject unregistered method,
+   URL origin/path/query, header, or body mutations after construction, including
+   aliases, cloned requests, and helper escapes. Add a negative control that changes
+   `request.URL.Path` between a generated constructor and `Do` or its equivalent.
+   Require generated `QueryParam` and `Header` keys
    for query setters and direct or aliased map writes, map literals, request headers, and
    custom-header maps. Normalize parenthesized map receivers and indexed expressions before checking
    query/header keys, and reject aliases to query or header `Set`/`Add` method values that could
@@ -112,7 +124,7 @@ record; all sixteen requirements are signed off below.
 - [x] **11.** Expose token exchange and refresh as explicit operations that return the current credentials to the caller. Do not silently refresh or retain updated tokens inside a reusable client; document caller storage and renewal responsibilities.
 - [x] **12.** Publish all customer-facing guides as MDX files under `docs/guides/` in the GitHub Pages site. Link guides to the matching generated reference pages. Keep separate repository Markdown only for contributor and release process notes; check internal links from **all** rendered pages, including the site root and generated references, and review external destinations and release-note links after a docs migration.
 - [x] **13.** Before release, edit every published page for concise copy: remove repeated caveats, stale claims, and links to duplicate repository documents; keep each page's purpose, evidence status, and next action clear. Keep the README focused on installation, a short authenticated example, supported capabilities, caller configuration and lifecycle obligations, and links to user guides. Put wire inventories, generation details, fixture provenance audits, coverage mechanics, migration history, and reviewer evidence in contributor material, not the README or customer guide navigation. Delete obsolete internal reports and duplicate process documents; keep one current checklist and independent review record plus contributor instructions needed to maintain the library. Review every tracked documentation file for audience, purpose, duplication, and incoming links, then review the rendered Pages site. Check release-note copy and URLs against the published guide locations.
-- [x] **14.** Before signing off a library migration or release, have two independent reviewers who did not implement the change audit the library against every item in this checklist and the linked standards. Have both reviewers write their separate verdicts and concrete evidence for every numbered item in one current repository review document, including the reviewed commit, discrepancies, and the disposition of every finding; link it from the library's checklist. Keep this item unchecked while any finding or other checklist item remains open; recording or tracking a finding does not resolve it. Re-run affected checks and have both reviewers verify every fix at the final commit before checking this item. Do not accept an implementer's own checklist sign-off as independent verification.
+- [ ] **14.** Before signing off a library migration or release, have two independent reviewers who did not implement the change audit the library against every item in this checklist and the linked standards. Have both reviewers write their separate verdicts and concrete evidence for every numbered item in one current repository review document, including the reviewed commit, discrepancies, and the disposition of every finding; link it from the library's checklist. Keep this item unchecked while any finding or other checklist item remains open; recording or tracking a finding does not resolve it. Re-run affected checks and have both reviewers verify every fix at the final commit before checking this item. Do not accept an implementer's own checklist sign-off as independent verification.
     For items 4 and 7, attach the complete wire-model inventory and verify every entry against
     its generated definition and actual use. Search independently for types missing from the
     inventory; do not accept the implementer's generated-file list as the full population.
@@ -130,5 +142,5 @@ record; all sixteen requirements are signed off below.
 - [x] **16.** Provide an installable standalone CLI that consumes the public SDK so customers can test the library without a consuming application. Use a separate module under `cmd/go-<provider>`; keep CLI concerns out of the SDK. Cover authentication and explicit token exchange, device or endpoint discovery, important read/control workflows, and event/session lifecycles where supported. Include useful help, machine-readable output, nonzero failures, cancellation, and session cleanup. Accept credentials through documented environment, stdin, or explicit file inputs; keep secrets out of arguments and ordinary output, and make credential export an explicit action. Require explicit commands for device changes. Document installation and customer examples in an MDX guide. Test CLI commands offline through injected paired request/response transports, including authentication errors and lifecycle cleanup, and run blocking pinned all-linter, build, test, and module checks for the CLI in CI. Verify a separate consumer installation from the published CLI module and release its module tags with the SDK.
 
 See [verification](verification.md), the shared template's
-[client design](https://github.com/portpowered/go-third-party-template/blob/25aeb783126c4049b3bc49286ee7808069db28e9/docs/client-design.md), and
-[website publishing](https://github.com/portpowered/go-third-party-template/blob/25aeb783126c4049b3bc49286ee7808069db28e9/docs/website.md).
+[client design](https://github.com/portpowered/go-third-party-template/blob/2f21da33e8acc0f9f94e5b53e9c812140c9cee1c/docs/client-design.md), and
+[website publishing](https://github.com/portpowered/go-third-party-template/blob/2f21da33e8acc0f9f94e5b53e9c812140c9cee1c/docs/website.md).
