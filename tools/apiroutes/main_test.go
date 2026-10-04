@@ -1,8 +1,10 @@
 package main
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -203,6 +205,16 @@ func routeShadowCases() []wireCallsiteTestCase {
 			func send() {
 				path := dynamicPath
 				if useList { path = apiroutes.PathListRestEndpoints }
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+			}`,
+			want: "not paired with its generated route",
+		},
+		{
+			name: "different generated routes across branches",
+			source: `package rest
+			func send(useList bool) {
+				var path string
+				if useList { path = apiroutes.PathListRestEndpoints } else { path = apiroutes.PathGetRestEndpoint }
 				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
 			}`,
 			want: "not paired with its generated route",
@@ -883,6 +895,109 @@ func TestWireCallsiteGateRejectsCounterfeitImports(t *testing.T) {
 	}
 }
 
+func TestWireCallsiteGateAcceptsExactPathImportAliases(t *testing.T) {
+	t.Parallel()
+
+	fset := token.NewFileSet()
+	source := `package rest
+	import (
+		format "fmt"
+		values "net/url"
+		web "net/http"
+		models "github.com/portpowered/go-alexa/pkg/dependencymodels"
+		routes "github.com/portpowered/go-alexa/pkg/internal/apiroutes"
+	)
+	func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, domain string) {
+		query := values.Values{}
+		query.Set(models.QueryParamOwner, "~caller")
+		headers := web.Header{}
+		headers.Set(routes.HeaderCsrf, "token")
+		target := format.Sprintf(routes.ServerExchangeRefreshTokenForCookies, domain) + routes.PathExchangeRefreshTokenForCookies
+		req, err := web.NewRequestWithContext(ctx, routes.MethodExchangeRefreshTokenForCookies, target, nil)
+		_ = err
+		c.httpClient.Do(req)
+	}`
+	file := parseTestFile(t, fset, "pkg/dependencies/rest/auth.go", source)
+
+	var violations []string
+
+	checkWireCallsites(file, fset, nil, map[string]string{
+		"ExchangeRefreshTokenForCookies": "/ap/exchangetoken/cookies",
+	}, 1, &violations)
+	checkNetworkInventory(file, fset, "pkg/dependencies/rest/auth.go", &violations)
+
+	if got := strings.Join(violations, "\n"); got != "" {
+		t.Fatalf("exact import aliases were rejected: %s", got)
+	}
+}
+
+func TestWireCallsiteGateRejectsAliasedImportCounterfeitsAndShadows(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct{ name, source, want string }{
+		{
+			name: "wrong path route alias",
+			source: `package rest
+			import routes "example.com/fake/routes"
+			func send() { c.doJSONRequest(ctx, routes.MethodListRestEndpoints, routes.PathListRestEndpoints, nil, nil) }`,
+			want: "method must be a generated OpenAPI operation",
+		},
+		{
+			name: "local route alias shadow",
+			source: `package rest
+			import routes "github.com/portpowered/go-alexa/pkg/internal/apiroutes"
+			type routeValues struct{ MethodListRestEndpoints, PathListRestEndpoints string }
+			func send() { { routes := routeValues{}; c.doJSONRequest(ctx, routes.MethodListRestEndpoints, routes.PathListRestEndpoints, nil, nil) } }`,
+			want: "method must be a generated OpenAPI operation",
+		},
+		{
+			name: "file scope route name shadow",
+			source: `package rest
+			import routepkg "github.com/portpowered/go-alexa/pkg/internal/apiroutes"
+			type routeValues struct{ MethodListRestEndpoints, PathListRestEndpoints string }
+			var routes routeValues
+			func send() { c.doJSONRequest(ctx, routes.MethodListRestEndpoints, routes.PathListRestEndpoints, nil, nil) }`,
+			want: "method must be a generated OpenAPI operation",
+		},
+		{
+			name: "local HTTP alias shadow",
+			source: `package rest
+			import (
+				web "net/http"
+				routes "github.com/portpowered/go-alexa/pkg/internal/apiroutes"
+			)
+			type fakeHTTP struct{}
+			type methodName string
+			func (fakeHTTP) NewRequestWithContext(context.Context, methodName, string, io.Reader) (*http.Request, error) { return nil, nil }
+			func (c *Client) ExchangeRefreshTokenForCookies(web fakeHTTP) {
+				req, _ := web.NewRequestWithContext(ctx, routes.MethodExchangeRefreshTokenForCookies, "/ap/exchangetoken/cookies", nil)
+				c.httpClient.Do(req)
+			}`,
+			want: "request constructor must be http.NewRequestWithContext",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			fset := token.NewFileSet()
+			file := parseTestFile(t, fset, "pkg/dependencies/rest/auth.go", test.source)
+
+			var violations []string
+
+			checkWireCallsites(file, fset, nil, map[string]string{
+				"ListRestEndpoints": "/v2/endpoints", "ExchangeRefreshTokenForCookies": "/ap/exchangetoken/cookies",
+			}, 1, &violations)
+			checkNetworkInventory(file, fset, "pkg/dependencies/rest/auth.go", &violations)
+
+			if got := strings.Join(violations, "\n"); !strings.Contains(got, test.want) {
+				t.Fatalf("gate result %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
 func TestWireCallsiteGateRejectsHandwrittenHeaders(t *testing.T) {
 	t.Parallel()
 
@@ -977,10 +1092,7 @@ func assertWireCallsiteGateCase(t *testing.T, test wireCallsiteTestCase) {
 
 	fset := token.NewFileSet()
 
-	file, err := parser.ParseFile(fset, test.name+".go", test.source, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	file := parseTestFile(t, fset, test.name+".go", test.source)
 
 	var violations []string
 
@@ -1026,10 +1138,7 @@ func TestNetworkInventoryGate(t *testing.T) {
 
 			fset := token.NewFileSet()
 
-			file, err := parser.ParseFile(fset, "pkg/dependencies/rest/new.go", test.source, 0)
-			if err != nil {
-				t.Fatal(err)
-			}
+			file := parseTestFile(t, fset, "pkg/dependencies/rest/new.go", test.source)
 
 			var violations []string
 
@@ -1054,10 +1163,7 @@ func TestNetworkInventoryRejectsReassignedRequest(t *testing.T) {
 		c.client.Do(req)
 	}`
 
-	file, err := parser.ParseFile(fset, "pkg/alexa/http2.go", source, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	file := parseTestFile(t, fset, "pkg/alexa/http2.go", source)
 
 	var violations []string
 
@@ -1124,10 +1230,7 @@ func TestNetworkInventoryRejectsRequestRouteMutation(t *testing.T) {
 				c.httpClient.Do(req)
 			}`
 
-			file, err := parser.ParseFile(fset, "pkg/dependencies/rest/client.go", source, 0)
-			if err != nil {
-				t.Fatal(err)
-			}
+			file := parseTestFile(t, fset, "pkg/dependencies/rest/client.go", source)
 
 			var violations []string
 
@@ -1151,10 +1254,7 @@ func TestNetworkInventoryRejectsHeaderHelperEscape(t *testing.T) {
 		c.httpClient.Do(req)
 	}`
 
-	file, err := parser.ParseFile(fset, "pkg/dependencies/rest/client.go", source, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	file := parseTestFile(t, fset, "pkg/dependencies/rest/client.go", source)
 
 	var violations []string
 
@@ -1176,10 +1276,7 @@ func TestNetworkInventoryRejectsShadowedInjectedClient(t *testing.T) {
 		{ c := fakeClient{httpClient: http.DefaultClient}; c.httpClient.Do(req) }
 	}`
 
-	file, err := parser.ParseFile(fset, "pkg/dependencies/rest/client.go", source, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	file := parseTestFile(t, fset, "pkg/dependencies/rest/client.go", source)
 
 	var violations []string
 
@@ -1201,10 +1298,7 @@ func TestNetworkInventoryRejectsShadowedHTTPPackage(t *testing.T) {
 		c.httpClient.Do(req)
 	}`
 
-	file, err := parser.ParseFile(fset, "pkg/dependencies/rest/client.go", source, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	file := parseTestFile(t, fset, "pkg/dependencies/rest/client.go", source)
 
 	var violations []string
 
@@ -1213,6 +1307,40 @@ func TestNetworkInventoryRejectsShadowedHTTPPackage(t *testing.T) {
 	if got := strings.Join(violations, "\n"); !strings.Contains(got, "request constructor must be http.NewRequestWithContext") {
 		t.Fatalf("gate result %q did not reject shadowed http package", got)
 	}
+}
+
+func parseTestFile(t *testing.T, fset *token.FileSet, filename, source string) *ast.File {
+	t.Helper()
+
+	file, err := parser.ParseFile(fset, filename, source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(file.Imports) != 0 {
+		return file
+	}
+
+	packageEnd := strings.Index(source, "\n")
+	if packageEnd < 0 {
+		t.Fatal("test source has no package clause")
+	}
+
+	imports := `import (
+		"fmt"
+		http "net/http"
+		url "net/url"
+		alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
+		apiroutes "github.com/portpowered/go-alexa/pkg/internal/apiroutes"
+	)`
+	source = source[:packageEnd+1] + imports + "\n" + source[packageEnd+1:]
+
+	file, err = parser.ParseFile(fset, filename, source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return file
 }
 
 func TestWireCallsiteGateChecksVerifiedHeaderHelper(t *testing.T) {
@@ -1226,4 +1354,226 @@ func TestWireCallsiteGateChecksVerifiedHeaderHelper(t *testing.T) {
 		}`,
 		want: "request header name must use a schema-generated Header constant",
 	})
+}
+
+func TestWireCallsiteGateRejectsOutboundURLQueryProvenance(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "query values copied from outbound URL",
+		source: `package rest
+		func send(raw string) {
+			parsedURL, _ := url.Parse(raw)
+			params := parsedURL.Query()
+			params.Set(alexamodels.QueryParamExpand, "all")
+			path := apiroutes.PathListRestEndpoints
+			path += "?" + params.Encode()
+			c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+		}`,
+		want: "not paired with its generated route",
+	})
+}
+
+func TestWireCallsiteGateRejectsRequestHeaderMethodValueAliases(t *testing.T) {
+	t.Parallel()
+
+	for _, method := range []string{"Set", "Add"} {
+		t.Run(method, func(t *testing.T) {
+			t.Parallel()
+
+			assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+				name: "request Header." + method + " method value",
+				source: `package rest
+				func send() {
+					request := req
+					writeHeader := request.Header.` + method + `
+					writeHeader("X-Unmodeled", "value")
+				}`,
+				want: "schema-keyed map method value must not be aliased",
+			})
+		})
+	}
+}
+
+func TestWireCallsiteGateRejectsNestedAggregateHelperArguments(t *testing.T) {
+	t.Parallel()
+
+	tests := []wireCallsiteTestCase{
+		{
+			name: "nested header aggregate argument",
+			source: `package rest
+			func wrap(value any) any { return value }
+			func send() {
+				headers := map[string]string{apiroutes.HeaderCookie: "safe"}
+				wrap(struct {
+					rows [1][]map[string]string
+				}{rows: [1][]map[string]string{{headers}}})
+				c.doJSONRequestWithFullURL(ctx, apiroutes.MethodListRestEndpoints,
+					apiroutes.PathListRestEndpoints, nil, headers, nil, true)
+			}`,
+			want: "custom header map must not escape to an unverified helper",
+		},
+		{
+			name: "nested query aggregate argument",
+			source: `package rest
+			func wrap(value any) any { return value }
+			func send() {
+				params := url.Values{}
+				params.Set(alexamodels.QueryParamExpand, "all")
+				wrap(struct {
+					rows [1][]url.Values
+				}{rows: [1][]url.Values{{params}}})
+				path := apiroutes.PathListRestEndpoints
+				path += "?" + params.Encode()
+				c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+			}`,
+			want: "query parameter map must not escape to an unverified helper",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			assertWireCallsiteGateCase(t, test)
+		})
+	}
+}
+
+func TestWireCallsiteGateRejectsUnverifiedQueryMapMethodReceiver(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "unverified query method receiver",
+		source: `package rest
+		func send() {
+			params := url.Values{}
+			params.mutate()
+			path := apiroutes.PathListRestEndpoints
+			path += "?" + params.Encode()
+			c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+		}`,
+		want: "query parameter map must not escape to an unverified helper",
+	})
+}
+
+func TestWireCallsiteGateAcceptsSameGeneratedRouteOnEveryBranch(t *testing.T) {
+	t.Parallel()
+
+	assertWireCallsiteGateCase(t, wireCallsiteTestCase{
+		name: "same generated route assigned in both branches",
+		source: `package rest
+		func send(useFirst bool) {
+			var path string
+			if useFirst {
+				path = apiroutes.PathListRestEndpoints
+			} else {
+				path = apiroutes.PathListRestEndpoints
+			}
+			c.doJSONRequest(ctx, apiroutes.MethodListRestEndpoints, path, nil, nil)
+		}`,
+		want: "",
+	})
+}
+
+func TestNetworkInventoryRejectsOutboundPrimitives(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{name: "http Get", source: `package rest
+			import "net/http"
+			func send() { _, _ = http.Get("https://example.com") }`, want: "unregistered outbound network primitive Get"},
+		{name: "http PostForm", source: `package rest
+			import "net/http"
+			func send() { _, _ = http.PostForm("https://example.com", nil) }`, want: "unregistered outbound network primitive PostForm"},
+		{name: "http Head", source: `package rest
+			import "net/http"
+			func send() { _, _ = http.Head("https://example.com") }`, want: "unregistered outbound network primitive Head"},
+		{name: "RoundTrip", source: `package rest
+			func send() { _, _ = transport.RoundTrip(req) }`, want: "unregistered outbound network primitive RoundTrip"},
+		{name: "net Dial", source: `package rest
+			import "net"
+			func send() { _, _ = net.Dial("tcp", "example.com:443") }`, want: "unregistered outbound network primitive Dial"},
+		{name: "net DialContext", source: `package rest
+			import "net"
+			func send() { _, _ = net.DialContext(ctx, "tcp", "example.com:443") }`, want: "unregistered outbound network primitive DialContext"},
+		{name: "transport DialTLS", source: `package rest
+			func send() { _ = transport.DialTLS(ctx, "tcp", "example.com:443") }`, want: "unregistered outbound network primitive DialTLS"},
+		{name: "transport DialTLSContext", source: `package rest
+			func send() { _ = transport.DialTLSContext(ctx, "tcp", "example.com:443") }`, want: "unregistered outbound network primitive DialTLSContext"},
+		{name: "connection Upgrade", source: `package rest
+			func send() { _ = connection.Upgrade(req, response) }`, want: "unregistered outbound network primitive Upgrade"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			fset := token.NewFileSet()
+
+			file, err := parser.ParseFile(fset, "pkg/dependencies/rest/new.go", test.source, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var violations []string
+
+			checkNetworkInventory(file, fset, "pkg/dependencies/rest/new.go", &violations)
+
+			if got := strings.Join(violations, "\n"); !strings.Contains(got, test.want) {
+				t.Fatalf("gate result %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestNetworkInventoryRejectsDotImportedProtectedPackages(t *testing.T) {
+	t.Parallel()
+
+	fset := token.NewFileSet()
+	source := `package rest
+	import . "net/http"
+	func send() { _, _ = Get("https://example.com") }`
+
+	file, err := parser.ParseFile(fset, "pkg/dependencies/rest/client.go", source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var violations []string
+
+	checkNetworkInventory(file, fset, "pkg/dependencies/rest/client.go", &violations)
+
+	if got := strings.Join(violations, "\n"); !strings.Contains(got, "protected package import must not be dot-imported") {
+		t.Fatalf("gate result %q did not reject a dot-imported protected package", got)
+	}
+}
+
+func TestNetworkInventoryRejectsUnregisteredNetworkImports(t *testing.T) {
+	t.Parallel()
+
+	for _, importPath := range []string{"net", "golang.org/x/net/websocket", "github.com/gorilla/websocket"} {
+		t.Run(importPath, func(t *testing.T) {
+			t.Parallel()
+
+			fset := token.NewFileSet()
+			source := "package rest\nimport _ " + strconv.Quote(importPath) + "\nfunc send() {}"
+
+			file, err := parser.ParseFile(fset, "pkg/dependencies/rest/new.go", source, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var violations []string
+
+			checkNetworkInventory(file, fset, "pkg/dependencies/rest/new.go", &violations)
+
+			if got := strings.Join(violations, "\n"); !strings.Contains(got, "unregistered network import") {
+				t.Fatalf("gate result %q, want an unregistered network import error", got)
+			}
+		})
+	}
 }

@@ -1,10 +1,13 @@
 package alexa
 
-import "github.com/portpowered/go-alexa/pkg/alexaapimodels"
+import (
+	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
+	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
+)
 
 // featureDefaults defines the canonical default properties and operations for each
 // supported Alexa Smart Home feature type. Property names align with the Alexa Smart
-// Home API specification and the property models in dependencymodels/event.go.
+// Home API specification and the schema-generated discovery descriptor names.
 //
 // Only the Name field is set for default properties — Type, Accuracy, TimeOfSample,
 // TimeOfLastChange, Error, and StateValue are populated at runtime when state data
@@ -16,7 +19,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameConnectivity: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "reachabilityState"},
+			{Name: alexamodels.FeatureDefaultPropertyNameReachabilityState},
 		},
 	},
 
@@ -24,7 +27,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameLocation: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "geolocation"},
+			{Name: alexamodels.FeatureDefaultPropertyNameGeolocation},
 		},
 	},
 
@@ -32,7 +35,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameLocationTracker: {
 		Properties: nil,
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "Locate"},
+			{Name: alexamodels.FeatureDefaultOperationNameLocate},
 		},
 	},
 
@@ -40,14 +43,14 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNamePlayback: {
 		Properties: nil,
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "Play"},
-			{Name: "Pause"},
-			{Name: "Next"},
-			{Name: "Previous"},
-			{Name: "Stop"},
-			{Name: "FastForward"},
-			{Name: "Rewind"},
-			{Name: "StartOver"},
+			{Name: alexamodels.FeatureDefaultOperationNamePlay},
+			{Name: alexamodels.FeatureDefaultOperationNamePause},
+			{Name: alexamodels.FeatureDefaultOperationNameNext},
+			{Name: alexamodels.FeatureDefaultOperationNamePrevious},
+			{Name: alexamodels.FeatureDefaultOperationNameStop},
+			{Name: alexamodels.FeatureDefaultOperationNameFastForward},
+			{Name: alexamodels.FeatureDefaultOperationNameRewind},
+			{Name: alexamodels.FeatureDefaultOperationNameStartOver},
 		},
 	},
 
@@ -55,133 +58,133 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameSpeaker: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "volume"},
-			{Name: "muted"},
+			{Name: alexamodels.FeatureDefaultPropertyNameVolume},
+			{Name: alexamodels.FeatureDefaultPropertyNameMuted},
 		},
 	},
 
 	// power — Alexa.PowerController property
 	alexaapimodels.FeatureNamePower: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "powerState"},
+			{Name: alexamodels.FeatureDefaultPropertyNamePowerState},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "TurnOn"},
-			{Name: "TurnOff"},
+			{Name: alexamodels.FeatureDefaultOperationNameTurnOn},
+			{Name: alexamodels.FeatureDefaultOperationNameTurnOff},
 		},
 	},
 
 	// brightness — Alexa.BrightnessController property
 	alexaapimodels.FeatureNameBrightness: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "brightness"},
+			{Name: alexamodels.FeatureDefaultPropertyNameBrightness},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "SetBrightness"},
-			{Name: "AdjustBrightness"},
+			{Name: alexamodels.FeatureDefaultOperationNameSetBrightness},
+			{Name: alexamodels.FeatureDefaultOperationNameAdjustBrightness},
 		},
 	},
 
 	// color — Alexa.ColorController property
 	alexaapimodels.FeatureNameColor: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "color"},
+			{Name: alexamodels.FeatureDefaultPropertyNameColor},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "SetColor"},
+			{Name: alexamodels.FeatureDefaultOperationNameSetColor},
 		},
 	},
 
 	// colorTemperature — Alexa.ColorTemperatureController property
 	alexaapimodels.FeatureNameColorTemperature: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "colorTemperatureInKelvin"},
+			{Name: alexamodels.FeatureDefaultPropertyNameColorTemperatureInKelvin},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "SetColorTemperature"},
-			{Name: "IncreaseColorTemperature"},
-			{Name: "DecreaseColorTemperature"},
+			{Name: alexamodels.FeatureDefaultOperationNameSetColorTemperature},
+			{Name: alexamodels.FeatureDefaultOperationNameIncreaseColorTemperature},
+			{Name: alexamodels.FeatureDefaultOperationNameDecreaseColorTemperature},
 		},
 	},
 
 	// lock — Alexa.LockController property
 	alexaapimodels.FeatureNameLock: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "lockState"},
+			{Name: alexamodels.FeatureDefaultPropertyNameLockState},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "Lock"},
-			{Name: "Unlock"},
+			{Name: alexamodels.FeatureDefaultOperationNameLock},
+			{Name: alexamodels.FeatureDefaultOperationNameUnlock},
 		},
 	},
 
 	// mode — Alexa.ModeController property
 	alexaapimodels.FeatureNameMode: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "mode"},
+			{Name: alexamodels.FeatureDefaultPropertyNameMode},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "SetMode"},
-			{Name: "AdjustMode"},
+			{Name: alexamodels.FeatureDefaultOperationNameSetMode},
+			{Name: alexamodels.FeatureDefaultOperationNameAdjustMode},
 		},
 	},
 
 	// range — Alexa.RangeController property
 	alexaapimodels.FeatureNameRange: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "rangeValue"},
+			{Name: alexamodels.FeatureDefaultPropertyNameRangeValue},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "SetRangeValue"},
-			{Name: "AdjustRangeValue"},
+			{Name: alexamodels.FeatureDefaultOperationNameSetRangeValue},
+			{Name: alexamodels.FeatureDefaultOperationNameAdjustRangeValue},
 		},
 	},
 
 	// toggle — Alexa.ToggleController property
 	alexaapimodels.FeatureNameToggle: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "toggleState"},
+			{Name: alexamodels.FeatureDefaultPropertyNameToggleState},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "TurnOn"},
-			{Name: "TurnOff"},
+			{Name: alexamodels.FeatureDefaultOperationNameTurnOn},
+			{Name: alexamodels.FeatureDefaultOperationNameTurnOff},
 		},
 	},
 
 	// percentage — Alexa.PercentageController property
 	alexaapimodels.FeatureNamePercentage: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "percentage"},
+			{Name: alexamodels.FeatureDefaultPropertyNamePercentage},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "SetPercentage"},
-			{Name: "AdjustPercentage"},
+			{Name: alexamodels.FeatureDefaultOperationNameSetPercentage},
+			{Name: alexamodels.FeatureDefaultOperationNameAdjustPercentage},
 		},
 	},
 
 	// powerLevel — Alexa.PowerLevelController property
 	alexaapimodels.FeatureNamePowerLevel: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "powerLevel"},
+			{Name: alexamodels.FeatureDefaultPropertyNamePowerLevel},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "SetPowerLevel"},
-			{Name: "AdjustPowerLevel"},
+			{Name: alexamodels.FeatureDefaultOperationNameSetPowerLevel},
+			{Name: alexamodels.FeatureDefaultOperationNameAdjustPowerLevel},
 		},
 	},
 
 	// thermostat — Alexa.ThermostatController properties
 	alexaapimodels.FeatureNameThermostat: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "thermostatMode"},
-			{Name: "targetSetpoint"},
-			{Name: "lowerSetpoint"},
-			{Name: "upperSetpoint"},
+			{Name: alexamodels.FeatureDefaultPropertyNameThermostatMode},
+			{Name: alexamodels.FeatureDefaultPropertyNameTargetSetpoint},
+			{Name: alexamodels.FeatureDefaultPropertyNameLowerSetpoint},
+			{Name: alexamodels.FeatureDefaultPropertyNameUpperSetpoint},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "SetThermostatMode"},
-			{Name: "SetTargetTemperature"},
-			{Name: "AdjustTargetTemperature"},
+			{Name: alexamodels.FeatureDefaultOperationNameSetThermostatMode},
+			{Name: alexamodels.FeatureDefaultOperationNameSetTargetTemperature},
+			{Name: alexamodels.FeatureDefaultOperationNameAdjustTargetTemperature},
 		},
 	},
 
@@ -189,7 +192,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameTemperatureSensor: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "temperature"},
+			{Name: alexamodels.FeatureDefaultPropertyNameTemperature},
 		},
 	},
 
@@ -197,18 +200,18 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameEndpointHealth: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "battery"},
+			{Name: alexamodels.FeatureDefaultPropertyNameBattery},
 		},
 	},
 
 	// securityPanel — Alexa.SecurityPanelController property
 	alexaapimodels.FeatureNameSecurityPanel: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "armState"},
+			{Name: alexamodels.FeatureDefaultPropertyNameArmState},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "Arm"},
-			{Name: "Disarm"},
+			{Name: alexamodels.FeatureDefaultOperationNameArm},
+			{Name: alexamodels.FeatureDefaultOperationNameDisarm},
 		},
 	},
 
@@ -216,7 +219,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameHumiditySensor: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "relativeHumidity"},
+			{Name: alexamodels.FeatureDefaultPropertyNameRelativeHumidity},
 		},
 	},
 
@@ -224,7 +227,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameLightSensor: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "illuminance"},
+			{Name: alexamodels.FeatureDefaultPropertyNameIlluminance},
 		},
 	},
 
@@ -232,7 +235,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameMotionSensor: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "detectionState"},
+			{Name: alexamodels.FeatureDefaultPropertyNameDetectionState},
 		},
 	},
 
@@ -240,18 +243,18 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameContactSensor: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "detectionState"},
+			{Name: alexamodels.FeatureDefaultPropertyNameDetectionState},
 		},
 	},
 
 	// action — Alexa.SceneController property
 	alexaapimodels.FeatureNameAction: {
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "actionState"},
+			{Name: alexamodels.FeatureDefaultPropertyNameActionState},
 		},
 		Operations: []alexaapimodels.FeatureOperation{
-			{Name: "Activate"},
-			{Name: "Deactivate"},
+			{Name: alexamodels.FeatureDefaultOperationNameActivate},
+			{Name: alexamodels.FeatureDefaultOperationNameDeactivate},
 		},
 	},
 
@@ -259,7 +262,7 @@ var featureDefaults = map[alexaapimodels.FeatureName]featureDefaultEntry{
 	alexaapimodels.FeatureNameStatusCode: {
 		Operations: nil,
 		Properties: []alexaapimodels.FeatureProperty{
-			{Name: "statusCode"},
+			{Name: alexamodels.FeatureDefaultPropertyNameStatusCode},
 		},
 	},
 }

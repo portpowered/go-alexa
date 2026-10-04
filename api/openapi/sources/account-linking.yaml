@@ -1,0 +1,548 @@
+openapi: 3.0.3
+info:
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: 'This is an implementation-derived description of HTTP routes, request shapes,
+
+    and response models used by the current go-alexa source. It is not an
+
+    Amazon-issued API contract. There are no sanitized live HTTP captures in
+
+    this repository, so these shapes have not been verified against current
+
+    service behavior. Synthetic test data is not evidence of provider behavior.
+
+    See the Alexa AsyncAPI document for the directive stream parsed by the
+
+    library, and the GraphQL schema for its GraphQL subset.
+
+    '
+servers:
+- url: https://api.amazonalexa.com
+  description: Default REST base URL in go-alexa.
+  x-go-alexa-region: na
+- url: https://api.eu.amazonalexa.com
+  description: EU REST base URL constant in go-alexa.
+  x-go-alexa-region: eu
+- url: https://api.jp.amazonalexa.com
+  description: Japan REST base URL constant in go-alexa.
+  x-go-alexa-region: jp
+security:
+- BearerToken: []
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
+tags:
+- name: Account linking
+  description: Caller-facing authorization entry point, code-pair registration, and token operations implemented by go-alexa.
+paths:
+  /ap/oa:
+    get:
+      tags:
+      - Account linking
+      operationId: openAuthorizationPage
+      summary: Start caller-managed account authorization
+      description: 'go-alexa exports regional authorization URLs using this path. The
+
+        library does not dispatch this request; callers direct an account
+
+        holder to the URL and add authorization query values. The path is
+
+        implementation-derived and is not a provider-verified OAuth contract.
+
+        '
+      servers:
+      - url: https://api.amazon.com
+        x-go-alexa-region: na
+      - url: https://api.amazon.co.uk
+        x-go-alexa-region: eu
+      - url: https://api.amazon.co.jp
+        x-go-alexa-region: jp
+      security: []
+      responses:
+        default:
+          description: Browser navigation response is not decoded by go-alexa.
+  /auth/create/codepair:
+    post:
+      tags:
+      - Account linking
+      operationId: createCodePair
+      summary: Request a code pair
+      description: 'The client posts device registration metadata and an empty scopes array
+
+        to the Amazon API base URL. The returned public and private codes are
+
+        credentials; keep them out of logs and source control. The route and
+
+        model describe the current implementation only.
+
+        '
+      servers:
+      - url: https://api.amazon.com
+      - url: https://api.amazon.co.uk
+      - url: https://api.amazon.co.jp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireCodePairRequest'
+      responses:
+        '200':
+          description: Response decoded by the current code-pair client.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireCodePairResponse'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /auth/register:
+    post:
+      tags:
+      - Account linking
+      operationId: registerDevice
+      summary: Register using a code pair or credentials
+      description: 'The current client constructs either `auth_data.code_pair` or
+
+        `auth_data.email_password` and sends a device registration request.
+
+        The email/password helper is present in the source but is not the
+
+        recommended linking flow. A 4xx response may be parsed as a challenge
+
+        body by the email/password helper. This source-derived description is
+
+        not a statement that either flow is currently accepted by the service.
+
+        '
+      servers:
+      - url: https://api.amazon.com
+      - url: https://api.amazon.co.uk
+      - url: https://api.amazon.co.jp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireRegistrationRequest'
+      responses:
+        '200':
+          description: Successful registration body decoded by go-alexa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireRegistrationResponse'
+        4XX:
+          description: The email/password helper attempts to decode challenge fields from this response body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireChallengeResponse'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /auth/token:
+    post:
+      tags:
+      - Account linking
+      operationId: refreshAccessToken
+      summary: Exchange a refresh token
+      description: 'The request body is assembled by `rest.Client.RefreshAccessToken`.
+
+        The source token and returned access token are secrets. This documents
+
+        the client''s serialization and decoding shapes, not verified service
+
+        behavior.
+
+        '
+      servers:
+      - url: https://api.amazon.com
+      - url: https://api.amazon.co.uk
+      - url: https://api.amazon.co.jp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireTokenRefreshRequest'
+      responses:
+        '200':
+          description: Response decoded by the current token refresh helper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireTokenRefreshResponse'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /ap/exchangetoken/cookies:
+    post:
+      tags:
+      - Account linking
+      operationId: exchangeRefreshTokenForCookies
+      summary: Exchange a refresh token for cookies
+      description: 'The client sends this request to `https://api.{domain}` with an
+
+        `x-amzn-identity-auth-domain` header. The body and returned cookies
+
+        contain authentication material. The caller-provided domain is not
+
+        validated by the library.
+
+        '
+      servers:
+      - url: https://api.{domain}
+        variables:
+          domain:
+            default: amazon.com
+            description: Domain supplied to the cookie exchange method.
+      security: []
+      parameters:
+      - name: x-amzn-identity-auth-domain
+        in: header
+        required: true
+        description: Set by the cookie exchange implementation to `api.{domain}`.
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireCookieExchangeRequest'
+      responses:
+        '200':
+          description: Cookie collection decoded by the current helper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireCookieExchangeResponse'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: The client sends its supplied access token in the Authorization header.
+  schemas:
+    WireTokenRefreshResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          format: password
+        expires_in:
+          type: integer
+    WireTokenRefreshRequest:
+      type: object
+      properties:
+        app_name:
+          type: string
+        app_version:
+          type: string
+        source_token_type:
+          x-go-compat-constant-values:
+            AuthTokenTypeRefresh: "refresh_token"
+          type: string
+        source_token:
+          type: string
+          format: password
+        requested_token_type:
+          x-go-compat-constant-values:
+            AuthTokenTypeAccess: "access_token"
+          type: string
+        device_metadata:
+          $ref: '#/components/schemas/WireDeviceMetadata'
+      required:
+      - app_name
+      - app_version
+      - source_token_type
+      - source_token
+      - requested_token_type
+      - device_metadata
+    WireDeviceMetadata:
+      type: object
+      properties:
+        device_type:
+          type: string
+        device_model:
+          type: string
+        os_version:
+          type: string
+        device_serial:
+          type: string
+        manufacturer:
+          x-go-compat-constant-values:
+            SDKDefaultManufacturer: "Amazon"
+          type: string
+      required:
+      - device_type
+      - device_model
+      - os_version
+      - device_serial
+      - manufacturer
+    WireRegistrationResponse:
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/WireRegistrationResponseEnvelope'
+    WireRegistrationResponseEnvelope:
+      type: object
+      properties:
+        success:
+          $ref: '#/components/schemas/WireRegistrationSuccess'
+    WireRegistrationSuccess:
+      type: object
+      properties:
+        tokens:
+          $ref: '#/components/schemas/WireRegistrationTokens'
+    WireRegistrationTokens:
+      type: object
+      properties:
+        bearer:
+          $ref: '#/components/schemas/WireBearerTokens'
+    WireBearerTokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+          format: password
+        refresh_token:
+          type: string
+          format: password
+    WireRegistrationRequest:
+      type: object
+      properties:
+        requested_token_type:
+          x-go-compat-constant-values:
+            AuthTokenTypeBearer: "bearer"
+          type: array
+          items:
+            type: string
+        registration_data:
+          $ref: '#/components/schemas/WireRegistrationData'
+        auth_data:
+          $ref: '#/components/schemas/WireAuthData'
+      required:
+      - requested_token_type
+      - registration_data
+      - auth_data
+    WireAuthData:
+      type: object
+      properties:
+        code_pair:
+          $ref: '#/components/schemas/WireCodePairAuth'
+        email_password:
+          $ref: '#/components/schemas/WireEmailPasswordAuth'
+    WireEmailPasswordAuth:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          format: password
+      required:
+      - email
+      - password
+    WireCodePairAuth:
+      type: object
+      properties:
+        public_code:
+          type: string
+        private_code:
+          type: string
+      required:
+      - public_code
+      - private_code
+    WireRegistrationData:
+      type: object
+      properties:
+        app_name:
+          x-go-compat-constant-values:
+            SDKDefaultAppName: "Client SDK"
+          type: string
+        app_version:
+          x-go-compat-constant-values:
+            SDKDefaultAppVersion: "1.0"
+          type: string
+        device_type:
+          type: string
+        domain:
+          x-go-compat-constant-values:
+            SDKDefaultRegistrationDomain: "Device"
+          type: string
+        device_model:
+          x-go-compat-constant-values:
+            SDKDefaultDeviceModel: "Client SDK"
+          type: string
+        os_version:
+          x-go-compat-constant-values:
+            SDKDefaultOSVersion: "0"
+          type: string
+        device_serial:
+          type: string
+        device_name:
+          type: string
+      required:
+      - app_name
+      - app_version
+      - device_type
+      - domain
+      - device_model
+      - os_version
+      - device_serial
+      - device_name
+    WireCookieExchangeResponse:
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/WireCookieExchangeEnvelope'
+    WireCookieExchangeEnvelope:
+      type: object
+      properties:
+        tokens:
+          $ref: '#/components/schemas/WireCookieTokens'
+    WireCookieTokens:
+      type: object
+      properties:
+        cookies:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/WireCookieRecord'
+    WireCookieRecord:
+      type: object
+      properties:
+        Name:
+          x-go-compat-constant-values:
+            AuthCSRFCookieName: "csrf"
+          type: string
+        Value:
+          type: string
+          format: password
+        Path:
+          type: string
+        Secure:
+          type: boolean
+        HttpOnly:
+          type: boolean
+        Expires:
+          type: string
+    WireCookieExchangeRequest:
+      type: object
+      properties:
+        app_name:
+          x-go-compat-constant-values:
+            AuthCookieExchangeAppName: "Amazon Alexa"
+          type: string
+        requested_token_type:
+          x-go-compat-constant-values:
+            AuthTokenTypeCookies: "auth_cookies"
+          type: string
+        domain:
+          type: string
+        source_token_type:
+          type: string
+        source_token:
+          type: string
+          format: password
+      required:
+      - app_name
+      - requested_token_type
+      - domain
+      - source_token_type
+      - source_token
+    WireCodePairResponse:
+      type: object
+      properties:
+        public_code:
+          type: string
+        private_code:
+          type: string
+    WireCodePairRequest:
+      type: object
+      properties:
+        code_data:
+          $ref: '#/components/schemas/WireCodeData'
+        scopes:
+          type: array
+          items:
+            type: string
+      required:
+      - code_data
+      - scopes
+    WireCodeData:
+      type: object
+      properties:
+        app_name:
+          type: string
+        app_version:
+          type: string
+        device_type:
+          type: string
+        domain:
+          type: string
+        device_model:
+          type: string
+        os_version:
+          type: string
+        device_serial:
+          type: string
+        device_name:
+          type: string
+        secondary_registration:
+          x-go-compat-constant-values:
+            AuthSecondaryRegistrationFalse: "False"
+          type: string
+      required:
+      - app_name
+      - app_version
+      - device_type
+      - domain
+      - device_model
+      - os_version
+      - device_serial
+      - device_name
+      - secondary_registration
+    WireChallengeResponse:
+      type: object
+      properties:
+        response:
+          $ref: '#/components/schemas/WireChallengeEnvelope'
+    WireChallengeEnvelope:
+      type: object
+      properties:
+        challenge:
+          $ref: '#/components/schemas/WireChallenge'
+    WireChallenge:
+      type: object
+      properties:
+        challenge_reason:
+          x-go-compat-constant-values:
+            AuthChallengeMissingData: "MissingRequiredAuthenticationData"
+            AuthChallengeWebView: "HandleOnWebView"
+            AuthChallengeFailed: "AuthenticationFailed"
+          type: string
+        required_authentication_method:
+          x-go-compat-constant-values:
+            AuthChallengePasswordMethod: "GenericClaimPassword"
+          type: string
+  responses:
+    UnhandledResponse:
+      description: Response not decoded into a success model by this operation.

@@ -34,7 +34,7 @@ func TestClientQueryMethodsIssueGeneratedOperations(t *testing.T) {
 		{
 			name: "list endpoints", queryPrefix: "query ListEndpoints", response: `{"listEndpoints":{"endpoints":[],"paginationInfo":{"totalCount":0,"nextToken":""},"completeResult":true}}`, variableText: "synthetic-endpoint-id",
 			call: func(client *Client) error {
-				_, err := client.ListEndpoints(context.Background(), ListEndpointsInput{EndpointIds: []string{"synthetic-endpoint-id"}})
+				_, err := client.ListEndpoints(context.Background(), testListEndpointsInput([]string{"synthetic-endpoint-id"}, nil))
 
 				return err
 			},
@@ -42,7 +42,8 @@ func TestClientQueryMethodsIssueGeneratedOperations(t *testing.T) {
 		{
 			name: "list endpoints with pagination", queryPrefix: "query ListEndpoints", response: `{"listEndpoints":{"endpoints":[],"paginationInfo":{"totalCount":0,"nextToken":""},"completeResult":true}}`, variableText: "\"pageSize\":50",
 			call: func(client *Client) error {
-				_, err := client.ListEndpointsWithPagination(context.Background(), ListEndpointsInput{PaginationParams: PaginationParams{DisablePagination: true}})
+				pagination := testPaginationParams("", true)
+				_, err := client.ListEndpointsWithPagination(context.Background(), testListEndpointsInput(nil, &pagination))
 
 				return err
 			},
@@ -50,7 +51,8 @@ func TestClientQueryMethodsIssueGeneratedOperations(t *testing.T) {
 		{
 			name: "list endpoints without states", queryPrefix: "query Endpoints", response: `{"endpoints":{"items":[]}}`, variableText: "synthetic-next-token",
 			call: func(client *Client) error {
-				_, err := client.ListEndpointsWithoutStates(context.Background(), EndpointsQueryParams{PaginationParams: PaginationParams{NextToken: "synthetic-next-token"}})
+				pagination := testPaginationParams("synthetic-next-token", false)
+				_, err := client.ListEndpointsWithoutStates(context.Background(), testEndpointsQueryParams(pagination))
 
 				return err
 			},
@@ -58,7 +60,7 @@ func TestClientQueryMethodsIssueGeneratedOperations(t *testing.T) {
 		{
 			name: "list endpoints with states", queryPrefix: "query ListEndpointsWithStates", response: `{"listEndpoints":{"completeResult":true,"endpoints":[]}}`, variableText: "synthetic-endpoint-id",
 			call: func(client *Client) error {
-				_, err := client.ListEndpointsWithStates(context.Background(), ListEndpointsInput{EndpointIds: []string{"synthetic-endpoint-id"}})
+				_, err := client.ListEndpointsWithStates(context.Background(), testListEndpointsInput([]string{"synthetic-endpoint-id"}, nil))
 
 				return err
 			},
@@ -66,7 +68,7 @@ func TestClientQueryMethodsIssueGeneratedOperations(t *testing.T) {
 		{
 			name: "quality of service", queryPrefix: "mutation RequestEndpointQualityOfService", response: `{"requestEndpointQualityOfService":{"durationInSeconds":45,"errors":[]}}`, variableText: "synthetic-endpoint-id",
 			call: func(client *Client) error {
-				_, err := client.RequestEndpointQualityOfService(context.Background(), EndpointQualityOfServiceInput{Endpoints: []string{"synthetic-endpoint-id"}, Configuration: QualityOfServiceConfiguration{DurationInSeconds: 45}})
+				_, err := client.RequestEndpointQualityOfService(context.Background(), EndpointQualityOfServiceInput{Endpoints: []string{"synthetic-endpoint-id"}, Configuration: testQualityOfServiceConfiguration(45)})
 
 				return err
 			},
@@ -74,7 +76,8 @@ func TestClientQueryMethodsIssueGeneratedOperations(t *testing.T) {
 		{
 			name: "subscribe", queryPrefix: "mutation Subscribe", response: `{"subscribe":{"entities":["synthetic-endpoint-id"],"durationInMinutes":5,"errors":[]}}`, variableText: "synthetic-endpoint-id",
 			call: func(client *Client) error {
-				_, err := client.Subscribe(context.Background(), SubscribeConfiguration{Entities: []SubscriptionFilter{{EntityType: "endpoint", Ids: []string{"synthetic-endpoint-id"}}}, DurationInMinutes: 5})
+				filter := testSubscriptionFilter("endpoint", []string{"synthetic-endpoint-id"})
+				_, err := client.Subscribe(context.Background(), testSubscribeConfiguration([]SubscriptionFilter{filter}, 5))
 
 				return err
 			},
@@ -187,7 +190,7 @@ func TestListAllEndpointsContinuesUntilPaginationTokenIsEmpty(t *testing.T) {
 		})}),
 	)
 
-	endpoints, err := client.ListAllEndpoints(context.Background(), ListEndpointsInput{})
+	endpoints, err := client.ListAllEndpoints(context.Background(), testListEndpointsInput(nil, nil))
 	if err != nil {
 		t.Fatalf("ListAllEndpoints returned an error: %v", err)
 	}

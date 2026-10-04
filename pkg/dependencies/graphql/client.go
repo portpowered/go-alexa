@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
-	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
+	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
@@ -78,32 +78,6 @@ func (c *Client) Apply(opts ...ClientOption) {
 	for _, opt := range opts {
 		opt(c)
 	}
-}
-
-// Request represents a GraphQL request.
-type Request struct {
-	Query     string                 `json:"query"`
-	Variables map[string]interface{} `json:"variables,omitempty"`
-}
-
-// Response represents a GraphQL response.
-type Response struct {
-	Data   interface{} `json:"data,omitempty"`
-	Errors []Error     `json:"errors,omitempty"`
-}
-
-// Error represents a GraphQL error.
-type Error struct {
-	Message    string                 `json:"message"`
-	Locations  []Location             `json:"locations,omitempty"`
-	Path       []interface{}          `json:"path,omitempty"`
-	Extensions map[string]interface{} `json:"extensions,omitempty"`
-}
-
-// Location represents an error location in a GraphQL query.
-type Location struct {
-	Line   int `json:"line"`
-	Column int `json:"column"`
 }
 
 // Execute executes a GraphQL query or mutation.
@@ -196,9 +170,14 @@ func executionRequestBody(
 		return nil, &alexaapimodels.BadRequestError{Message: "GraphQL operation is not in the generated schema set"}
 	}
 
-	wireRequest := wire.WireGraphQLRequest{Query: query}
+	wireRequest := alexamodels.WireGraphQLRequest{
+		OperationName:        nil,
+		Query:                query,
+		Variables:            nil,
+		AdditionalProperties: nil,
+	}
 	if len(variables) > 0 {
-		wireRequest.Variables = &variables
+		wireRequest.Variables = variables
 	}
 
 	body, err := json.Marshal(wireRequest)
@@ -210,36 +189,29 @@ func executionRequestBody(
 }
 
 func decodeExecutionResponse(body []byte, result interface{}) error {
-	var wireResponse wire.WireGraphQLResponse
+	var wireResponse alexamodels.WireGraphQLResponse
 
 	err := json.Unmarshal(body, &wireResponse)
 	if err != nil {
 		return &alexaapimodels.BadRequestError{Message: "failed to decode response", Err: err}
 	}
 
-	encodedResponse, err := json.Marshal(wireResponse)
-	if err != nil {
-		return &alexaapimodels.BadRequestError{Message: "failed to marshal response", Err: err}
-	}
+	if wireResponse.Errors != nil && len(*wireResponse.Errors) > 0 {
+		messages := make([]string, 0, len(*wireResponse.Errors))
+		for _, graphQLError := range *wireResponse.Errors {
+			messages = append(messages, graphQLError.Message)
+		}
 
-	var graphqlResponse Response
-
-	err = json.Unmarshal(encodedResponse, &graphqlResponse)
-	if err != nil {
-		return &alexaapimodels.BadRequestError{Message: "failed to convert response", Err: err}
-	}
-
-	if len(graphqlResponse.Errors) > 0 {
 		return &alexaapimodels.BadRequestError{
-			Message: fmt.Sprintf("graphql errors: %v", graphqlResponse.Errors),
+			Message: fmt.Sprintf("graphql errors: %v", messages),
 		}
 	}
 
-	if result == nil || graphqlResponse.Data == nil {
+	if result == nil || wireResponse.Data == nil {
 		return nil
 	}
 
-	data, err := json.Marshal(graphqlResponse.Data)
+	data, err := json.Marshal(wireResponse.Data)
 	if err != nil {
 		return &alexaapimodels.BadRequestError{Message: "failed to marshal data", Err: err}
 	}

@@ -19,8 +19,41 @@ const syntheticPingPath = "/ping"
 func syntheticDirectiveFrame(t *testing.T) string {
 	t.Helper()
 
-	metadata := `{"metricName":"EndpointPower","payload":{"data":{"features":[{"name":"power","properties":[{"name":"powerState","powerStateValue":"OFF"}]}]},` +
-		`"entity":{"id":"synthetic-endpoint"}}}`
+	property := map[string]any{
+		"__typename":      "Power",
+		"name":            "powerState",
+		"powerStateValue": "OFF",
+		"timeOfSample":    "2025-12-02T05:17:49Z",
+		"accuracy":        "HIGH",
+		"type":            "RETRIEVABLE",
+	}
+	metadataValue := map[string]any{
+		"metricName": "EndpointPower",
+		"payload": map[string]any{
+			"data": map[string]any{
+				"__typename": "Endpoint",
+				"features": []any{map[string]any{
+					"__typename": "Feature",
+					"name":       "power",
+					"properties": []any{property},
+				}},
+			},
+			"entity": map[string]any{
+				"__typename": "Endpoint",
+				"id":         "synthetic-endpoint",
+			},
+		},
+		"type":      "UPDATE_ENTITY",
+		"timestamp": "2025-12-02T05:17:49Z",
+	}
+
+	metadataBody, err := json.Marshal(metadataValue)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	metadata := string(metadataBody)
+
 	directive := map[string]any{
 		"directive": map[string]any{
 			"header": map[string]any{
@@ -28,7 +61,11 @@ func syntheticDirectiveFrame(t *testing.T) string {
 				"namespace": "Alexa.Mobile.Push",
 				"name":      "RenderUpdate",
 			},
-			"payload": map[string]any{"renderingUpdates": []any{map[string]any{"resourceMetadata": metadata}}},
+			"payload": map[string]any{
+				"renderingUpdates": []any{map[string]any{
+					"resourceMetadata": metadata,
+				}},
+			},
 		},
 	}
 

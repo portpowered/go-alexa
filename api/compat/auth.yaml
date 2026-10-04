@@ -1,0 +1,225 @@
+openapi: 3.0.3
+info:
+  title: Alexa authentication Go compatibility projections
+  version: 0.1.0
+  description: |
+    These schemas preserve the historical exported Go field types and JSON
+    names for account-linking callers. Required lists reflect the old Go
+    serialization shape only; they do not assert provider-side validation.
+paths: {}
+components:
+  schemas:
+    DeviceAuthResponse:
+      type: object
+      required: [device_code, user_code, verification_uri, expires_in]
+      properties:
+        device_code: {type: string}
+        user_code: {type: string}
+        verification_uri:
+          type: string
+          x-go-name: VerificationURI
+        verification_uri_complete:
+          type: string
+          x-go-name: VerificationURIComplete
+          x-go-type-skip-optional-pointer: true
+        expires_in: {type: integer}
+        interval:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+    RegistrationData:
+      type: object
+      required: [app_name, app_version, device_type, domain, device_model, os_version, device_serial, device_name]
+      properties:
+        app_name: {type: string}
+        app_version: {type: string}
+        device_type: {type: string}
+        domain: {type: string}
+        device_model: {type: string}
+        os_version:
+          type: string
+          x-go-name: OSVersion
+        device_serial: {type: string}
+        device_name: {type: string}
+    EmailPasswordAuth:
+      type: object
+      required: [email, password]
+      properties:
+        email: {type: string}
+        password: {type: string}
+    CodePairAuth:
+      type: object
+      required: [public_code, private_code]
+      properties:
+        public_code: {type: string}
+        private_code: {type: string}
+    RegistrationRequest:
+      type: object
+      required: [requested_token_type, registration_data, auth_data]
+      properties:
+        requested_token_type:
+          type: array
+          items: {type: string}
+        registration_data: {$ref: '#/components/schemas/RegistrationData'}
+        auth_data: {$ref: '#/components/schemas/AuthData'}
+    AuthData:
+      type: object
+      properties:
+        code_pair:
+          $ref: '#/components/schemas/CodePairAuth'
+          x-go-name: CodePairAuth
+        email_password:
+          $ref: '#/components/schemas/EmailPasswordAuth'
+          x-go-name: EmailPasswordAuth
+    RegistrationResponse:
+      type: object
+      required: [response]
+      properties:
+        response: {$ref: '#/components/schemas/RegistrationResponseEnvelope'}
+    RegistrationResponseEnvelope:
+      type: object
+      required: [success]
+      properties:
+        success: {$ref: '#/components/schemas/RegistrationSuccess'}
+    RegistrationSuccess:
+      type: object
+      required: [tokens]
+      properties:
+        tokens: {$ref: '#/components/schemas/RegistrationTokens'}
+    RegistrationTokens:
+      type: object
+      required: [bearer]
+      properties:
+        bearer: {$ref: '#/components/schemas/BearerTokens'}
+    BearerTokens:
+      type: object
+      required: [access_token, refresh_token]
+      properties:
+        access_token: {type: string}
+        refresh_token: {type: string}
+    ChallengeResponse:
+      type: object
+      required: [response]
+      properties:
+        response: {$ref: '#/components/schemas/ChallengeEnvelope'}
+    ChallengeEnvelope:
+      type: object
+      required: [challenge]
+      properties:
+        challenge: {$ref: '#/components/schemas/Challenge'}
+    Challenge:
+      type: object
+      required: [challenge_reason]
+      properties:
+        challenge_reason: {type: string}
+        required_authentication_method:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    CodePairRequest:
+      type: object
+      required: [code_data, scopes]
+      properties:
+        code_data: {$ref: '#/components/schemas/CodeData'}
+        scopes:
+          type: array
+          items: {type: string}
+    CodeData:
+      type: object
+      required: [app_name, app_version, device_type, domain, device_model, os_version, device_serial, device_name, secondary_registration]
+      properties:
+        app_name: {type: string}
+        app_version: {type: string}
+        device_type: {type: string}
+        domain: {type: string}
+        device_model: {type: string}
+        os_version:
+          type: string
+          x-go-name: OSVersion
+        device_serial: {type: string}
+        device_name: {type: string}
+        secondary_registration: {type: string}
+    CodePairResponse:
+      type: object
+      required: [public_code, private_code]
+      properties:
+        public_code: {type: string}
+        private_code: {type: string}
+    TokenRefreshRequest:
+      type: object
+      required: [app_name, app_version, source_token_type, source_token, requested_token_type, device_metadata]
+      properties:
+        app_name: {type: string}
+        app_version: {type: string}
+        source_token_type: {type: string}
+        source_token: {type: string}
+        requested_token_type: {type: string}
+        device_metadata: {$ref: '#/components/schemas/DeviceMetadata'}
+    DeviceMetadata:
+      type: object
+      required: [device_type, device_model, os_version, device_serial, manufacturer]
+      properties:
+        device_type: {type: string}
+        device_model: {type: string}
+        os_version:
+          type: string
+          x-go-name: OSVersion
+        device_serial: {type: string}
+        manufacturer: {type: string}
+    TokenRefreshResponse:
+      type: object
+      required: [access_token, expires_in]
+      properties:
+        access_token: {type: string}
+        expires_in:
+          type: integer
+          x-go-name: ExpiresInSeconds
+    Token:
+      description: |
+        Legacy caller-owned credential and expiration projection preserved for
+        Go API compatibility. This is not a provider response model.
+      type: object
+      properties:
+        access_token:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        refresh_token:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        token_type:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        expires_in:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+        expires_at:
+          type: string
+          format: date-time
+          x-go-type-skip-optional-pointer: true
+        scope:
+          type: string
+          x-go-type-skip-optional-pointer: true
+
+    SDKKnownDeviceType:
+      type: string
+      x-go-type: string
+      description: Known library DeviceType values. Caller-supplied extensions remain open.
+      x-go-compat-constant-values:
+        SDKDeviceTypeIphone: "A2IVLV5VM2W81"
+        SDKDeviceTypeSimulator: "A3UMCOIO3URGGU"
+
+    SDKKnownRegion:
+      type: string
+      x-go-type: string
+      description: Known library Region values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: Region
+      x-go-compat-constant-values:
+        SDKRegionUS: "us"
+        SDKRegionEU: "eu"
+        SDKRegionJP: "jp"
+
+    AuthCookieDomain:
+      type: string
+      x-go-type: string
+      description: Known domains recognized by the compatibility cookie-jar lookup. Other caller cookies remain open.
+      x-go-compat-constant-values:
+        AuthCSRFCookieDomain: alexa.amazon.com
+        AuthCSRFCookieSubdomain: .alexa.amazon.com

@@ -29,6 +29,9 @@ linters:
             - github.com/charmbracelet
             - github.com/google/uuid
             - github.com/portpowered/go-alexa
+            - github.com/vektah/gqlparser/v2
+            - github.com/vektah/gqlparser/v2/ast
+            - github.com/vektah/gqlparser/v2/parser
             - golang.org/x/net
             - gopkg.in/yaml.v2
     exhaustruct:
@@ -38,10 +41,8 @@ linters:
         # These exact public DTO types intentionally use zero values for optional wire fields.
         # exhaustruct remains active for every other type in these packages.
         - '^github\.com/portpowered/go-alexa/pkg/alexaapimodels\.(AuthenticationError|BadRequestError|ClosedError|ConnectionError|ControlAnnouncementPayload|ControlAudioPlayerPayload|ControlAudioPlayerURIPayload|ControlColorTemperatureAdjustPayload|ControlNotificationPayload|ControlRequest|Endpoint|EndpointIncludeFields|EndpointQuery|Feature|FeatureControlError|FeatureControlResponse|FeatureProperty|HTTPError|InternalServerError|NetworkError|PingError|SdkError|SubscribeRequest|TokenError|UnauthorizedError|UnifiedEndpointListResponse)$'
-        - '^github\.com/portpowered/go-alexa/pkg/dependencymodels\.(ActionControlRequest|AnnouncementSpeak|BaseFeatureRequest|BrightnessControlRequest|ColorTemperatureControlRequest|Command|EndpointQuery|EndpointQueryRequest|ModeControlRequest|PercentageControlRequest|PlayAudioURIRequest|PlayMusicRequest|PlayVideoRequest|PowerLevelControlRequest|RangeControlRequest|SendAnnouncementRequest|SendNotificationRequest|SendTTSRequest|SpeakerControlRequest|StopPlaybackRequest|ThermostatControlRequest|Token|VolumeControlRequest)$'
+        - '^github\.com/portpowered/go-alexa/pkg/dependencymodels\.Token$'
         - '^github\.com/portpowered/go-alexa/pkg/dependencies/graphql\.(EndpointsEndpointsEndpointsResponseItemsEndpoint|EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature|EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureOperationsFeatureOperation|EndpointsQueryParams|FeatureControlRequest|ListEndpointsInput|PaginationParams|QualityOfServiceConfiguration|SubscribeConfiguration|SubscriptionFilter)$'
-        # These exact generated request types leave protocol-optional fields at zero.
-        - '^github\.com/portpowered/go-alexa/pkg/dependencies/internal/wire\.(WireAuthData|WireGraphQLRequest|WireMediaCommand|WireTokenRefreshRequest)$'
         # Standard library transport structs intentionally use their documented zero defaults.
         - '^net/http\.Client$'
         - '^net/http\.Response$'
@@ -56,12 +57,10 @@ linters:
         - '^github\.com/portpowered/go-alexa/pkg/testing\.(CapturedResponse|CapturedRequest)$'
   exclusions:
     # golangci-lint v2.3.0 defaults generated-file filtering to strict. It
-    # excludes the five newly stamped Modelina files in pkg/alexa/internal/wire
-    # plus five existing generated files: pkg/dependencies/internal/wire/models.gen.go,
-    # pkg/dependencymodels/embedded_wire.gen.go, pkg/dependencies/graphql/generated.go,
-    # pkg/dependencies/graphql/allowed_operations.gen.go, and
+    # excludes checked-in generated outputs in pkg/dependencymodels, the
+    # GraphQL operation/model outputs in pkg/dependencies/graphql, and
     # pkg/internal/apiroutes/routes.gen.go. make generate regenerates these files;
-    # they are outside this lint scan's issue scope.
+    # generated-file filtering keeps provider wire definitions out of lint diagnostics.
     rules:
       # Genqlient embeds long schema paths in generated GraphQL type names.
       - path: ^pkg/alexa/client_enumeration\.go$
@@ -85,7 +84,7 @@ linters:
           - tagliatelle
       # These dependency-model tags are provider wire keys. Keep their exact
       # snake_case spelling because changing it would alter encoded requests.
-      - path: ^pkg/dependencymodels/(auth|endpoint|event)\.go$
+      - path: ^pkg/dependencymodels/auth\.go$
         linters:
           - tagliatelle
       # The terminal UI's existing config.json format uses customerID.
@@ -104,7 +103,7 @@ linters:
         text: '^Function TestGetConfigFromFilePreservesCustomerIDKey'
         linters:
           - paralleltest
-      # Preserve v0.3.1 exported spellings and JSON-model fields; changing these
+      # Preserve v0.3.2 exported spellings and JSON-model fields; changing these
       # Go identifiers would break callers even though the wire tags are stable.
       - path: ^pkg/alexa/client\.go$
         text: '^var-naming: func WithHttpClient should be WithHTTPClient$'
@@ -124,14 +123,6 @@ linters:
           - revive
       - path: ^pkg/alexaapimodels/requests\.go$
         text: '^var-naming: const ProviderIdDefault should be .+$'
-        linters:
-          - revive
-      - path: ^pkg/dependencymodels/alexa_devices_v2\.go$
-        text: '^var-naming: struct field (DeviceAccountId|AssociatedUnitIds|DeviceOwnerCustomerId|RegistrationId) should be .+$'
-        linters:
-          - revive
-      - path: ^pkg/dependencymodels/endpoint\.go$
-        text: '^var-naming: struct field (MediaId|PlayingInLemurId|QueueId|IconId|MediaOwnerCustomerId) should be .+$'
         linters:
           - revive
       - path: ^pkg/dependencies/graphql/client_transport_test\.go$

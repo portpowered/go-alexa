@@ -74,10 +74,8 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 			responseData:   `{"listEndpoints":{"endpoints":[],"paginationInfo":{"totalCount":0,"nextToken":"synthetic-next"},"completeResult":true}}`,
 			variableMarker: "synthetic-endpoint-id",
 			call: func(ctx context.Context, client genqlient.Client) error {
-				_, err := ListEndpoints(ctx, client, ListEndpointsInput{
-					EndpointIds:      []string{"synthetic-endpoint-id"},
-					PaginationParams: PaginationParams{NextToken: "synthetic-next"},
-				})
+				pagination := testPaginationParams("synthetic-next", false)
+				_, err := ListEndpoints(ctx, client, testListEndpointsInput([]string{"synthetic-endpoint-id"}, &pagination))
 
 				return err
 			},
@@ -88,7 +86,7 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 			responseData:   `{"listEndpoints":{"completeResult":true,"endpoints":[]}}`,
 			variableMarker: "synthetic-endpoint-id",
 			call: func(ctx context.Context, client genqlient.Client) error {
-				_, err := ListEndpointsWithStates(ctx, client, ListEndpointsInput{EndpointIds: []string{"synthetic-endpoint-id"}})
+				_, err := ListEndpointsWithStates(ctx, client, testListEndpointsInput([]string{"synthetic-endpoint-id"}, nil))
 
 				return err
 			},
@@ -101,7 +99,7 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 			call: func(ctx context.Context, client genqlient.Client) error {
 				_, err := RequestEndpointQualityOfService(ctx, client, EndpointQualityOfServiceInput{
 					Endpoints:     []string{"synthetic-endpoint-id"},
-					Configuration: QualityOfServiceConfiguration{DurationInSeconds: 45},
+					Configuration: testQualityOfServiceConfiguration(45),
 				})
 
 				return err
@@ -114,11 +112,9 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 			variableMarker: "synthetic-endpoint-id",
 			call: func(ctx context.Context, client genqlient.Client) error {
 				_, err := SetEndpointFeatures(ctx, client, SetEndpointFeaturesInput{
-					FeatureControlRequests: []FeatureControlRequest{{
-						EndpointId:           "synthetic-endpoint-id",
-						FeatureName:          FeatureNamePower,
-						FeatureOperationName: FeatureOperationNameTurnon,
-					}},
+					FeatureControlRequests: []FeatureControlRequest{
+						testFeatureControlRequest("synthetic-endpoint-id", FeatureNamePower, FeatureOperationNameTurnon),
+					},
 				})
 
 				return err
@@ -130,10 +126,8 @@ func TestGeneratedOperationWrappersBuildRequestsAndDecodeSyntheticData(t *testin
 			responseData:   `{"subscribe":{"entities":["synthetic-endpoint-id"],"durationInMinutes":5,"errors":[]}}`,
 			variableMarker: "synthetic-endpoint-id",
 			call: func(ctx context.Context, client genqlient.Client) error {
-				_, err := Subscribe(ctx, client, SubscribeConfiguration{
-					Entities:          []SubscriptionFilter{{EntityType: "endpoint", Ids: []string{"synthetic-endpoint-id"}}},
-					DurationInMinutes: 5,
-				})
+				filter := testSubscriptionFilter("endpoint", []string{"synthetic-endpoint-id"})
+				_, err := Subscribe(ctx, client, testSubscribeConfiguration([]SubscriptionFilter{filter}, 5))
 
 				return err
 			},

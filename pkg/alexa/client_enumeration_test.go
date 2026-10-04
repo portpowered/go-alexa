@@ -4,6 +4,7 @@ package alexa
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -280,6 +281,73 @@ func TestListEndpointsWithStates_PreservesAirQualityMonitorRangeInstancesAndValu
 	}
 }
 
+func TestExtractRangeStateValuePreservesPresentZeroAndOmitsMissingValues(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		wireJSON  string
+		wantNil   bool
+		wantValue float64
+	}{
+		{
+			name:      "present zero",
+			wireJSON:  `{"rangeValue":{"__typename":"RangeValueNumber","value":0}}`,
+			wantNil:   false,
+			wantValue: 0,
+		},
+		{
+			name:      "present nonzero",
+			wireJSON:  `{"rangeValue":{"__typename":"RangeValueNumber","value":12.5}}`,
+			wantNil:   false,
+			wantValue: 12.5,
+		},
+		{
+			name:      "explicit null",
+			wireJSON:  `{"rangeValue":null}`,
+			wantNil:   true,
+			wantValue: 0,
+		},
+		{
+			name:      "omitted",
+			wireJSON:  `{}`,
+			wantNil:   true,
+			wantValue: 0,
+		},
+		{
+			name:      "provider error",
+			wireJSON:  `{"error":{"type":"NOT_FOUND","message":"missing"},"rangeValue":{"__typename":"RangeValueNumber","value":0}}`,
+			wantNil:   true,
+			wantValue: 0,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			var property gqlStatePropertyRangeValue
+
+			err := json.Unmarshal([]byte(test.wireJSON), &property)
+			if err != nil {
+				t.Fatalf("decode generated GraphQL property: %v", err)
+			}
+
+			got := extractRangeStateValue(&property)
+			if test.wantNil {
+				if got != nil {
+					t.Fatalf("extractRangeStateValue() = %#v, want nil", got)
+				}
+
+				return
+			}
+
+			if got == nil || got.Value != test.wantValue {
+				t.Fatalf("extractRangeStateValue() = %#v, want value %v", got, test.wantValue)
+			}
+		})
+	}
+}
+
 func rangeFeaturesByInstance(features []alexaapimodels.Feature) map[string]alexaapimodels.Feature {
 	result := make(map[string]alexaapimodels.Feature)
 
@@ -328,5 +396,49 @@ func assertRangeFeature(
 
 	if value.Value != expectedValue {
 		t.Fatalf("state value for %s = %v, want %v", expectedLabel, value.Value, expectedValue)
+	}
+}
+
+func TestGeneratedPropertyTimesPreserveMissingAndTypedNilValues(t *testing.T) {
+	t.Parallel()
+
+	session := &Session{}
+
+	var property gqlStatePropertyPower
+
+	property.TimeOfSample = "2026-10-03T00:00:00Z"
+
+	property.TimeOfLastChange = "2026-10-02T23:59:00Z"
+
+	if got := session.extractTimeOfSample(&property); got != property.TimeOfSample {
+		t.Fatalf("sample = %q", got)
+	}
+
+	if got := session.extractTimeOfLastChange(&property); got != property.TimeOfLastChange {
+		t.Fatalf("last change = %q", got)
+	}
+
+	var missing *gqlStatePropertyPower
+	for _, absent := range []gqlStatePropertyFeatureProperty{nil, missing} {
+		if session.extractTimeOfSample(absent) != "" || session.extractTimeOfLastChange(absent) != "" {
+			t.Fatal("missing generated property has a time")
+		}
+	}
+}
+
+func TestLegacyCapabilityJSONScalarUsesGeneratedKnownMembers(t *testing.T) {
+	t.Parallel()
+
+	inputs := []interface{}{
+		map[string]interface{}{"interfaceName": "Alexa.Speaker", "future": true},
+		map[string]interface{}{"interfaceName": ""},
+		map[string]interface{}{"interfaceName": 1},
+		map[string]interface{}{"future": true},
+		"not an object", nil, make(chan int),
+	}
+
+	got := extractLegacyCapabilityInterfaces(inputs)
+	if len(got) != 1 || got[0] != "Alexa.Speaker" {
+		t.Fatalf("legacy interfaces = %v", got)
 	}
 }

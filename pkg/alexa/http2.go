@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	directivewire "github.com/portpowered/go-alexa/pkg/alexa/internal/wire"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
@@ -397,7 +396,7 @@ func (c *HTTP2Connection) readStreamEvent(reader *bufio.Reader) (*alexaapimodels
 
 	// Decode the implementation-derived directive model. The schema does not
 	// claim to be a provider-verified contract.
-	var directiveMessage directivewire.DirectiveMessage
+	var directiveMessage alexamodels.DirectiveMessage
 	{
 		err := json.Unmarshal([]byte(line), &directiveMessage)
 		if err != nil {

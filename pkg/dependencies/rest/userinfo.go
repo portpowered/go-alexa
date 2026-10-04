@@ -2,11 +2,9 @@ package rest
 
 import (
 	"context"
-	"net/url"
-
-	"github.com/portpowered/go-alexa/pkg/dependencies/internal/wire"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
+	"net/url"
 )
 
 // GetUserInfoOptions contains options for getting user info.
@@ -42,11 +40,11 @@ func (c *Client) GetUserInfo(ctx context.Context, opts *GetUserInfoOptions) (*al
 	// Build custom headers
 	customHeaders := make(map[string]string)
 	if opts.CSRFToken != "" {
-		customHeaders[apiroutes.HeaderCookie] = "csrf=" + opts.CSRFToken
+		customHeaders[apiroutes.HeaderCookie] = alexamodels.AuthCSRFCookieName + "=" + opts.CSRFToken
 	}
 
 	// Use the client's helper method to perform the request
-	var userInfo wire.WireUserInfo
+	var userInfo alexamodels.WireUserInfo
 
 	err := c.doJSONRequestWithFullURL(ctx, apiroutes.MethodGetUserInfo, baseURL, nil, customHeaders, &userInfo, true)
 	if err != nil {

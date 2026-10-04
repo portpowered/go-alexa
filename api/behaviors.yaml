@@ -1,0 +1,602 @@
+openapi: 3.0.3
+info:
+  title: Alexa behavior payloads
+  version: 0.1.0
+  description: Implementation-derived nested behavior JSON. No sanitized
+    live captures are available.
+paths: {}
+components:
+  schemas:
+    BehaviorPreviewRequest:
+      type: object
+      properties:
+        behaviorId:
+          type: string
+          x-go-name: BehaviorID
+        sequenceJson:
+          type: string
+          x-go-name: SequenceJSON
+        status:
+          type: string
+          x-go-name: Status
+      required:
+      - behaviorId
+      - sequenceJson
+      - status
+    Sequence:
+      type: object
+      properties:
+        '@type':
+          $ref: '#/components/schemas/SequenceType'
+          x-go-name: Type
+        startNode:
+          description: The implementation emits generated typed nodes for known operations, an open-payload node for generic SendSequence callers, or a serial or parallel composite node.
+          x-go-name: StartNode
+      required:
+      - '@type'
+      - startNode
+    BehaviorNodeDiscriminator:
+      description: Schema used by the implementation to read a behavior node discriminator before selecting its typed model.
+      type: object
+      properties:
+        '@type':
+          type: string
+          x-go-name: Type
+      required:
+      - '@type'
+    BehaviorSequenceNodeInspection:
+      description: Schema used by the implementation to inspect composite behavior nodes before recursively validating children.
+      type: object
+      properties:
+        '@type':
+          type: string
+          x-go-name: Type
+        nodesToExecute:
+          type: array
+          items: {}
+          x-go-name: NodesToExecute
+      required:
+      - '@type'
+      - nodesToExecute
+    SerialNode:
+      type: object
+      properties:
+        '@type':
+          type: string
+          enum: [com.amazon.alexa.behaviors.model.SerialNode]
+          x-go-name: Type
+        nodesToExecute:
+          type: array
+          items: {}
+          x-go-name: NodesToExecute
+      required:
+      - '@type'
+      - nodesToExecute
+    ParallelNode:
+      type: object
+      properties:
+        '@type':
+          type: string
+          enum: [com.amazon.alexa.behaviors.model.ParallelNode]
+          x-go-name: Type
+        nodesToExecute:
+          type: array
+          items: {}
+          x-go-name: NodesToExecute
+      required:
+      - '@type'
+      - nodesToExecute
+    OpaquePayloadOperationNode:
+      type: object
+      properties:
+        '@type':
+          $ref: '#/components/schemas/OpaquePayloadOperationNodeType'
+          x-go-name: Type
+        type:
+          type: string
+          x-go-name: OperationType
+        operationPayload:
+          type: object
+          additionalProperties: {}
+          x-go-name: OperationPayload
+      required:
+      - '@type'
+      - type
+      - operationPayload
+    DeviceTarget:
+      type: object
+      properties:
+        deviceType:
+          type: string
+          x-go-name: DeviceType
+        deviceSerialNumber:
+          type: string
+          x-go-name: DeviceSerialNumber
+      required:
+      - deviceType
+      - deviceSerialNumber
+    Target:
+      type: object
+      properties:
+        customerId:
+          type: string
+          x-go-name: CustomerID
+          x-go-type-skip-optional-pointer: true
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceTarget'
+          x-go-name: Devices
+          x-go-type-skip-optional-pointer: true
+      required: []
+    OpaquePayloadOperationNodeType:
+      type: string
+      enum: [com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode]
+      x-enum-varnames: [ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode]
+      x-go-compat-constant-names: [ModelTypeOpaquePayloadOperationNode]
+    SequenceType:
+      type: string
+      enum: [com.amazon.alexa.behaviors.model.Sequence]
+      x-enum-varnames: [ComAmazonAlexaBehaviorsModelSequence]
+      x-go-compat-constant-names: [ModelTypeSequence]
+    BehaviorOperationType:
+      type: string
+      description: Known operation names constructed by this implementation.
+      enum:
+      - Alexa.DeviceControls.Stop
+      - Alexa.DeviceControls.Volume
+      - Alexa.Notifications.SendMobilePush
+      - AlexaAnnouncement
+      - Alexa.Speak
+      - Alexa.CannedTts.Speak
+      - Alexa.Music.PlaySearchPhrase
+      - Alexa.Operation.Video.PlaySearchPhrase
+      - Alexa.Operation.FireTV.TurnOn
+      - Alexa.Operation.FireTV.TurnOff
+      - Alexa.Operation.FireTV.PauseVideo
+      - Alexa.Operation.FireTV.ResumeVideo
+      - Alexa.Operation.FireTV.NavigateHome
+      - Alexa.Sound
+      x-enum-varnames:
+      - BehaviorOperationTypeDeviceControlsStop
+      - BehaviorOperationTypeDeviceControlsVolume
+      - BehaviorOperationTypeNotificationsSendMobilePush
+      - BehaviorOperationTypeAnnouncement
+      - BehaviorOperationTypeSpeak
+      - BehaviorOperationTypeCannedTtsSpeak
+      - BehaviorOperationTypeMusicPlaySearchPhrase
+      - BehaviorOperationTypeVideoPlaySearchPhrase
+      - BehaviorOperationTypeFireTVTurnOn
+      - BehaviorOperationTypeFireTVTurnOff
+      - BehaviorOperationTypeFireTVPauseVideo
+      - BehaviorOperationTypeFireTVResumeVideo
+      - BehaviorOperationTypeFireTVNavigateHome
+      - BehaviorOperationTypeSound
+      x-go-compat-constant-names:
+      - OperationTypeDeviceControlsStop
+      - OperationTypeDeviceControlsVolume
+      - OperationTypeNotificationsSendMobilePush
+      - OperationTypeAnnouncement
+      - OperationTypeSpeak
+      - OperationTypeCannedTtsSpeak
+      - OperationTypeMusicPlaySearchPhrase
+      - OperationTypeVideoPlaySearchPhrase
+      - OperationTypeFireTVTurnOn
+      - OperationTypeFireTVTurnOff
+      - OperationTypeFireTVPauseVideo
+      - OperationTypeFireTVResumeVideo
+      - OperationTypeFireTVNavigateHome
+      - OperationTypeSound
+    BehaviorPayloadKey:
+      type: string
+      description: Known behavior payload property names, including compatibility keys.
+      enum:
+      - deviceType
+      - deviceSerialNumber
+      - locale
+      - customerId
+      - skillId
+      - value
+      - notificationMessage
+      - alexaUrl
+      - title
+      - expireAfter
+      - content
+      - target
+      - textToSpeak
+      - cannedTtsStringId
+      - searchPhrase
+      - sanitizedSearchPhrase
+      - musicProviderId
+      - waitTimeInSeconds
+      - deviceAccountId
+      - soundStringId
+      - display
+      - speak
+      - body
+      - devices
+      - type
+      x-enum-varnames:
+      - BehaviorPayloadKeyDeviceType
+      - BehaviorPayloadKeyDeviceSerialNumber
+      - BehaviorPayloadKeyLocale
+      - BehaviorPayloadKeyCustomerID
+      - BehaviorPayloadKeySkillID
+      - BehaviorPayloadKeyValue
+      - BehaviorPayloadKeyNotificationMessage
+      - BehaviorPayloadKeyAlexaURL
+      - BehaviorPayloadKeyTitle
+      - BehaviorPayloadKeyExpireAfter
+      - BehaviorPayloadKeyContent
+      - BehaviorPayloadKeyTarget
+      - BehaviorPayloadKeyTextToSpeak
+      - BehaviorPayloadKeyCannedTtsStringID
+      - BehaviorPayloadKeySearchPhrase
+      - BehaviorPayloadKeySanitizedSearchPhrase
+      - BehaviorPayloadKeyMusicProviderID
+      - BehaviorPayloadKeyWaitTimeInSeconds
+      - BehaviorPayloadKeyDeviceAccountID
+      - BehaviorPayloadKeySoundStringID
+      - BehaviorPayloadKeyDisplay
+      - BehaviorPayloadKeySpeak
+      - BehaviorPayloadKeyBody
+      - BehaviorPayloadKeyDevices
+      - BehaviorPayloadKeyType
+      x-go-compat-constant-names:
+      - PayloadKeyDeviceType
+      - PayloadKeyDeviceSerialNumber
+      - PayloadKeyLocale
+      - PayloadKeyCustomerID
+      - PayloadKeySkillID
+      - PayloadKeyValue
+      - PayloadKeyNotificationMessage
+      - PayloadKeyAlexaURL
+      - PayloadKeyTitle
+      - PayloadKeyExpireAfter
+      - PayloadKeyContent
+      - PayloadKeyTarget
+      - PayloadKeyTextToSpeak
+      - PayloadKeyCannedTtsStringID
+      - PayloadKeySearchPhrase
+      - PayloadKeySanitizedSearchPhrase
+      - PayloadKeyMusicProviderID
+      - PayloadKeyWaitTimeInSeconds
+      - PayloadKeyDeviceAccountID
+      - PayloadKeySoundStringID
+      - PayloadKeyDisplay
+      - PayloadKeySpeak
+      - PayloadKeyBody
+      - PayloadKeyDevices
+      - PayloadKeyType
+    BehaviorSkillID:
+      type: string
+      description: Skill identifiers used by the implementation-built behavior operations.
+      enum:
+      - amzn1.ask.1p.alexadevicecontrols
+      - amzn1.ask.1p.routines.messaging
+      - amzn1.ask.1p.alexanotifications
+      - amzn1.ask.1p.saysomething
+      - amzn1.ask.1p.routines.firetv
+      x-enum-varnames:
+      - BehaviorSkillIDAlexaDeviceControls
+      - BehaviorSkillIDRoutinesMessaging
+      - BehaviorSkillIDAlexaNotifications
+      - BehaviorSkillIDSaySomething
+      - BehaviorSkillIDRoutinesFireTV
+      x-go-compat-constant-names:
+      - SkillIDAlexaDeviceControls
+      - SkillIDRoutinesMessaging
+      - SkillIDAlexaNotifications
+      - SkillIDSaySomething
+      - SkillIDRoutinesFireTV
+    BehaviorDefaultLocale:
+      type: string
+      enum: [en-US]
+      x-enum-varnames: [BehaviorDefaultLocaleEnglishUS]
+      x-go-compat-constant-names: [DefaultLocale]
+      x-go-compat-constant-values:
+        SDKDefaultLocale: en-US
+    BehaviorDefaultID:
+      type: string
+      enum: [PREVIEW]
+      x-enum-varnames: [BehaviorDefaultIDPreview]
+      x-go-compat-constant-names: [DefaultBehaviorID]
+    BehaviorDefaultStatus:
+      type: string
+      enum: [ENABLED]
+      x-enum-varnames: [BehaviorDefaultStatusEnabled]
+      x-go-compat-constant-names: [DefaultBehaviorStatus]
+    BehaviorAnnouncementExpireAfter:
+      type: string
+      enum: [PT5S]
+      x-enum-varnames: [BehaviorAnnouncementExpireAfterFiveSeconds]
+      x-go-compat-constant-names: [DefaultAnnouncementExpireAfter]
+    BehaviorAnnouncementSpeakType:
+      type: string
+      enum: [text]
+      x-enum-varnames: [BehaviorAnnouncementSpeakTypeText]
+      x-go-compat-constant-names: [DefaultAnnouncementSpeakType]
+    BehaviorAlexaURL:
+      type: string
+      enum: ['#v2/behaviors']
+      x-enum-varnames: [BehaviorAlexaURLBehaviors]
+      x-go-compat-constant-names: [AlexaURLBehaviors]
+    AnnouncementMethod:
+      type: string
+      description: Values accepted by the implementation's announcement method switch.
+      enum: [speak, show, all]
+      x-enum-varnames:
+      - BehaviorAnnouncementMethodSpeak
+      - BehaviorAnnouncementMethodShow
+      - BehaviorAnnouncementMethodAll
+      x-go-compat-constant-names:
+      - AnnouncementMethodSpeak
+      - AnnouncementMethodShow
+      - AnnouncementMethodAll
+    DeviceControlsStopPayload:
+      description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+      type: object
+      properties:
+        deviceType: {type: string}
+        deviceSerialNumber: {type: string}
+        locale: {type: string}
+        customerId: {type: string, x-go-name: CustomerID}
+        skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
+      required: [deviceType, deviceSerialNumber, locale, customerId, skillId]
+    DeviceControlsVolumePayload:
+      description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+      type: object
+      properties:
+        deviceType: {type: string}
+        deviceSerialNumber: {type: string}
+        locale: {type: string}
+        customerId: {type: string, x-go-name: CustomerID}
+        value: {type: integer, nullable: true}
+        skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
+      required: [deviceType, deviceSerialNumber, locale, customerId, value, skillId]
+    NotificationsSendMobilePushPayload:
+      description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+      type: object
+      properties:
+        deviceType: {type: string}
+        deviceSerialNumber: {type: string}
+        locale: {type: string}
+        customerId: {type: string, x-go-name: CustomerID}
+        notificationMessage: {type: string}
+        alexaUrl: {$ref: '#/components/schemas/BehaviorAlexaURL', x-go-name: AlexaURL}
+        title: {type: string}
+        skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
+      required: [deviceType, deviceSerialNumber, locale, customerId, notificationMessage, alexaUrl, title, skillId]
+    AnnouncementPayload:
+      description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+      type: object
+      properties:
+        deviceType: {type: string}
+        deviceSerialNumber: {type: string}
+        locale: {type: string}
+        customerId: {type: string, x-go-name: CustomerID}
+        expireAfter: {$ref: '#/components/schemas/BehaviorAnnouncementExpireAfter'}
+        content:
+          type: array
+          items: {$ref: '#/components/schemas/BehaviorAnnouncementContent'}
+        target: {$ref: '#/components/schemas/Target'}
+        skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
+      required: [deviceType, deviceSerialNumber, locale, customerId, expireAfter, content, target, skillId]
+    BehaviorAnnouncementContent:
+      description: Implementation-derived nested behavior content shape; no sanitized live capture is available.
+      type: object
+      properties:
+        locale: {type: string}
+        display: {$ref: '#/components/schemas/BehaviorAnnouncementDisplay'}
+        speak: {$ref: '#/components/schemas/BehaviorAnnouncementSpeak'}
+      required: [locale, display, speak]
+    BehaviorAnnouncementDisplay:
+      type: object
+      properties:
+        title: {type: string}
+        body: {type: string}
+      required: [title, body]
+    BehaviorAnnouncementSpeak:
+      type: object
+      properties:
+        type: {$ref: '#/components/schemas/BehaviorAnnouncementSpeakType'}
+        value: {type: string}
+      required: [type, value]
+    SpeakPayload:
+      description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+      type: object
+      properties:
+        deviceType: {type: string}
+        deviceSerialNumber: {type: string}
+        locale: {type: string}
+        customerId: {type: string, x-go-name: CustomerID}
+        textToSpeak:
+          type: string
+          description: Caller speech text, including the library audio-URI SSML wrapper. The URI is escaped before interpolation.
+          x-go-compat-constant-values:
+            BehaviorAudioSSMLTemplate: "<audio src='%s'/>"
+        skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
+      required: [deviceType, deviceSerialNumber, locale, customerId, textToSpeak, skillId]
+    CannedTTSSpeakPayload:
+      description: Compatibility payload shape retained for an exported legacy payload key; not built by active REST methods.
+      type: object
+      properties:
+        deviceType: {type: string}
+        deviceSerialNumber: {type: string}
+        locale: {type: string}
+        customerId: {type: string, x-go-name: CustomerID}
+        cannedTtsStringId: {type: string, x-go-name: CannedTtsStringID}
+        skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
+      required: [deviceType, deviceSerialNumber, locale, customerId, cannedTtsStringId, skillId]
+    MusicPlaySearchPhrasePayload:
+      description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+      type: object
+      properties:
+        deviceType: {type: string}
+        deviceSerialNumber: {type: string}
+        locale: {type: string}
+        customerId: {type: string, x-go-name: CustomerID}
+        searchPhrase: {type: string}
+        sanitizedSearchPhrase: {type: string}
+        musicProviderId: {type: string, x-go-name: MusicProviderID}
+        waitTimeInSeconds: {type: integer, x-go-type-skip-optional-pointer: true}
+      required: [deviceType, deviceSerialNumber, locale, customerId, searchPhrase, sanitizedSearchPhrase, musicProviderId]
+    SoundPayload:
+      description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+      type: object
+      properties:
+        deviceType: {type: string}
+        deviceSerialNumber: {type: string}
+        locale: {type: string}
+        customerId: {type: string, x-go-name: CustomerID}
+        soundStringId: {type: string, x-go-name: SoundStringID}
+      required: [deviceType, deviceSerialNumber, locale, customerId, soundStringId]
+    VideoPlaySearchPhrasePayload:
+      description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+      type: object
+      properties:
+        deviceType: {type: string}
+        deviceSerialNumber: {type: string}
+        locale: {type: string}
+        customerId: {type: string, x-go-name: CustomerID}
+        searchPhrase:
+          type: string
+          x-go-compat-constant-values:
+            BehaviorVideoSearchPhraseTemplate: "%s on %s"
+        sanitizedSearchPhrase: {type: string}
+        waitTimeInSeconds: {type: integer, x-go-type-skip-optional-pointer: true}
+      required: [deviceType, deviceSerialNumber, locale, customerId, searchPhrase, sanitizedSearchPhrase]
+    FireTVOperationPayload:
+      description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+      type: object
+      properties:
+        deviceAccountId: {type: string, x-go-name: DeviceAccountID}
+        skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
+      required: [deviceAccountId, skillId]
+    DeviceControlsStopOperationType:
+      type: string
+      enum: [Alexa.DeviceControls.Stop]
+      x-enum-varnames: [DeviceControlsStopOperationTypeStop]
+    DeviceControlsVolumeOperationType:
+      type: string
+      enum: [Alexa.DeviceControls.Volume]
+      x-enum-varnames: [DeviceControlsVolumeOperationTypeVolume]
+    NotificationsSendMobilePushOperationType:
+      type: string
+      enum: [Alexa.Notifications.SendMobilePush]
+      x-enum-varnames: [NotificationsSendMobilePushOperationTypeSendMobilePush]
+    AnnouncementOperationType:
+      type: string
+      enum: [AlexaAnnouncement]
+      x-enum-varnames: [AnnouncementOperationTypeAlexaAnnouncement]
+    SpeakOperationType:
+      type: string
+      enum: [Alexa.Speak]
+      x-enum-varnames: [SpeakOperationTypeAlexaSpeak]
+    CannedTTSSpeakOperationType:
+      type: string
+      enum: [Alexa.CannedTts.Speak]
+      x-enum-varnames: [CannedTTSSpeakOperationTypeCannedTtsSpeak]
+    MusicPlaySearchPhraseOperationType:
+      type: string
+      enum: [Alexa.Music.PlaySearchPhrase]
+      x-enum-varnames: [MusicPlaySearchPhraseOperationTypePlaySearchPhrase]
+    SoundOperationType:
+      type: string
+      enum: [Alexa.Sound]
+      x-enum-varnames: [SoundOperationTypeAlexaSound]
+    VideoPlaySearchPhraseOperationType:
+      type: string
+      enum: [Alexa.Operation.Video.PlaySearchPhrase]
+      x-enum-varnames: [VideoPlaySearchPhraseOperationTypePlaySearchPhrase]
+    DeviceControlsStopOperationNode:
+      description: Implementation-derived node paired with the generated device-controls stop payload; no sanitized live capture is available.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {$ref: '#/components/schemas/DeviceControlsStopOperationType', x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/DeviceControlsStopPayload'}
+      required: ['@type', type, operationPayload]
+    DeviceControlsVolumeOperationNode:
+      description: Implementation-derived node paired with the generated device-controls volume payload; no sanitized live capture is available.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {$ref: '#/components/schemas/DeviceControlsVolumeOperationType', x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/DeviceControlsVolumePayload'}
+      required: ['@type', type, operationPayload]
+    NotificationsSendMobilePushOperationNode:
+      description: Implementation-derived node paired with the generated mobile notification payload; no sanitized live capture is available.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {$ref: '#/components/schemas/NotificationsSendMobilePushOperationType', x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/NotificationsSendMobilePushPayload'}
+      required: ['@type', type, operationPayload]
+    AnnouncementOperationNode:
+      description: Implementation-derived node paired with the generated announcement payload; no sanitized live capture is available.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {$ref: '#/components/schemas/AnnouncementOperationType', x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/AnnouncementPayload'}
+      required: ['@type', type, operationPayload]
+    SpeakOperationNode:
+      description: Implementation-derived node paired with the generated speech payload; no sanitized live capture is available.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {$ref: '#/components/schemas/SpeakOperationType', x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/SpeakPayload'}
+      required: ['@type', type, operationPayload]
+    CannedTTSSpeakOperationNode:
+      description: Compatibility node and payload shape retained for an exported legacy payload key; not built by active REST methods.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {$ref: '#/components/schemas/CannedTTSSpeakOperationType', x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/CannedTTSSpeakPayload'}
+      required: ['@type', type, operationPayload]
+    MusicPlaySearchPhraseOperationNode:
+      description: Implementation-derived node paired with the generated music search payload; no sanitized live capture is available.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {$ref: '#/components/schemas/MusicPlaySearchPhraseOperationType', x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/MusicPlaySearchPhrasePayload'}
+      required: ['@type', type, operationPayload]
+    SoundOperationNode:
+      description: Implementation-derived node paired with the generated sound payload; no sanitized live capture is available.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {$ref: '#/components/schemas/SoundOperationType', x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/SoundPayload'}
+      required: ['@type', type, operationPayload]
+    VideoPlaySearchPhraseOperationNode:
+      description: Implementation-derived node paired with the generated video search payload; no sanitized live capture is available.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {$ref: '#/components/schemas/VideoPlaySearchPhraseOperationType', x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/VideoPlaySearchPhrasePayload'}
+      required: ['@type', type, operationPayload]
+    FireTVOperationNode:
+      description: Implementation-derived node paired with the generated Fire TV payload; SendFireTVSequence preserves its caller-supplied operation type as an open string, with no sanitized live capture available.
+      type: object
+      properties:
+        '@type': {$ref: '#/components/schemas/OpaquePayloadOperationNodeType', x-go-name: Type}
+        type: {type: string, x-go-name: OperationType}
+        operationPayload: {$ref: '#/components/schemas/FireTVOperationPayload'}
+      required: ['@type', type, operationPayload]
+
+    SDKKnownProviderID:
+      type: string
+      x-go-type: string
+      description: Known library ProviderID values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: ProviderID
+      x-go-compat-constant-values:
+        SDKProviderIDAmazon: "AMAZON_MUSIC"
+        SDKProviderIdDefault: "DEFAULT"
+        SDKProviderIDSpotify: "SPOTIFY"
+        SDKProviderIDAudible: "AUDIBLE"

@@ -1,0 +1,228 @@
+openapi: 3.0.3
+info:
+  title: Alexa media Go compatibility projections
+  version: 0.1.0
+  description: |
+    These schemas preserve historical exported Go response and command types.
+    Required lists describe old Go JSON encoding only and do not assert
+    provider validation requirements.
+paths: {}
+components:
+  schemas:
+    VideoProviderID:
+      type: string
+      enum: [PRIME VIDEO, YOUTUBE, NETFLIX, DAILYMOTION]
+      x-enum-varnames:
+        - VideoProviderIDAmazon
+        - VideoProviderIDYouTube
+        - VideoProviderIDNetflix
+        - VideoProviderIDDailymotion
+    MediaCommand:
+      type: object
+      required: [type]
+      properties:
+        type: {type: string}
+        shuffle: {type: boolean}
+        repeat: {type: boolean}
+    PlayerStateResponse:
+      type: object
+      properties:
+        playerInfo: {$ref: '#/components/schemas/PlayerInfo'}
+    PlayerInfo:
+      type: object
+      properties:
+        hint: {type: string}
+        infoText: {$ref: '#/components/schemas/InfoText'}
+        isPlayingInLemur:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+        lemurVolume: {type: integer}
+        lyrics: {type: string}
+        mainArt: {$ref: '#/components/schemas/Art'}
+        mediaId:
+          type: string
+          x-go-name: MediaId
+          x-go-type-skip-optional-pointer: true
+        miniArt: {$ref: '#/components/schemas/Art'}
+        miniInfoText: {$ref: '#/components/schemas/InfoText'}
+        playbackSource: {type: string}
+        playingInLemurId: {type: string, x-go-name: PlayingInLemurId}
+        progress: {$ref: '#/components/schemas/Progress'}
+        provider: {$ref: '#/components/schemas/Provider'}
+        quality: {type: string}
+        queueId:
+          type: string
+          x-go-name: QueueId
+          x-go-type-skip-optional-pointer: true
+        state:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        template: {$ref: '#/components/schemas/Template'}
+        transport: {$ref: '#/components/schemas/Transport'}
+        upNextItems:
+          x-go-type-skip-optional-pointer: true
+        volume: {$ref: '#/components/schemas/Volume'}
+    InfoText:
+      type: object
+      properties:
+        header: {type: string}
+        headerSubtext1: {type: string}
+        multiLineMode:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+        subText1:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        subText2:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        title:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    Art:
+      type: object
+      properties:
+        altText:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        artType:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        contentType: {type: string}
+        url:
+          type: string
+          x-go-name: URL
+        iconId: {type: string}
+        iconStyles: {type: string}
+    Progress:
+      type: object
+      properties:
+        allowScrubbing:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+        locationInfo: {type: string}
+        mediaLength:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+        mediaProgress:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+        showTiming:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+        visible:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+    Provider:
+      type: object
+      properties:
+        artOverlay: {$ref: '#/components/schemas/Art'}
+        fallbackMainArt: {$ref: '#/components/schemas/Art'}
+        providerDisplayName: {type: string}
+        providerLogo: {$ref: '#/components/schemas/Art'}
+        providerName:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    Template:
+      type: object
+      properties:
+        art: {$ref: '#/components/schemas/Art'}
+        backgroundImageUrl:
+          type: string
+          x-go-name: BackgroundImageURL
+          x-go-type-skip-optional-pointer: true
+        templateType:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    Transport:
+      type: object
+      properties:
+        closedCaptions: {type: string}
+        layoutType:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        lyrics:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        next:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        playPause:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        previous:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        rateContentAction: {$ref: '#/components/schemas/RateContentAction'}
+        thumbsDown:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        thumbsUp:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    RateContentAction:
+      type: object
+      properties:
+        mediaOwnerCustomerId:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        rating: {type: string}
+        type:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    Volume:
+      type: object
+      properties:
+        muted:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+        volume:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+    StopPlaybackRequest:
+      type: object
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+        allDevices: {type: boolean, x-go-type-skip-optional-pointer: true}
+    MediaControlRequest:
+      type: object
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+    PlayerStateRequest:
+      type: object
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+    PlayMusicRequest:
+      type: object
+      required: [providerId, searchPhrase]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        providerId: {type: string, x-go-name: ProviderID}
+        searchPhrase: {type: string}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+        timerSeconds: {type: integer}
+    PlayVideoRequest:
+      type: object
+      required: [videoProviderId, searchPhrase]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        videoProviderId: {type: string, x-go-name: VideoProviderID}
+        searchPhrase: {type: string}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+        timerSeconds: {type: integer}
+    PlayAudioURIRequest:
+      type: object
+      required: [uri]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        uri: {type: string, x-go-name: URI}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+    VolumeControlRequest:
+      type: object
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        volume: {type: integer}
+        delta: {type: integer}
+        setVolume: {type: boolean, x-go-type-skip-optional-pointer: true}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}

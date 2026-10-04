@@ -1,0 +1,168 @@
+package main
+
+import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"testing"
+)
+
+func TestWireConstructionRejectsUnregisteredFixedValuesAndAliases(t *testing.T) {
+	t.Parallel()
+
+	for _, construction := range []string{
+		`wire.Payload{Value: "brandNewUnregisteredValue"}`,
+		`wire.Payload{Value: "brandNew" + "UnregisteredValue"}`,
+		`wire.Payload{Value: string("brandNewUnregisteredValue")}`,
+		`wire.Payload{Value: raw}`,
+		`wire.Payload{Value: indirect}`,
+		`wire.Payload{Value: reassigned}`,
+		`wire.Payload{Value: declared}`,
+		`wire.Payload{Extra: map[string]any{"brandNewUnregisteredKey": caller}}`,
+		`wire.Payload{Extra: map[string]any{raw: caller}}`,
+		`[]wire.Payload{{Value: "brandNewUnregisteredValue"}}`,
+		`map[string]wire.Payload{raw: {Value: caller}}`,
+	} {
+		set := token.NewFileSet()
+
+		file, err := parser.ParseFile(set, "probe.go", `package probe
+import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
+const raw = "brandNewUnregisteredValue"
+func request(caller string) {
+ indirect := raw
+ reassigned := caller
+ reassigned = "brandNewReassignedValue"
+ var declared string
+ declared = "brandNewDeclaredValue"
+ _ = `+construction+`
+}
+`, 0)
+		if err != nil {
+			t.Fatalf("parse construction probe: %v", err)
+		}
+
+		err = rejectRawGeneratedWireConstructions(file, set, wireConstructionTestModels())
+		if err == nil {
+			t.Fatalf("unregistered fixed value/key accepted: %s", construction)
+		}
+	}
+}
+
+func TestWireConstructionAllowsCallerInputsAndGeneratedConstants(t *testing.T) {
+	t.Parallel()
+
+	set := token.NewFileSet()
+
+	file, err := parser.ParseFile(set, "probe.go", `package probe
+import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
+func request(caller string, input *wire.Payload) {
+ _ = wire.Payload{Value: caller}
+ _ = wire.Payload{Value: wire.RegisteredValue}
+ input.Extra[caller] = caller
+ input.Extra[wire.RegisteredValue] = caller
+ input.Extra[caller][wire.RegisteredValue] = caller
+ alias := input.Extra[caller]
+ alias[wire.RegisteredValue] = caller
+ (*input).Value = caller
+ var payloads []wire.Payload
+ payloads[:][0].Value = caller
+}
+`, 0)
+	if err != nil {
+		t.Fatalf("parse caller probe: %v", err)
+	}
+
+	err = rejectRawGeneratedWireConstructions(file, set, wireConstructionTestModels())
+	if err != nil {
+		t.Fatalf("caller or generated value rejected: %v", err)
+	}
+}
+
+func wireConstructionTestModels() map[string]generatedModel {
+	var payload generatedModel
+
+	payload.Name = "Payload"
+	payload.File = "pkg/dependencymodels/payload.gen.go"
+	payload.Generated = true
+
+	return map[string]generatedModel{"Payload": payload}
+}
+
+func TestWireMutationRejectsNewFixedValuesAfterInitialization(t *testing.T) {
+	t.Parallel()
+
+	for _, mutation := range []string{
+		`var payload wire.Payload; payload.Value = "unregistered"`,
+		`payload := wire.Payload{}; payload.Value = "unregistered"`,
+		`payload := &wire.Payload{}; alias := payload; alias.Value = "unregistered"`,
+		`input.Value = "unregistered"`,
+		`input.Extra["brandNewKey"] = input.Value`,
+		`input.Extra[input.Value] = "brandNewValue"`,
+		`alias := input.Extra; alias["brandNewKey"] = input.Value`,
+		`var alias map[string]any; alias = input.Extra; alias["brandNewKey"] = input.Value`,
+		`var alias map[string]any; alias = input.Extra; alias[input.Value] = "brandNewValue"`,
+		`var alias *wire.Payload; alias = input; alias.Value = "brandNewValue"`,
+		`payloads := []wire.Payload{}; payloads[0].Value = "brandNewValue"`,
+		`var payloads []wire.Payload; payloads[0].Value = "brandNewValue"`,
+		`var payloads []wire.Payload; payloads[:][0].Value = "brandNewValue"`,
+		`(*input).Value = "brandNewValue"`,
+		`input.Extra[input.Value].(map[string]any)["brandNewKey"] = input.Value`,
+		`input.Extra[input.Value]["brandNewKey"] = input.Value`,
+		`input.Extra[input.Value][input.Value] = "brandNewValue"`,
+		`input.Extra["brandNewIntermediate"][wire.RegisteredValue] = input.Value`,
+		`key := "brandNewIntermediate"; input.Extra[key][input.Value] = input.Value`,
+		`alias := input.Extra["brandNewIntermediate"]; alias[input.Value] = input.Value`,
+		`var alias map[string]any; alias = input.Extra["brandNewIntermediate"]; alias[input.Value] = input.Value`,
+		`(input).Value = "brandNewValue"`,
+		`key := "brandNewKey"; input.Extra[key] = input.Value`,
+	} {
+		set := token.NewFileSet()
+
+		file, err := parser.ParseFile(set, "probe.go", `package probe
+import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
+func request(input *wire.Payload) { `+mutation+` }
+`, 0)
+		if err != nil {
+			t.Fatalf("parse mutation probe: %v", err)
+		}
+
+		err = rejectRawGeneratedWireConstructions(file, set, wireConstructionTestModels())
+		if err == nil {
+			t.Fatalf("unregistered mutation accepted: %s", mutation)
+		}
+	}
+}
+
+func TestWireConstructionDoesNotTreatFieldNamesOrSiblingAssignmentsAsValues(t *testing.T) {
+	t.Parallel()
+
+	set := token.NewFileSet()
+
+	file, err := parser.ParseFile(set, "probe.go", `package probe
+import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
+const Value = "not a wire value"
+func request(caller string) {
+ local, diagnostic := caller, "diagnostic"
+ _ = diagnostic
+ _ = wire.Payload{Nested: wire.Payload{Value: local}}
+}
+`, 0)
+	if err != nil {
+		t.Fatalf("parse scope probe: %v", err)
+	}
+
+	err = rejectRawGeneratedWireConstructions(file, set, wireConstructionTestModels())
+	if err != nil {
+		t.Fatalf("non-wire strings were treated as wire values: %v", err)
+	}
+}
+
+func rejectRawGeneratedWireConstructions(file *ast.File, set *token.FileSet, models map[string]generatedModel) error {
+	path := "pkg/probe.go"
+	owner := primitivePackage{ImportPath: wireImportPath, Name: "alexamodels", Directory: "pkg/dependencymodels"}
+	aliases := primitiveImportAliases(file, owner)
+	assignments := indexWireSourceAssignments(file)
+	indexWireHelperParameters(file, aliases, path, models, assignments)
+
+	return rejectRawGeneratedWireConstructionsWithAssignments(file, set, path, models, assignments)
+}

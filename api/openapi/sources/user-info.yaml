@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: 'This is an implementation-derived description of HTTP routes, request shapes,
+
+    and response models used by the current go-alexa source. It is not an
+
+    Amazon-issued API contract. There are no sanitized live HTTP captures in
+
+    this repository, so these shapes have not been verified against current
+
+    service behavior. Synthetic test data is not evidence of provider behavior.
+
+    See the Alexa AsyncAPI document for the directive stream parsed by the
+
+    library, and the GraphQL schema for its GraphQL subset.
+
+    '
+servers:
+- url: https://api.amazonalexa.com
+  description: Default REST base URL in go-alexa.
+  x-go-alexa-region: na
+- url: https://api.eu.amazonalexa.com
+  description: EU REST base URL constant in go-alexa.
+  x-go-alexa-region: eu
+- url: https://api.jp.amazonalexa.com
+  description: Japan REST base URL constant in go-alexa.
+  x-go-alexa-region: jp
+security:
+- BearerToken: []
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
+tags:
+- name: User info
+  description: Cookie-backed account profile operations implemented by go-alexa.
+paths:
+  /api/users/me:
+    get:
+      tags:
+      - User info
+      operationId: getUserInfo
+      summary: Read the current account profile
+      description: The decoded response contains personal account information. Treat it as sensitive data.
+      servers:
+      - url: https://alexa.amazon.com
+        x-go-alexa-region: na
+      - url: https://alexa.amazon.co.uk
+        x-go-alexa-region: eu
+      - url: https://alexa.amazon.co.jp
+        x-go-alexa-region: jp
+      security:
+      - BearerToken: []
+      - CookieHeader: []
+      parameters:
+      - name: platform
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: version
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: csrf
+        in: header
+        required: false
+        description: A supplied CSRF token is serialized as a Cookie header by the helper.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Account profile decoded by the current helper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireUserInfo'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: The client sends its supplied access token in the Authorization header.
+  schemas:
+    WireUserInfo:
+      type: object
+      description: May contain personal account information.
+      properties:
+        countryOfResidence:
+          type: string
+        effectiveMarketPlaceId:
+          type: string
+        email:
+          type: string
+        eulaAcceptance:
+          type: boolean
+        features:
+          type: array
+          items:
+            type: string
+        fullName:
+          type: string
+        hasActiveDopplers:
+          type: boolean
+        id:
+          type: string
+        marketPlaceDomainName:
+          type: string
+        marketPlaceId:
+          type: string
+        marketPlaceLocale:
+          type: string
+      additionalProperties: true
+  responses:
+    UnhandledResponse:
+      description: Response not decoded into a success model by this operation.

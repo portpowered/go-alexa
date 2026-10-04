@@ -1,6 +1,7 @@
 // Package alexa provides the main client for interacting with Alexa services.
 // It orchestrates authentication, API clients (REST and GraphQL), and event connections.
-// The client supports both full OAuth flows and simple bearer token authentication.
+// It supports code-pair registration, bearer tokens, and explicit token refresh.
+// Browser authorization and callback validation belong to the calling application.
 package alexa
 
 import (

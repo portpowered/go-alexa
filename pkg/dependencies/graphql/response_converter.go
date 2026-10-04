@@ -108,6 +108,7 @@ func ConvertSubscribeEntities(entities []alexaapimodels.SubscribeEntity) []Subsc
 	for _, entity := range entities {
 		filters = append(filters, SubscriptionFilter{
 			EntityType: string(entity.EntityType),
+			Ids:        nil,
 		})
 	}
 

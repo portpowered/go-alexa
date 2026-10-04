@@ -30,6 +30,7 @@ func restPairedReplayResponses(
 ) []restReplayResponse {
 	responses := make([]restReplayResponse, 0, 26)
 	responses = append(responses, restAuthenticationReplayCases(ctx, config)...)
+	responses = append(responses, restAuthenticationFailureReplayCases(ctx, config)...)
 	responses = append(responses, restEndpointReplayCases(ctx, endpoint)...)
 	responses = append(responses, restAccountReplayCases(ctx)...)
 	responses = append(responses, restMediaReplayCases(ctx, endpoint, media)...)
@@ -86,7 +87,9 @@ func restEndpointReplayCases(
 			return err
 		}},
 		{"queryRestEndpoints", "{}", 200, nil, func(c *Client) error {
-			_, err := c.QueryEndpoints(ctx, &alexamodels.EndpointQueryRequest{}, nil)
+			_, err := c.QueryEndpoints(ctx, &alexamodels.EndpointQueryRequest{
+				Query: alexamodels.EndpointQuery{AND: nil, OR: nil, IncludeFields: nil, PaginationContext: nil},
+			}, nil)
 
 			return err
 		}},
@@ -98,6 +101,7 @@ func restEndpointReplayCases(
 				ctx,
 				"synthetic-endpoint",
 				alexamodels.Command{
+					DeviceID: "", Type: "",
 					Namespace: "Alexa.PowerController",
 					Name:      "TurnOn",
 					Payload:   map[string]any{"powerState": "ON"},

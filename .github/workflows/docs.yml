@@ -38,10 +38,12 @@ jobs:
       - name: Test with coverage
         if: github.event_name != 'pull_request'
         run: go test -race -coverpkg=./pkg/... -coverprofile=coverage.out ./pkg/...
+      - name: Check bundled OpenAPI source
+        run: go run ./tools/openapibundle -check
       - name: Build API documentation site
         uses: portpowered/api-docs-website-github-action@v0.3.0
         with:
-          title: Alexa API Reference
+          title: Alexa · implementation-derived
           openapi: api/openapi.yaml
           asyncapi: api/asyncapi.yaml
           graphql: pkg/schemas/graphql/endpoints-schema.graphql
@@ -74,6 +76,13 @@ jobs:
             color,
           }, null, 2)}\n`);
           JS
+      - name: Upload reviewable documentation build
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-site
+          path: site
+          include-hidden-files: true
+          retention-days: 14
       - name: Upload Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5

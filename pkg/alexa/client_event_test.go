@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
-	directivewire "github.com/portpowered/go-alexa/pkg/alexa/internal/wire"
+
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
 	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
@@ -154,7 +155,7 @@ func assertParsedEvent(t *testing.T, testCase parseEventTestCase) {
 		t.Fatalf("Failed to unmarshal synthetic event envelope: %v", err)
 	}
 
-	var directive directivewire.DirectiveMessage
+	var directive alexamodels.DirectiveMessage
 
 	err = json.Unmarshal(envelope.Data, &directive)
 	if err != nil {
@@ -197,29 +198,25 @@ func assertParsedEventMetadata(t *testing.T, event *alexaapimodels.Event, testCa
 func assertTemperaturePayload(t *testing.T, payload interface{}) {
 	t.Helper()
 
-	property, ok := payload.(*alexamodels.TemperatureSensorProperty)
+	property, ok := payload.(*alexaapimodels.TemperatureSensorPayload)
 	if !ok {
-		t.Fatalf("Expected payload type *alexamodels.TemperatureSensorProperty, got %T", payload)
-	}
-
-	if property.Name != "temperature" {
-		t.Errorf("Expected property name 'temperature', got %s", property.Name)
+		t.Fatalf("Expected payload type *alexaapimodels.TemperatureSensorPayload, got %T", payload)
 	}
 
 	if property.Value == nil {
 		t.Fatal("Expected value to be non-nil")
 	}
 
-	if property.Value.Value != 20.8 {
-		t.Errorf("Expected temperature value 20.8, got %f", property.Value.Value)
+	if *property.Value != 20.8 {
+		t.Errorf("Expected temperature value 20.8, got %f", *property.Value)
 	}
 
-	if property.Value.Scale != "CELSIUS" {
-		t.Errorf("Expected temperature scale 'CELSIUS', got %s", property.Value.Scale)
+	if property.Scale != "CELSIUS" {
+		t.Errorf("Expected temperature scale 'CELSIUS', got %s", property.Scale)
 	}
 
-	if property.TimeOfSample != "2025-12-02T05:17:29.25Z" {
-		t.Errorf("Expected timeOfSample '2025-12-02T05:17:29.25Z', got %s", property.TimeOfSample)
+	if !property.TimeOfSample.Equal(time.Date(2025, time.December, 2, 5, 17, 29, 250000000, time.UTC)) {
+		t.Errorf("Unexpected timeOfSample: %s", property.TimeOfSample)
 	}
 
 	if property.Accuracy != "HIGH" {
@@ -234,21 +231,17 @@ func assertTemperaturePayload(t *testing.T, payload interface{}) {
 func assertPowerPayload(t *testing.T, payload interface{}) {
 	t.Helper()
 
-	property, ok := payload.(*alexamodels.PowerProperty)
+	property, ok := payload.(*alexaapimodels.PowerPayload)
 	if !ok {
-		t.Fatalf("Expected payload type *alexamodels.PowerProperty, got %T", payload)
+		t.Fatalf("Expected payload type *alexaapimodels.PowerPayload, got %T", payload)
 	}
 
-	if property.Name != "powerState" {
-		t.Errorf("Expected property name 'powerState', got %s", property.Name)
+	if property.PowerState != "OFF" {
+		t.Errorf("Expected power state 'OFF', got %s", property.PowerState)
 	}
 
-	if property.PowerStateValue != "OFF" {
-		t.Errorf("Expected powerStateValue 'OFF', got %s", property.PowerStateValue)
-	}
-
-	if property.TimeOfSample != "2025-12-02T05:17:49Z" {
-		t.Errorf("Expected timeOfSample '2025-12-02T05:17:49Z', got %s", property.TimeOfSample)
+	if !property.TimeOfSample.Equal(time.Date(2025, time.December, 2, 5, 17, 49, 0, time.UTC)) {
+		t.Errorf("Unexpected timeOfSample: %s", property.TimeOfSample)
 	}
 
 	if property.Accuracy != "HIGH" {
@@ -257,5 +250,28 @@ func assertPowerPayload(t *testing.T, payload interface{}) {
 
 	if property.Type != "RETRIEVABLE" {
 		t.Errorf("Expected type 'RETRIEVABLE', got %s", property.Type)
+	}
+}
+
+func TestCompatibilityEventRejectsMalformedGeneratedDirectiveShapes(t *testing.T) {
+	t.Parallel()
+
+	for _, input := range []string{
+		`{}`, `{"directive":null}`, `{"directive":{"header":null}}`,
+		`{"directive":{"header":{},"payload":null}}`,
+		`{"directive":{"header":{},"payload":{"renderingUpdates":[]}}}`,
+		`{"directive":{"header":{},"payload":{"renderingUpdates":[{"resourceMetadata":4}]}}}`,
+	} {
+		var message alexamodels.Message
+
+		err := json.Unmarshal([]byte(`{"data":`+input+`}`), &message)
+		if err != nil {
+			t.Fatalf("decode synthetic compatibility input: %v", err)
+		}
+
+		_, err = ParseEvent(&message)
+		if err == nil {
+			t.Fatalf("malformed directive accepted: %s", input)
+		}
 	}
 }

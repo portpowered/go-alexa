@@ -6,6 +6,8 @@ import (
 )
 
 // Event represents a decomposed event from the Alexa event stream.
+//
+//modelinventory:semantic Event: public envelope for a parsed event namespace, name, endpoint, message ID, and payload.
 type Event struct {
 	Namespace string `json:"namespace"`
 	// The name of the event within the context of the namespace
@@ -18,6 +20,8 @@ type Event struct {
 }
 
 // ColorTemperaturePayload represents a color temperature update event.
+//
+//modelinventory:semantic ColorTemperaturePayload: color-temperature event value with normalized sample time and property metadata.
 type ColorTemperaturePayload struct {
 	ColorTemperatureInKelvin int       `json:"colorTemperatureInKelvin"`
 	TimeOfSample             time.Time `json:"timeOfSample"`
@@ -27,6 +31,8 @@ type ColorTemperaturePayload struct {
 }
 
 // PowerPayload represents a power state update event.
+//
+//modelinventory:semantic PowerPayload: power state event value with normalized sample time and property metadata.
 type PowerPayload struct {
 	PowerState   string    `json:"powerState"` // "ON" or "OFF"
 	TimeOfSample time.Time `json:"timeOfSample"`
@@ -36,6 +42,8 @@ type PowerPayload struct {
 }
 
 // SpeakerPayload represents a speaker/volume update event.
+//
+//modelinventory:semantic SpeakerPayload: speaker volume and mute event values with optional-value preservation.
 type SpeakerPayload struct {
 	Volume       *int      `json:"volume,omitempty"`
 	Muted        *bool     `json:"muted,omitempty"`
@@ -46,6 +54,8 @@ type SpeakerPayload struct {
 }
 
 // BrightnessPayload represents a brightness update event.
+//
+//modelinventory:semantic BrightnessPayload: brightness event value with optional numeric state preserved.
 type BrightnessPayload struct {
 	Brightness   *int      `json:"brightness,omitempty"`
 	TimeOfSample time.Time `json:"timeOfSample"`
@@ -55,6 +65,8 @@ type BrightnessPayload struct {
 }
 
 // ColorPayload represents a color update event.
+//
+//modelinventory:semantic ColorPayload: hue, saturation, and brightness event values with optional state preserved.
 type ColorPayload struct {
 	Hue          *float64  `json:"hue,omitempty"`
 	Saturation   *float64  `json:"saturation,omitempty"`
@@ -66,6 +78,8 @@ type ColorPayload struct {
 }
 
 // LockPayload represents a lock state update event.
+//
+//modelinventory:semantic LockPayload: lock state event value with normalized sample time and property metadata.
 type LockPayload struct {
 	LockState    string    `json:"lockState"` // "LOCKED" or "UNLOCKED"
 	TimeOfSample time.Time `json:"timeOfSample"`
@@ -75,6 +89,8 @@ type LockPayload struct {
 }
 
 // ModePayload represents a mode update event.
+//
+//modelinventory:semantic ModePayload: mode event value and optional instance identifier.
 type ModePayload struct {
 	Instance     *string   `json:"instance,omitempty"` // Instance identifier for multiple modes on same endpoint
 	Mode         string    `json:"mode"`
@@ -85,6 +101,8 @@ type ModePayload struct {
 }
 
 // RangePayload represents a range value update event.
+//
+//modelinventory:semantic RangePayload: range event value and optional feature instance identifier.
 type RangePayload struct {
 	Instance     *string   `json:"instance,omitempty"` // Instance identifier for multiple ranges on same endpoint
 	RangeValue   *float64  `json:"rangeValue,omitempty"`
@@ -95,6 +113,8 @@ type RangePayload struct {
 }
 
 // TogglePayload represents a toggle state update event.
+//
+//modelinventory:semantic TogglePayload: toggle state event value and optional feature instance identifier.
 type TogglePayload struct {
 	Instance     *string   `json:"instance,omitempty"` // Instance identifier for multiple toggles on same endpoint
 	ToggleState  string    `json:"toggleState"`        // "ON" or "OFF"
@@ -105,6 +125,8 @@ type TogglePayload struct {
 }
 
 // PercentagePayload represents a percentage update event.
+//
+//modelinventory:semantic PercentagePayload: percentage event value with optional zero-preserving numeric state.
 type PercentagePayload struct {
 	Percentage   *float64  `json:"percentage,omitempty"`
 	TimeOfSample time.Time `json:"timeOfSample"`
@@ -114,6 +136,8 @@ type PercentagePayload struct {
 }
 
 // PowerLevelPayload represents a power level update event.
+//
+//modelinventory:semantic PowerLevelPayload: power-level event value with optional zero-preserving numeric state.
 type PowerLevelPayload struct {
 	PowerLevel   *int      `json:"powerLevel,omitempty"`
 	TimeOfSample time.Time `json:"timeOfSample"`
@@ -122,17 +146,16 @@ type PowerLevelPayload struct {
 	Error        *Error    `json:"error,omitempty"`
 }
 
-// UnknownPayload represents an unknown or unparsed event payload.
-type UnknownPayload struct {
-	Data map[string]interface{} `json:"data"`
-}
-
 // Error represents an error in an event payload.
+//
+//modelinventory:semantic Error: normalized event property error exposed through typed event payloads.
 type Error struct {
 	Type string `json:"type"`
 }
 
 // ThermostatModePayload represents a thermostat mode update event.
+//
+//modelinventory:semantic ThermostatModePayload: thermostat mode state converted from the registered endpoint event.
 type ThermostatModePayload struct {
 	ThermostatMode   string    `json:"thermostatMode"` // "COOL", "HEAT", "OFF", "AUTO", "ECO", "EM_HEAT"
 	TimeOfSample     time.Time `json:"timeOfSample"`
@@ -142,20 +165,9 @@ type ThermostatModePayload struct {
 	Error            *Error    `json:"error,omitempty"`
 }
 
-// SetpointPayload represents a setpoint (temperature) update event
-// Can represent lowerSetpoint, upperSetpoint, or targetSetpoint.
-type SetpointPayload struct {
-	Value             *float64  `json:"value,omitempty"` // Temperature value
-	Scale             string    `json:"scale,omitempty"` // "FAHRENHEIT", "CELSIUS", "KELVIN"
-	DeviceNativeScale string    `json:"deviceNativeScale,omitempty"`
-	TimeOfSample      time.Time `json:"timeOfSample"`
-	TimeOfLastChange  time.Time `json:"timeOfLastChange,omitempty"`
-	Accuracy          string    `json:"accuracy"`
-	Type              string    `json:"type"`
-	Error             *Error    `json:"error,omitempty"`
-}
-
 // TemperatureSensorPayload represents a temperature sensor update event.
+//
+//modelinventory:semantic TemperatureSensorPayload: temperature sensor reading with scale and timestamp metadata.
 type TemperatureSensorPayload struct {
 	Value            *float64  `json:"value,omitempty"` // Temperature value
 	Scale            string    `json:"scale,omitempty"` // "FAHRENHEIT", "CELSIUS", "KELVIN"
@@ -168,6 +180,8 @@ type TemperatureSensorPayload struct {
 
 // DetectionStatePayload represents a detection state update event
 // Used for contact sensors and motion sensors.
+//
+//modelinventory:semantic DetectionStatePayload: motion or contact detection state converted from registered endpoint events.
 type DetectionStatePayload struct {
 	DetectionState   string    `json:"detectionState"` // "DETECTED", "NOT_DETECTED", "UNKNOWN"
 	TimeOfSample     time.Time `json:"timeOfSample"`
@@ -178,6 +192,8 @@ type DetectionStatePayload struct {
 }
 
 // ActionStatePayload represents an action state update event.
+//
+//modelinventory:semantic ActionStatePayload: action status, IDs, target IDs, and timing converted from an endpoint event.
 type ActionStatePayload struct {
 	Instance         *string       `json:"instance,omitempty"` // Instance identifier for multiple actions on same endpoint
 	Status           string        `json:"status"`             // "IDLE", "UNAVAILABLE", "RUNNING", "PAUSED", "COMPLETED", "INCOMPLETE", "UNKNOWN"
@@ -192,13 +208,17 @@ type ActionStatePayload struct {
 }
 
 // TimeInterval represents a time interval for action states.
+//
+//modelinventory:semantic TimeInterval: optional action start, end, and ISO duration fields preserved in the public event model.
 type TimeInterval struct {
 	Start    *time.Time `json:"start,omitempty"`
 	End      *time.Time `json:"end,omitempty"`
-	Duration *time.Time `json:"duration,omitempty"`
+	Duration *string    `json:"duration,omitempty"`
 }
 
 // ReachabilityPayload represents a reachability update event.
+//
+//modelinventory:semantic ReachabilityPayload: endpoint reachability state and optional change time converted for consumers.
 type ReachabilityPayload struct {
 	ReachabilityStatus string    `json:"reachabilityStatus"` // "REACHABLE", "UNREACHABLE", "UNKNOWN"
 	TimeOfSample       time.Time `json:"timeOfSample"`
@@ -209,6 +229,8 @@ type ReachabilityPayload struct {
 }
 
 // BatteryPayload represents a battery update event.
+//
+//modelinventory:semantic BatteryPayload: battery percentage, health, and charging status converted from the registered event.
 type BatteryPayload struct {
 	LevelPercentage  *int                   `json:"levelPercentage,omitempty"`
 	Health           *BatteryHealth         `json:"health,omitempty"`
@@ -221,18 +243,24 @@ type BatteryPayload struct {
 }
 
 // BatteryHealth represents battery health information.
+//
+//modelinventory:semantic BatteryHealth: battery state and reason list nested in the public battery event payload.
 type BatteryHealth struct {
 	State   string   `json:"state"` // "OK", "WARNING", "CRITICAL", "UNKNOWN"
 	Reasons []string `json:"reasons"`
 }
 
 // BatteryChargingHealth represents battery charging health information.
+//
+//modelinventory:semantic BatteryChargingHealth: charging health state and reason nested in the public battery event payload.
 type BatteryChargingHealth struct {
 	State  string `json:"state"` // "OK", "WARNING", "CRITICAL", "UNKNOWN"
 	Reason string `json:"reason,omitempty"`
 }
 
 // IlluminancePayload represents an illuminance update event.
+//
+//modelinventory:semantic IlluminancePayload: illuminance reading with normalized timestamps and optional change time.
 type IlluminancePayload struct {
 	Value            *float64  `json:"value,omitempty"`
 	TimeOfSample     time.Time `json:"timeOfSample"`
@@ -243,6 +271,8 @@ type IlluminancePayload struct {
 }
 
 // GeolocationPayload represents a geolocation update event.
+//
+//modelinventory:semantic GeolocationPayload: location reading and optional coordinate, altitude, heading, and speed details.
 type GeolocationPayload struct {
 	Coordinate       *GeolocationCoordinate `json:"coordinate,omitempty"`
 	Altitude         *GeolocationAltitude   `json:"altitude,omitempty"`
@@ -257,6 +287,8 @@ type GeolocationPayload struct {
 }
 
 // GeolocationCoordinate represents a geolocation coordinate.
+//
+//modelinventory:semantic GeolocationCoordinate: latitude and longitude values nested in the public geolocation event.
 type GeolocationCoordinate struct {
 	LatitudeInDegrees  float64  `json:"latitudeInDegrees"`
 	LongitudeInDegrees float64  `json:"longitudeInDegrees"`
@@ -264,24 +296,32 @@ type GeolocationCoordinate struct {
 }
 
 // GeolocationAltitude represents geolocation altitude information.
+//
+//modelinventory:semantic GeolocationAltitude: altitude and accuracy nested in the public geolocation event.
 type GeolocationAltitude struct {
 	AltitudeInMeters float64  `json:"altitudeInMeters"`
 	AccuracyInMeters *float64 `json:"accuracyInMeters,omitempty"`
 }
 
 // GeolocationHeading represents geolocation heading information.
+//
+//modelinventory:semantic GeolocationHeading: direction and accuracy nested in the public geolocation event.
 type GeolocationHeading struct {
 	DirectionInDegrees float64  `json:"directionInDegrees"`
 	AccuracyInDegrees  *float64 `json:"accuracyInDegrees,omitempty"`
 }
 
 // GeolocationSpeed represents geolocation speed information.
+//
+//modelinventory:semantic GeolocationSpeed: speed and accuracy nested in the public geolocation event.
 type GeolocationSpeed struct {
 	SpeedInMetersPerSecond    float64  `json:"speedInMetersPerSecond"`
 	AccuracyInMetersPerSecond *float64 `json:"accuracyInMetersPerSecond,omitempty"`
 }
 
 // StatusCodePayload represents a status code update event.
+//
+//modelinventory:semantic StatusCodePayload: status-code event collection with normalized timestamps and typed code entries.
 type StatusCodePayload struct {
 	Codes            []StatusCodeValue `json:"codes"`
 	TimeOfSample     time.Time         `json:"timeOfSample"`
@@ -292,12 +332,16 @@ type StatusCodePayload struct {
 }
 
 // StatusCodeValue represents a single status code value.
+//
+//modelinventory:semantic StatusCodeValue: individual detected status code and optional detection time in a status event.
 type StatusCodeValue struct {
 	Code            string     `json:"code,omitempty"`
 	TimeOfDetection *time.Time `json:"timeOfDetection,omitempty"`
 }
 
 // ArmStatePayload represents an arm state update event (security panel).
+//
+//modelinventory:semantic ArmStatePayload: security panel arm state converted from the registered endpoint event.
 type ArmStatePayload struct {
 	ArmState         string    `json:"armState"` // "ARMED_AWAY", "ARMED_STAY", "ARMED_NIGHT", "DISARMED", "UNKNOWN"
 	TimeOfSample     time.Time `json:"timeOfSample"`
@@ -308,6 +352,8 @@ type ArmStatePayload struct {
 }
 
 // RelativeHumidityPayload represents a relative humidity update event.
+//
+//modelinventory:semantic RelativeHumidityPayload: humidity reading with normalized sample time and optional change time.
 type RelativeHumidityPayload struct {
 	Value            *float64  `json:"value,omitempty"`
 	TimeOfSample     time.Time `json:"timeOfSample"`

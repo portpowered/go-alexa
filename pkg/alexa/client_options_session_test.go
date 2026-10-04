@@ -346,6 +346,8 @@ func TestSessionCSRFRetrievalIsExplicitAndReturned(t *testing.T) {
 func TestSessionRefreshReturnsCredentialsWithoutImplicitlyReplacingThem(t *testing.T) {
 	t.Parallel()
 
+	const syntheticRefreshedToken = "synthetic-access-refreshed"
+
 	var refreshRequest struct {
 		SourceToken string `json:"source_token"`
 	}
@@ -365,7 +367,7 @@ func TestSessionRefreshReturnsCredentialsWithoutImplicitlyReplacingThem(t *testi
 
 			return syntheticResponse(
 				request,
-				`{"access_token":"synthetic-access-refreshed","expires_in":3600}`,
+				`{"access_token":"`+syntheticRefreshedToken+`","expires_in":3600}`,
 				nil,
 			), nil
 		})}),
@@ -389,7 +391,7 @@ func TestSessionRefreshReturnsCredentialsWithoutImplicitlyReplacingThem(t *testi
 		t.Fatalf("refresh access token: %v", err)
 	}
 
-	if refreshRequest.SourceToken != "synthetic-refresh" || result.AccessToken != "synthetic-access-refreshed" ||
+	if refreshRequest.SourceToken != "synthetic-refresh" || result.AccessToken != syntheticRefreshedToken ||
 		result.ExpiresInSeconds != 3600 {
 		t.Fatalf("refresh request=%#v result=%#v", refreshRequest, result)
 	}
@@ -405,7 +407,21 @@ func TestSessionRefreshReturnsCredentialsWithoutImplicitlyReplacingThem(t *testi
 		}
 	}
 
-	if got := session.Credentials().AccessToken; got != "synthetic-access-refreshed" {
+	if got := session.Credentials().AccessToken; got != syntheticRefreshedToken {
 		t.Fatalf("session token after explicit SetAccessToken = %q", got)
+	}
+
+	request := alexaapimodels.TokenRefreshRequest{
+		RefreshToken: "synthetic-refresh",
+		Config:       alexaapimodels.DefaultDeviceRegistrationConfig("synthetic-serial", "synthetic-device"),
+	}
+
+	directResult, err := client.RefreshAccessToken(context.Background(), request)
+	if err != nil {
+		t.Fatalf("refresh access token through client: %v", err)
+	}
+
+	if refreshRequest.SourceToken != request.RefreshToken || directResult.AccessToken != syntheticRefreshedToken {
+		t.Fatalf("client refresh request=%#v result=%#v", refreshRequest, directResult)
 	}
 }

@@ -1,0 +1,6 @@
+package: alexamodels
+generate:
+  models: true
+output: pkg/dependencymodels/behaviors_api.gen.go
+output-options:
+  include-tags: [Behaviors]

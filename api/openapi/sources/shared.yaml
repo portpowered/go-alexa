@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: 'This is an implementation-derived description of HTTP routes, request shapes,
+
+    and response models used by the current go-alexa source. It is not an
+
+    Amazon-issued API contract. There are no sanitized live HTTP captures in
+
+    this repository, so these shapes have not been verified against current
+
+    service behavior. Synthetic test data is not evidence of provider behavior.
+
+    See the Alexa AsyncAPI document for the directive stream parsed by the
+
+    library, and the GraphQL schema for its GraphQL subset.
+
+    '
+servers:
+- url: https://api.amazonalexa.com
+  description: Default REST base URL in go-alexa.
+  x-go-alexa-region: na
+- url: https://api.eu.amazonalexa.com
+  description: EU REST base URL constant in go-alexa.
+  x-go-alexa-region: eu
+- url: https://api.jp.amazonalexa.com
+  description: Japan REST base URL constant in go-alexa.
+  x-go-alexa-region: jp
+security:
+- BearerToken: []
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
+tags:
+- name: Alexa web APIs
+  description: Cookie-backed account and first-party device routes used by go-alexa.
+paths: {}
+components:
+  securitySchemes:
+    CookieHeader:
+      type: apiKey
+      in: header
+      name: Cookie
+      description: The cookie-backed client sends stored cookies in the Cookie header.

@@ -1,11 +1,15 @@
 package alexaapimodels
 
 // EndpointQuery selects optional fields to include in an endpoint listing.
+//
+//modelinventory:client-input EndpointQuery: consumer options selecting which endpoint fields ListEndpoints includes.
 type EndpointQuery struct {
 	IncludeFields *EndpointIncludeFields `json:"includeFields,omitempty"`
 }
 
 // EndpointIncludeFields controls which optional endpoint details are returned.
+//
+//modelinventory:client-input EndpointIncludeFields: caller flags selecting feature and property data in endpoint enumeration.
 type EndpointIncludeFields struct {
 	// Include the properties of the endpoints (power on, volume, etc) in the response object.
 	Properties bool `json:"states,omitempty"`
@@ -14,17 +18,23 @@ type EndpointIncludeFields struct {
 }
 
 // PlayerStateRequest represents a request to get player state.
+//
+//modelinventory:client-input PlayerStateRequest: endpoint identity supplied to the player-state lookup.
 type PlayerStateRequest struct {
 	// Target is the endpoint to get player state for
 	Target EndpointInterface `json:"-"` // Not serialized, used to extract device info
 }
 
 // PlayerStateResponse represents the response from getting player state.
+//
+//modelinventory:semantic PlayerStateResponse: public result wrapper returned by the player-state lookup.
 type PlayerStateResponse struct {
 	PlayerInfo *PlayerInfo `json:"playerInfo,omitempty"`
 }
 
 // PlayerInfo represents player information.
+//
+//modelinventory:semantic PlayerInfo: normalized player state and its caller-facing nested display and control data.
 type PlayerInfo struct {
 	Hint             *string     `json:"hint,omitempty"`
 	InfoText         *InfoText   `json:"infoText,omitempty"`
@@ -49,6 +59,8 @@ type PlayerInfo struct {
 }
 
 // InfoText represents text information displayed to the user.
+//
+//modelinventory:semantic InfoText: player title, header, and subtitle display text converted from generated response data.
 type InfoText struct {
 	Header         *string `json:"header,omitempty"`
 	HeaderSubtext1 *string `json:"headerSubtext1,omitempty"`
@@ -59,6 +71,8 @@ type InfoText struct {
 }
 
 // Art represents artwork (album art, icons, etc.)
+//
+//modelinventory:semantic Art: player artwork URL, content type, and styling metadata converted for callers.
 type Art struct {
 	AltText     string  `json:"altText,omitempty"`
 	ArtType     string  `json:"artType,omitempty"` // e.g., "UrlArtSource", "IconArtSource"
@@ -69,6 +83,8 @@ type Art struct {
 }
 
 // Progress represents playback progress information.
+//
+//modelinventory:semantic Progress: playback timing and visibility options converted from generated player state.
 type Progress struct {
 	AllowScrubbing bool    `json:"allowScrubbing,omitempty"`
 	LocationInfo   *string `json:"locationInfo,omitempty"`
@@ -79,6 +95,8 @@ type Progress struct {
 }
 
 // Provider represents the media provider information.
+//
+//modelinventory:semantic Provider: provider name, display label, logo, and overlay artwork in player state.
 type Provider struct {
 	ArtOverlay          *Art    `json:"artOverlay,omitempty"`
 	FallbackMainArt     *Art    `json:"fallbackMainArt,omitempty"`
@@ -88,6 +106,8 @@ type Provider struct {
 }
 
 // Template represents the display template.
+//
+//modelinventory:semantic Template: player template type, artwork, and background image converted for callers.
 type Template struct {
 	Art                *Art   `json:"art,omitempty"`
 	BackgroundImageURL string `json:"backgroundImageUrl,omitempty"`
@@ -95,6 +115,8 @@ type Template struct {
 }
 
 // Transport represents transport controls state.
+//
+//modelinventory:semantic Transport: supported player controls and captions converted from generated player state.
 type Transport struct {
 	ClosedCaptions    *string            `json:"closedCaptions,omitempty"`
 	LayoutType        string             `json:"layoutType,omitempty"`
@@ -108,6 +130,8 @@ type Transport struct {
 }
 
 // RateContentAction represents rating action information.
+//
+//modelinventory:semantic RateContentAction: rating type, value, and media owner used by the player rating control.
 type RateContentAction struct {
 	MediaOwnerCustomerId string  `json:"mediaOwnerCustomerId,omitempty"`
 	Rating               *string `json:"rating,omitempty"`
@@ -115,6 +139,8 @@ type RateContentAction struct {
 }
 
 // Volume represents volume information.
+//
+//modelinventory:semantic Volume: player volume and mute state converted from generated player state.
 type Volume struct {
 	Muted  bool `json:"muted,omitempty"`
 	Volume int  `json:"volume,omitempty"` // Volume level (0-100)

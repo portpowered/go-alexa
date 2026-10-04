@@ -1,0 +1,6 @@
+package: alexamodels
+generate:
+  models: true
+output: pkg/dependencymodels/feature_events.gen.go
+output-options:
+  skip-prune: true
