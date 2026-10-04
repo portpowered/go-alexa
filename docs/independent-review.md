@@ -64,18 +64,18 @@ The prior R2 findings for package-global generated-map escape, helper-returned f
 
 # Independent Alexa publication review (R2)
 
-Status: final Alexa R2 review at b74 is complete. The canonical review record contains both independent final reports, is linked from the checklist, and all other items are complete. This R2 signoff for item 14 is PASS; the repository checklist remains open until the responsible maintainer checks it. This report is stored in TEMP, separate from repository source.
+Status: final Alexa R2 review at b74 is complete. The canonical review record contains both independent final reports, is linked from the checklist, and all sixteen checklist items are checked at d0b091bf12eda4e01eae8df7dee355de7c016dac. Item 14 is PASS. I authored this report in TEMP, then its final verdict was consolidated in the canonical repository record.
 
 - Reviewed implementation: `8a22252d064857750c053fbd3103f6c79be463af`.
 - Published CLI-module finalization: `d6bc1d12c75705e0595ae8156ea223c249cd2e91`.
 - Current documentation follow-up: `b74b322b38f8342c480be9fdce768e7cc1a526fa` (only README.md and docs/guides/cli.mdx changed from d6).
 - Current checklist pin: shared template `25aeb783126c4049b3bc49286ee7808069db28e9`.
-- Consolidation: both final independent all-16 reports are present in the current `docs/independent-review.md`, linked from `docs/template-checklist.md`; item 14 is the only checklist box left open pending maintainer signoff.
+- Consolidation: both final independent all-16 reports are present in the current `docs/independent-review.md`, linked from `docs/template-checklist.md`; all sixteen checklist boxes are checked at `d0b091bf12eda4e01eae8df7dee355de7c016dac`.
 - I have no Alexa implementation authorship. Archives were read-only; all consumer/install probes and this report are under `%TEMP%`.
 
 ## Evidence
 
-- Existing canonical independent records in `docs/independent-review.md` contain separate R1 and R2 all-16 reviews of implementation commit 8a. Both identify the named-result source-gate fixes at 8a and find no remaining SDK/CLI implementation blocker. I independently checked the final commit delta and publication evidence instead of treating those older verdicts as final signoff.
+- Earlier implementation reviews at 8a remain in Git history. The current canonical `docs/independent-review.md` contains separate final all-16 reports for the b74 publication state, linked from the checklist. I independently checked the final docs delta and publication evidence against that record.
 - Main CI run `37183250064` succeeded at exact d6; Documentation run `37183250051` succeeded at exact d6, including build, rendered-link check, Pages artifact upload, and Pages deploy. Its artifact has 251 HTML files, generated OpenAPI/GraphQL/AsyncAPI reference routes, a visible `implementation-derived` label, and `coverage.json` = 84.6%. Live root, docs root, CLI guide, and upgrade guide returned HTTP 200 at the published Pages site.
 - SDK release tag `v0.4.0` points to `8fbb9dc1bfe6064594dd500d8a170a74fba9ec42`; release workflow `37183039192` succeeded. The nested CLI tag `cmd/go-alexa/v0.4.0` points to d6 and its CLI Release run `37183841537` succeeded. SDK release notes link to the upgrade guide and pinned verification doc; CLI release notes give `go install github.com/portpowered/go-alexa/cmd/go-alexa@v0.4.0` and link the CLI guide.
 - Fresh isolated Go 1.24.2 cache: `go install github.com/portpowered/go-alexa/cmd/go-alexa@v0.4.0` succeeded from `proxy.golang.org`; installed binary `--help` exited successfully and shows credential-safe command usage.
