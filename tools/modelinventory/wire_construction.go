@@ -98,15 +98,14 @@ func inspectWireValueLiterals(expression ast.Expr, visiting map[wireSourceVariab
 	}
 
 	ast.Inspect(expression, func(node ast.Node) bool {
-		if literal, isComposite := node.(*ast.CompositeLit); isComposite {
-			if _, isMap := literal.Type.(*ast.MapType); isMap {
-				for _, element := range literal.Elts {
-					if entry, isEntry := element.(*ast.KeyValueExpr); isEntry {
-						inspectWireValueLiterals(entry.Key, visiting, report, assignments)
-						inspectWireValueLiterals(entry.Value, visiting, report, assignments)
-					}
-				}
+		if call, callable := node.(*ast.CallExpr); callable {
+			if inspectWireReturnedLiterals(call, visiting, report, assignments) {
+				return false
+			}
+		}
 
+		if literal, isComposite := node.(*ast.CompositeLit); isComposite {
+			if inspectWireMapLiterals(literal, visiting, report, assignments) {
 				return false
 			}
 		}
@@ -133,6 +132,23 @@ func inspectWireValueLiterals(expression ast.Expr, visiting map[wireSourceVariab
 	})
 }
 
+func inspectWireMapLiterals(
+	literal *ast.CompositeLit, visiting map[wireSourceVariable]bool, report func(*ast.BasicLit), assignments wireSourceAssignments,
+) bool {
+	if _, isMap := literal.Type.(*ast.MapType); !isMap {
+		return false
+	}
+
+	for _, element := range literal.Elts {
+		if entry, isEntry := element.(*ast.KeyValueExpr); isEntry {
+			inspectWireValueLiterals(entry.Key, visiting, report, assignments)
+			inspectWireValueLiterals(entry.Value, visiting, report, assignments)
+		}
+	}
+
+	return true
+}
+
 func inspectWireAlias(identifier *ast.Ident, visiting map[wireSourceVariable]bool, report func(*ast.BasicLit), assignments wireSourceAssignments) {
 	if identifier.Obj == nil {
 		return
@@ -153,7 +169,8 @@ func inspectWireAlias(identifier *ast.Ident, visiting map[wireSourceVariable]boo
 	}
 
 	for _, value := range assignments.values[key] {
-		if value.Pos() < identifier.Pos() {
+		_, parameter := declaration.(*ast.Field)
+		if parameter || assignments.globalVariables[key] || value.Pos() < identifier.Pos() {
 			inspectWireValueLiterals(value, visiting, report, assignments)
 		}
 	}
@@ -252,7 +269,8 @@ func generatedWireIdentifier(
 	}
 
 	for _, value := range assignments.values[key] {
-		if value.Pos() < identifier.Pos() && generatedWireReceiver(value, aliases, path, models, visiting, assignments) {
+		if (assignments.globalVariables[key] || value.Pos() < identifier.Pos()) &&
+			generatedWireReceiver(value, aliases, path, models, visiting, assignments) {
 			return true
 		}
 	}

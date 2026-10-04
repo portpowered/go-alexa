@@ -7,6 +7,8 @@ import "go/ast"
 func indexWireHelperParameters(
 	file *ast.File, aliases map[string]bool, path string, models map[string]generatedModel, assignments wireSourceAssignments,
 ) {
+	indexDeclaredWireParameters(file, aliases, path, models, assignments)
+
 	for {
 		before := wireProvenanceCount(assignments)
 

@@ -10,6 +10,7 @@ type wireSourceVariable struct {
 type wireSourceAssignments struct {
 	values              map[wireSourceVariable][]ast.Expr
 	generatedParameters map[wireSourceVariable]bool
+	globalVariables     map[wireSourceVariable]bool
 	sdkDependencies     map[string]bool
 	sdkOwner            *ast.TypeSpec
 	callableFields      map[string][]ast.Expr
@@ -21,6 +22,7 @@ func indexWireSourceAssignments(file *ast.File) wireSourceAssignments {
 	assignments := wireSourceAssignments{
 		values:              make(map[wireSourceVariable][]ast.Expr),
 		generatedParameters: make(map[wireSourceVariable]bool),
+		globalVariables:     make(map[wireSourceVariable]bool),
 		sdkDependencies:     make(map[string]bool),
 		sdkOwner:            nil,
 		callableFields:      make(map[string][]ast.Expr),
@@ -29,6 +31,12 @@ func indexWireSourceAssignments(file *ast.File) wireSourceAssignments {
 	}
 
 	assignments.sdkDependencies, assignments.sdkOwner = indexSDKDependencyFields(file)
+
+	for name, object := range file.Scope.Objects {
+		if declaration, variable := object.Decl.(*ast.ValueSpec); variable && object.Kind == ast.Var {
+			assignments.globalVariables[wireSourceVariable{declaration: declaration, name: name}] = true
+		}
+	}
 
 	for _, declaration := range file.Decls {
 		if function, ok := declaration.(*ast.FuncDecl); ok && function.Recv != nil {
@@ -93,7 +101,7 @@ func wireAliasExpressions(identifier *ast.Ident, assignments wireSourceAssignmen
 	key := wireSourceVariable{declaration: declaration, name: identifier.Name}
 	for _, value := range assignments.values[key] {
 		_, parameter := declaration.(*ast.Field)
-		if parameter || value.Pos() < identifier.Pos() {
+		if parameter || assignments.globalVariables[key] || value.Pos() < identifier.Pos() {
 			values = append(values, value)
 		}
 	}

@@ -78,6 +78,7 @@ func checkWireSourcePackage(files []wireSourceFile, set *token.FileSet, models m
 	assignments := wireSourceAssignments{
 		values:              make(map[wireSourceVariable][]ast.Expr),
 		generatedParameters: make(map[wireSourceVariable]bool),
+		globalVariables:     make(map[wireSourceVariable]bool),
 		sdkDependencies:     make(map[string]bool),
 		sdkOwner:            nil,
 		callableFields:      make(map[string][]ast.Expr),
@@ -87,6 +88,10 @@ func checkWireSourcePackage(files []wireSourceFile, set *token.FileSet, models m
 
 	for _, source := range files {
 		local := indexWireSourceAssignments(source.file)
+		for variable, global := range local.globalVariables {
+			assignments.globalVariables[variable] = global
+		}
+
 		if local.sdkOwner != nil {
 			assignments.sdkOwner = local.sdkOwner
 		}
