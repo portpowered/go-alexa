@@ -17,7 +17,8 @@ func unverifiedWireCallable(
 	if verifiedLocalWireCallable(call.Fun, assignments) ||
 		isWireCopyFunction(file, call.Fun, assignments, make(map[wireSourceVariable]bool)) ||
 		isGeneratedWireConstruction(call.Fun, aliases, path, models) ||
-		verifiedWireCallable(file, call.Fun, assignments) || verifiedSDKDependencyCall(path, call.Fun, assignments) {
+		verifiedWireCallable(file, call.Fun, assignments) || verifiedSDKDependencyCall(path, call.Fun, assignments) ||
+		verifiedGeneratedGraphQLCall(file, path, call.Fun) {
 		return false
 	}
 
@@ -28,6 +29,40 @@ func unverifiedWireCallable(
 	}
 
 	return false
+}
+
+// The native genqlient operation file is separately checked against exact SDL
+// selections and generation drift. Its imported Client performs the inventoried
+// request handoff through the SDK's injected GraphQL transport.
+func verifiedGeneratedGraphQLCall(file *ast.File, path string, expression ast.Expr) bool {
+	if path != "pkg/dependencies/graphql/generated.go" {
+		return false
+	}
+
+	selector, selected := expression.(*ast.SelectorExpr)
+	if !selected || selector.Sel.Name != "MakeRequest" {
+		return false
+	}
+
+	receiver, named := selector.X.(*ast.Ident)
+	if !named || receiver.Obj == nil {
+		return false
+	}
+
+	parameter, declared := receiver.Obj.Decl.(*ast.Field)
+	if !declared {
+		return false
+	}
+
+	client, typed := parameter.Type.(*ast.SelectorExpr)
+	if !typed || client.Sel.Name != "Client" {
+		return false
+	}
+
+	qualifier, imported := client.X.(*ast.Ident)
+	owner := primitivePackage{ImportPath: "github.com/Khan/genqlient/graphql", Name: "graphql", Directory: ""}
+
+	return imported && qualifier.Obj == nil && primitiveImportAliases(file, owner)[qualifier.Name]
 }
 
 func verifiedWireCallable(file *ast.File, expression ast.Expr, assignments wireSourceAssignments) bool {
@@ -69,6 +104,14 @@ func verifiedImportedWireCallable(file *ast.File, selector *ast.SelectorExpr) bo
 	identifier, imported := selector.X.(*ast.Ident)
 	if !imported || identifier.Obj != nil {
 		return false
+	}
+
+	stringsOwner := primitivePackage{ImportPath: "strings", Name: "strings", Directory: ""}
+	if primitiveImportAliases(file, stringsOwner)[identifier.Name] {
+		switch selector.Sel.Name {
+		case "TrimPrefix", "TrimSpace", "TrimRight", "ToLower", "NewReader", "Join", "HasPrefix", "Contains":
+			return true
+		}
 	}
 
 	timeOwner := primitivePackage{ImportPath: "time", Name: "time", Directory: ""}

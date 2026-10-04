@@ -1944,9 +1944,9 @@ func (scan *handwrittenSourceScan) inspectNamedStruct(structType *ast.StructType
 
 	key := scan.path + "::" + name
 
-	dependencyExport := ast.IsExported(name) && strings.HasPrefix(scan.path, "pkg/dependencymodels/")
+	dependencyModel := strings.HasPrefix(scan.path, "pkg/dependencymodels/")
 
-	if !hasTaggedJSONField(structType) && !scan.jsonTypes[name] && !dependencyExport &&
+	if !hasTaggedJSONField(structType) && !scan.jsonTypes[name] && !dependencyModel &&
 		scan.allowances[key].Classification != legacyNonwireClassification {
 		return
 	}
@@ -2007,7 +2007,7 @@ func (scan *handwrittenSourceScan) validateModelMarker(name, classification, rea
 func (scan *handwrittenSourceScan) validateModelClassification(key string, allowance handwrittenAllowance) {
 	if allowance.Classification == legacyNonwireClassification {
 		name := strings.Split(key, "::")[1]
-		if scan.jsonTypes[name] {
+		if scan.jsonTypes[name] || scan.methods[name] {
 			scan.problems = append(scan.problems, key+" legacy nonwire type has acquired an SDK consumer or codec")
 		}
 	}

@@ -12,6 +12,11 @@ func TestWireMutationRejectsCopyAndLocalHelperEscapes(t *testing.T) {
 	for _, mutation := range []string{
 		`maps.Copy(input.Extra, map[string]any{"brandNewKey": caller})`,
 		`unknown(input.Extra, caller)`,
+		`unknownAny([]any{input.Extra})`,
+		`unknownAny(struct{ Extra map[string]any }{input.Extra})`,
+		`unknownAny(expose(input))`,
+		`unknownAny(func() map[string]any { return input.Extra })`,
+		`genericHelper[int].mutate(genericHelper[int]{}, input.Extra)`,
 		`external.Mutate(input.Extra)`,
 		`maps.Copy(input.Extra, map[string]any{caller: "brandNewValue"})`,
 		`clone := maps.Copy[map[string]any, map[string]any]; clone(input.Extra, map[string]any{"brandNewKey": caller})`,
@@ -43,11 +48,15 @@ type mapAlias map[string]any
 func mutate(extra map[string]any, caller string) { extra["brandNewKey"] = caller }
 func noop(extra map[string]any, caller string) {}
 type helper struct{}
+func (helper) Mutate(map[string]any) {}
+type genericHelper[T any] struct{}
+func (genericHelper[T]) mutate(extra map[string]any) { extra["brandNewKey"] = "brandNewValue" }
+func expose(input *wire.Payload) map[string]any { return input.Extra }
 func (helper) mutate(extra map[string]any, caller string) { extra["brandNewKey"] = caller }
 func variadic(caller string, extras ...map[string]any) { extras[0]["brandNewKey"] = caller }
 func unnamed(_ map[string]any, extra map[string]any) { extra["brandNewKey"] = "brandNewValue" }
 func indirect(extra map[string]any, caller string) { mutate(extra, caller) }
-func request(input *wire.Payload, caller string, unknown func(map[string]any, string)) { `+mutation+` }
+func request(input *wire.Payload, caller string, unknown func(map[string]any, string), unknownAny func(any)) { `+mutation+` }
 `, 0)
 		if err != nil {
 			t.Fatalf("parse helper mutation: %v", err)

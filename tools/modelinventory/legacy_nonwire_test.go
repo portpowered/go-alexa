@@ -26,11 +26,12 @@ func TestLegacyNonwireDispositionRejectsWireFieldsAndCodecs(t *testing.T) {
 		"type AuthConfig struct { ClientID string }",
 		"type AuthConfig struct { ClientID string `json:\"client_id\"` }",
 		"type AuthConfig struct { ClientID string }; func encode(value AuthConfig) { json.Marshal(value) }",
+		"type AuthConfig struct { ClientID string }; func (AuthConfig) MarshalJSON() ([]byte, error) { return nil, nil }",
 	} {
 		data := []byte("package alexamodels\nimport \"encoding/json\"\n//modelinventory:legacy-nonwire " + reason + "\n" + change)
 		_, problems, seen := scanHandwrittenSource(path, data, token.NewFileSet(), false, allowances)
 
-		wantRejected := strings.Contains(change, "json")
+		wantRejected := strings.Contains(change, "json") || strings.Contains(change, "MarshalJSON")
 		if (len(problems) != 0) != wantRejected || !seen[path+"::"+name] {
 			t.Fatalf("legacy disposition for %q: problems=%v, seen=%v", change, problems, seen)
 		}
@@ -42,10 +43,10 @@ func TestUnlistedDependencyStructWithoutTagsIsRejected(t *testing.T) {
 
 	const path = "pkg/dependencymodels/unused.go"
 
-	data := []byte("package alexamodels; type UnusedResponse struct { Status string }")
+	data := []byte("package alexamodels; type UnusedResponse struct { Status string }; type privateWire struct { Status string }")
 
 	_, problems, seen := scanHandwrittenSource(path, data, token.NewFileSet(), false, nil)
-	if len(problems) == 0 || !seen[path+"::UnusedResponse"] {
+	if len(problems) == 0 || !seen[path+"::UnusedResponse"] || !seen[path+"::privateWire"] {
 		t.Fatalf("untagged exported dependency model escaped inventory: problems=%v, seen=%v", problems, seen)
 	}
 }

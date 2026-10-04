@@ -199,13 +199,17 @@ func generatedWireReceiver(
 	case *ast.ParenExpr:
 		return generatedWireReceiver(expression.X, aliases, path, models, visiting, assignments)
 	case *ast.CompositeLit:
-		return generatedWireDeclaredType(expression.Type, aliases, path, models)
+		return generatedWireAggregate(expression, aliases, path, models, visiting, assignments)
+	case *ast.FuncLit:
+		return generatedWireReturnedValue(expression.Body, aliases, path, models, visiting, assignments)
 	case *ast.Ident:
 		return generatedWireIdentifier(expression, aliases, path, models, visiting, assignments)
 	case *ast.CallExpr:
 		if len(expression.Args) == 1 && wireTypeConversion(expression.Fun) {
 			return generatedWireReceiver(expression.Args[0], aliases, path, models, visiting, assignments)
 		}
+
+		return generatedWireCallResult(expression, aliases, path, models, visiting, assignments)
 	}
 
 	return false

@@ -44,8 +44,11 @@ func wireLocalHelpers(expression ast.Expr, assignments wireSourceAssignments, vi
 		visiting[key] = true
 
 		functions := wireMethodHelpers(expression, assignments)
-		for _, value := range assignments.callableFields[expression.Sel.Name] {
-			functions = append(functions, wireLocalHelpers(value, assignments, visiting)...)
+
+		if wireCallableFieldDeclared(expression, assignments) {
+			for _, value := range assignments.callableFields[expression.Sel.Name] {
+				functions = append(functions, wireLocalHelpers(value, assignments, visiting)...)
+			}
 		}
 
 		return wireHelperCandidates(functions)
@@ -183,8 +186,13 @@ func markWireHelperParameters(
 
 func wireMethodHelpers(selector *ast.SelectorExpr, assignments wireSourceAssignments) []*ast.FuncType {
 	functions := make([]*ast.FuncType, 0, len(assignments.methods[selector.Sel.Name]))
+	owner := wireReceiverDeclaration(selector.X, assignments, make(map[wireSourceVariable]bool))
 
 	for _, declaration := range assignments.methods[selector.Sel.Name] {
+		if owner == nil || wireReceiverDeclaration(declaration.Recv.List[0].Type, assignments, make(map[wireSourceVariable]bool)) != owner {
+			continue
+		}
+
 		function := declaration.Type
 
 		if wireMethodExpression(selector.X) {
@@ -204,6 +212,10 @@ func wireMethodHelpers(selector *ast.SelectorExpr, assignments wireSourceAssignm
 }
 func wireMethodExpression(expression ast.Expr) bool {
 	switch expression := expression.(type) {
+	case *ast.IndexExpr:
+		return wireMethodExpression(expression.X)
+	case *ast.IndexListExpr:
+		return wireMethodExpression(expression.X)
 	case *ast.ParenExpr:
 		return wireMethodExpression(expression.X)
 	case *ast.StarExpr:
