@@ -15,12 +15,16 @@ import (
 const captureDirectoryPermissions = 0o750
 
 // CapturePair represents a captured HTTP request/response pair.
+//
+//modelinventory:domain CapturePair: local request and response snapshot written for explicit network capture tooling.
 type CapturePair struct {
 	Request  CapturedRequest  `json:"request"`
 	Response CapturedResponse `json:"response"`
 }
 
 // CapturedRequest represents a captured HTTP request.
+//
+//modelinventory:domain CapturedRequest: local request snapshot with method, URL, headers, and copied body bytes.
 type CapturedRequest struct {
 	Method  string      `json:"method"`
 	URL     string      `json:"url"`
@@ -29,6 +33,8 @@ type CapturedRequest struct {
 }
 
 // CapturedResponse represents a captured HTTP response.
+//
+//modelinventory:domain CapturedResponse: local response snapshot with status, headers, and copied body bytes.
 type CapturedResponse struct {
 	StatusCode int         `json:"status_code"`
 	Status     string      `json:"status"`

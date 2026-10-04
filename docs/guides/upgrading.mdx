@@ -1,0 +1,65 @@
+---
+title: 'Upgrade from v0.3'
+---
+
+The v0.4 model changes affect callers that construct dependency models directly or inspect event payload types. Review these changes before updating your module version.
+
+## Nested dependency models
+
+Use the named nested types from `pkg/dependencymodels` when constructing these fields:
+
+| Field | Nested type |
+|---|---|
+| `CodePairRequest.CodeData` | `CodeData` |
+| `TokenRefreshRequest.DeviceMetadata` | `DeviceMetadata` |
+| `ChallengeResponse.Response` | `ChallengeEnvelope` |
+| `RegistrationResponse.Response` | `RegistrationResponseEnvelope` |
+| `FriendlyNameValue.Value` | `FriendlyNameText` |
+| `StringFilter.Value` | `StringFilterValue` |
+| `ColorProperty.ColorStateValue` | `EventColorValue` |
+| `ModeProperty.ModeValue` | `EventModeValue` |
+| `RangeProperty.RangeValue` | `EventRangeValueNumber` |
+| `SetpointProperty.Value`, `TemperatureSensorProperty.Value` | `EventTemperature` |
+| `ActionStateProperty.ActionStateValue` | `EventActionStateValue` |
+| `EventActionStateValue.TimeInterval` | `EventTimeInterval` |
+| `BatteryProperty.BatteryValue` | `EventBatteryValue` |
+| `EventBatteryValue.Health`, `.ChargingHealth` | `EventBatteryHealth`, `EventBatteryChargingHealth` |
+| `IlluminanceProperty.IlluminanceValue` | `EventIlluminanceStateValue` |
+| `GeolocationProperty.GeolocationValue` | `EventGeolocationValue` |
+| `EventGeolocationValue.Coordinate`, `.Altitude`, `.Heading`, `.Speed` | `EventGeolocationCoordinate`, `EventGeolocationAltitude`, `EventGeolocationHeading`, `EventGeolocationSpeed` |
+| `StatusCodeProperty.StatusCodeValue` | `EventStatusCodeValues` |
+| `EventStatusCodeValues.Value` items | `EventStatusCodeValue` |
+| `RelativeHumidityProperty.RelativeHumidityValue` | `EventRelativeHumidityStateValue` |
+| `ResourceMetadataPayloadData.Data`, `.Entity` | `EventResourceMetadataPayloadDataData`, `EventResourceMetadataPayloadDataEntity` |
+| `EventResourceMetadataPayloadDataData.Features` items | `EventResourceMetadataPayloadDataDataFeatures` |
+
+For example, a name value can be constructed as:
+
+```go
+import dependencymodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
+
+name := dependencymodels.FriendlyNameValue{
+    Type: "text",
+    Value: dependencymodels.FriendlyNameText{Text: "Living room"},
+}
+```
+
+State fields remain open strings, including unknown future provider values. Audio URI playback now escapes quotes, ampersands, and angle brackets before embedding the URI in speech markup.
+
+Existing embedded control-request fields and `float64` control values remain available.
+
+## Event payloads
+
+Known events now return public SDK payloads in `Event.Payload`. Use types from `pkg/alexaapimodels` rather than dependency property types in assertions:
+
+```go
+if power, ok := event.Payload.(*alexaapimodels.PowerPayload); ok {
+    fmt.Printf("power: %s\n", power.PowerState)
+}
+```
+
+`TimeInterval.Duration` is now `*string`, preserving duration values such as `PT30M`. Check for nil before using it; interpret the duration according to your application's needs. `Start` and `End` remain optional timestamps.
+
+See the [event guide](../events/) for the subscription and stream lifecycle.
+
+`UnknownPayload` and `SetpointPayload` have been removed. Neither was produced by the event API. Remove references to those types; use the documented payload type for the event you handle.

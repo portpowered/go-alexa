@@ -24,7 +24,7 @@
           "multipart/mixed; boundary=--synthetic-boundary"
         ]
       },
-      "body": "------synthetic-boundary\nContent-Type: application/json\n\n{\"directive\":{\"header\":{\"messageId\":\"synthetic-message\",\"name\":\"RenderUpdate\",\"namespace\":\"Alexa.Mobile.Push\"},\"payload\":{\"renderingUpdates\":[{\"resourceMetadata\":\"{\\\"metricName\\\":\\\"EndpointPower\\\",\\\"payload\\\":{\\\"data\\\":{\\\"features\\\":[{\\\"name\\\":\\\"power\\\",\\\"properties\\\":[{\\\"name\\\":\\\"powerState\\\",\\\"powerStateValue\\\":\\\"OFF\\\"}]}]},\\\"entity\\\":{\\\"id\\\":\\\"synthetic-endpoint\\\"}}}\"}]}}}\n"
+      "body": "------synthetic-boundary\nContent-Type: application/json\n\n{\"directive\":{\"header\":{\"messageId\":\"synthetic-message\",\"name\":\"RenderUpdate\",\"namespace\":\"Alexa.Mobile.Push\"},\"payload\":{\"renderingUpdates\":[{\"resourceMetadata\":\"{\\\"metricName\\\":\\\"EndpointPower\\\",\\\"payload\\\":{\\\"data\\\":{\\\"__typename\\\":\\\"Endpoint\\\",\\\"features\\\":[{\\\"__typename\\\":\\\"Feature\\\",\\\"name\\\":\\\"power\\\",\\\"properties\\\":[{\\\"__typename\\\":\\\"Power\\\",\\\"name\\\":\\\"powerState\\\",\\\"powerStateValue\\\":\\\"OFF\\\",\\\"timeOfSample\\\":\\\"2025-12-02T05:17:49Z\\\",\\\"accuracy\\\":\\\"HIGH\\\",\\\"type\\\":\\\"RETRIEVABLE\\\"}]}]},\\\"entity\\\":{\\\"__typename\\\":\\\"Endpoint\\\",\\\"id\\\":\\\"synthetic-endpoint\\\"}},\\\"type\\\":\\\"UPDATE_ENTITY\\\",\\\"timestamp\\\":\\\"2025-12-02T05:17:49Z\\\"}\"}]}}}\n"
     }
   },
   {

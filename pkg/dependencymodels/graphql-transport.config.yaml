@@ -1,0 +1,6 @@
+package: alexamodels
+generate:
+  models: true
+output: pkg/dependencymodels/graphql_transport.gen.go
+output-options:
+  include-tags: [GraphQL]

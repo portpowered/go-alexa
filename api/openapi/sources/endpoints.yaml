@@ -1,0 +1,423 @@
+openapi: 3.0.3
+info:
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: 'This is an implementation-derived description of HTTP routes, request shapes,
+
+    and response models used by the current go-alexa source. It is not an
+
+    Amazon-issued API contract. There are no sanitized live HTTP captures in
+
+    this repository, so these shapes have not been verified against current
+
+    service behavior. Synthetic test data is not evidence of provider behavior.
+
+    See the Alexa AsyncAPI document for the directive stream parsed by the
+
+    library, and the GraphQL schema for its GraphQL subset.
+
+    '
+servers:
+- url: https://api.amazonalexa.com
+  description: Default REST base URL in go-alexa.
+  x-go-alexa-region: na
+- url: https://api.eu.amazonalexa.com
+  description: EU REST base URL constant in go-alexa.
+  x-go-alexa-region: eu
+- url: https://api.jp.amazonalexa.com
+  description: Japan REST base URL constant in go-alexa.
+  x-go-alexa-region: jp
+security:
+- BearerToken: []
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
+tags:
+- name: Endpoints
+  description: Endpoint enumeration and direct endpoint operations implemented by go-alexa.
+paths:
+  /v2/endpoints:
+    get:
+      tags:
+      - Endpoints
+      operationId: listRestEndpoints
+      summary: List endpoints through the REST client
+      description: 'This operation is implemented by `rest.Client.GetEndpoints`. The public
+
+        `alexa.Client.ListEndpoints` operation uses GraphQL and a separate
+
+        device lookup; it does not call this route in its current
+
+        implementation. `owner` defaults to `~caller` in this REST helper.
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/Owner'
+      - $ref: '#/components/parameters/Expand'
+      - $ref: '#/components/parameters/MaxResults'
+      - $ref: '#/components/parameters/NextToken'
+      responses:
+        '200':
+          description: Endpoint list decoded by the REST helper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireEndpointListResponse'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /v2/endpoints/{endpointId}:
+    get:
+      tags:
+      - Endpoints
+      operationId: getRestEndpoint
+      summary: Get one endpoint through the REST client
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      - $ref: '#/components/parameters/Expand'
+      responses:
+        '200':
+          description: Endpoint decoded by the REST helper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireDevice'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /v2/endpoint-query:
+    post:
+      tags:
+      - Endpoints
+      operationId: queryRestEndpoints
+      summary: Query endpoints through the REST client
+      parameters:
+      - $ref: '#/components/parameters/Expand'
+      - $ref: '#/components/parameters/MaxResults'
+      - $ref: '#/components/parameters/NextToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireEndpointQueryRequest'
+      responses:
+        '200':
+          description: Endpoint list decoded by the REST helper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireEndpointListResponse'
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /v2/endpoints/{endpointId}/forget:
+    post:
+      tags:
+      - Endpoints
+      operationId: forgetEndpoint
+      summary: Request that an endpoint be forgotten
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      responses:
+        '200':
+          description: The implementation accepts a successful response without decoding a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /v2/endpoints/{endpointId}/deregister:
+    post:
+      tags:
+      - Endpoints
+      operationId: deregisterEndpoint
+      summary: Request endpoint deregistration
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      responses:
+        '200':
+          description: The implementation accepts a successful response without decoding a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /v2/endpoints/{endpointId}/friendlyName:
+    post:
+      tags:
+      - Endpoints
+      operationId: updateEndpointFriendlyName
+      summary: Submit a friendly name for an endpoint
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireFriendlyNameRequest'
+      responses:
+        '200':
+          description: The implementation accepts a successful response without decoding a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /v2/endpoints/{endpointId}/control:
+    post:
+      tags:
+      - Endpoints
+      operationId: controlRestEndpoint
+      summary: Submit a legacy endpoint control command
+      description: The command body is built by the legacy REST helper; current top-level client controls use other operations.
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireCommand'
+      responses:
+        '200':
+          description: The implementation accepts a successful response without decoding a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+  /v2/endpoints/{endpointId}/interfaces/{feature}/{operation}/:
+    post:
+      tags:
+      - Endpoints
+      operationId: sendEndpointInterfaceMessage
+      summary: Submit an endpoint interface payload
+      description: 'The current implementation appends a trailing slash to this route and
+
+        sends the caller payload as the JSON request body, or an empty object
+
+        when the payload is nil. Feature and operation are open strings in the
+
+        client and are not enumerated here.
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      - name: feature
+        in: path
+        required: true
+        description: Feature name supplied by the caller.
+        schema:
+          type: string
+      - name: operation
+        in: path
+        required: true
+        description: Operation name supplied by the caller.
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireInterfacePayload'
+      responses:
+        '200':
+          description: The implementation accepts a successful response without decoding a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: The client sends its supplied access token in the Authorization header.
+  schemas:
+    WireInterfacePayload:
+      type: object
+      description: Caller-supplied JSON object; nil is serialized by this client as an empty object.
+      additionalProperties: true
+    WireFriendlyNameRequest:
+      type: object
+      properties:
+        friendlyName:
+          $ref: '#/components/schemas/WireFriendlyNameValue'
+      required:
+      - friendlyName
+    WireFriendlyNameValue:
+      type: object
+      properties:
+        type:
+          type: string
+          default: PLAIN
+          x-go-compat-constant-name: DefaultFriendlyNameType
+        value:
+          $ref: '#/components/schemas/WireFriendlyNameText'
+      required:
+      - type
+      - value
+    WireFriendlyNameText:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+      - text
+    WireEndpointQueryRequest:
+      type: object
+      properties:
+        query:
+          $ref: '#/components/schemas/WireEndpointQuery'
+      required:
+      - query
+    WireEndpointQuery:
+      type: object
+      properties:
+        and:
+          type: array
+          items:
+            $ref: '#/components/schemas/WireEndpointQueryClause'
+        or:
+          type: array
+          items:
+            $ref: '#/components/schemas/WireEndpointQueryClause'
+        includeFields:
+          $ref: '#/components/schemas/WireEndpointIncludeFields'
+        paginationContext:
+          $ref: '#/components/schemas/WirePaginationContext'
+    WirePaginationContext:
+      type: object
+      properties:
+        nextToken:
+          type: string
+        maxResults:
+          type: integer
+        performPagination:
+          type: boolean
+    WireEndpointIncludeFields:
+      type: object
+      properties:
+        states:
+          type: boolean
+        capabilities:
+          type: boolean
+    WireEndpointQueryClause:
+      type: object
+      properties:
+        associatedUnits:
+          $ref: '#/components/schemas/WireAssociatedUnitsFilter'
+        manufacturer:
+          $ref: '#/components/schemas/WireStringFilter'
+        model:
+          $ref: '#/components/schemas/WireStringFilter'
+    WireStringFilter:
+      type: object
+      properties:
+        value:
+          $ref: '#/components/schemas/WireStringFilterValue'
+      required:
+      - value
+    WireStringFilterValue:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+      - text
+    WireAssociatedUnitsFilter:
+      type: object
+      properties:
+        id:
+          type: string
+      required:
+      - id
+    WireEndpointListResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WireDevice'
+        nextToken:
+          type: string
+      additionalProperties: true
+    WireDevice:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/WireCapabilityInterface'
+        state:
+          type: object
+          additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+    WireCapabilityInterface:
+      type: string
+      description: Open string value; the implementation does not reject unknown capability names.
+    WireCommand:
+      type: object
+      properties:
+        type:
+          type: string
+        device_id:
+          type: string
+        payload: {}
+        namespace:
+          type: string
+        name:
+          type: string
+      required:
+      - type
+      additionalProperties: true
+  responses:
+    UnhandledResponse:
+      description: Response not decoded into a success model by this operation.
+  parameters:
+    Owner:
+      name: owner
+      in: query
+      required: false
+      description: Defaults to `~caller` in the current REST helper.
+      schema:
+        type: string
+        default: '~caller'
+        x-go-compat-constant-name: DefaultOwnerCaller
+    NextToken:
+      name: nextToken
+      in: query
+      required: false
+      schema:
+        type: string
+    MaxResults:
+      name: maxResults
+      in: query
+      required: false
+      description: Integer pagination value passed through by the current REST helper.
+      schema:
+        type: integer
+    Expand:
+      name: expand
+      in: query
+      required: false
+      description: Repeated query parameter accepted by the current request builder.
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+    EndpointId:
+      name: endpointId
+      in: path
+      required: true
+      description: Endpoint identifier supplied by the caller.
+      schema:
+        type: string

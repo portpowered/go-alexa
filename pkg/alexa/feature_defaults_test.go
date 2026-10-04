@@ -179,18 +179,24 @@ func TestMergeEndpointWithoutStates_IncludesProperties(t *testing.T) {
 	session := &Session{}
 
 	// Build a GraphQL endpoint with a feature that has properties via operations
-	gqlEndpoint := graphql.EndpointsEndpointsEndpointsResponseItemsEndpoint{
-		Id:         "test-id",
-		EndpointId: "test-endpoint",
-		Features: []graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature{
-			{
-				Name:     "power",
-				Instance: "test-instance",
-				Operations: []graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureOperationsFeatureOperation{
-					{Name: "CustomTurnOn"},
-				},
-			},
-		},
+	var gqlEndpoint graphql.EndpointsEndpointsEndpointsResponseItemsEndpoint
+
+	gqlEndpoint.Id = "test-id"
+	gqlEndpoint.EndpointId = "test-endpoint"
+
+	var feature graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature
+
+	feature.Name = "power"
+	feature.Instance = "test-instance"
+
+	var operation graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureOperationsFeatureOperation
+
+	operation.Name = "CustomTurnOn"
+	feature.Operations = []graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureOperationsFeatureOperation{
+		operation,
+	}
+	gqlEndpoint.Features = []graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature{
+		feature,
 	}
 
 	mergeData := endpointMergeData{
@@ -229,11 +235,11 @@ func TestMergeEndpointWithoutStates_DefaultPropertiesWhenNoGraphQL(t *testing.T)
 
 	// Endpoint with power feature but no GraphQL metadata for it
 	// Power is inferred from device family (FireTV)
-	gqlEndpoint := graphql.EndpointsEndpointsEndpointsResponseItemsEndpoint{
-		Id:         "test-id",
-		EndpointId: "test-endpoint",
-		Features:   []graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature{},
-	}
+	var gqlEndpoint graphql.EndpointsEndpointsEndpointsResponseItemsEndpoint
+
+	gqlEndpoint.Id = "test-id"
+	gqlEndpoint.EndpointId = "test-endpoint"
+	gqlEndpoint.Features = []graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature{}
 
 	mergeData := endpointMergeData{
 		deviceV2Map: map[string]*alexamodels.DeviceV2{

@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/portpowered/go-alexa/pkg/alexa"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
+	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
 
 const (
@@ -644,9 +645,9 @@ func executeColorTemp(
 func executeLock(lock bool) func(context.Context, alexa.ClientInterface, *alexaapimodels.Endpoint, string) tea.Cmd {
 	return func(ctx context.Context, client alexa.ClientInterface, endpoint *alexaapimodels.Endpoint, _ string) tea.Cmd {
 		return func() tea.Msg {
-			state := "LOCKED"
+			state := string(alexamodels.LockStateValueLocked)
 			if !lock {
-				state = "UNLOCKED"
+				state = string(alexamodels.LockStateValueUnlocked)
 			}
 
 			req := alexaapimodels.ControlRequest{
@@ -671,9 +672,9 @@ func executeLock(lock bool) func(context.Context, alexa.ClientInterface, *alexaa
 func executeToggle(isOn bool) func(context.Context, alexa.ClientInterface, *alexaapimodels.Endpoint, string) tea.Cmd {
 	return func(ctx context.Context, client alexa.ClientInterface, endpoint *alexaapimodels.Endpoint, _ string) tea.Cmd {
 		return func() tea.Msg {
-			state := "ON"
+			state := string(alexamodels.ToggleStateValueOn)
 			if !isOn {
-				state = "OFF"
+				state = string(alexamodels.ToggleStateValueOff)
 			}
 
 			req := alexaapimodels.ControlRequest{

@@ -6,8 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	replay "github.com/portpowered/go-alexa/pkg/testing"
 	"io"
 	"net/http"
+	"path/filepath"
 	"testing"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
@@ -37,8 +39,25 @@ func (t *captureTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 func TestControlAudioPlayerURI(t *testing.T) {
 	t.Parallel()
 
+	fixture := filepath.Join("..", "..", "tests", "replay", "fixtures", "synthetic", "alexa-audio-uri.json")
+
+	player, err := replay.LoadSyntheticReplay(fixture)
+	if err != nil {
+		t.Fatalf("load audio replay: %v", err)
+	}
+
 	transport := &captureTransport{}
-	httpClient := &http.Client{Transport: transport}
+	httpClient := &http.Client{Transport: syntheticEventTransport(func(request *http.Request) (*http.Response, error) {
+		body, readErr := io.ReadAll(request.Body)
+		if readErr != nil {
+			return nil, fmt.Errorf("read synthetic audio request: %w", readErr)
+		}
+		transport.lastRequestBody = body
+		transport.lastRequestURL = request.URL.String()
+		request.Body = io.NopCloser(bytes.NewReader(body))
+
+		return player.RoundTrip(request)
+	})}
 
 	client := newTestSession(t, httpClient, WithBearerToken("test-token"))
 
@@ -48,7 +67,7 @@ func TestControlAudioPlayerURI(t *testing.T) {
 		EndpointID:         "amzn1.alexa.endpoint.test-123",
 	}
 
-	testURI := "https://example.com/audio/test-tts.mp3"
+	testURI := "https://example.com/audio.mp3?name='quoted'&next=<track>"
 
 	resp, err := client.Control(context.Background(), alexaapimodels.ControlRequest{
 		Target:    endpoint,
@@ -71,10 +90,32 @@ func TestControlAudioPlayerURI(t *testing.T) {
 		t.Fatalf("unexpected errors: %v", resp.Errors)
 	}
 
-	assertAudioPlayerURIRequest(t, transport, testURI)
+	assertAudioPlayerURIRequest(t, transport)
+
+	err = player.AssertConsumed()
+	if err != nil {
+		t.Fatalf("unconsumed audio replay: %v", err)
+	}
+
+	duplicate, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://alexa.amazon.com/api/behaviors/preview", nil)
+	if err != nil {
+		t.Fatalf("create duplicate: %v", err)
+	}
+
+	response, replayErr := player.RoundTrip(duplicate)
+	if response != nil {
+		closeErr := response.Body.Close()
+		if closeErr != nil {
+			t.Errorf("close unexpected replay response: %v", closeErr)
+		}
+	}
+
+	if replayErr == nil || response != nil {
+		t.Fatal("duplicate request accepted")
+	}
 }
 
-func assertAudioPlayerURIRequest(t *testing.T, transport *captureTransport, testURI string) {
+func assertAudioPlayerURIRequest(t *testing.T, transport *captureTransport) {
 	t.Helper()
 
 	// Verify the request was sent to the behaviors preview endpoint
@@ -148,7 +189,7 @@ func assertAudioPlayerURIRequest(t *testing.T, transport *captureTransport, test
 		)
 	}
 
-	textOut := fmt.Sprintf("<audio src='%s'/>", testURI)
+	textOut := "<audio src='https://example.com/audio.mp3?name=&#39;quoted&#39;&amp;next=&lt;track&gt;'/>"
 	if payload[alexamodels.PayloadKeyTextToSpeak] != textOut {
 		t.Errorf("expected textToSpeak %q, got %q", textOut, payload[alexamodels.PayloadKeyTextToSpeak])
 	}

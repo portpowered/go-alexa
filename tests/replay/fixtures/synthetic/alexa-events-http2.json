@@ -1,0 +1,57 @@
+[
+  {
+    "source": "synthetic",
+    "operation": "openDirectiveStream",
+    "request": {
+      "method": "GET",
+      "origin": "https://events.synthetic.test",
+      "escaped_path": "/v20160207/directives",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "*/*"
+        ],
+        "Authorization": [
+          "Bearer synthetic-event-token"
+        ],
+        "User-Agent": [
+          "Go-http-client/2.0"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": [
+          "multipart/mixed; boundary=--synthetic-boundary"
+        ]
+      },
+      "body": "------synthetic-boundary\nContent-Type: application/json\n\n{\"directive\":{\"header\":{\"messageId\":\"synthetic-message\",\"name\":\"RenderUpdate\",\"namespace\":\"Alexa.Mobile.Push\"},\"payload\":{\"renderingUpdates\":[{\"resourceMetadata\":\"{\\\"metricName\\\":\\\"EndpointPower\\\",\\\"payload\\\":{\\\"data\\\":{\\\"__typename\\\":\\\"Endpoint\\\",\\\"features\\\":[{\\\"__typename\\\":\\\"Feature\\\",\\\"name\\\":\\\"power\\\",\\\"properties\\\":[{\\\"__typename\\\":\\\"Power\\\",\\\"name\\\":\\\"powerState\\\",\\\"powerStateValue\\\":\\\"OFF\\\",\\\"timeOfSample\\\":\\\"2025-12-02T05:17:49Z\\\",\\\"accuracy\\\":\\\"HIGH\\\",\\\"type\\\":\\\"RETRIEVABLE\\\"}]}]},\\\"entity\\\":{\\\"__typename\\\":\\\"Endpoint\\\",\\\"id\\\":\\\"synthetic-endpoint\\\"}},\\\"type\\\":\\\"UPDATE_ENTITY\\\",\\\"timestamp\\\":\\\"2025-12-02T05:17:49Z\\\"}\"}]}}}\n"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "pingDirectiveStream",
+    "request": {
+      "method": "GET",
+      "origin": "https://events.synthetic.test",
+      "escaped_path": "/ping",
+      "query": {},
+      "headers": {
+        "Authorization": [
+          "Bearer synthetic-event-token"
+        ],
+        "User-Agent": [
+          "Go-http-client/2.0"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 204,
+      "headers": {},
+      "body": ""
+    }
+  }
+]

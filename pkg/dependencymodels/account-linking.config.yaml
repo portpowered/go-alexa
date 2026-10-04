@@ -1,0 +1,6 @@
+package: alexamodels
+generate:
+  models: true
+output: pkg/dependencymodels/account_linking.gen.go
+output-options:
+  include-tags: [Account linking]

@@ -10,6 +10,32 @@ permissions:
   contents: read
 
 jobs:
+  cli-windows:
+    runs-on: windows-latest
+    env:
+      GOWORK: 'off'
+      GOTOOLCHAIN: auto
+    defaults:
+      run:
+        working-directory: cmd/go-alexa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.2'
+          cache-dependency-path: cmd/go-alexa/go.sum
+      - name: Check Windows credential permissions and CLI lifecycle
+        run: go test -race ./...
+      - name: Build and vet standalone CLI
+        run: |
+          go build ./...
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go vet ./...
+      - name: Check CLI module metadata
+        run: |
+          go mod tidy -diff
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go mod verify
   verify:
     runs-on: ubuntu-latest
     env:
@@ -33,10 +59,12 @@ jobs:
         run: |
           make generate
           go run ./tools/apiroutes --check
-          git diff --exit-code -- pkg/dependencies/graphql/generated.go pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencies/internal/wire/models.gen.go pkg/dependencymodels/embedded_wire.gen.go pkg/dependencies/rest/internal/wire pkg/alexa/internal/wire pkg/internal/apiroutes
-          untracked="$(git ls-files --others --exclude-standard -- pkg/dependencies/graphql/allowed_operations.gen.go pkg/dependencies/internal/wire pkg/dependencymodels/embedded_wire.gen.go pkg/alexa/internal/wire pkg/internal/apiroutes)"
-          if [ -n "$untracked" ]; then
-            echo "Untracked generated files: $untracked"
+          go run ./tools/modelinventory -check
+          go run ./tools/openapibundle -check
+          generated_status="$(git status --porcelain --untracked-files=all)"
+          if [ -n "$generated_status" ]; then
+            echo "Regeneration changed files or produced untracked artifacts:"
+            echo "$generated_status"
             exit 1
           fi
       - name: Check module metadata

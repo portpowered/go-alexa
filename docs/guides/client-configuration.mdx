@@ -1,0 +1,38 @@
+---
+title: 'Configure network clients'
+---
+
+Supply independent HTTP clients for REST and GraphQL, and an HTTP/2 transport for events. Your transport can add tracing, connection settings, or offline responses.
+
+```go
+import (
+    "net/http"
+    "time"
+
+    "github.com/portpowered/go-alexa/pkg/alexa"
+    "github.com/portpowered/go-alexa/pkg/alexaapimodels"
+    "golang.org/x/net/http2"
+)
+
+restHTTP := &http.Client{Timeout: 30 * time.Second}
+graphqlHTTP := &http.Client{Timeout: 30 * time.Second}
+eventTransport := &http2.Transport{}
+
+client, err := alexa.NewClient(
+    alexa.WithRegion(alexaapimodels.RegionUS),
+    alexa.WithRESTHTTPClient(restHTTP),
+    alexa.WithGraphQLHTTPClient(graphqlHTTP),
+    alexa.WithEventTransport(eventTransport),
+)
+if err != nil {
+    return err
+}
+```
+
+Create an [account session](../authentication/) from this client before calling operations. Use a context deadline for individual requests. Event streams are long-lived; close the connection or session when finished.
+
+Use `WithEventHTTPClient` instead of `WithEventTransport` when supplying a complete event client. Setting both is an error. A custom event transport must support streaming HTTP/2 responses.
+
+For a custom connection, set `http2.Transport.DialTLSContext` before passing the transport to `WithEventTransport`. The hook returns a `net.Conn`; your application owns its dialing, TLS setup, and cancellation behavior.
+
+See the [GraphQL request route](../../openapi/graphql/executeNexusGraphQL/) and [event stream route](../../openapi/event-stream/openDirectiveStream/).

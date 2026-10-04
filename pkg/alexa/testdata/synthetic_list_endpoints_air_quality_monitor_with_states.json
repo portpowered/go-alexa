@@ -82,6 +82,7 @@
                   "type": "RETRIEVABLE",
                   "error": null,
                   "rangeValue": {
+                    "__typename": "RangeValueNumber",
                     "value": 42
                   }
                 }
@@ -132,6 +133,7 @@
                   "type": "RETRIEVABLE",
                   "error": null,
                   "rangeValue": {
+                    "__typename": "RangeValueNumber",
                     "value": 7.5
                   }
                 }
@@ -182,6 +184,7 @@
                   "type": "RETRIEVABLE",
                   "error": null,
                   "rangeValue": {
+                    "__typename": "RangeValueNumber",
                     "value": 37
                   }
                 }
@@ -232,6 +235,7 @@
                   "type": "RETRIEVABLE",
                   "error": null,
                   "rangeValue": {
+                    "__typename": "RangeValueNumber",
                     "value": 125
                   }
                 }

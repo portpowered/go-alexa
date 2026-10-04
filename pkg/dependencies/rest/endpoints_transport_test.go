@@ -24,7 +24,7 @@ func TestEndpointQueryMutationsAndDevicesV2UseExpectedRoutes(t *testing.T) {
 			name: "query endpoints",
 			call: func(client *Client) error {
 				_, err := client.QueryEndpoints(context.Background(), &alexamodels.EndpointQueryRequest{
-					Query: alexamodels.EndpointQuery{AND: []alexamodels.EndpointQueryClause{{AssociatedUnits: &alexamodels.AssociatedUnitsFilter{ID: "synthetic-unit"}, Manufacturer: nil, Model: nil}}},
+					Query: alexamodels.EndpointQuery{OR: nil, IncludeFields: nil, PaginationContext: nil, AND: []alexamodels.EndpointQueryClause{{AssociatedUnits: &alexamodels.AssociatedUnitsFilter{ID: "synthetic-unit"}, Manufacturer: nil, Model: nil}}},
 				}, &ListEndpointsOptions{NextToken: "synthetic-next", MaxResults: 4, Expand: []string{"all"}})
 
 				return err
@@ -282,139 +282,335 @@ func assertPlayerStateRequest(t *testing.T, request *http.Request) {
 	}
 }
 
-//nolint:funlen // Keep this synthetic operation matrix together under one preview wire contract.
+//nolint:funlen,maintidx // Keep this synthetic operation matrix together under one preview wire contract.
 func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 	t.Parallel()
 
 	endpoint := syntheticEndpoint{id: "synthetic-endpoint", device: "synthetic-device-type", serial: "synthetic-device-serial", locale: "fr-FR", family: alexamodels.DeviceFamilyFireTV, account: "synthetic-account"}
 
 	type behaviorCase struct {
-		name      string
-		operation string
-		payload   map[string]any
-		call      func(*Client) error
+		name string
+		node any
+		call func(*Client) error
 	}
 
 	seconds := 30
 	volume := 45
+	behaviorNodeType := alexamodels.ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode
+	deviceTarget := alexamodels.DeviceTarget{DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial"}
+	sharedTarget := alexamodels.Target{
+		CustomerID: "synthetic-client-customer",
+		Devices:    []alexamodels.DeviceTarget{deviceTarget},
+	}
+	announcementContent := func(locale, title, message, spoken string) []alexamodels.BehaviorAnnouncementContent {
+		return []alexamodels.BehaviorAnnouncementContent{{
+			Locale: locale,
+			Display: alexamodels.BehaviorAnnouncementDisplay{
+				Title: title,
+				Body:  message,
+			},
+			Speak: alexamodels.BehaviorAnnouncementSpeak{
+				Type:  alexamodels.BehaviorAnnouncementSpeakTypeText,
+				Value: spoken,
+			},
+		}}
+	}
 
 	tests := []behaviorCase{
 		{
-			name: "send sequence", operation: "synthetic.Operation", payload: map[string]any{"deviceType": "synthetic-device-type", "deviceSerialNumber": "synthetic-device-serial"},
+			name: "send sequence", node: alexamodels.OpaquePayloadOperationNode{
+				Type: behaviorNodeType, OperationType: "synthetic.Operation",
+				OperationPayload: map[string]interface{}{"deviceType": "synthetic-device-type", "deviceSerialNumber": "synthetic-device-serial"},
+			},
 			call: func(client *Client) error {
 				return client.SendSequence(context.Background(), "synthetic.Operation", map[string]any{"deviceType": "synthetic-device-type", "deviceSerialNumber": "synthetic-device-serial"})
 			},
 		},
 		{
-			name: "stop playback", operation: alexamodels.OperationTypeDeviceControlsStop, payload: map[string]any{"deviceType": "synthetic-device-type", "deviceSerialNumber": "synthetic-device-serial", "customerId": "synthetic-client-customer", "skillId": alexamodels.SkillIDAlexaDeviceControls},
+			name: "stop playback", node: alexamodels.DeviceControlsStopOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.DeviceControlsStopOperationTypeStop,
+				OperationPayload: alexamodels.DeviceControlsStopPayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					SkillID: alexamodels.BehaviorSkillIDAlexaDeviceControls,
+				},
+			},
 			call: func(client *Client) error {
-				return client.StopPlayback(context.Background(), &alexamodels.StopPlaybackRequest{Endpoint: endpoint, CustomerID: "synthetic-customer"})
+				return client.StopPlayback(context.Background(), &alexamodels.StopPlaybackRequest{
+					Endpoint: endpoint, AllDevices: false, CustomerID: "synthetic-customer",
+				})
 			},
 		},
 		{
-			name: "volume behavior", operation: alexamodels.OperationTypeDeviceControlsVolume, payload: map[string]any{"deviceSerialNumber": "synthetic-device-serial", "value": 45},
+			name: "volume behavior", node: alexamodels.DeviceControlsVolumeOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.DeviceControlsVolumeOperationTypeVolume,
+				OperationPayload: alexamodels.DeviceControlsVolumePayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					Value: &volume, SkillID: alexamodels.BehaviorSkillIDAlexaDeviceControls,
+				},
+			},
 			call: func(client *Client) error {
-				return client.SetVolume(context.Background(), &alexamodels.VolumeControlRequest{Endpoint: endpoint, Volume: &volume, CustomerID: "synthetic-customer"})
+				return client.SetVolume(context.Background(), &alexamodels.VolumeControlRequest{
+					Endpoint: endpoint, CustomerID: "synthetic-customer", Delta: nil, SetVolume: false, Volume: &volume,
+				})
 			},
 		},
 		{
-			name: "notification", operation: alexamodels.OperationTypeNotificationsSendMobilePush, payload: map[string]any{"deviceType": "synthetic-device-type", "deviceSerialNumber": "synthetic-device-serial", "notificationMessage": "Synthetic alert", "title": "Synthetic title", "customerId": "synthetic-client-customer"},
+			name: "volume behavior with null value", node: alexamodels.DeviceControlsVolumeOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.DeviceControlsVolumeOperationTypeVolume,
+				OperationPayload: alexamodels.DeviceControlsVolumePayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					Value: nil, SkillID: alexamodels.BehaviorSkillIDAlexaDeviceControls,
+				},
+			},
+			call: func(client *Client) error {
+				return client.SetVolume(context.Background(), &alexamodels.VolumeControlRequest{
+					Endpoint: endpoint, CustomerID: "synthetic-customer", Delta: nil, SetVolume: false, Volume: nil,
+				})
+			},
+		},
+		{
+			name: "notification", node: alexamodels.NotificationsSendMobilePushOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.NotificationsSendMobilePushOperationTypeSendMobilePush,
+				OperationPayload: alexamodels.NotificationsSendMobilePushPayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					NotificationMessage: "Synthetic alert", Title: "Synthetic title",
+					AlexaURL: alexamodels.BehaviorAlexaURL(alexamodels.AlexaURLBehaviors),
+					SkillID:  alexamodels.BehaviorSkillIDRoutinesMessaging,
+				},
+			},
 			call: func(client *Client) error {
 				return client.SendNotification(context.Background(), &alexamodels.SendNotificationRequest{Endpoint: endpoint, Message: "Synthetic alert", Title: "Synthetic title", CustomerID: "request-customer"})
 			},
 		},
 		{
-			name: "announcement speak", operation: alexamodels.OperationTypeAnnouncement, payload: map[string]any{"deviceSerialNumber": "synthetic-device-serial", "locale": "de-DE", "customerId": "synthetic-client-customer"},
+			name: "announcement speak", node: alexamodels.AnnouncementOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.AnnouncementOperationTypeAlexaAnnouncement,
+				OperationPayload: alexamodels.AnnouncementPayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: "de-DE", CustomerID: "synthetic-client-customer",
+					ExpireAfter: alexamodels.BehaviorAnnouncementExpireAfter(alexamodels.DefaultAnnouncementExpireAfter),
+					Content:     announcementContent("de-DE", "", "", "Synthetic words"),
+					Target:      sharedTarget, SkillID: alexamodels.BehaviorSkillIDAlexaNotifications,
+				},
+			},
 			call: func(client *Client) error {
-				return client.SendAnnouncement(context.Background(), &alexamodels.SendAnnouncementRequest{Endpoint: endpoint, Message: "Synthetic words", Method: alexamodels.AnnouncementMethodSpeak, Locale: "de-DE", CustomerID: "request-customer"})
+				return client.SendAnnouncement(context.Background(), &alexamodels.SendAnnouncementRequest{
+					Endpoint: endpoint, CustomerID: "request-customer", Locale: "de-DE", Message: "Synthetic words",
+					Method: alexamodels.AnnouncementMethodSpeak, TargetDevices: nil, Title: "",
+				})
 			},
 		},
 		{
-			name: "announcement show", operation: alexamodels.OperationTypeAnnouncement, payload: map[string]any{"deviceSerialNumber": "synthetic-device-serial", "locale": "fr-FR"},
+			name: "announcement show", node: alexamodels.AnnouncementOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.AnnouncementOperationTypeAlexaAnnouncement,
+				OperationPayload: alexamodels.AnnouncementPayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: "fr-FR", CustomerID: "synthetic-client-customer", ExpireAfter: alexamodels.BehaviorAnnouncementExpireAfter(alexamodels.DefaultAnnouncementExpireAfter),
+					Content: announcementContent("fr-FR", "Synthetic title", "Synthetic display", ""),
+					Target:  sharedTarget, SkillID: alexamodels.BehaviorSkillIDAlexaNotifications,
+				},
+			},
 			call: func(client *Client) error {
-				return client.SendAnnouncement(context.Background(), &alexamodels.SendAnnouncementRequest{Endpoint: endpoint, Message: "Synthetic display", Method: alexamodels.AnnouncementMethodShow, Title: "Synthetic title"})
+				return client.SendAnnouncement(context.Background(), &alexamodels.SendAnnouncementRequest{
+					Endpoint: endpoint, CustomerID: "", Locale: "", Message: "Synthetic display",
+					Method: alexamodels.AnnouncementMethodShow, TargetDevices: nil, Title: "Synthetic title",
+				})
 			},
 		},
 		{
-			name: "announcement all", operation: alexamodels.OperationTypeAnnouncement, payload: map[string]any{"deviceSerialNumber": "synthetic-device-serial", "locale": "fr-FR"},
+			name: "announcement all", node: alexamodels.AnnouncementOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.AnnouncementOperationTypeAlexaAnnouncement,
+				OperationPayload: alexamodels.AnnouncementPayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: "fr-FR", CustomerID: "synthetic-client-customer", ExpireAfter: alexamodels.BehaviorAnnouncementExpireAfter(alexamodels.DefaultAnnouncementExpireAfter),
+					Content: announcementContent("fr-FR", "", "Synthetic display and speech", "Synthetic display and speech"),
+					Target:  sharedTarget, SkillID: alexamodels.BehaviorSkillIDAlexaNotifications,
+				},
+			},
 			call: func(client *Client) error {
-				return client.SendAnnouncement(context.Background(), &alexamodels.SendAnnouncementRequest{Endpoint: endpoint, Message: "Synthetic display and speech", Method: alexamodels.AnnouncementMethodAll})
+				return client.SendAnnouncement(context.Background(), &alexamodels.SendAnnouncementRequest{
+					Endpoint: endpoint, CustomerID: "", Locale: "", Message: "Synthetic display and speech",
+					Method: alexamodels.AnnouncementMethodAll, TargetDevices: nil, Title: "",
+				})
 			},
 		},
 		{
-			name: "text to speech", operation: alexamodels.OperationTypeSpeak, payload: map[string]any{"deviceSerialNumber": "synthetic-device-serial", "textToSpeak": "Synthetic spoken text"},
+			name: "text to speech", node: alexamodels.SpeakOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.SpeakOperationTypeAlexaSpeak,
+				OperationPayload: alexamodels.SpeakPayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					TextToSpeak: "Synthetic spoken text", SkillID: alexamodels.BehaviorSkillIDSaySomething,
+				},
+			},
 			call: func(client *Client) error {
-				return client.SendTTS(context.Background(), &alexamodels.SendTTSRequest{Endpoint: endpoint, Message: "Synthetic spoken text"})
+				return client.SendTTS(context.Background(), &alexamodels.SendTTSRequest{
+					Endpoint: endpoint, CustomerID: "", Message: "Synthetic spoken text", TargetDevices: nil,
+				})
 			},
 		},
 		{
-			name: "play music with timer", operation: alexamodels.OperationTypeMusicPlaySearchPhrase, payload: map[string]any{"searchPhrase": "Synthetic artist", "sanitizedSearchPhrase": "Synthetic artist", "musicProviderId": "synthetic-provider", "waitTimeInSeconds": 30},
+			name: "play music with timer", node: alexamodels.MusicPlaySearchPhraseOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.MusicPlaySearchPhraseOperationTypePlaySearchPhrase,
+				OperationPayload: alexamodels.MusicPlaySearchPhrasePayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					SearchPhrase: "Synthetic artist", SanitizedSearchPhrase: "Synthetic artist",
+					MusicProviderID: "synthetic-provider", WaitTimeInSeconds: seconds,
+				},
+			},
 			call: func(client *Client) error {
-				return client.PlayMusic(context.Background(), &alexamodels.PlayMusicRequest{Endpoint: endpoint, SearchPhrase: "Synthetic artist", ProviderID: "synthetic-provider", TimerSeconds: &seconds})
+				return client.PlayMusic(context.Background(), &alexamodels.PlayMusicRequest{
+					Endpoint: endpoint, CustomerID: "", ProviderID: "synthetic-provider", SearchPhrase: "Synthetic artist", TimerSeconds: &seconds,
+				})
 			},
 		},
 		{
-			name: "play audio uri", operation: alexamodels.OperationTypeSound, payload: map[string]any{"soundStringId": "https://media.example.invalid/synthetic.mp3"},
+			name: "play music omits nonpositive timer", node: alexamodels.MusicPlaySearchPhraseOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.MusicPlaySearchPhraseOperationTypePlaySearchPhrase,
+				OperationPayload: alexamodels.MusicPlaySearchPhrasePayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					SearchPhrase: "Synthetic artist", SanitizedSearchPhrase: "Synthetic artist", MusicProviderID: "synthetic-provider",
+					WaitTimeInSeconds: 0,
+				},
+			},
 			call: func(client *Client) error {
-				return client.PlayAudioURI(context.Background(), &alexamodels.PlayAudioURIRequest{Endpoint: endpoint, URI: "https://media.example.invalid/synthetic.mp3"})
+				zero := 0
+
+				return client.PlayMusic(context.Background(), &alexamodels.PlayMusicRequest{
+					Endpoint: endpoint, CustomerID: "", ProviderID: "synthetic-provider", SearchPhrase: "Synthetic artist", TimerSeconds: &zero,
+				})
 			},
 		},
 		{
-			name: "play video with provider", operation: alexamodels.OperationTypeVideoPlaySearchPhrase, payload: map[string]any{"searchPhrase": "Synthetic title on Synthetic Video", "sanitizedSearchPhrase": "Synthetic title on Synthetic Video", "waitTimeInSeconds": 30},
+			name: "play audio uri", node: alexamodels.SoundOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.SoundOperationTypeAlexaSound,
+				OperationPayload: alexamodels.SoundPayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					SoundStringID: "https://media.example.invalid/synthetic.mp3",
+				},
+			},
 			call: func(client *Client) error {
-				return client.PlayVideo(context.Background(), &alexamodels.PlayVideoRequest{Endpoint: endpoint, SearchPhrase: "Synthetic title", VideoProviderID: "Synthetic Video", TimerSeconds: &seconds})
+				return client.PlayAudioURI(context.Background(), &alexamodels.PlayAudioURIRequest{
+					Endpoint: endpoint, CustomerID: "", URI: "https://media.example.invalid/synthetic.mp3",
+				})
 			},
 		},
 		{
-			name: "play video without provider", operation: alexamodels.OperationTypeVideoPlaySearchPhrase, payload: map[string]any{"searchPhrase": "Synthetic title", "sanitizedSearchPhrase": "Synthetic title"},
+			name: "play video with provider", node: alexamodels.VideoPlaySearchPhraseOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.VideoPlaySearchPhraseOperationTypePlaySearchPhrase,
+				OperationPayload: alexamodels.VideoPlaySearchPhrasePayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					SearchPhrase: "Synthetic title on Synthetic Video", SanitizedSearchPhrase: "Synthetic title on Synthetic Video",
+					WaitTimeInSeconds: seconds,
+				},
+			},
 			call: func(client *Client) error {
-				return client.PlayVideo(context.Background(), &alexamodels.PlayVideoRequest{Endpoint: endpoint, SearchPhrase: "Synthetic title"})
+				return client.PlayVideo(context.Background(), &alexamodels.PlayVideoRequest{
+					Endpoint: endpoint, CustomerID: "", SearchPhrase: "Synthetic title", TimerSeconds: &seconds, VideoProviderID: "Synthetic Video",
+				})
 			},
 		},
 		{
-			name: "fire tv sequence", operation: alexamodels.OperationTypeFireTVPauseVideo, payload: map[string]any{"deviceAccountId": "synthetic-account", "skillId": alexamodels.SkillIDRoutinesFireTV},
+			name: "play video without provider", node: alexamodels.VideoPlaySearchPhraseOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.VideoPlaySearchPhraseOperationTypePlaySearchPhrase,
+				OperationPayload: alexamodels.VideoPlaySearchPhrasePayload{
+					DeviceType: "synthetic-device-type", DeviceSerialNumber: "synthetic-device-serial",
+					Locale: alexamodels.DefaultLocale, CustomerID: "synthetic-client-customer",
+					SearchPhrase: "Synthetic title", SanitizedSearchPhrase: "Synthetic title",
+					WaitTimeInSeconds: 0,
+				},
+			},
+			call: func(client *Client) error {
+				return client.PlayVideo(context.Background(), &alexamodels.PlayVideoRequest{
+					Endpoint: endpoint, CustomerID: "", SearchPhrase: "Synthetic title", TimerSeconds: nil, VideoProviderID: "",
+				})
+			},
+		},
+		{
+			name: "fire tv sequence", node: alexamodels.FireTVOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVPauseVideo,
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+			},
 			call: func(client *Client) error {
 				return client.SendFireTVSequence(context.Background(), "synthetic-account", alexamodels.OperationTypeFireTVPauseVideo)
 			},
 		},
 		{
-			name: "fire tv on", operation: alexamodels.OperationTypeFireTVTurnOn, payload: map[string]any{"deviceAccountId": "synthetic-account"},
+			name: "fire tv sequence preserves arbitrary operation type", node: alexamodels.FireTVOperationNode{
+				Type: behaviorNodeType, OperationType: "synthetic.CustomFireTVOperation",
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+			},
+			call: func(client *Client) error {
+				return client.SendFireTVSequence(context.Background(), "synthetic-account", "synthetic.CustomFireTVOperation")
+			},
+		},
+		{
+			name: "fire tv on", node: alexamodels.FireTVOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVTurnOn,
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+			},
 			call: func(client *Client) error {
 				return client.FireTVTurnOn(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
 			},
 		},
 		{
-			name: "fire tv off", operation: alexamodels.OperationTypeFireTVTurnOff, payload: map[string]any{"deviceAccountId": "synthetic-account"},
+			name: "fire tv off", node: alexamodels.FireTVOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVTurnOff,
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+			},
 			call: func(client *Client) error {
 				return client.FireTVTurnOff(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
 			},
 		},
 		{
-			name: "fire tv turn on/off true", operation: alexamodels.OperationTypeFireTVTurnOn, payload: map[string]any{"deviceAccountId": "synthetic-account"},
+			name: "fire tv turn on/off true", node: alexamodels.FireTVOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVTurnOn,
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+			},
 			call: func(client *Client) error {
 				return client.FireTVTurnOnOff(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint}, true)
 			},
 		},
 		{
-			name: "fire tv turn on/off false", operation: alexamodels.OperationTypeFireTVTurnOff, payload: map[string]any{"deviceAccountId": "synthetic-account"},
+			name: "fire tv turn on/off false", node: alexamodels.FireTVOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVTurnOff,
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+			},
 			call: func(client *Client) error {
 				return client.FireTVTurnOnOff(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint}, false)
 			},
 		},
 		{
-			name: "fire tv pause", operation: alexamodels.OperationTypeFireTVPauseVideo, payload: map[string]any{"deviceAccountId": "synthetic-account"},
+			name: "fire tv pause", node: alexamodels.FireTVOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVPauseVideo,
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+			},
 			call: func(client *Client) error {
 				return client.FireTVPauseVideo(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
 			},
 		},
 		{
-			name: "fire tv resume", operation: alexamodels.OperationTypeFireTVResumeVideo, payload: map[string]any{"deviceAccountId": "synthetic-account"},
+			name: "fire tv resume", node: alexamodels.FireTVOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVResumeVideo,
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+			},
 			call: func(client *Client) error {
 				return client.FireTVResumeVideo(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
 			},
 		},
 		{
-			name: "fire tv home", operation: alexamodels.OperationTypeFireTVNavigateHome, payload: map[string]any{"deviceAccountId": "synthetic-account"},
+			name: "fire tv home", node: alexamodels.FireTVOperationNode{
+				Type: behaviorNodeType, OperationType: alexamodels.OperationTypeFireTVNavigateHome,
+				OperationPayload: alexamodels.FireTVOperationPayload{DeviceAccountID: "synthetic-account", SkillID: alexamodels.BehaviorSkillIDRoutinesFireTV},
+			},
 			call: func(client *Client) error {
 				return client.FireTVNavigateHome(context.Background(), &alexamodels.FireTVRequest{Endpoint: endpoint})
 			},
@@ -424,12 +620,15 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
+			requestCount := 0
+
 			client := NewClient(
 				WithAlexaAmazonBaseURI("https://alexa.synthetic.test"),
 				WithBearerToken("synthetic-behavior-token"),
 				WithCustomerID("synthetic-client-customer"),
 				WithHTTPClient(&http.Client{Transport: syntheticRoundTripper(func(request *http.Request) (*http.Response, error) {
-					assertBehaviorSequenceRequest(t, request, testCase.operation, testCase.payload)
+					requestCount++
+					assertBehaviorSequenceRequest(t, request, testCase.node)
 
 					return syntheticResponse(request, http.StatusOK, `{}`), nil
 				})}),
@@ -439,11 +638,15 @@ func TestBehaviorMethodsSerializeSyntheticSequences(t *testing.T) {
 			if err != nil {
 				t.Fatalf("behavior operation returned an error: %v", err)
 			}
+
+			if requestCount != 1 {
+				t.Fatalf("behavior operation made %d requests, want exactly one", requestCount)
+			}
 		})
 	}
 }
 
-func assertBehaviorSequenceRequest(t *testing.T, request *http.Request, operation string, payload map[string]any) {
+func assertBehaviorSequenceRequest(t *testing.T, request *http.Request, expectedStartNode any) {
 	t.Helper()
 
 	if request.Method != http.MethodPost || request.URL.Path != "/api/behaviors/preview" ||
@@ -451,39 +654,37 @@ func assertBehaviorSequenceRequest(t *testing.T, request *http.Request, operatio
 		t.Errorf("unexpected behavior request: %s %s auth=%q", request.Method, request.URL, request.Header.Get("Authorization"))
 	}
 
-	var body struct {
-		BehaviorID   string `json:"behaviorId"`
-		SequenceJSON string `json:"sequenceJson"`
-		Status       string `json:"status"`
-	}
+	var body map[string]any
 
 	err := json.NewDecoder(request.Body).Decode(&body)
 	if err != nil {
 		t.Fatalf("decode behavior preview request: %v", err)
 	}
 
-	if body.BehaviorID != "PREVIEW" || body.Status != "ENABLED" {
-		t.Errorf("unexpected behavior preview metadata: %#v", body)
+	sequenceJSON, ok := body["sequenceJson"].(string)
+	if !ok {
+		t.Fatalf("behavior preview sequenceJson has type %T, want string", body["sequenceJson"])
 	}
 
-	var sequence map[string]any
-
-	err = json.Unmarshal([]byte(body.SequenceJSON), &sequence)
+	expectedSequence, err := json.Marshal(alexamodels.Sequence{
+		Type:      alexamodels.SequenceType(alexamodels.ModelTypeSequence),
+		StartNode: expectedStartNode,
+	})
 	if err != nil {
-		t.Fatalf("decode behavior sequence: %v", err)
+		t.Fatalf("marshal expected behavior sequence: %v", err)
 	}
 
-	if sequence["@type"] != alexamodels.ModelTypeSequence {
-		t.Errorf("unexpected sequence type: %#v", sequence)
+	if sequenceJSON != string(expectedSequence) {
+		t.Errorf("unexpected behavior sequence bytes:\n got: %s\nwant: %s", sequenceJSON, expectedSequence)
 	}
 
-	node, ok := sequence["startNode"].(map[string]any)
-	if !ok || node["type"] != operation || node["@type"] != alexamodels.ModelTypeOpaquePayloadOperationNode {
-		t.Errorf("unexpected operation node: %#v", sequence["startNode"])
+	expectedRequest := alexamodels.WireBehaviorPreviewRequest{
+		BehaviorId:   alexamodels.DefaultBehaviorID,
+		SequenceJson: string(expectedSequence),
+		Status:       alexamodels.DefaultBehaviorStatus,
 	}
-
-	if got, ok := node["operationPayload"].(map[string]any); !ok || !restJSONSubset(t, got, payload) {
-		t.Errorf("unexpected operation payload: %#v", node["operationPayload"])
+	if !sameRestJSON(body, expectedRequest) {
+		t.Errorf("behavior preview request got %#v, want %#v", body, expectedRequest)
 	}
 }
 
@@ -496,28 +697,60 @@ func TestBehaviorMethodsValidateEndpointAndVolumeInputs(t *testing.T) {
 		name string
 		call func() error
 	}{
-		{name: "stop playback endpoint", call: func() error { return client.StopPlayback(context.Background(), &alexamodels.StopPlaybackRequest{}) }},
-		{name: "set volume endpoint", call: func() error { return client.SetVolume(context.Background(), &alexamodels.VolumeControlRequest{}) }},
+		{name: "stop playback endpoint", call: func() error {
+			return client.StopPlayback(context.Background(), &alexamodels.StopPlaybackRequest{
+				Endpoint: nil, AllDevices: false, CustomerID: "",
+			})
+		}},
+		{name: "set volume endpoint", call: func() error {
+			return client.SetVolume(context.Background(), &alexamodels.VolumeControlRequest{
+				Endpoint: nil, CustomerID: "", Delta: nil, SetVolume: false, Volume: nil,
+			})
+		}},
 		{name: "negative volume", call: func() error {
 			value := -1
 
-			return client.SetVolume(context.Background(), &alexamodels.VolumeControlRequest{Endpoint: syntheticEndpoint{}, Volume: &value})
+			return client.SetVolume(context.Background(), &alexamodels.VolumeControlRequest{
+				Endpoint: syntheticEndpoint{}, CustomerID: "", Delta: nil, SetVolume: false, Volume: &value,
+			})
 		}},
 		{name: "volume over maximum", call: func() error {
 			value := 101
 
-			return client.SetVolume(context.Background(), &alexamodels.VolumeControlRequest{Endpoint: syntheticEndpoint{}, Volume: &value})
+			return client.SetVolume(context.Background(), &alexamodels.VolumeControlRequest{
+				Endpoint: syntheticEndpoint{}, CustomerID: "", Delta: nil, SetVolume: false, Volume: &value,
+			})
 		}},
 		{name: "notification endpoint", call: func() error {
-			return client.SendNotification(context.Background(), &alexamodels.SendNotificationRequest{})
+			return client.SendNotification(context.Background(), &alexamodels.SendNotificationRequest{
+				Endpoint: nil, CustomerID: "", Message: "", Title: "",
+			})
 		}},
 		{name: "announcement endpoint", call: func() error {
-			return client.SendAnnouncement(context.Background(), &alexamodels.SendAnnouncementRequest{})
+			return client.SendAnnouncement(context.Background(), &alexamodels.SendAnnouncementRequest{
+				Endpoint: nil, CustomerID: "", Locale: "", Message: "", Method: "", TargetDevices: nil, Title: "",
+			})
 		}},
-		{name: "tts endpoint", call: func() error { return client.SendTTS(context.Background(), &alexamodels.SendTTSRequest{}) }},
-		{name: "music endpoint", call: func() error { return client.PlayMusic(context.Background(), &alexamodels.PlayMusicRequest{}) }},
-		{name: "audio endpoint", call: func() error { return client.PlayAudioURI(context.Background(), &alexamodels.PlayAudioURIRequest{}) }},
-		{name: "video endpoint", call: func() error { return client.PlayVideo(context.Background(), &alexamodels.PlayVideoRequest{}) }},
+		{name: "tts endpoint", call: func() error {
+			return client.SendTTS(context.Background(), &alexamodels.SendTTSRequest{
+				Endpoint: nil, CustomerID: "", Message: "", TargetDevices: nil,
+			})
+		}},
+		{name: "music endpoint", call: func() error {
+			return client.PlayMusic(context.Background(), &alexamodels.PlayMusicRequest{
+				Endpoint: nil, CustomerID: "", ProviderID: "", SearchPhrase: "", TimerSeconds: nil,
+			})
+		}},
+		{name: "audio endpoint", call: func() error {
+			return client.PlayAudioURI(context.Background(), &alexamodels.PlayAudioURIRequest{
+				Endpoint: nil, CustomerID: "", URI: "",
+			})
+		}},
+		{name: "video endpoint", call: func() error {
+			return client.PlayVideo(context.Background(), &alexamodels.PlayVideoRequest{
+				Endpoint: nil, CustomerID: "", SearchPhrase: "", TimerSeconds: nil, VideoProviderID: "",
+			})
+		}},
 		{name: "fire tv missing account", call: func() error {
 			return client.FireTVTurnOn(context.Background(), &alexamodels.FireTVRequest{Endpoint: syntheticEndpoint{family: alexamodels.DeviceFamilyFireTV}})
 		}},
@@ -544,27 +777,6 @@ func TestBehaviorMethodsValidateEndpointAndVolumeInputs(t *testing.T) {
 			}
 		})
 	}
-}
-
-func restJSONSubset(t *testing.T, actual, expected map[string]any) bool {
-	t.Helper()
-
-	for key, expectedValue := range expected {
-		actualValue, ok := actual[key]
-		if !ok {
-			t.Errorf("payload missing key %q: %#v", key, actual)
-
-			return false
-		}
-
-		if !sameRestJSON(actualValue, expectedValue) {
-			t.Errorf("payload key %q got %#v, want %#v", key, actualValue, expectedValue)
-
-			return false
-		}
-	}
-
-	return true
 }
 
 func sameRestJSON(actual, expected any) bool {

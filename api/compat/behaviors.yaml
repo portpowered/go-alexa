@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: Alexa behavior Go compatibility projections
+  version: 0.1.0
+  description: |
+    These schemas preserve the historical exported Go fields in behavior
+    payload helpers. Required lists describe Go JSON encoding only and do not
+    assert provider validation requirements.
+paths: {}
+components:
+  schemas:
+    AnnouncementContent:
+      type: object
+      required: [locale, display, speak]
+      properties:
+        locale: {type: string}
+        display: {$ref: '#/components/schemas/AnnouncementDisplay'}
+        speak: {$ref: '#/components/schemas/AnnouncementSpeak'}
+    AnnouncementDisplay:
+      type: object
+      required: [title, body]
+      properties:
+        title: {type: string}
+        body: {type: string}
+    AnnouncementSpeak:
+      type: object
+      required: [type, value]
+      properties:
+        type: {type: string}
+        value: {type: string}

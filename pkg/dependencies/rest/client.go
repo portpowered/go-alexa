@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
+	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
@@ -219,13 +220,14 @@ func (c *Client) GetCSRFToken(ctx context.Context) (string, error) {
 	if c.cookies != nil {
 		// Check for csrf cookie
 		for key, cookie := range c.cookies {
-			if cookie.Name == "csrf" {
+			if cookie.Name == alexamodels.AuthCSRFCookieName {
 				c.csrfToken = cookie.Value
 
 				return cookie.Value, nil
 			}
 			// Also check key format
-			if key == "alexa.amazon.com:csrf" || key == ".alexa.amazon.com:csrf" {
+			if key == alexamodels.AuthCSRFCookieDomain+":"+alexamodels.AuthCSRFCookieName ||
+				key == alexamodels.AuthCSRFCookieSubdomain+":"+alexamodels.AuthCSRFCookieName {
 				c.csrfToken = cookie.Value
 
 				return cookie.Value, nil
@@ -313,7 +315,9 @@ func (c *Client) cachedCSRFToken() (string, error) {
 			continue
 		}
 
-		if cookie.Name == "csrf" || key == "alexa.amazon.com:csrf" || key == ".alexa.amazon.com:csrf" {
+		if cookie.Name == alexamodels.AuthCSRFCookieName ||
+			key == alexamodels.AuthCSRFCookieDomain+":"+alexamodels.AuthCSRFCookieName ||
+			key == alexamodels.AuthCSRFCookieSubdomain+":"+alexamodels.AuthCSRFCookieName {
 			return cookie.Value, nil
 		}
 	}

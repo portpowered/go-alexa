@@ -421,15 +421,5 @@ func isIntegrationPowerEvent(t *testing.T, event *alexaapimodels.Event, endpoint
 		return true
 	}
 
-	if event.Name != "ChangeReport" && event.Name != "StateReport" {
-		return false
-	}
-
-	t.Log("Received state change event for endpoint (may contain power state)")
-
-	if unknownPayload, ok := event.Payload.(*alexaapimodels.UnknownPayload); ok {
-		t.Logf("Unknown payload data: %+v", unknownPayload.Data)
-	}
-
-	return true
+	return false
 }

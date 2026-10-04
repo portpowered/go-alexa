@@ -86,6 +86,7 @@ components:
       properties:
         directive:
           $ref: '#/components/schemas/Directive'
+          x-go-wire-key-constant-name: EventDirectiveKey
       required: [directive]
       additionalProperties: true
     Directive:
@@ -93,8 +94,10 @@ components:
       properties:
         header:
           $ref: '#/components/schemas/DirectiveHeader'
+          x-go-wire-key-constant-name: EventHeaderKey
         payload:
           $ref: '#/components/schemas/DirectivePayload'
+          x-go-wire-key-constant-name: EventPayloadKey
       required: [header, payload]
       additionalProperties: true
     DirectiveHeader:
@@ -103,13 +106,16 @@ components:
       properties:
         namespace: {type: string}
         name: {type: string}
-        messageId: {type: string}
+        messageId:
+          type: string
+          x-go-wire-key-constant-name: EventMessageIDKey
       additionalProperties: true
     DirectivePayload:
       type: object
       properties:
         renderingUpdates:
           type: array
+          x-go-wire-key-constant-name: EventRenderingUpdatesKey
           items:
             $ref: '#/components/schemas/RenderingUpdate'
       required: [renderingUpdates]
@@ -121,57 +127,10 @@ components:
         resourceId: {type: string}
         resourceMetadata:
           type: string
+          x-go-wire-key-constant-name: EventResourceMetadataKey
           description: JSON text which the parser decodes as a ResourceMetadata document.
           contentMediaType: application/json
           contentSchema:
-            $ref: '#/components/schemas/ResourceMetadata'
+            $ref: './feature-events.yaml#/components/schemas/ResourceMetadataPayload'
       required: [resourceMetadata]
-      additionalProperties: true
-    ResourceMetadata:
-      type: object
-      description: Parsed from the resourceMetadata string by the current event parser.
-      properties:
-        metricName: {type: string}
-        payload:
-          $ref: '#/components/schemas/ResourceMetadataPayload'
-        type: {type: string}
-        timestamp: {type: string}
-      required: [metricName, payload]
-      additionalProperties: true
-    ResourceMetadataPayload:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ResourceData'
-        entity:
-          $ref: '#/components/schemas/ResourceEntity'
-      required: [data, entity]
-      additionalProperties: true
-    ResourceData:
-      type: object
-      properties:
-        __typename: {type: string}
-        features:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResourceFeature'
-      required: [features]
-      additionalProperties: true
-    ResourceFeature:
-      type: object
-      description: Feature property content is metric-specific and may be extended by the provider. Known parser property shapes are modeled in api/embedded-wire.yaml.
-      x-go-alexa-known-property-schema: embedded-wire.yaml#/components/schemas
-      properties:
-        name: {type: string}
-        __typename: {type: string}
-        properties: {}
-        instance: {type: string, nullable: true}
-      required: [properties]
-      additionalProperties: true
-    ResourceEntity:
-      type: object
-      properties:
-        __typename: {type: string}
-        id: {type: string}
-      required: [id]
       additionalProperties: true

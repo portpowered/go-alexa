@@ -25,32 +25,35 @@ func graphqlReplayOperations(ctx context.Context) []graphqlReplayOperation {
 			return err
 		}},
 		{"ListEndpoints", `{"data":{"listEndpoints":{"endpoints":[],"paginationInfo":{"totalCount":0,"nextToken":""},"completeResult":true}}}`, func(c *Client) error {
-			_, err := c.ListEndpoints(ctx, ListEndpointsInput{EndpointIds: []string{"synthetic-endpoint"}})
+			_, err := c.ListEndpoints(ctx, testListEndpointsInput([]string{"synthetic-endpoint"}, nil))
 
 			return err
 		}},
 		{"Endpoints", `{"data":{"endpoints":{"items":[]}}}`, func(c *Client) error {
-			_, err := c.ListEndpointsWithoutStates(ctx, EndpointsQueryParams{PaginationParams: PaginationParams{NextToken: "synthetic-next"}})
+			pagination := testPaginationParams("synthetic-next", false)
+			_, err := c.ListEndpointsWithoutStates(ctx, testEndpointsQueryParams(pagination))
 
 			return err
 		}},
 		{"ListEndpointsWithStates", `{"data":{"listEndpoints":{"completeResult":true,"endpoints":[]}}}`, func(c *Client) error {
-			_, err := c.ListEndpointsWithStates(ctx, ListEndpointsInput{EndpointIds: []string{"synthetic-endpoint"}})
+			_, err := c.ListEndpointsWithStates(ctx, testListEndpointsInput([]string{"synthetic-endpoint"}, nil))
 
 			return err
 		}},
 		{"SetEndpointFeatures", `{"data":{"setEndpointFeatures":{"featureControlResponses":[],"errors":[]}}}`, func(c *Client) error {
-			_, err := c.SetEndpointFeatures(ctx, SetEndpointFeaturesInput{FeatureControlRequests: []FeatureControlRequest{{EndpointId: "synthetic-endpoint", FeatureName: FeatureNamePower, FeatureOperationName: FeatureOperationNameTurnon}}})
+			request := testFeatureControlRequest("synthetic-endpoint", FeatureNamePower, FeatureOperationNameTurnon)
+			_, err := c.SetEndpointFeatures(ctx, SetEndpointFeaturesInput{FeatureControlRequests: []FeatureControlRequest{request}})
 
 			return err
 		}},
 		{"RequestEndpointQualityOfService", `{"data":{"requestEndpointQualityOfService":{"durationInSeconds":45,"errors":[]}}}`, func(c *Client) error {
-			_, err := c.RequestEndpointQualityOfService(ctx, EndpointQualityOfServiceInput{Endpoints: []string{"synthetic-endpoint"}, Configuration: QualityOfServiceConfiguration{DurationInSeconds: 45}})
+			_, err := c.RequestEndpointQualityOfService(ctx, EndpointQualityOfServiceInput{Endpoints: []string{"synthetic-endpoint"}, Configuration: testQualityOfServiceConfiguration(45)})
 
 			return err
 		}},
 		{"Subscribe", `{"data":{"subscribe":{"entities":["synthetic-endpoint"],"durationInMinutes":5,"errors":[]}}}`, func(c *Client) error {
-			_, err := c.Subscribe(ctx, SubscribeConfiguration{Entities: []SubscriptionFilter{{EntityType: "endpoint", Ids: []string{"synthetic-endpoint"}}}, DurationInMinutes: 5})
+			filter := testSubscriptionFilter("endpoint", []string{"synthetic-endpoint"})
+			_, err := c.Subscribe(ctx, testSubscribeConfiguration([]SubscriptionFilter{filter}, 5))
 
 			return err
 		}},

@@ -1,0 +1,61 @@
+# Inventory of the pinned external network codec, not a provider-issued schema.
+dependency: golang.org/x/net/http2
+module: golang.org/x/net
+version: v0.47.0
+contract: RFC 9113 HTTP/2 over TLS
+evidence: implementation-derived
+source:
+  transport: http2/transport.go
+  entrypoint: Transport.RoundTrip
+  connection: Transport.dialTLS
+  injection: Transport.DialTLSContext
+  framing: http2/frame.go
+library_callsite: pkg/alexa/http2.go
+configuration: pkg/alexa/client.go#WithEventTransport
+codec_owned_headers:
+  pseudo_headers: [':method', ':scheme', ':authority', ':path', ':status']
+  default_user_agent: Go-http-client/2.0
+  optional_accept_encoding: gzip
+  # Native offline replay disables compression to make headers deterministic.
+  # Application Authorization and Accept fields remain in the operation schema.
+servers:
+  - schema: ../asyncapi.yaml#/servers/northAmerica
+  - schema: ../asyncapi.yaml#/servers/europe
+  - schema: ../asyncapi.yaml#/servers/japan
+  - configured: WithEventAuthority
+exchanges:
+  - operation: openDirectiveStream
+    schema: ../openapi.yaml#/paths/~1v20160207~1directives/get
+    channel: ../asyncapi.yaml#/channels/directives
+    framing: ../asyncapi.yaml#/channels/directives/x-go-alexa-stream-framing
+    message: ../asyncapi.yaml#/components/schemas/DirectiveMessage
+    callsite: pkg/alexa/http2.go#Connect
+  - operation: pingDirectiveStream
+    schema: ../openapi.yaml#/paths/~1ping/get
+    callsite: pkg/alexa/http2.go#ping
+codec_owned_frames:
+  # Stock HTTP/2 framing is implemented by the dependency; go-alexa does not
+  # duplicate its structs. Provider routes, headers and DATA payloads are schema
+  # generated in this repository. These frames introduce no other provider route.
+  - client_preface
+  - SETTINGS
+  - HEADERS
+  - CONTINUATION
+  - DATA
+  - WINDOW_UPDATE
+  - RST_STREAM
+  - PING
+  - GOAWAY
+offline_verification:
+  test: pkg/alexa/http2_native_replay_test.go#TestEventNativeHTTP2PairedReplay
+  fixture: tests/replay/fixtures/synthetic/alexa-events-http2.json
+  connection: net.Pipe through Transport.DialTLSContext and Server.ServeConn
+  checks:
+    - both parsed requests use HTTP/2
+    - exact method, origin, escaped path, query, headers and body before response
+    - directive DATA payload reaches the generated parser and SDK event projection
+    - stream-open followed by application keepalive ping and complete consumption
+    - explicit connection close stops the server
+limitations:
+  - Synthetic in-memory traffic does not verify provider behavior or TLS negotiation.
+  - Protocol control frames remain owned by the pinned standard HTTP/2 codec.

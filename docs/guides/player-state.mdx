@@ -1,0 +1,21 @@
+---
+title: 'Read player state'
+---
+
+Select a device from [endpoint enumeration](../endpoint-enumeration/) with a device type and device serial number, then read its playback status.
+
+```go
+state, err := session.GetPlayerState(ctx, alexaapimodels.PlayerStateRequest{
+    Target: target,
+})
+if err != nil {
+    return err
+}
+if state.PlayerInfo != nil {
+    fmt.Printf("playback state: %s\n", state.PlayerInfo.State)
+}
+```
+
+`target` is the selected `*alexaapimodels.Endpoint`. Some devices or accounts return no player information; check `PlayerInfo` before reading it. A reported state can lag behind the physical device.
+
+See the [media player reference](../../openapi/media/getMediaPlayerState/).

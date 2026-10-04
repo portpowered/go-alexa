@@ -16,10 +16,6 @@
 go get github.com/portpowered/go-alexa@latest
 ```
 
-`v0.1.0` was the first release from the cleaned history. The v0.2.0 API moves
-account operations from `Client` to `Session`; see the [authentication guide](https://portpowered.github.io/go-alexa/docs/guides/authentication/)
-for the migration pattern.
-
 ## Quick start
 
 Provide an access token through your application's secret store or environment. Do not commit tokens or print them to logs.
@@ -71,6 +67,8 @@ func main() {
 
 `Client` holds reusable endpoint and transport configuration. Create an account `Session` with credentials before calling API methods, then close the session when finished. Every network operation accepts a context. See the [authentication guide](https://portpowered.github.io/go-alexa/docs/guides/authentication/) for token refresh and code-based linking.
 
+The first standalone CLI release is pending. Until then, run it from a checkout with `cd cmd/go-alexa && go run . help`. After publication, install it with `go install github.com/portpowered/go-alexa/cmd/go-alexa@latest`. See the [CLI guide](https://portpowered.github.io/go-alexa/docs/guides/cli/) for account linking, secure credential files, endpoint commands, player state, and event listening.
+
 ## Supported operations
 
 | Operation | Method | Notes |
@@ -84,11 +82,11 @@ func main() {
 | Account profile | `GetUserInfo` | Returns personal account information; handle the result as sensitive data. |
 | Player state | `GetPlayerState` | Provider- and device-dependent. |
 
-The package exposes endpoint, feature, event, request, response, and error models under `pkg/alexaapimodels`. Its GraphQL, OpenAPI, and AsyncAPI files describe implementation-derived subsets, not authoritative Amazon contracts. The maintainer reports account testing, but operation-level results and sanitized captures are not recorded. See the [generated API reference](https://portpowered.github.io/go-alexa/docs/) and [verification guidance](docs/verification.md).
+The package exposes endpoint, feature, event, request, response, and error models under `pkg/alexaapimodels`. See the [customer guides](https://portpowered.github.io/go-alexa/docs/guides/) and [API reference](https://portpowered.github.io/go-alexa/docs/).
 
 ## Authentication, errors, and transports
 
-Create a reusable client with `WithRegion`, `WithTimeout`, endpoint overrides, and network options. Put account credentials on `client.NewSession(alexa.WithBearerToken(...))`. `WithRefreshToken` only stores a caller-managed token: refresh it explicitly and install the returned access token with `Session.SetAccessToken`, or explicitly exchange it for cookies. `WithRESTHTTPClient`, `WithGraphQLHTTPClient`, and `WithEventHTTPClient` inject separate network edges; `WithEventTransport` accepts an event-stream `RoundTripper` such as an HTTP/2 transport.
+Create a reusable client with `WithRegion`, `WithTimeout`, endpoint overrides, and network options. Put account credentials on `client.NewSession(alexa.WithBearerToken(...))`. `WithRefreshToken` only stores a caller-managed token: refresh it explicitly and install the returned access token with `Session.SetAccessToken`, or explicitly exchange it for cookies. `WithRESTHTTPClient`, `WithGraphQLHTTPClient`, and `WithEventHTTPClient` inject separate network edges; `WithEventTransport` accepts an event-stream `RoundTripper` such as an HTTP/2 transport. See the [transport configuration example](https://portpowered.github.io/go-alexa/docs/guides/client-configuration/).
 
 Errors use typed values such as `AuthenticationError`, `NetworkError`, `TokenError`, `BadRequestError`, and `HTTPError` in `alexaapimodels`; many wrapped errors preserve their cause with `Unwrap`. `ControlResponse`, `SubscribeResponse`, and `QualityOfServiceResponse` can also contain operation-level errors even when the HTTP request succeeded.
 
@@ -101,24 +99,6 @@ Runnable examples are in `cmd/examples/`:
 - `events` creates an endpoint subscription and listens for events.
 
 The examples use environment variables where credentials are needed. No account tokens or endpoint identifiers are hard-coded.
-
-## Verification
-
-Normal checks are offline and use synthetic fixtures; no Amazon credentials are required:
-
-```sh
-make lint
-make check
-make generate
-```
-
-`make check` runs vet, build, and race-enabled tests. The synthetic fixtures define test inputs and are not proof of current service behavior. Live integration tests in `test/integration` run only when `ALEXA_REFRESH_TOKEN` is set; otherwise they skip:
-
-```sh
-go test ./test/integration/...
-```
-
-Read [fixture guidance](docs/verification.md) before adding any captured payload and the [release guide](docs/releasing.md) before tagging. Never check in raw captures, tokens, cookies, customer identifiers, or device identifiers.
 
 ## License
 

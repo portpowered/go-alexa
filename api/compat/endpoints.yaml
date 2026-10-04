@@ -1,0 +1,535 @@
+openapi: 3.0.3
+info:
+  title: Alexa endpoint Go compatibility projections
+  version: 0.1.0
+  description: |
+    These schemas preserve legacy exported Go field types used by the endpoint
+    client. Required lists describe old Go JSON encoding only and do not assert
+    provider validation requirements.
+paths: {}
+components:
+  schemas:
+    Device:
+      type: object
+      required: [id, name, type]
+      properties:
+        id:
+          type: string
+          x-go-name: ID
+        name: {type: string}
+        type: {type: string}
+        capabilities:
+          type: array
+          items: {type: string}
+          x-go-type-skip-optional-pointer: true
+        state:
+          type: object
+          additionalProperties: true
+          x-go-type-skip-optional-pointer: true
+        metadata:
+          type: object
+          additionalProperties: true
+          x-go-type-skip-optional-pointer: true
+    Capability:
+      type: object
+      required: [type]
+      properties:
+        type: {type: string}
+        interface:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        version:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        properties:
+          type: object
+          additionalProperties: true
+          x-go-type-skip-optional-pointer: true
+    Command:
+      type: object
+      required: [type]
+      properties:
+        type: {type: string}
+        device_id:
+          type: string
+          x-go-name: DeviceID
+          x-go-type-skip-optional-pointer: true
+        payload:
+          x-go-type-skip-optional-pointer: true
+        namespace:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        name:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    EndpointListResponse:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/Device'}
+        nextToken:
+          type: string
+          x-go-type-skip-optional-pointer: true
+    EndpointQueryRequest:
+      type: object
+      required: [query]
+      properties:
+        query: {$ref: '#/components/schemas/EndpointQuery'}
+    EndpointQuery:
+      type: object
+      properties:
+        and:
+          type: array
+          items: {$ref: '#/components/schemas/EndpointQueryClause'}
+          x-go-name: AND
+          x-go-type-skip-optional-pointer: true
+        or:
+          type: array
+          items: {$ref: '#/components/schemas/EndpointQueryClause'}
+          x-go-name: OR
+          x-go-type-skip-optional-pointer: true
+        includeFields: {$ref: '#/components/schemas/EndpointIncludeFields'}
+        paginationContext: {$ref: '#/components/schemas/PaginationContext'}
+    EndpointIncludeFields:
+      type: object
+      properties:
+        states:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+        capabilities:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+    PaginationContext:
+      type: object
+      properties:
+        nextToken:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        maxResults:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+        performPagination:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+    EndpointQueryClause:
+      type: object
+      properties:
+        associatedUnits: {$ref: '#/components/schemas/AssociatedUnitsFilter'}
+        manufacturer: {$ref: '#/components/schemas/StringFilter'}
+        model: {$ref: '#/components/schemas/StringFilter'}
+    AssociatedUnitsFilter:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          x-go-name: ID
+    StringFilter:
+      type: object
+      required: [value]
+      properties:
+        value: {$ref: '#/components/schemas/StringFilterValue'}
+    StringFilterValue:
+      type: object
+      required: [text]
+      properties:
+        text: {type: string}
+    FriendlyNameRequest:
+      type: object
+      required: [friendlyName]
+      properties:
+        friendlyName: {$ref: '#/components/schemas/FriendlyNameValue'}
+    FriendlyNameValue:
+      type: object
+      required: [type, value]
+      properties:
+        type: {type: string}
+        value: {$ref: '#/components/schemas/FriendlyNameText'}
+    FriendlyNameText:
+      type: object
+      required: [text]
+      properties:
+        text: {type: string}
+    SendNotificationRequest:
+      type: object
+      required: [message, title]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        message: {type: string}
+        title: {type: string}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+    SendAnnouncementRequest:
+      type: object
+      required: [message, method]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        message: {type: string}
+        method: {type: string}
+        title: {type: string, x-go-type-skip-optional-pointer: true}
+        locale: {type: string, x-go-type-skip-optional-pointer: true}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+        targetDevices:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: object
+            required: [deviceType, deviceSerialNumber]
+            properties:
+              deviceType: {type: string}
+              deviceSerialNumber: {type: string}
+            x-go-type: DeviceTarget
+    SendTTSRequest:
+      type: object
+      required: [message]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        message: {type: string}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+        targetDevices:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: object
+            required: [deviceType, deviceSerialNumber]
+            properties:
+              deviceType: {type: string}
+              deviceSerialNumber: {type: string}
+            x-go-type: DeviceTarget
+    FireTVRequest:
+      type: object
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+    FireTVOperationRequest:
+      type: object
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+    PlaybackControlRequest:
+      type: object
+      required: [operation]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        customerId: {type: string, x-go-name: CustomerID, x-go-type-skip-optional-pointer: true}
+        operation: {type: string}
+    InterfaceMessageRequest:
+      type: object
+      required: [featureName, operationName]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        featureName: {type: string}
+        operationName: {type: string}
+        payload:
+          type: object
+          additionalProperties: true
+          x-go-type: interface{}
+          x-go-type-skip-optional-pointer: true
+    PowerControlRequest:
+      type: object
+      required: [state]
+      properties:
+        '-': {type: string, x-go-name: Endpoint, x-go-type: Endpoint, x-go-type-skip-optional-pointer: true}
+        state:
+          type: string
+          x-go-type: alexaapimodels.PowerState
+          x-go-type-import:
+            path: github.com/portpowered/go-alexa/pkg/alexaapimodels
+            name: alexaapimodels
+
+    SDKKnownEndpointDisplayCategory:
+      type: string
+      x-go-type: string
+      description: Known library EndpointDisplayCategory values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: EndpointDisplayCategory
+      x-go-compat-constant-values:
+        SDKEndpointDisplayCategoryOther: "OTHER"
+        SDKEndpointDisplayCategoryActivityTrigger: "ACTIVITY_TRIGGER"
+        SDKEndpointDisplayCategoryAirConditioner: "AIR_CONDITIONER"
+        SDKEndpointDisplayCategoryAirFreshener: "AIR_FRESHENER"
+        SDKEndpointDisplayCategoryAirPurifier: "AIR_PURIFIER"
+        SDKEndpointDisplayCategoryAirQualityMonitor: "AIR_QUALITY_MONITOR"
+        SDKEndpointDisplayCategoryAlexaVoiceEnabled: "ALEXA_VOICE_ENABLED"
+        SDKEndpointDisplayCategoryAutoAccessory: "AUTO_ACCESSORY"
+        SDKEndpointDisplayCategoryBluetoothSpeaker: "BLUETOOTH_SPEAKER"
+        SDKEndpointDisplayCategoryBurner: "BURNER"
+        SDKEndpointDisplayCategoryCamera: "CAMERA"
+        SDKEndpointDisplayCategoryCarbonMonoxideSensor: "CARBON_MONOXIDE_SENSOR"
+        SDKEndpointDisplayCategoryChristmasTree: "CHRISTMAS_TREE"
+        SDKEndpointDisplayCategoryCoffeeMaker: "COFFEE_MAKER"
+        SDKEndpointDisplayCategoryComputer: "COMPUTER"
+        SDKEndpointDisplayCategoryContactSensor: "CONTACT_SENSOR"
+        SDKEndpointDisplayCategoryCookingAppliance: "COOKING_APPLIANCE"
+        SDKEndpointDisplayCategoryCooktop: "COOKTOP"
+        SDKEndpointDisplayCategoryCoolingCabinet: "COOLING_CABINET"
+        SDKEndpointDisplayCategoryDishwasher: "DISHWASHER"
+        SDKEndpointDisplayCategoryDoor: "DOOR"
+        SDKEndpointDisplayCategoryDoorbell: "DOORBELL"
+        SDKEndpointDisplayCategoryDryer: "DRYER"
+        SDKEndpointDisplayCategoryExteriorBlind: "EXTERIOR_BLIND"
+        SDKEndpointDisplayCategoryFan: "FAN"
+        SDKEndpointDisplayCategoryGameConsole: "GAME_CONSOLE"
+        SDKEndpointDisplayCategoryGarageDoor: "GARAGE_DOOR"
+        SDKEndpointDisplayCategoryHeadphones: "HEADPHONES"
+        SDKEndpointDisplayCategoryHub: "HUB"
+        SDKEndpointDisplayCategoryHumiditySensor: "HUMIDITY_SENSOR"
+        SDKEndpointDisplayCategoryInteriorBlind: "INTERIOR_BLIND"
+        SDKEndpointDisplayCategoryLaptop: "LAPTOP"
+        SDKEndpointDisplayCategoryLight: "LIGHT"
+        SDKEndpointDisplayCategoryLightSensor: "LIGHT_SENSOR"
+        SDKEndpointDisplayCategoryMicrowave: "MICROWAVE"
+        SDKEndpointDisplayCategoryMobilePhone: "MOBILE_PHONE"
+        SDKEndpointDisplayCategoryMotionSensor: "MOTION_SENSOR"
+        SDKEndpointDisplayCategoryMusicSystem: "MUSIC_SYSTEM"
+        SDKEndpointDisplayCategoryNetworkHardware: "NETWORK_HARDWARE"
+        SDKEndpointDisplayCategoryOven: "OVEN"
+        SDKEndpointDisplayCategoryPhone: "PHONE"
+        SDKEndpointDisplayCategoryPrinter: "PRINTER"
+        SDKEndpointDisplayCategoryRefrigerator: "REFRIGERATOR"
+        SDKEndpointDisplayCategoryRemote: "REMOTE"
+        SDKEndpointDisplayCategoryRouter: "ROUTER"
+        SDKEndpointDisplayCategorySceneTrigger: "SCENE_TRIGGER"
+        SDKEndpointDisplayCategoryScreen: "SCREEN"
+        SDKEndpointDisplayCategorySecurityPanel: "SECURITY_PANEL"
+        SDKEndpointDisplayCategorySecuritySystem: "SECURITY_SYSTEM"
+        SDKEndpointDisplayCategorySlowCooker: "SLOW_COOKER"
+        SDKEndpointDisplayCategorySmartlock: "SMARTLOCK"
+        SDKEndpointDisplayCategorySmartplug: "SMARTPLUG"
+        SDKEndpointDisplayCategorySmokeSensor: "SMOKE_SENSOR"
+        SDKEndpointDisplayCategorySpeaker: "SPEAKER"
+        SDKEndpointDisplayCategoryStreamingDevice: "STREAMING_DEVICE"
+        SDKEndpointDisplayCategorySwitch: "SWITCH"
+        SDKEndpointDisplayCategoryTablet: "TABLET"
+        SDKEndpointDisplayCategoryTemperatureSensor: "TEMPERATURE_SENSOR"
+        SDKEndpointDisplayCategoryThermostat: "THERMOSTAT"
+        SDKEndpointDisplayCategoryTracker: "TRACKER"
+        SDKEndpointDisplayCategoryTV: "TV"
+        SDKEndpointDisplayCategoryVacuumCleaner: "VACUUM_CLEANER"
+        SDKEndpointDisplayCategoryVehicle: "VEHICLE"
+        SDKEndpointDisplayCategoryWasher: "WASHER"
+        SDKEndpointDisplayCategoryWaterHeater: "WATER_HEATER"
+        SDKEndpointDisplayCategoryWaterLeakSensor: "WATER_LEAK_SENSOR"
+        SDKEndpointDisplayCategoryWearable: "WEARABLE"
+
+    SDKKnownFeatureName:
+      type: string
+      x-go-type: string
+      description: Known library FeatureName values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: FeatureName
+      x-go-sdk-graphql-values:
+        FeatureNameBrightness: FeatureName.brightness
+        FeatureNameColor: FeatureName.color
+        FeatureNameColorTemperature: FeatureName.colorTemperature
+        FeatureNameLock: FeatureName.lock
+        FeatureNameMode: FeatureName.mode
+        FeatureNameRange: FeatureName.range
+        FeatureNameToggle: FeatureName.toggle
+        FeatureNamePercentage: FeatureName.percentage
+        FeatureNamePowerLevel: FeatureName.powerLevel
+        FeatureNameAction: FeatureName.action
+        FeatureNamePower: FeatureName.power
+        FeatureNameSpeaker: FeatureName.speaker
+        FeatureNameThermostat: FeatureName.thermostat
+        FeatureNameTemperatureSensor: FeatureName.temperatureSensor
+        FeatureNameMotionSensor: FeatureName.motionSensor
+        FeatureNameContactSensor: FeatureName.contactSensor
+        FeatureNameConnectivity: FeatureName.connectivity
+      x-go-compat-constant-values:
+        SDKFeatureNameNotification: "notification"
+        SDKFeatureNameAnnouncement: "announcement"
+        SDKFeatureNameSpeechSynthesizer: "speechsynthesizer"
+        SDKFeatureNameAudioPlayer: "audioplayer"
+        SDKFeatureNameNavigation: "navigation"
+        SDKFeatureNameBrightness: "brightness"
+        SDKFeatureNameColor: "color"
+        SDKFeatureNameColorTemperature: "colorTemperature"
+        SDKFeatureNameLock: "lock"
+        SDKFeatureNameMode: "mode"
+        SDKFeatureNameRange: "range"
+        SDKFeatureNameToggle: "toggle"
+        SDKFeatureNamePercentage: "percentage"
+        SDKFeatureNamePowerLevel: "powerLevel"
+        SDKFeatureNameAction: "action"
+        SDKFeatureNamePlayback: "playback"
+        SDKFeatureNamePower: "power"
+        SDKFeatureNameSpeaker: "speaker"
+        SDKFeatureNameThermostat: "thermostat"
+        SDKFeatureNameTemperatureSensor: "temperatureSensor"
+        SDKFeatureNameMotionSensor: "motionSensor"
+        SDKFeatureNameContactSensor: "contactSensor"
+        SDKFeatureNameConnectivity: "connectivity"
+        SDKFeatureNameEndpointHealth: "endpointHealth"
+        SDKFeatureNameLightSensor: "lightSensor"
+        SDKFeatureNameLocation: "location"
+        SDKFeatureNameLocationTracker: "locationTracker"
+        SDKFeatureNameStatusCode: "statusCode"
+        SDKFeatureNameSecurityPanel: "securityPanel"
+        SDKFeatureNameHumiditySensor: "humiditySensor"
+
+    SDKKnownFeatureOperationName:
+      type: string
+      x-go-type: string
+      description: Known library FeatureOperationName values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: FeatureOperationName
+      x-go-sdk-graphql-values:
+        FeatureOperationNameSetBrightness: FeatureOperationName.setBrightness
+        FeatureOperationNameAdjustBrightness: FeatureOperationName.adjustBrightness
+        FeatureOperationNameSetColor: FeatureOperationName.setColor
+        FeatureOperationNameSetColorTemperature: FeatureOperationName.setColorTemperature
+        FeatureOperationNameDecreaseColorTemperature: FeatureOperationName.decreaseColorTemperature
+        FeatureOperationNameSetMode: FeatureOperationName.setMode
+        FeatureOperationNameAdjustMode: FeatureOperationName.adjustMode
+        FeatureOperationNameSetRangeValue: FeatureOperationName.setRangeValue
+        FeatureOperationNameAdjustRangeValue: FeatureOperationName.adjustRangeValue
+        FeatureOperationNameSetPercentage: FeatureOperationName.setPercentage
+        FeatureOperationNameAdjustPercentage: FeatureOperationName.adjustPercentage
+        FeatureOperationNameSetPowerLevel: FeatureOperationName.setPowerLevel
+        FeatureOperationNameAdjustPowerLevel: FeatureOperationName.adjustPowerLevel
+        FeatureOperationNamePerformAction: FeatureOperationName.performAction
+        FeatureOperationNameTurnOn: FeatureOperationName.turnOn
+        FeatureOperationNameTurnOff: FeatureOperationName.turnOff
+        FeatureOperationNameSetVolume: FeatureOperationName.setVolume
+        FeatureOperationNameAdjustVolume: FeatureOperationName.adjustVolume
+        FeatureOperationNameSetTargetSetpoint: FeatureOperationName.setTargetSetpoint
+        FeatureOperationNameSetThermostatMode: FeatureOperationName.setThermostatMode
+        FeatureOperationNameAdjustTargetSetpoint: FeatureOperationName.adjustTargetSetpoint
+      x-go-compat-constant-values:
+        SDKFeatureOperationNameSend: "send"
+        SDKFeatureOperationNameSpeak: "speak"
+        SDKFeatureOperationNamePlay: "play"
+        SDKFeatureOperationNamePlayURI: "playURI"
+        SDKFeatureOperationNameNavigateHome: "navigateHome"
+        SDKFeatureOperationNameSetBrightness: "setBrightness"
+        SDKFeatureOperationNameAdjustBrightness: "adjustBrightness"
+        SDKFeatureOperationNameSetColor: "setColor"
+        SDKFeatureOperationNameSetColorTemperature: "setColorTemperature"
+        SDKFeatureOperationNameIncreasColorTemperature: "adjustColorTemperature"
+        SDKFeatureOperationNameDecreaseColorTemperature: "decreaseColorTemperature"
+        SDKFeatureOperationNameSetLockState: "setLockState"
+        SDKFeatureOperationNameSetMode: "setMode"
+        SDKFeatureOperationNameAdjustMode: "adjustMode"
+        SDKFeatureOperationNameSetRangeValue: "setRangeValue"
+        SDKFeatureOperationNameAdjustRangeValue: "adjustRangeValue"
+        SDKFeatureOperationNameSetToggleState: "setToggleState"
+        SDKFeatureOperationNameSetPercentage: "setPercentage"
+        SDKFeatureOperationNameAdjustPercentage: "adjustPercentage"
+        SDKFeatureOperationNameSetPowerLevel: "setPowerLevel"
+        SDKFeatureOperationNameAdjustPowerLevel: "adjustPowerLevel"
+        SDKFeatureOperationNamePerformAction: "performAction"
+        SDKFeatureOperationNamePause: "pause"
+        SDKFeatureOperationNameResume: "resume"
+        SDKFeatureOperationNameNext: "next"
+        SDKFeatureOperationNamePrevious: "previous"
+        SDKFeatureOperationNameStop: "stop"
+        SDKFeatureOperationNameForward: "forward"
+        SDKFeatureOperationNameRewind: "rewind"
+        SDKFeatureOperationNameShuffle: "shuffle"
+        SDKFeatureOperationNameRepeat: "repeat"
+        SDKFeatureOperationNameTurnOn: "turnOn"
+        SDKFeatureOperationNameTurnOff: "turnOff"
+        SDKFeatureOperationNameSetVolume: "setVolume"
+        SDKFeatureOperationNameAdjustVolume: "adjustVolume"
+        SDKFeatureOperationNameSetTargetSetpoint: "setTargetSetpoint"
+        SDKFeatureOperationNameSetThermostatMode: "setThermostatMode"
+        SDKFeatureOperationNameAdjustTargetSetpoint: "adjustTargetSetpoint"
+
+    SDKKnownPowerState:
+      type: string
+      x-go-type: string
+      description: Known library PowerState values. Caller-supplied extensions remain open.
+      x-go-sdk-constant-type: PowerState
+      x-go-sdk-graphql-values:
+        PowerStateOn: PowerStateValue.ON
+        PowerStateOff: PowerStateValue.OFF
+      x-go-compat-constant-values:
+        SDKPowerStateOn: "ON"
+        SDKPowerStateOff: "OFF"
+
+    FeatureDefaultPropertyName:
+      type: string
+      x-go-type: string
+      description: Implementation-derived known discovery descriptor names. Caller extensions remain open.
+      x-go-compat-constant-values:
+        FeatureDefaultPropertyNameActionState: actionState
+        FeatureDefaultPropertyNameArmState: armState
+        FeatureDefaultPropertyNameBattery: battery
+        FeatureDefaultPropertyNameBrightness: brightness
+        FeatureDefaultPropertyNameColor: color
+        FeatureDefaultPropertyNameColorTemperatureInKelvin: colorTemperatureInKelvin
+        FeatureDefaultPropertyNameDetectionState: detectionState
+        FeatureDefaultPropertyNameGeolocation: geolocation
+        FeatureDefaultPropertyNameIlluminance: illuminance
+        FeatureDefaultPropertyNameLockState: lockState
+        FeatureDefaultPropertyNameLowerSetpoint: lowerSetpoint
+        FeatureDefaultPropertyNameMode: mode
+        FeatureDefaultPropertyNameMuted: muted
+        FeatureDefaultPropertyNamePercentage: percentage
+        FeatureDefaultPropertyNamePowerLevel: powerLevel
+        FeatureDefaultPropertyNamePowerState: powerState
+        FeatureDefaultPropertyNameRangeValue: rangeValue
+        FeatureDefaultPropertyNameReachabilityState: reachabilityState
+        FeatureDefaultPropertyNameRelativeHumidity: relativeHumidity
+        FeatureDefaultPropertyNameStatusCode: statusCode
+        FeatureDefaultPropertyNameTargetSetpoint: targetSetpoint
+        FeatureDefaultPropertyNameTemperature: temperature
+        FeatureDefaultPropertyNameThermostatMode: thermostatMode
+        FeatureDefaultPropertyNameToggleState: toggleState
+        FeatureDefaultPropertyNameUpperSetpoint: upperSetpoint
+        FeatureDefaultPropertyNameVolume: volume
+
+    FeatureDefaultOperationName:
+      type: string
+      x-go-type: string
+      description: Implementation-derived known discovery descriptor names. Caller extensions remain open.
+      x-go-compat-constant-values:
+        FeatureDefaultOperationNameActivate: Activate
+        FeatureDefaultOperationNameAdjustBrightness: AdjustBrightness
+        FeatureDefaultOperationNameAdjustMode: AdjustMode
+        FeatureDefaultOperationNameAdjustPercentage: AdjustPercentage
+        FeatureDefaultOperationNameAdjustPowerLevel: AdjustPowerLevel
+        FeatureDefaultOperationNameAdjustRangeValue: AdjustRangeValue
+        FeatureDefaultOperationNameAdjustTargetTemperature: AdjustTargetTemperature
+        FeatureDefaultOperationNameArm: Arm
+        FeatureDefaultOperationNameDeactivate: Deactivate
+        FeatureDefaultOperationNameDecreaseColorTemperature: DecreaseColorTemperature
+        FeatureDefaultOperationNameDisarm: Disarm
+        FeatureDefaultOperationNameFastForward: FastForward
+        FeatureDefaultOperationNameIncreaseColorTemperature: IncreaseColorTemperature
+        FeatureDefaultOperationNameLocate: Locate
+        FeatureDefaultOperationNameLock: Lock
+        FeatureDefaultOperationNameNext: Next
+        FeatureDefaultOperationNamePause: Pause
+        FeatureDefaultOperationNamePlay: Play
+        FeatureDefaultOperationNamePrevious: Previous
+        FeatureDefaultOperationNameRewind: Rewind
+        FeatureDefaultOperationNameSetBrightness: SetBrightness
+        FeatureDefaultOperationNameSetColor: SetColor
+        FeatureDefaultOperationNameSetColorTemperature: SetColorTemperature
+        FeatureDefaultOperationNameSetMode: SetMode
+        FeatureDefaultOperationNameSetPercentage: SetPercentage
+        FeatureDefaultOperationNameSetPowerLevel: SetPowerLevel
+        FeatureDefaultOperationNameSetRangeValue: SetRangeValue
+        FeatureDefaultOperationNameSetTargetTemperature: SetTargetTemperature
+        FeatureDefaultOperationNameSetThermostatMode: SetThermostatMode
+        FeatureDefaultOperationNameStartOver: StartOver
+        FeatureDefaultOperationNameStop: Stop
+        FeatureDefaultOperationNameTurnOff: TurnOff
+        FeatureDefaultOperationNameTurnOn: TurnOn
+        FeatureDefaultOperationNameUnlock: Unlock
+
+    SDKKnownEndpointPrefix:
+      type: string
+      x-go-type: string
+      description: Prefixes used to adapt known endpoint IDs and feature event namespaces.
+      x-go-compat-constant-values:
+        SDKEndpointIDPrefix: amzn1.alexa.endpoint.
+        SDKFeatureEventNamespacePrefix: alexa.endpoint.feature.
+
+    LegacyCapabilityPayload:
+      type: object
+      description: Known object members consumed from the LegacyAppliance capabilities JSON scalar. Unknown provider members remain open.
+      x-go-graphql-json-field: LegacyAppliance.capabilities
+      properties:
+        interfaceName:
+          type: string
+          x-go-name: InterfaceName
+      additionalProperties: true

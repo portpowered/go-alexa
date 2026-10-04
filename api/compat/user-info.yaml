@@ -1,0 +1,34 @@
+openapi: 3.0.3
+info:
+  title: Alexa user info Go compatibility projection
+  version: 0.1.0
+  description: |
+    This schema preserves the historical exported Go response shape. The
+    required list describes its former JSON serialization, not provider
+    validation rules.
+paths: {}
+components:
+  schemas:
+    UserInfo:
+      type: object
+      required: [countryOfResidence, effectiveMarketPlaceId, email, eulaAcceptance, features, fullName, hasActiveDopplers, id, marketPlaceDomainName, marketPlaceId, marketPlaceLocale]
+      properties:
+        countryOfResidence: {type: string}
+        effectiveMarketPlaceId:
+          type: string
+          x-go-name: EffectiveMarketPlaceID
+        email: {type: string}
+        eulaAcceptance: {type: boolean}
+        features:
+          type: array
+          items: {type: string}
+        fullName: {type: string}
+        hasActiveDopplers: {type: boolean}
+        id:
+          type: string
+          x-go-name: ID
+        marketPlaceDomainName: {type: string}
+        marketPlaceId:
+          type: string
+          x-go-name: MarketPlaceID
+        marketPlaceLocale: {type: string}

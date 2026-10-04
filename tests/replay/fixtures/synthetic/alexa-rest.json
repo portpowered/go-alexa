@@ -141,6 +141,90 @@
   },
   {
     "source": "synthetic",
+    "operation": "registerDevice_email_otp",
+    "request": {
+      "method": "POST",
+      "origin": "https://auth.synthetic.test",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"email_password\":{\"email\":\"synthetic@example.invalid\",\"password\":\"synthetic-password\"}},\"registration_data\":{\"app_name\":\"synthetic-app\",\"app_version\":\"1\",\"device_model\":\"\",\"device_name\":\"\",\"device_serial\":\"synthetic-serial\",\"device_type\":\"synthetic-device\",\"domain\":\"\",\"os_version\":\"\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"response\":{\"challenge\":{\"challenge_reason\":\"MissingRequiredAuthenticationData\",\"required_authentication_method\":\"OTP\"}}}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "registerDevice_codePair_rejected",
+    "request": {
+      "method": "POST",
+      "origin": "https://auth.synthetic.test",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"synthetic-public\"}},\"registration_data\":{\"app_name\":\"synthetic-app\",\"app_version\":\"1\",\"device_model\":\"\",\"device_name\":\"\",\"device_serial\":\"synthetic-serial\",\"device_type\":\"synthetic-device\",\"domain\":\"\",\"os_version\":\"\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 401,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"message\":\"synthetic code-pair rejection\"}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "registerDevice_email_rejected",
+    "request": {
+      "method": "POST",
+      "origin": "https://auth.synthetic.test",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"email_password\":{\"email\":\"synthetic@example.invalid\",\"password\":\"synthetic-password\"}},\"registration_data\":{\"app_name\":\"synthetic-app\",\"app_version\":\"1\",\"device_model\":\"\",\"device_name\":\"\",\"device_serial\":\"synthetic-serial\",\"device_type\":\"synthetic-device\",\"domain\":\"\",\"os_version\":\"\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"message\":\"not a registration challenge\"}"
+    }
+  },
+  {
+    "source": "synthetic",
     "operation": "listRestEndpoints",
     "request": {
       "method": "GET",

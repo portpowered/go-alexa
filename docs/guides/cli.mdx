@@ -1,0 +1,68 @@
+---
+title: 'Command line'
+---
+
+The first standalone CLI release is pending. Until it is published, run it from a checkout:
+
+```sh
+cd cmd/go-alexa
+go run . help
+```
+
+After the CLI release is published, install it with Go:
+
+```sh
+go install github.com/portpowered/go-alexa/cmd/go-alexa@latest
+go-alexa help
+```
+
+The CLI uses the public `pkg/alexa` SDK. It prints JSON for results and exits with a nonzero status for failed commands. API behavior can vary by region, account, and device.
+
+## Link an account
+
+Run code-based linking when you choose to connect your Alexa account:
+
+```sh
+go-alexa auth link --region US --credentials-out "$HOME/.config/go-alexa/credentials.json"
+```
+
+The command prints a public code and approval URL. After you approve that code in your browser and press Enter, it writes the access token, refresh token, and device registration data to a new credential file. It does not print the private code or tokens. The output file must not already exist. On systems with POSIX file permissions, the CLI creates credential directories with mode `0700` and files with mode `0600`; on Windows, the file receives a protected ACL granting access only to the current user.
+
+Refresh explicitly into a second file so an existing credential file is never overwritten:
+
+```sh
+go-alexa auth refresh \
+  --credentials-file "$HOME/.config/go-alexa/credentials.json" \
+  --credentials-out "$HOME/.config/go-alexa/credentials-refreshed.json"
+```
+
+Use `auth export --credentials-stdin --credentials-out FILE` to copy a credential JSON object from a secret manager or secure input into a newly created file. Authenticated commands also accept `--credentials-file FILE`, `--credentials-stdin`, or `ALEXA_ACCESS_TOKEN` and `ALEXA_REFRESH_TOKEN`. Linking and refresh use device registration values saved with the credential file; environment-based registration can use `ALEXA_DEVICE_SERIAL` and `ALEXA_DEVICE_NAME`.
+
+## Read and control endpoints
+
+List devices and their feature names:
+
+```sh
+go-alexa endpoints list --credentials-file "$HOME/.config/go-alexa/credentials.json"
+```
+
+Add `--include-states` to request current feature property values. Use the endpoint ID from this output for player state or power control:
+
+```sh
+go-alexa player state --id ENDPOINT_ID --credentials-file "$HOME/.config/go-alexa/credentials.json"
+go-alexa endpoint power --id ENDPOINT_ID --state off \
+  --credentials-file "$HOME/.config/go-alexa/credentials.json"
+```
+
+Power commands are explicit device changes. The command checks that the endpoint advertises the power feature before sending the request. A successful API response does not guarantee that a physical device changed state.
+
+## Listen for events
+
+```sh
+go-alexa events listen --duration-minutes 30 \
+  --credentials-file "$HOME/.config/go-alexa/credentials.json"
+```
+
+The command subscribes to endpoint events, opens the event stream, and writes one JSON object per event. Press Ctrl+C to cancel; the command closes the stream and session. The event subscription lasts at most 24 hours.
+
+Credential values are not accepted as command-line arguments. Keep credential files private, exclude them from source control, and avoid piping normal CLI output into logs that collect account data.

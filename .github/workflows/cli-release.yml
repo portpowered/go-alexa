@@ -1,0 +1,89 @@
+name: CLI Release
+
+on:
+  push:
+    tags: ['cmd/go-alexa/v*']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GOWORK: 'off'
+      GOTOOLCHAIN: auto
+      GOPROXY: https://proxy.golang.org
+      GOSUMDB: sum.golang.org
+      GOLANGCI_LINT: golangci-lint
+      CLI_MODULE: github.com/portpowered/go-alexa/cmd/go-alexa
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.2'
+          cache: true
+      - name: Install pinned golangci-lint
+        run: |
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Verify standalone CLI module
+        shell: bash
+        run: |
+          cd cmd/go-alexa
+          if grep -Eq '^[[:space:]]*replace[[:space:]]' go.mod; then
+            echo "Release module go.mod must not contain replace directives."
+            exit 1
+          fi
+          grep -Eq '^require github.com/portpowered/go-alexa v0\.4\.0$' go.mod
+          go mod tidy -diff
+          go mod verify
+          unformatted="$(gofmt -l $(find . -name '*.go' -type f))"
+          if [ -n "$unformatted" ]; then
+            echo "Unformatted Go files: $unformatted"
+            exit 1
+          fi
+          golangci-lint run --config .golangci.yml ./...
+          go vet ./...
+          go test -race ./...
+          go build ./...
+      - name: Install tagged CLI through the public Go proxy
+        env:
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          version="${TAG#cmd/go-alexa/}"
+          check_dir="$(mktemp -d)"
+          trap 'rm -rf "$check_dir"' EXIT
+          mkdir -p "$check_dir/bin"
+          GOBIN="$check_dir/bin" go install "${CLI_MODULE}@${version}"
+          "$check_dir/bin/go-alexa" --help
+  publish:
+    runs-on: ubuntu-latest
+    needs: verify
+    permissions:
+      contents: write
+    steps:
+      - name: Publish CLI release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          notes_file="$(mktemp)"
+          trap 'rm -f "$notes_file"' EXIT
+          cat > "$notes_file" <<EOF
+          Install the standalone Alexa command with:
+
+          \`\`\`sh
+          go install github.com/portpowered/go-alexa/cmd/go-alexa@${VERSION#cmd/go-alexa/}
+          \`\`\`
+
+          Read the [CLI guide](https://portpowered.github.io/go-alexa/docs/guides/cli/) for credential handling and commands.
+          EOF
+          gh release create "$VERSION" --repo "$REPOSITORY" --verify-tag --notes-file "$notes_file"

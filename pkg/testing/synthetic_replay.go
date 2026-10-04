@@ -17,22 +17,34 @@ const syntheticReplayFilePermissions = 0o600
 
 // SyntheticExchange is a hand-authored request/response pair, never account traffic.
 // Request fields are exact; stable synthetic IDs and credentials need no wildcard.
+//
+//modelinventory:domain SyntheticExchange: ordered local synthetic request and response pair used by exact-match replay.
 type SyntheticExchange struct {
-	Source    string `json:"source"`
-	Operation string `json:"operation"`
-	Request   struct {
-		Method      string      `json:"method"`
-		Origin      string      `json:"origin"`
-		EscapedPath string      `json:"escaped_path"`
-		Query       url.Values  `json:"query"`
-		Headers     http.Header `json:"headers"`
-		Body        string      `json:"body"`
-	} `json:"request"`
-	Response struct {
-		Status  int         `json:"status"`
-		Headers http.Header `json:"headers"`
-		Body    string      `json:"body"`
-	} `json:"response"`
+	Source    string            `json:"source"`
+	Operation string            `json:"operation"`
+	Request   SyntheticRequest  `json:"request"`
+	Response  SyntheticResponse `json:"response"`
+}
+
+// SyntheticRequest is the exact local HTTP request recorded for synthetic replay.
+//
+//modelinventory:domain SyntheticRequest: hand-authored local request fields used to match method, origin, path, query, headers, and body.
+type SyntheticRequest struct {
+	Method      string      `json:"method"`
+	Origin      string      `json:"origin"`
+	EscapedPath string      `json:"escaped_path"`
+	Query       url.Values  `json:"query"`
+	Headers     http.Header `json:"headers"`
+	Body        string      `json:"body"`
+}
+
+// SyntheticResponse is the hand-authored local response returned after a replay match.
+//
+//modelinventory:domain SyntheticResponse: hand-authored local status, headers, and body returned after a synthetic request matches.
+type SyntheticResponse struct {
+	Status  int         `json:"status"`
+	Headers http.Header `json:"headers"`
+	Body    string      `json:"body"`
 }
 
 // SyntheticReplay returns responses only after the next exact request matches.
@@ -87,12 +99,14 @@ func RecordSyntheticExchange(operation string, req *http.Request, status int, he
 
 	pair.Source = "synthetic"
 	pair.Operation = operation
-	pair.Request.Method = req.Method
-	pair.Request.Origin = req.URL.Scheme + "://" + req.URL.Host
-	pair.Request.EscapedPath = req.URL.EscapedPath()
-	pair.Request.Query = req.URL.Query()
-
-	pair.Request.Headers = req.Header.Clone()
+	pair.Request = SyntheticRequest{
+		Method:      req.Method,
+		Origin:      req.URL.Scheme + "://" + req.URL.Host,
+		EscapedPath: req.URL.EscapedPath(),
+		Query:       req.URL.Query(),
+		Headers:     req.Header.Clone(),
+		Body:        "",
+	}
 
 	if req.Body != nil {
 		body, err := io.ReadAll(req.Body)
@@ -104,9 +118,11 @@ func RecordSyntheticExchange(operation string, req *http.Request, status int, he
 		req.Body = io.NopCloser(bytes.NewReader(body))
 	}
 
-	pair.Response.Status = status
-	pair.Response.Headers = headers.Clone()
-	pair.Response.Body = responseBody
+	pair.Response = SyntheticResponse{
+		Status:  status,
+		Headers: headers.Clone(),
+		Body:    responseBody,
+	}
 
 	return pair, nil
 }

@@ -1,0 +1,6 @@
+package: alexamodels
+generate:
+  models: true
+output: pkg/dependencymodels/behavior_sequence.gen.go
+output-options:
+  skip-prune: true

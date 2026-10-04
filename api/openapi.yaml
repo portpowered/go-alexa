@@ -1,10 +1,917 @@
-openapi: 3.0.3
+components:
+  parameters:
+    DeviceSerialNumber:
+      description: Derived from the endpoint object by the media helper.
+      in: query
+      name: deviceSerialNumber
+      required: true
+      schema:
+        type: string
+    DeviceType:
+      description: Derived from the endpoint object by the media helper.
+      in: query
+      name: deviceType
+      required: true
+      schema:
+        type: string
+    EndpointId:
+      description: Endpoint identifier supplied by the caller.
+      in: path
+      name: endpointId
+      required: true
+      schema:
+        type: string
+    Expand:
+      description: Repeated query parameter accepted by the current request builder.
+      explode: true
+      in: query
+      name: expand
+      required: false
+      schema:
+        items:
+          type: string
+        type: array
+      style: form
+    MaxResults:
+      description: Integer pagination value passed through by the current REST helper.
+      in: query
+      name: maxResults
+      required: false
+      schema:
+        type: integer
+    NextToken:
+      in: query
+      name: nextToken
+      required: false
+      schema:
+        type: string
+    Owner:
+      description: Defaults to `~caller` in the current REST helper.
+      in: query
+      name: owner
+      required: false
+      schema:
+        default: ~caller
+        type: string
+        x-go-compat-constant-name: DefaultOwnerCaller
+  responses:
+    UnhandledResponse:
+      description: Response not decoded into a success model by this operation.
+  schemas:
+    WireAppDevice:
+      additionalProperties: true
+      properties:
+        deviceAccountId:
+          type: string
+        deviceType:
+          type: string
+        serialNumber:
+          type: string
+      type: object
+    WireArt:
+      additionalProperties: true
+      properties:
+        altText:
+          type: string
+        artType:
+          type: string
+        contentType:
+          type: string
+        iconId:
+          type: string
+        iconStyles:
+          type: string
+        url:
+          format: uri
+          type: string
+      type: object
+    WireAssociatedUnitsFilter:
+      properties:
+        id:
+          type: string
+      required:
+      - id
+      type: object
+    WireAuthData:
+      properties:
+        code_pair:
+          $ref: '#/components/schemas/WireCodePairAuth'
+        email_password:
+          $ref: '#/components/schemas/WireEmailPasswordAuth'
+      type: object
+    WireBearerTokens:
+      properties:
+        access_token:
+          format: password
+          type: string
+        refresh_token:
+          format: password
+          type: string
+      type: object
+    WireBehaviorPreviewRequest:
+      properties:
+        behaviorId:
+          type: string
+        sequenceJson:
+          contentMediaType: application/json
+          description: JSON-encoded sequence serialized as a string by the client;
+            the embedded object is modeled in api/behaviors.yaml.
+          type: string
+          x-go-alexa-embedded-schema: behaviors.yaml#/components/schemas/Sequence
+        status:
+          type: string
+      required:
+      - behaviorId
+      - sequenceJson
+      - status
+      type: object
+    WireCapabilityInterface:
+      description: Open string value; the implementation does not reject unknown capability
+        names.
+      type: string
+    WireChallenge:
+      properties:
+        challenge_reason:
+          type: string
+          x-go-compat-constant-values:
+            AuthChallengeFailed: AuthenticationFailed
+            AuthChallengeMissingData: MissingRequiredAuthenticationData
+            AuthChallengeWebView: HandleOnWebView
+        required_authentication_method:
+          type: string
+          x-go-compat-constant-values:
+            AuthChallengePasswordMethod: GenericClaimPassword
+      type: object
+    WireChallengeEnvelope:
+      properties:
+        challenge:
+          $ref: '#/components/schemas/WireChallenge'
+      type: object
+    WireChallengeResponse:
+      properties:
+        response:
+          $ref: '#/components/schemas/WireChallengeEnvelope'
+      type: object
+    WireCodeData:
+      properties:
+        app_name:
+          type: string
+        app_version:
+          type: string
+        device_model:
+          type: string
+        device_name:
+          type: string
+        device_serial:
+          type: string
+        device_type:
+          type: string
+        domain:
+          type: string
+        os_version:
+          type: string
+        secondary_registration:
+          type: string
+          x-go-compat-constant-values:
+            AuthSecondaryRegistrationFalse: "False"
+      required:
+      - app_name
+      - app_version
+      - device_type
+      - domain
+      - device_model
+      - os_version
+      - device_serial
+      - device_name
+      - secondary_registration
+      type: object
+    WireCodePairAuth:
+      properties:
+        private_code:
+          type: string
+        public_code:
+          type: string
+      required:
+      - public_code
+      - private_code
+      type: object
+    WireCodePairRequest:
+      properties:
+        code_data:
+          $ref: '#/components/schemas/WireCodeData'
+        scopes:
+          items:
+            type: string
+          type: array
+      required:
+      - code_data
+      - scopes
+      type: object
+    WireCodePairResponse:
+      properties:
+        private_code:
+          type: string
+        public_code:
+          type: string
+      type: object
+    WireCommand:
+      additionalProperties: true
+      properties:
+        device_id:
+          type: string
+        name:
+          type: string
+        namespace:
+          type: string
+        payload: {}
+        type:
+          type: string
+      required:
+      - type
+      type: object
+    WireCookieExchangeEnvelope:
+      properties:
+        tokens:
+          $ref: '#/components/schemas/WireCookieTokens'
+      type: object
+    WireCookieExchangeRequest:
+      properties:
+        app_name:
+          type: string
+          x-go-compat-constant-values:
+            AuthCookieExchangeAppName: Amazon Alexa
+        domain:
+          type: string
+        requested_token_type:
+          type: string
+          x-go-compat-constant-values:
+            AuthTokenTypeCookies: auth_cookies
+        source_token:
+          format: password
+          type: string
+        source_token_type:
+          type: string
+      required:
+      - app_name
+      - requested_token_type
+      - domain
+      - source_token_type
+      - source_token
+      type: object
+    WireCookieExchangeResponse:
+      properties:
+        response:
+          $ref: '#/components/schemas/WireCookieExchangeEnvelope'
+      type: object
+    WireCookieRecord:
+      properties:
+        Expires:
+          type: string
+        HttpOnly:
+          type: boolean
+        Name:
+          type: string
+          x-go-compat-constant-values:
+            AuthCSRFCookieName: csrf
+        Path:
+          type: string
+        Secure:
+          type: boolean
+        Value:
+          format: password
+          type: string
+      type: object
+    WireCookieTokens:
+      properties:
+        cookies:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/WireCookieRecord'
+            type: array
+          type: object
+      type: object
+    WireDevice:
+      additionalProperties: true
+      properties:
+        capabilities:
+          items:
+            $ref: '#/components/schemas/WireCapabilityInterface'
+          type: array
+        id:
+          type: string
+        metadata:
+          additionalProperties: true
+          type: object
+        name:
+          type: string
+        state:
+          additionalProperties: true
+          type: object
+        type:
+          type: string
+      type: object
+    WireDeviceMetadata:
+      properties:
+        device_model:
+          type: string
+        device_serial:
+          type: string
+        device_type:
+          type: string
+        manufacturer:
+          type: string
+          x-go-compat-constant-values:
+            SDKDefaultManufacturer: Amazon
+        os_version:
+          type: string
+      required:
+      - device_type
+      - device_model
+      - os_version
+      - device_serial
+      - manufacturer
+      type: object
+    WireDeviceV2:
+      additionalProperties: true
+      properties:
+        accountName:
+          type: string
+        appDeviceList:
+          items:
+            $ref: '#/components/schemas/WireAppDevice'
+          type: array
+        associatedUnitIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        capabilities:
+          items:
+            type: string
+          type: array
+        charging:
+          nullable: true
+          type: boolean
+        clusterMembers:
+          items:
+            type: string
+          type: array
+        deviceAccountId:
+          type: string
+        deviceFamily:
+          type: string
+          x-go-compat-constant-values:
+            DeviceFamilyFireTV: FIRE_TV
+        deviceOwnerCustomerId:
+          type: string
+        deviceType:
+          type: string
+        deviceTypeFriendlyName:
+          nullable: true
+          type: string
+        essid:
+          nullable: true
+          type: string
+        language:
+          nullable: true
+          type: string
+        macAddress:
+          nullable: true
+          type: string
+        online:
+          type: boolean
+        parentClusters:
+          items:
+            type: string
+          type: array
+        postalCode:
+          nullable: true
+          type: string
+        registrationId:
+          nullable: true
+          type: string
+        remainingBatteryLevel:
+          nullable: true
+          type: integer
+        serialNumber:
+          type: string
+        softwareVersion:
+          type: string
+      type: object
+    WireDevicesV2Response:
+      additionalProperties: true
+      properties:
+        devices:
+          items:
+            $ref: '#/components/schemas/WireDeviceV2'
+          type: array
+      required:
+      - devices
+      type: object
+    WireEmailPasswordAuth:
+      properties:
+        email:
+          type: string
+        password:
+          format: password
+          type: string
+      required:
+      - email
+      - password
+      type: object
+    WireEndpointIncludeFields:
+      properties:
+        capabilities:
+          type: boolean
+        states:
+          type: boolean
+      type: object
+    WireEndpointListResponse:
+      additionalProperties: true
+      properties:
+        nextToken:
+          type: string
+        results:
+          items:
+            $ref: '#/components/schemas/WireDevice'
+          type: array
+      type: object
+    WireEndpointQuery:
+      properties:
+        and:
+          items:
+            $ref: '#/components/schemas/WireEndpointQueryClause'
+          type: array
+        includeFields:
+          $ref: '#/components/schemas/WireEndpointIncludeFields'
+        or:
+          items:
+            $ref: '#/components/schemas/WireEndpointQueryClause'
+          type: array
+        paginationContext:
+          $ref: '#/components/schemas/WirePaginationContext'
+      type: object
+    WireEndpointQueryClause:
+      properties:
+        associatedUnits:
+          $ref: '#/components/schemas/WireAssociatedUnitsFilter'
+        manufacturer:
+          $ref: '#/components/schemas/WireStringFilter'
+        model:
+          $ref: '#/components/schemas/WireStringFilter'
+      type: object
+    WireEndpointQueryRequest:
+      properties:
+        query:
+          $ref: '#/components/schemas/WireEndpointQuery'
+      required:
+      - query
+      type: object
+    WireFriendlyNameRequest:
+      properties:
+        friendlyName:
+          $ref: '#/components/schemas/WireFriendlyNameValue'
+      required:
+      - friendlyName
+      type: object
+    WireFriendlyNameText:
+      properties:
+        text:
+          type: string
+      required:
+      - text
+      type: object
+    WireFriendlyNameValue:
+      properties:
+        type:
+          default: PLAIN
+          type: string
+          x-go-compat-constant-name: DefaultFriendlyNameType
+        value:
+          $ref: '#/components/schemas/WireFriendlyNameText'
+      required:
+      - type
+      - value
+      type: object
+    WireGraphQLError:
+      additionalProperties: true
+      properties:
+        extensions:
+          additionalProperties: true
+          type: object
+        locations:
+          items:
+            $ref: '#/components/schemas/WireGraphQLErrorLocation'
+          type: array
+        message:
+          type: string
+        path:
+          items: {}
+          type: array
+      required:
+      - message
+      type: object
+    WireGraphQLErrorLocation:
+      properties:
+        column:
+          type: integer
+        line:
+          type: integer
+      required:
+      - line
+      - column
+      type: object
+    WireGraphQLRequest:
+      additionalProperties: true
+      properties:
+        operationName:
+          type: string
+        query:
+          type: string
+        variables:
+          additionalProperties: true
+          type: object
+          x-go-type-skip-optional-pointer: true
+      required:
+      - query
+      type: object
+    WireGraphQLResponse:
+      additionalProperties: true
+      properties:
+        data:
+          additionalProperties: true
+          type: object
+        errors:
+          items:
+            $ref: '#/components/schemas/WireGraphQLError'
+          type: array
+      type: object
+    WireInfoText:
+      additionalProperties: true
+      properties:
+        header:
+          type: string
+        headerSubtext1:
+          type: string
+        multiLineMode:
+          type: boolean
+        subText1:
+          type: string
+        subText2:
+          type: string
+        title:
+          type: string
+      type: object
+    WireInterfacePayload:
+      additionalProperties: true
+      description: Caller-supplied JSON object; nil is serialized by this client as
+        an empty object.
+      type: object
+    WireMediaCommand:
+      properties:
+        repeat:
+          type: boolean
+        shuffle:
+          type: boolean
+        type:
+          $ref: '#/components/schemas/WireMediaCommandType'
+      required:
+      - type
+      type: object
+    WireMediaCommandType:
+      description: Implementation-derived media command values used by the client.
+      enum:
+      - PlayCommand
+      - PauseCommand
+      - NextCommand
+      - PreviousCommand
+      - ForwardCommand
+      - RewindCommand
+      - ShuffleCommand
+      - RepeatCommand
+      type: string
+      x-enum-varnames:
+      - WireMediaCommandTypePlay
+      - WireMediaCommandTypePause
+      - WireMediaCommandTypeNext
+      - WireMediaCommandTypePrevious
+      - WireMediaCommandTypeForward
+      - WireMediaCommandTypeRewind
+      - WireMediaCommandTypeShuffle
+      - WireMediaCommandTypeRepeat
+      x-go-compat-constant-names:
+      - MediaCommandTypePlay
+      - MediaCommandTypePause
+      - MediaCommandTypeNext
+      - MediaCommandTypePrevious
+      - MediaCommandTypeForward
+      - MediaCommandTypeRewind
+      - MediaCommandTypeShuffle
+      - MediaCommandTypeRepeat
+    WirePaginationContext:
+      properties:
+        maxResults:
+          type: integer
+        nextToken:
+          type: string
+        performPagination:
+          type: boolean
+      type: object
+    WirePlayerInfo:
+      additionalProperties: true
+      properties:
+        hint:
+          type: string
+        infoText:
+          $ref: '#/components/schemas/WireInfoText'
+        isPlayingInLemur:
+          type: boolean
+        lemurVolume:
+          type: integer
+        lyrics:
+          type: string
+        mainArt:
+          $ref: '#/components/schemas/WireArt'
+        mediaId:
+          type: string
+        miniArt:
+          $ref: '#/components/schemas/WireArt'
+        miniInfoText:
+          $ref: '#/components/schemas/WireInfoText'
+        playbackSource:
+          type: string
+        playingInLemurId:
+          type: string
+        progress:
+          $ref: '#/components/schemas/WireProgress'
+        provider:
+          $ref: '#/components/schemas/WireProvider'
+        quality:
+          type: string
+        queueId:
+          type: string
+        state:
+          type: string
+        template:
+          $ref: '#/components/schemas/WireTemplate'
+        transport:
+          $ref: '#/components/schemas/WireTransport'
+        upNextItems: {}
+        volume:
+          $ref: '#/components/schemas/WireVolume'
+      type: object
+    WirePlayerStateResponse:
+      additionalProperties: true
+      properties:
+        playerInfo:
+          $ref: '#/components/schemas/WirePlayerInfo'
+      type: object
+    WireProgress:
+      additionalProperties: true
+      properties:
+        allowScrubbing:
+          type: boolean
+        locationInfo:
+          type: string
+        mediaLength:
+          type: integer
+        mediaProgress:
+          type: integer
+        showTiming:
+          type: boolean
+        visible:
+          type: boolean
+      type: object
+    WireProvider:
+      additionalProperties: true
+      properties:
+        artOverlay:
+          $ref: '#/components/schemas/WireArt'
+        fallbackMainArt:
+          $ref: '#/components/schemas/WireArt'
+        providerDisplayName:
+          type: string
+        providerLogo:
+          $ref: '#/components/schemas/WireArt'
+        providerName:
+          type: string
+      type: object
+    WireRateContentAction:
+      additionalProperties: true
+      properties:
+        mediaOwnerCustomerId:
+          type: string
+        rating:
+          type: string
+        type:
+          type: string
+      type: object
+    WireRegistrationData:
+      properties:
+        app_name:
+          type: string
+          x-go-compat-constant-values:
+            SDKDefaultAppName: Client SDK
+        app_version:
+          type: string
+          x-go-compat-constant-values:
+            SDKDefaultAppVersion: "1.0"
+        device_model:
+          type: string
+          x-go-compat-constant-values:
+            SDKDefaultDeviceModel: Client SDK
+        device_name:
+          type: string
+        device_serial:
+          type: string
+        device_type:
+          type: string
+        domain:
+          type: string
+          x-go-compat-constant-values:
+            SDKDefaultRegistrationDomain: Device
+        os_version:
+          type: string
+          x-go-compat-constant-values:
+            SDKDefaultOSVersion: "0"
+      required:
+      - app_name
+      - app_version
+      - device_type
+      - domain
+      - device_model
+      - os_version
+      - device_serial
+      - device_name
+      type: object
+    WireRegistrationRequest:
+      properties:
+        auth_data:
+          $ref: '#/components/schemas/WireAuthData'
+        registration_data:
+          $ref: '#/components/schemas/WireRegistrationData'
+        requested_token_type:
+          items:
+            type: string
+          type: array
+          x-go-compat-constant-values:
+            AuthTokenTypeBearer: bearer
+      required:
+      - requested_token_type
+      - registration_data
+      - auth_data
+      type: object
+    WireRegistrationResponse:
+      properties:
+        response:
+          $ref: '#/components/schemas/WireRegistrationResponseEnvelope'
+      type: object
+    WireRegistrationResponseEnvelope:
+      properties:
+        success:
+          $ref: '#/components/schemas/WireRegistrationSuccess'
+      type: object
+    WireRegistrationSuccess:
+      properties:
+        tokens:
+          $ref: '#/components/schemas/WireRegistrationTokens'
+      type: object
+    WireRegistrationTokens:
+      properties:
+        bearer:
+          $ref: '#/components/schemas/WireBearerTokens'
+      type: object
+    WireStringFilter:
+      properties:
+        value:
+          $ref: '#/components/schemas/WireStringFilterValue'
+      required:
+      - value
+      type: object
+    WireStringFilterValue:
+      properties:
+        text:
+          type: string
+      required:
+      - text
+      type: object
+    WireTemplate:
+      additionalProperties: true
+      properties:
+        art:
+          $ref: '#/components/schemas/WireArt'
+        backgroundImageUrl:
+          format: uri
+          type: string
+        templateType:
+          type: string
+      type: object
+    WireTokenRefreshRequest:
+      properties:
+        app_name:
+          type: string
+        app_version:
+          type: string
+        device_metadata:
+          $ref: '#/components/schemas/WireDeviceMetadata'
+        requested_token_type:
+          type: string
+          x-go-compat-constant-values:
+            AuthTokenTypeAccess: access_token
+        source_token:
+          format: password
+          type: string
+        source_token_type:
+          type: string
+          x-go-compat-constant-values:
+            AuthTokenTypeRefresh: refresh_token
+      required:
+      - app_name
+      - app_version
+      - source_token_type
+      - source_token
+      - requested_token_type
+      - device_metadata
+      type: object
+    WireTokenRefreshResponse:
+      properties:
+        access_token:
+          format: password
+          type: string
+        expires_in:
+          type: integer
+      type: object
+    WireTransport:
+      additionalProperties: true
+      properties:
+        closedCaptions:
+          type: string
+        layoutType:
+          type: string
+        lyrics:
+          type: string
+        next:
+          type: string
+        playPause:
+          type: string
+        previous:
+          type: string
+        rateContentAction:
+          $ref: '#/components/schemas/WireRateContentAction'
+        thumbsDown:
+          type: string
+        thumbsUp:
+          type: string
+      type: object
+    WireUserInfo:
+      additionalProperties: true
+      description: May contain personal account information.
+      properties:
+        countryOfResidence:
+          type: string
+        effectiveMarketPlaceId:
+          type: string
+        email:
+          type: string
+        eulaAcceptance:
+          type: boolean
+        features:
+          items:
+            type: string
+          type: array
+        fullName:
+          type: string
+        hasActiveDopplers:
+          type: boolean
+        id:
+          type: string
+        marketPlaceDomainName:
+          type: string
+        marketPlaceId:
+          type: string
+        marketPlaceLocale:
+          type: string
+      type: object
+    WireVolume:
+      additionalProperties: true
+      properties:
+        muted:
+          type: boolean
+        volume:
+          type: integer
+      type: object
+  securitySchemes:
+    BearerToken:
+      description: The client sends its supplied access token in the Authorization
+        header.
+      scheme: bearer
+      type: http
+    CookieHeader:
+      description: The cookie-backed client sends stored cookies in the Cookie header.
+      in: header
+      name: Cookie
+      type: apiKey
 info:
-  title: Alexa HTTP APIs used by go-alexa
-  version: 0.1.0
-  license:
-    name: Apache-2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
   description: |
     This is an implementation-derived description of HTTP routes, request shapes,
     and response models used by the current go-alexa source. It is not an
@@ -13,453 +920,150 @@ info:
     service behavior. Synthetic test data is not evidence of provider behavior.
     See the Alexa AsyncAPI document for the directive stream parsed by the
     library, and the GraphQL schema for its GraphQL subset.
-servers:
-  - url: https://api.amazonalexa.com
-    description: Default REST base URL in go-alexa.
-    x-go-alexa-region: na
-  - url: https://api.eu.amazonalexa.com
-    description: EU REST base URL constant in go-alexa.
-    x-go-alexa-region: eu
-  - url: https://api.jp.amazonalexa.com
-    description: Japan REST base URL constant in go-alexa.
-    x-go-alexa-region: jp
-tags:
-  - name: Account linking
-    description: Caller-facing authorization entry point, code-pair registration, and token operations implemented by go-alexa.
-  - name: Endpoints
-    description: Endpoint enumeration and direct endpoint operations implemented by go-alexa.
-  - name: Alexa web APIs
-    description: Cookie-backed account and first-party device routes used by go-alexa.
-  - name: Media
-    description: First-party media routes used by go-alexa.
-  - name: Event stream
-    description: Long-lived HTTP/2 connection and keepalive operations.
-security:
-  - BearerToken: []
-x-go-alexa-request-headers:
-  - Accept
-  - Authorization
-  - Content-Type
-  - Cookie
-  - DNT
-  - Origin
-  - Referer
-  - User-Agent
-  - csrf
-  - x-amzn-identity-auth-domain
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Alexa HTTP APIs used by go-alexa
+  version: 0.1.0
+openapi: 3.0.3
 paths:
-  /ap/oa:
-    get:
-      tags: [Account linking]
-      operationId: openAuthorizationPage
-      summary: Start caller-managed account authorization
-      description: |
-        go-alexa exports regional authorization URLs using this path. The
-        library does not dispatch this request; callers direct an account
-        holder to the URL and add authorization query values. The path is
-        implementation-derived and is not a provider-verified OAuth contract.
-      servers:
-        - url: https://api.amazon.com
-          x-go-alexa-region: na
-        - url: https://api.amazon.co.uk
-          x-go-alexa-region: eu
-        - url: https://api.amazon.co.jp
-          x-go-alexa-region: jp
-      security: []
-      responses:
-        default:
-          description: Browser navigation response is not decoded by go-alexa.
-  /auth/create/codepair:
-    post:
-      tags: [Account linking]
-      operationId: createCodePair
-      summary: Request a code pair
-      description: |
-        The client posts device registration metadata and an empty scopes array
-        to the Amazon API base URL. The returned public and private codes are
-        credentials; keep them out of logs and source control. The route and
-        model describe the current implementation only.
-      servers:
-        - url: https://api.amazon.com
-        - url: https://api.amazon.co.uk
-        - url: https://api.amazon.co.jp
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WireCodePairRequest'
-      responses:
-        '200':
-          description: Response decoded by the current code-pair client.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WireCodePairResponse'
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
-  /auth/register:
-    post:
-      tags: [Account linking]
-      operationId: registerDevice
-      summary: Register using a code pair or credentials
-      description: |
-        The current client constructs either `auth_data.code_pair` or
-        `auth_data.email_password` and sends a device registration request.
-        The email/password helper is present in the source but is not the
-        recommended linking flow. A 4xx response may be parsed as a challenge
-        body by the email/password helper. This source-derived description is
-        not a statement that either flow is currently accepted by the service.
-      servers:
-        - url: https://api.amazon.com
-        - url: https://api.amazon.co.uk
-        - url: https://api.amazon.co.jp
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WireRegistrationRequest'
-      responses:
-        '200':
-          description: Successful registration body decoded by go-alexa.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WireRegistrationResponse'
-        '4XX':
-          description: The email/password helper attempts to decode challenge fields from this response body.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WireChallengeResponse'
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
-  /auth/token:
-    post:
-      tags: [Account linking]
-      operationId: refreshAccessToken
-      summary: Exchange a refresh token
-      description: |
-        The request body is assembled by `rest.Client.RefreshAccessToken`.
-        The source token and returned access token are secrets. This documents
-        the client's serialization and decoding shapes, not verified service
-        behavior.
-      servers:
-        - url: https://api.amazon.com
-        - url: https://api.amazon.co.uk
-        - url: https://api.amazon.co.jp
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WireTokenRefreshRequest'
-      responses:
-        '200':
-          description: Response decoded by the current token refresh helper.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WireTokenRefreshResponse'
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
   /ap/exchangetoken/cookies:
     post:
-      tags: [Account linking]
-      operationId: exchangeRefreshTokenForCookies
-      summary: Exchange a refresh token for cookies
       description: |
         The client sends this request to `https://api.{domain}` with an
         `x-amzn-identity-auth-domain` header. The body and returned cookies
         contain authentication material. The caller-provided domain is not
         validated by the library.
-      servers:
-        - url: https://api.{domain}
-          variables:
-            domain:
-              default: amazon.com
-              description: Domain supplied to the cookie exchange method.
-      security: []
+      operationId: exchangeRefreshTokenForCookies
       parameters:
-        - name: x-amzn-identity-auth-domain
-          in: header
-          required: true
-          description: Set by the cookie exchange implementation to `api.{domain}`.
-          schema:
-            type: string
-      requestBody:
+      - description: Set by the cookie exchange implementation to `api.{domain}`.
+        in: header
+        name: x-amzn-identity-auth-domain
         required: true
+        schema:
+          type: string
+      requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/WireCookieExchangeRequest'
+        required: true
       responses:
-        '200':
-          description: Cookie collection decoded by the current helper.
+        "200":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/WireCookieExchangeResponse'
+          description: Cookie collection decoded by the current helper.
         default:
           $ref: '#/components/responses/UnhandledResponse'
-  /v2/endpoints:
+      security: []
+      servers:
+      - url: https://api.{domain}
+        variables:
+          domain:
+            default: amazon.com
+            description: Domain supplied to the cookie exchange method.
+      summary: Exchange a refresh token for cookies
+      tags:
+      - Account linking
+  /ap/oa:
     get:
-      tags: [Endpoints]
-      operationId: listRestEndpoints
-      summary: List endpoints through the REST client
       description: |
-        This operation is implemented by `rest.Client.GetEndpoints`. The public
-        `alexa.Client.ListEndpoints` operation uses GraphQL and a separate
-        device lookup; it does not call this route in its current
-        implementation. `owner` defaults to `~caller` in this REST helper.
-      parameters:
-        - $ref: '#/components/parameters/Owner'
-        - $ref: '#/components/parameters/Expand'
-        - $ref: '#/components/parameters/MaxResults'
-        - $ref: '#/components/parameters/NextToken'
+        go-alexa exports regional authorization URLs using this path. The
+        library does not dispatch this request; callers direct an account
+        holder to the URL and add authorization query values. The path is
+        implementation-derived and is not a provider-verified OAuth contract.
+      operationId: openAuthorizationPage
       responses:
-        '200':
-          description: Endpoint list decoded by the REST helper.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WireEndpointListResponse'
         default:
-          $ref: '#/components/responses/UnhandledResponse'
-  /v2/endpoints/{endpointId}:
-    get:
-      tags: [Endpoints]
-      operationId: getRestEndpoint
-      summary: Get one endpoint through the REST client
-      parameters:
-        - $ref: '#/components/parameters/EndpointId'
-        - $ref: '#/components/parameters/Expand'
-      responses:
-        '200':
-          description: Endpoint decoded by the REST helper.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WireDevice'
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
-  /v2/endpoint-query:
+          description: Browser navigation response is not decoded by go-alexa.
+      security: []
+      servers:
+      - url: https://api.amazon.com
+        x-go-alexa-region: na
+      - url: https://api.amazon.co.uk
+        x-go-alexa-region: eu
+      - url: https://api.amazon.co.jp
+        x-go-alexa-region: jp
+      summary: Start caller-managed account authorization
+      tags:
+      - Account linking
+  /api/behaviors/preview:
     post:
-      tags: [Endpoints]
-      operationId: queryRestEndpoints
-      summary: Query endpoints through the REST client
-      parameters:
-        - $ref: '#/components/parameters/Expand'
-        - $ref: '#/components/parameters/MaxResults'
-        - $ref: '#/components/parameters/NextToken'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WireEndpointQueryRequest'
-      responses:
-        '200':
-          description: Endpoint list decoded by the REST helper.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WireEndpointListResponse'
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
-  /v2/endpoints/{endpointId}/forget:
-    post:
-      tags: [Endpoints]
-      operationId: forgetEndpoint
-      summary: Request that an endpoint be forgotten
-      parameters:
-        - $ref: '#/components/parameters/EndpointId'
-      responses:
-        '200':
-          description: The implementation accepts a successful response without decoding a body.
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
-  /v2/endpoints/{endpointId}/deregister:
-    post:
-      tags: [Endpoints]
-      operationId: deregisterEndpoint
-      summary: Request endpoint deregistration
-      parameters:
-        - $ref: '#/components/parameters/EndpointId'
-      responses:
-        '200':
-          description: The implementation accepts a successful response without decoding a body.
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
-  /v2/endpoints/{endpointId}/friendlyName:
-    post:
-      tags: [Endpoints]
-      operationId: updateEndpointFriendlyName
-      summary: Submit a friendly name for an endpoint
-      parameters:
-        - $ref: '#/components/parameters/EndpointId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WireFriendlyNameRequest'
-      responses:
-        '200':
-          description: The implementation accepts a successful response without decoding a body.
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
-  /v2/endpoints/{endpointId}/control:
-    post:
-      tags: [Endpoints]
-      operationId: controlRestEndpoint
-      summary: Submit a legacy endpoint control command
-      description: The command body is built by the legacy REST helper; current top-level client controls use other operations.
-      parameters:
-        - $ref: '#/components/parameters/EndpointId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WireCommand'
-      responses:
-        '200':
-          description: The implementation accepts a successful response without decoding a body.
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
-  /v2/endpoints/{endpointId}/interfaces/{feature}/{operation}/:
-    post:
-      tags: [Endpoints]
-      operationId: sendEndpointInterfaceMessage
-      summary: Submit an endpoint interface payload
       description: |
-        The current implementation appends a trailing slash to this route and
-        sends the caller payload as the JSON request body, or an empty object
-        when the payload is nil. Feature and operation are open strings in the
-        client and are not enumerated here.
-      parameters:
-        - $ref: '#/components/parameters/EndpointId'
-        - name: feature
-          in: path
-          required: true
-          description: Feature name supplied by the caller.
-          schema:
-            type: string
-        - name: operation
-          in: path
-          required: true
-          description: Operation name supplied by the caller.
-          schema:
-            type: string
+        The sequence itself is JSON encoded into the `sequenceJson` string.
+        The library sets `behaviorId` to `PREVIEW` and `status` to `ENABLED`.
+        This describes serialization in the source, not the service's current
+        acceptance rules.
+      operationId: submitBehaviorPreview
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WireInterfacePayload'
+              $ref: '#/components/schemas/WireBehaviorPreviewRequest'
+        required: true
       responses:
-        '200':
-          description: The implementation accepts a successful response without decoding a body.
+        "200":
+          description: The implementation accepts a successful response without decoding
+            a body.
         default:
           $ref: '#/components/responses/UnhandledResponse'
+      security:
+      - BearerToken: []
+      - CookieHeader: []
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      summary: Submit a behavior preview sequence
+      tags:
+      - Behaviors
   /api/devices-v2/device:
     get:
-      tags: [Alexa web APIs]
-      operationId: listFirstPartyDevices
-      summary: List first-party device records
       description: |
         The REST helper sends either a bearer authorization header or a cookie
         header. A supplied CSRF option is serialized as a `Cookie` header.
         The response model is based on the Go fields currently decoded by the
         client and is not verified against a live response.
-      servers:
-        - url: https://alexa.amazon.com
-        - url: https://alexa.amazon.co.uk
-        - url: https://alexa.amazon.co.jp
-      security:
-        - BearerToken: []
-        - CookieHeader: []
+      operationId: listFirstPartyDevices
       parameters:
-        - name: csrf
-          in: header
-          required: false
-          description: The helper can send this value in its Cookie header.
-          schema:
-            type: string
+      - description: The helper can send this value in its Cookie header.
+        in: header
+        name: csrf
+        required: false
+        schema:
+          type: string
       responses:
-        '200':
-          description: Device list decoded by the current helper.
+        "200":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/WireDevicesV2Response'
+          description: Device list decoded by the current helper.
         default:
           $ref: '#/components/responses/UnhandledResponse'
-  /api/users/me:
-    get:
-      tags: [Alexa web APIs]
-      operationId: getUserInfo
-      summary: Read the current account profile
-      description: The decoded response contains personal account information. Treat it as sensitive data.
-      servers:
-        - url: https://alexa.amazon.com
-          x-go-alexa-region: na
-        - url: https://alexa.amazon.co.uk
-          x-go-alexa-region: eu
-        - url: https://alexa.amazon.co.jp
-          x-go-alexa-region: jp
       security:
-        - BearerToken: []
-        - CookieHeader: []
-      parameters:
-        - name: platform
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: version
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: csrf
-          in: header
-          required: false
-          description: A supplied CSRF token is serialized as a Cookie header by the helper.
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Account profile decoded by the current helper.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WireUserInfo'
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
+      - BearerToken: []
+      - CookieHeader: []
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      summary: List first-party device records
+      tags:
+      - First-party devices
   /api/language:
     get:
-      tags: [Alexa web APIs]
-      operationId: fetchCsrfCookie
-      summary: Request the language route while looking for a CSRF cookie
       description: |
         This helper sends its stored cookies and checks the response cookies
         for a cookie named `csrf`. It does not decode the response body or
         validate a provider status code in this path.
-      servers:
-        - url: https://alexa.amazon.com
-        - url: https://alexa.amazon.co.uk
-        - url: https://alexa.amazon.co.jp
-      security:
-        - CookieHeader: []
+      operationId: fetchCsrfCookie
       responses:
-        '200':
-          description: The client only inspects response cookies; the body shape is unknown to this implementation.
+        "200":
+          description: The client only inspects response cookies; the body shape is
+            unknown to this implementation.
           headers:
             Set-Cookie:
               description: The helper looks for a cookie whose name is `csrf`.
@@ -467,127 +1071,451 @@ paths:
                 type: string
         default:
           $ref: '#/components/responses/UnhandledResponse'
-  /api/behaviors/preview:
-    post:
-      tags: [Alexa web APIs]
-      operationId: submitBehaviorPreview
-      summary: Submit a behavior preview sequence
-      description: |
-        The sequence itself is JSON encoded into the `sequenceJson` string.
-        The library sets `behaviorId` to `PREVIEW` and `status` to `ENABLED`.
-        This describes serialization in the source, not the service's current
-        acceptance rules.
-      servers:
-        - url: https://alexa.amazon.com
-        - url: https://alexa.amazon.co.uk
-        - url: https://alexa.amazon.co.jp
       security:
-        - BearerToken: []
-        - CookieHeader: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WireBehaviorPreviewRequest'
-      responses:
-        '200':
-          description: The implementation accepts a successful response without decoding a body.
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
+      - CookieHeader: []
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      summary: Request the language route while looking for a CSRF cookie
+      tags:
+      - Language
   /api/np/command:
     post:
-      tags: [Media]
-      operationId: sendMediaCommand
-      summary: Submit a media command
       description: |
         The helper supplies device serial and type as query parameters and sends
         a media command JSON body. The client currently uses the command values
         PlayCommand, PauseCommand, NextCommand, PreviousCommand, ForwardCommand,
         RewindCommand, ShuffleCommand, and RepeatCommand.
-      servers:
-        - url: https://alexa.amazon.com
-        - url: https://alexa.amazon.co.uk
-        - url: https://alexa.amazon.co.jp
-      security:
-        - BearerToken: []
-        - CookieHeader: []
+      operationId: sendMediaCommand
       parameters:
-        - $ref: '#/components/parameters/DeviceSerialNumber'
-        - $ref: '#/components/parameters/DeviceType'
+      - $ref: '#/components/parameters/DeviceSerialNumber'
+      - $ref: '#/components/parameters/DeviceType'
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/WireMediaCommand'
+        required: true
       responses:
-        '200':
-          description: The implementation accepts a successful response without decoding a body.
+        "200":
+          description: The implementation accepts a successful response without decoding
+            a body.
         default:
           $ref: '#/components/responses/UnhandledResponse'
+      security:
+      - BearerToken: []
+      - CookieHeader: []
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      summary: Submit a media command
+      tags:
+      - Media
   /api/np/player:
     get:
-      tags: [Media]
+      description: The response fields reflect the model currently decoded by go-alexa
+        and may vary by account or device.
       operationId: getMediaPlayerState
-      summary: Read media player state
-      description: The response fields reflect the model currently decoded by go-alexa and may vary by account or device.
-      servers:
-        - url: https://alexa.amazon.com
-        - url: https://alexa.amazon.co.uk
-        - url: https://alexa.amazon.co.jp
-      security:
-        - BearerToken: []
-        - CookieHeader: []
       parameters:
-        - $ref: '#/components/parameters/DeviceSerialNumber'
-        - $ref: '#/components/parameters/DeviceType'
+      - $ref: '#/components/parameters/DeviceSerialNumber'
+      - $ref: '#/components/parameters/DeviceType'
       responses:
-        '200':
-          description: Player state decoded by the current helper.
+        "200":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/WirePlayerStateResponse'
+          description: Player state decoded by the current helper.
         default:
           $ref: '#/components/responses/UnhandledResponse'
+      security:
+      - BearerToken: []
+      - CookieHeader: []
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      summary: Read media player state
+      tags:
+      - Media
+  /api/users/me:
+    get:
+      description: The decoded response contains personal account information. Treat
+        it as sensitive data.
+      operationId: getUserInfo
+      parameters:
+      - in: query
+        name: platform
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: version
+        required: false
+        schema:
+          type: string
+      - description: A supplied CSRF token is serialized as a Cookie header by the
+          helper.
+        in: header
+        name: csrf
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireUserInfo'
+          description: Account profile decoded by the current helper.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      security:
+      - BearerToken: []
+      - CookieHeader: []
+      servers:
+      - url: https://alexa.amazon.com
+        x-go-alexa-region: na
+      - url: https://alexa.amazon.co.uk
+        x-go-alexa-region: eu
+      - url: https://alexa.amazon.co.jp
+        x-go-alexa-region: jp
+      summary: Read the current account profile
+      tags:
+      - User info
+  /auth/create/codepair:
+    post:
+      description: |
+        The client posts device registration metadata and an empty scopes array
+        to the Amazon API base URL. The returned public and private codes are
+        credentials; keep them out of logs and source control. The route and
+        model describe the current implementation only.
+      operationId: createCodePair
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireCodePairRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireCodePairResponse'
+          description: Response decoded by the current code-pair client.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      security: []
+      servers:
+      - url: https://api.amazon.com
+      - url: https://api.amazon.co.uk
+      - url: https://api.amazon.co.jp
+      summary: Request a code pair
+      tags:
+      - Account linking
+  /auth/register:
+    post:
+      description: |
+        The current client constructs either `auth_data.code_pair` or
+        `auth_data.email_password` and sends a device registration request.
+        The email/password helper is present in the source but is not the
+        recommended linking flow. A 4xx response may be parsed as a challenge
+        body by the email/password helper. This source-derived description is
+        not a statement that either flow is currently accepted by the service.
+      operationId: registerDevice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireRegistrationRequest'
+        required: true
+      responses:
+        4XX:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireChallengeResponse'
+          description: The email/password helper attempts to decode challenge fields
+            from this response body.
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireRegistrationResponse'
+          description: Successful registration body decoded by go-alexa.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      security: []
+      servers:
+      - url: https://api.amazon.com
+      - url: https://api.amazon.co.uk
+      - url: https://api.amazon.co.jp
+      summary: Register using a code pair or credentials
+      tags:
+      - Account linking
+  /auth/token:
+    post:
+      description: |
+        The request body is assembled by `rest.Client.RefreshAccessToken`.
+        The source token and returned access token are secrets. This documents
+        the client's serialization and decoding shapes, not verified service
+        behavior.
+      operationId: refreshAccessToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireTokenRefreshRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireTokenRefreshResponse'
+          description: Response decoded by the current token refresh helper.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      security: []
+      servers:
+      - url: https://api.amazon.com
+      - url: https://api.amazon.co.uk
+      - url: https://api.amazon.co.jp
+      summary: Exchange a refresh token
+      tags:
+      - Account linking
   /nexus/v1/graphql:
     post:
-      tags: [Alexa web APIs]
-      operationId: executeNexusGraphQL
-      summary: Execute a GraphQL operation
       description: |
         The generic GraphQL client posts one of the seven generated operation
         documents with optional variables to this route. Other documents are
         rejected before network I/O. This shape is derived from the
         current client serializer and GraphQL schema, not from an Amazon-issued
         HTTP contract or a sanitized live capture.
-      servers:
-        - url: https://alexa.amazon.com
-        - url: https://alexa.amazon.co.uk
-        - url: https://alexa.amazon.co.jp
-      security:
-        - BearerToken: []
+      operationId: executeNexusGraphQL
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/WireGraphQLRequest'
+        required: true
       responses:
-        '200':
-          description: GraphQL data or operation errors decoded by the client.
+        "200":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/WireGraphQLResponse'
+          description: GraphQL data or operation errors decoded by the client.
         default:
           $ref: '#/components/responses/UnhandledResponse'
+      security:
+      - BearerToken: []
+      servers:
+      - url: https://alexa.amazon.com
+      - url: https://alexa.amazon.co.uk
+      - url: https://alexa.amazon.co.jp
+      summary: Execute a GraphQL operation
+      tags:
+      - GraphQL
+  /ping:
+    get:
+      description: The HTTP/2 connection sends this GET with the same bearer token;
+        the code expects 204 No Content.
+      operationId: pingDirectiveStream
+      responses:
+        "204":
+          description: Expected keepalive response; no body is decoded.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      security:
+      - BearerToken: []
+      servers:
+      - url: https://alexa.na.gateway.devices.a2z.com
+      - url: https://alexa.eu.gateway.devices.a2z.com
+      - url: https://alexa.fe.gateway.devices.a2z.com
+      summary: Send a directive stream keepalive request
+      tags:
+      - Event stream
+  /v2/endpoint-query:
+    post:
+      operationId: queryRestEndpoints
+      parameters:
+      - $ref: '#/components/parameters/Expand'
+      - $ref: '#/components/parameters/MaxResults'
+      - $ref: '#/components/parameters/NextToken'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireEndpointQueryRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireEndpointListResponse'
+          description: Endpoint list decoded by the REST helper.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      summary: Query endpoints through the REST client
+      tags:
+      - Endpoints
+  /v2/endpoints:
+    get:
+      description: |
+        This operation is implemented by `rest.Client.GetEndpoints`. The public
+        `alexa.Client.ListEndpoints` operation uses GraphQL and a separate
+        device lookup; it does not call this route in its current
+        implementation. `owner` defaults to `~caller` in this REST helper.
+      operationId: listRestEndpoints
+      parameters:
+      - $ref: '#/components/parameters/Owner'
+      - $ref: '#/components/parameters/Expand'
+      - $ref: '#/components/parameters/MaxResults'
+      - $ref: '#/components/parameters/NextToken'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireEndpointListResponse'
+          description: Endpoint list decoded by the REST helper.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      summary: List endpoints through the REST client
+      tags:
+      - Endpoints
+  /v2/endpoints/{endpointId}:
+    get:
+      operationId: getRestEndpoint
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      - $ref: '#/components/parameters/Expand'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireDevice'
+          description: Endpoint decoded by the REST helper.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      summary: Get one endpoint through the REST client
+      tags:
+      - Endpoints
+  /v2/endpoints/{endpointId}/control:
+    post:
+      description: The command body is built by the legacy REST helper; current top-level
+        client controls use other operations.
+      operationId: controlRestEndpoint
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireCommand'
+        required: true
+      responses:
+        "200":
+          description: The implementation accepts a successful response without decoding
+            a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      summary: Submit a legacy endpoint control command
+      tags:
+      - Endpoints
+  /v2/endpoints/{endpointId}/deregister:
+    post:
+      operationId: deregisterEndpoint
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      responses:
+        "200":
+          description: The implementation accepts a successful response without decoding
+            a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      summary: Request endpoint deregistration
+      tags:
+      - Endpoints
+  /v2/endpoints/{endpointId}/forget:
+    post:
+      operationId: forgetEndpoint
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      responses:
+        "200":
+          description: The implementation accepts a successful response without decoding
+            a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      summary: Request that an endpoint be forgotten
+      tags:
+      - Endpoints
+  /v2/endpoints/{endpointId}/friendlyName:
+    post:
+      operationId: updateEndpointFriendlyName
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireFriendlyNameRequest'
+        required: true
+      responses:
+        "200":
+          description: The implementation accepts a successful response without decoding
+            a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      summary: Submit a friendly name for an endpoint
+      tags:
+      - Endpoints
+  /v2/endpoints/{endpointId}/interfaces/{feature}/{operation}/:
+    post:
+      description: |
+        The current implementation appends a trailing slash to this route and
+        sends the caller payload as the JSON request body, or an empty object
+        when the payload is nil. Feature and operation are open strings in the
+        client and are not enumerated here.
+      operationId: sendEndpointInterfaceMessage
+      parameters:
+      - $ref: '#/components/parameters/EndpointId'
+      - description: Feature name supplied by the caller.
+        in: path
+        name: feature
+        required: true
+        schema:
+          type: string
+      - description: Operation name supplied by the caller.
+        in: path
+        name: operation
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireInterfacePayload'
+        required: true
+      responses:
+        "200":
+          description: The implementation accepts a successful response without decoding
+            a body.
+        default:
+          $ref: '#/components/responses/UnhandledResponse'
+      summary: Submit an endpoint interface payload
+      tags:
+      - Endpoints
   /v20160207/directives:
     get:
-      tags: [Event stream]
-      operationId: openDirectiveStream
-      summary: Open the long-lived directive response
       description: |
         The implementation uses an HTTP/2 transport and a bearer token, then
         reads the response as newline-delimited text. It skips lines beginning
@@ -595,628 +1523,68 @@ paths:
         directives. The exact response media type, boundary syntax, and current
         provider payloads are not established by a live capture. See the
         AsyncAPI reference for the shape required by the current parser.
-      servers:
-        - url: https://alexa.na.gateway.devices.a2z.com
-          description: Default authority in go-alexa.
-        - url: https://alexa.eu.gateway.devices.a2z.com
-          description: EU authority constant in go-alexa.
-        - url: https://alexa.fe.gateway.devices.a2z.com
-          description: Japan authority constant in go-alexa.
-      security:
-        - BearerToken: []
+      operationId: openDirectiveStream
       responses:
-        '200':
-          description: Long-lived response consumed by the current HTTP/2 line parser; media type is not asserted.
+        "200":
+          description: Long-lived response consumed by the current HTTP/2 line parser;
+            media type is not asserted.
         default:
           $ref: '#/components/responses/UnhandledResponse'
-  /ping:
-    get:
-      tags: [Event stream]
-      operationId: pingDirectiveStream
-      summary: Send a directive stream keepalive request
-      description: The HTTP/2 connection sends this GET with the same bearer token; the code expects 204 No Content.
-      servers:
-        - url: https://alexa.na.gateway.devices.a2z.com
-        - url: https://alexa.eu.gateway.devices.a2z.com
-        - url: https://alexa.fe.gateway.devices.a2z.com
       security:
-        - BearerToken: []
-      responses:
-        '204':
-          description: Expected keepalive response; no body is decoded.
-        default:
-          $ref: '#/components/responses/UnhandledResponse'
-components:
-  securitySchemes:
-    BearerToken:
-      type: http
-      scheme: bearer
-      description: The client sends its supplied access token in the Authorization header.
-    CookieHeader:
-      type: apiKey
-      in: header
-      name: Cookie
-      description: The cookie-backed client sends stored cookies in the Cookie header.
-  parameters:
-    EndpointId:
-      name: endpointId
-      in: path
-      required: true
-      description: Endpoint identifier supplied by the caller.
-      schema:
-        type: string
-    Owner:
-      name: owner
-      in: query
-      required: false
-      description: Defaults to `~caller` in the current REST helper.
-      schema:
-        type: string
-    Expand:
-      name: expand
-      in: query
-      required: false
-      description: Repeated query parameter accepted by the current request builder.
-      style: form
-      explode: true
-      schema:
-        type: array
-        items:
-          type: string
-    MaxResults:
-      name: maxResults
-      in: query
-      required: false
-      description: Integer pagination value passed through by the current REST helper.
-      schema:
-        type: integer
-    NextToken:
-      name: nextToken
-      in: query
-      required: false
-      schema:
-        type: string
-    DeviceSerialNumber:
-      name: deviceSerialNumber
-      in: query
-      required: true
-      description: Derived from the endpoint object by the media helper.
-      schema:
-        type: string
-    DeviceType:
-      name: deviceType
-      in: query
-      required: true
-      description: Derived from the endpoint object by the media helper.
-      schema:
-        type: string
-  responses:
-    UnhandledResponse:
-      description: Response not decoded into a success model by this operation.
-  schemas:
-    WireCodePairRequest:
-      type: object
-      properties:
-        code_data:
-          $ref: '#/components/schemas/WireCodeData'
-        scopes:
-          type: array
-          items:
-            type: string
-      required: [code_data, scopes]
-    WireCodeData:
-      type: object
-      properties:
-        app_name: {type: string}
-        app_version: {type: string}
-        device_type: {type: string}
-        domain: {type: string}
-        device_model: {type: string}
-        os_version: {type: string}
-        device_serial: {type: string}
-        device_name: {type: string}
-        secondary_registration: {type: string}
-      required: [app_name, app_version, device_type, domain, device_model, os_version, device_serial, device_name, secondary_registration]
-    WireCodePairResponse:
-      type: object
-      properties:
-        public_code: {type: string}
-        private_code: {type: string}
-    WireRegistrationRequest:
-      type: object
-      properties:
-        requested_token_type:
-          type: array
-          items: {type: string}
-        registration_data:
-          $ref: '#/components/schemas/WireRegistrationData'
-        auth_data:
-          $ref: '#/components/schemas/WireAuthData'
-      required: [requested_token_type, registration_data, auth_data]
-    WireRegistrationData:
-      type: object
-      properties:
-        app_name: {type: string}
-        app_version: {type: string}
-        device_type: {type: string}
-        domain: {type: string}
-        device_model: {type: string}
-        os_version: {type: string}
-        device_serial: {type: string}
-        device_name: {type: string}
-      required: [app_name, app_version, device_type, domain, device_model, os_version, device_serial, device_name]
-    WireAuthData:
-      type: object
-      properties:
-        code_pair:
-          $ref: '#/components/schemas/WireCodePairAuth'
-        email_password:
-          $ref: '#/components/schemas/WireEmailPasswordAuth'
-    WireCodePairAuth:
-      type: object
-      properties:
-        public_code: {type: string}
-        private_code: {type: string}
-      required: [public_code, private_code]
-    WireEmailPasswordAuth:
-      type: object
-      properties:
-        email: {type: string}
-        password: {type: string, format: password}
-      required: [email, password]
-    WireRegistrationResponse:
-      type: object
-      properties:
-        response:
-          $ref: '#/components/schemas/WireRegistrationResponseEnvelope'
-    WireRegistrationResponseEnvelope:
-      type: object
-      properties:
-        success:
-          $ref: '#/components/schemas/WireRegistrationSuccess'
-    WireRegistrationSuccess:
-      type: object
-      properties:
-        tokens:
-          $ref: '#/components/schemas/WireRegistrationTokens'
-    WireRegistrationTokens:
-      type: object
-      properties:
-        bearer:
-          $ref: '#/components/schemas/WireBearerTokens'
-    WireBearerTokens:
-      type: object
-      properties:
-        access_token: {type: string, format: password}
-        refresh_token: {type: string, format: password}
-    WireChallengeResponse:
-      type: object
-      properties:
-        response:
-          $ref: '#/components/schemas/WireChallengeEnvelope'
-    WireChallengeEnvelope:
-      type: object
-      properties:
-        challenge:
-          $ref: '#/components/schemas/WireChallenge'
-    WireChallenge:
-      type: object
-      properties:
-        challenge_reason: {type: string}
-        required_authentication_method: {type: string}
-    WireTokenRefreshRequest:
-      type: object
-      properties:
-        app_name: {type: string}
-        app_version: {type: string}
-        source_token_type: {type: string}
-        source_token: {type: string, format: password}
-        requested_token_type: {type: string}
-        device_metadata:
-          $ref: '#/components/schemas/WireDeviceMetadata'
-      required: [app_name, app_version, source_token_type, source_token, requested_token_type, device_metadata]
-    WireDeviceMetadata:
-      type: object
-      properties:
-        device_type: {type: string}
-        device_model: {type: string}
-        os_version: {type: string}
-        device_serial: {type: string}
-        manufacturer: {type: string}
-      required: [device_type, device_model, os_version, device_serial, manufacturer]
-    WireTokenRefreshResponse:
-      type: object
-      properties:
-        access_token: {type: string, format: password}
-        expires_in: {type: integer}
-    WireCookieExchangeRequest:
-      type: object
-      properties:
-        app_name: {type: string}
-        requested_token_type: {type: string}
-        domain: {type: string}
-        source_token_type: {type: string}
-        source_token: {type: string, format: password}
-      required: [app_name, requested_token_type, domain, source_token_type, source_token]
-    WireCookieExchangeResponse:
-      type: object
-      properties:
-        response:
-          $ref: '#/components/schemas/WireCookieExchangeEnvelope'
-    WireCookieExchangeEnvelope:
-      type: object
-      properties:
-        tokens:
-          $ref: '#/components/schemas/WireCookieTokens'
-    WireCookieTokens:
-      type: object
-      properties:
-        cookies:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              $ref: '#/components/schemas/WireCookieRecord'
-    WireCookieRecord:
-      type: object
-      properties:
-        Name: {type: string}
-        Value: {type: string, format: password}
-        Path: {type: string}
-        Secure: {type: boolean}
-        HttpOnly: {type: boolean}
-        Expires: {type: string}
-    WireEndpointListResponse:
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/WireDevice'
-        nextToken: {type: string}
-      additionalProperties: true
-    WireDevice:
-      type: object
-      properties:
-        id: {type: string}
-        name: {type: string}
-        type: {type: string}
-        capabilities:
-          type: array
-          items:
-            $ref: '#/components/schemas/WireCapabilityInterface'
-        state:
-          type: object
-          additionalProperties: true
-        metadata:
-          type: object
-          additionalProperties: true
-      additionalProperties: true
-    WireCapabilityInterface:
-      type: string
-      description: Open string value; the implementation does not reject unknown capability names.
-    WireEndpointQueryRequest:
-      type: object
-      properties:
-        query:
-          $ref: '#/components/schemas/WireEndpointQuery'
-      required: [query]
-    WireEndpointQuery:
-      type: object
-      properties:
-        and:
-          type: array
-          items:
-            $ref: '#/components/schemas/WireEndpointQueryClause'
-        or:
-          type: array
-          items:
-            $ref: '#/components/schemas/WireEndpointQueryClause'
-        includeFields:
-          $ref: '#/components/schemas/WireEndpointIncludeFields'
-        paginationContext:
-          $ref: '#/components/schemas/WirePaginationContext'
-    WireEndpointQueryClause:
-      type: object
-      properties:
-        associatedUnits:
-          $ref: '#/components/schemas/WireAssociatedUnitsFilter'
-        manufacturer:
-          $ref: '#/components/schemas/WireStringFilter'
-        model:
-          $ref: '#/components/schemas/WireStringFilter'
-    WireAssociatedUnitsFilter:
-      type: object
-      properties:
-        id: {type: string}
-      required: [id]
-    WireStringFilter:
-      type: object
-      properties:
-        value:
-          $ref: '#/components/schemas/WireStringFilterValue'
-      required: [value]
-    WireStringFilterValue:
-      type: object
-      properties:
-        text: {type: string}
-      required: [text]
-    WireEndpointIncludeFields:
-      type: object
-      properties:
-        states: {type: boolean}
-        capabilities: {type: boolean}
-    WirePaginationContext:
-      type: object
-      properties:
-        nextToken: {type: string}
-        maxResults: {type: integer}
-        performPagination: {type: boolean}
-    WireFriendlyNameRequest:
-      type: object
-      properties:
-        friendlyName:
-          $ref: '#/components/schemas/WireFriendlyNameValue'
-      required: [friendlyName]
-    WireFriendlyNameValue:
-      type: object
-      properties:
-        type: {type: string}
-        value:
-          $ref: '#/components/schemas/WireFriendlyNameText'
-      required: [type, value]
-    WireFriendlyNameText:
-      type: object
-      properties:
-        text: {type: string}
-      required: [text]
-    WireCommand:
-      type: object
-      properties:
-        type: {type: string}
-        device_id: {type: string}
-        payload: {}
-        namespace: {type: string}
-        name: {type: string}
-      required: [type]
-      additionalProperties: true
-    WireInterfacePayload:
-      type: object
-      description: Caller-supplied JSON object; nil is serialized by this client as an empty object.
-      additionalProperties: true
-    WireDevicesV2Response:
-      type: object
-      properties:
-        devices:
-          type: array
-          items:
-            $ref: '#/components/schemas/WireDeviceV2'
-      required: [devices]
-      additionalProperties: true
-    WireDeviceV2:
-      type: object
-      properties:
-        accountName: {type: string}
-        appDeviceList:
-          type: array
-          items:
-            $ref: '#/components/schemas/WireAppDevice'
-        associatedUnitIds:
-          type: array
-          nullable: true
-          items: {type: string}
-        capabilities:
-          type: array
-          items: {type: string}
-        charging: {type: boolean, nullable: true}
-        clusterMembers:
-          type: array
-          items: {type: string}
-        deviceAccountId: {type: string}
-        deviceFamily: {type: string}
-        deviceOwnerCustomerId: {type: string}
-        deviceType: {type: string}
-        deviceTypeFriendlyName: {type: string, nullable: true}
-        essid: {type: string, nullable: true}
-        language: {type: string, nullable: true}
-        macAddress: {type: string, nullable: true}
-        online: {type: boolean}
-        parentClusters:
-          type: array
-          items: {type: string}
-        postalCode: {type: string, nullable: true}
-        registrationId: {type: string, nullable: true}
-        remainingBatteryLevel: {type: integer, nullable: true}
-        serialNumber: {type: string}
-        softwareVersion: {type: string}
-      additionalProperties: true
-    WireAppDevice:
-      type: object
-      properties:
-        deviceAccountId: {type: string}
-        deviceType: {type: string}
-        serialNumber: {type: string}
-      additionalProperties: true
-    WireUserInfo:
-      type: object
-      description: May contain personal account information.
-      properties:
-        countryOfResidence: {type: string}
-        effectiveMarketPlaceId: {type: string}
-        email: {type: string}
-        eulaAcceptance: {type: boolean}
-        features:
-          type: array
-          items: {type: string}
-        fullName: {type: string}
-        hasActiveDopplers: {type: boolean}
-        id: {type: string}
-        marketPlaceDomainName: {type: string}
-        marketPlaceId: {type: string}
-        marketPlaceLocale: {type: string}
-      additionalProperties: true
-    WireBehaviorPreviewRequest:
-      type: object
-      properties:
-        behaviorId: {type: string}
-        sequenceJson:
-          type: string
-          description: JSON-encoded sequence serialized as a string by the client; the embedded object is modeled in api/embedded-wire.yaml.
-          contentMediaType: application/json
-          x-go-alexa-embedded-schema: embedded-wire.yaml#/components/schemas/Sequence
-        status: {type: string}
-      required: [behaviorId, sequenceJson, status]
-    WireMediaCommand:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: [PlayCommand, PauseCommand, NextCommand, PreviousCommand, ForwardCommand, RewindCommand, ShuffleCommand, RepeatCommand]
-        shuffle: {type: boolean}
-        repeat: {type: boolean}
-      required: [type]
-    WireGraphQLRequest:
-      type: object
-      properties:
-        query: {type: string}
-        operationName: {type: string}
-        variables:
-          type: object
-          additionalProperties: true
-      required: [query]
-      additionalProperties: true
-    WireGraphQLResponse:
-      type: object
-      properties:
-        data:
-          type: object
-          additionalProperties: true
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/WireGraphQLError'
-      additionalProperties: true
-    WireGraphQLError:
-      type: object
-      properties:
-        message: {type: string}
-        locations:
-          type: array
-          items:
-            $ref: '#/components/schemas/WireGraphQLErrorLocation'
-        path:
-          type: array
-          items: {}
-        extensions:
-          type: object
-          additionalProperties: true
-      required: [message]
-      additionalProperties: true
-    WireGraphQLErrorLocation:
-      type: object
-      properties:
-        line: {type: integer}
-        column: {type: integer}
-      required: [line, column]
-    WirePlayerStateResponse:
-      type: object
-      properties:
-        playerInfo:
-          $ref: '#/components/schemas/WirePlayerInfo'
-      additionalProperties: true
-    WirePlayerInfo:
-      type: object
-      properties:
-        hint: {type: string}
-        infoText: {$ref: '#/components/schemas/WireInfoText'}
-        isPlayingInLemur: {type: boolean}
-        lemurVolume: {type: integer}
-        lyrics: {type: string}
-        mainArt: {$ref: '#/components/schemas/WireArt'}
-        mediaId: {type: string}
-        miniArt: {$ref: '#/components/schemas/WireArt'}
-        miniInfoText: {$ref: '#/components/schemas/WireInfoText'}
-        playbackSource: {type: string}
-        playingInLemurId: {type: string}
-        progress: {$ref: '#/components/schemas/WireProgress'}
-        provider: {$ref: '#/components/schemas/WireProvider'}
-        quality: {type: string}
-        queueId: {type: string}
-        state: {type: string}
-        template: {$ref: '#/components/schemas/WireTemplate'}
-        transport: {$ref: '#/components/schemas/WireTransport'}
-        upNextItems: {}
-        volume: {$ref: '#/components/schemas/WireVolume'}
-      additionalProperties: true
-    WireInfoText:
-      type: object
-      properties:
-        header: {type: string}
-        headerSubtext1: {type: string}
-        multiLineMode: {type: boolean}
-        subText1: {type: string}
-        subText2: {type: string}
-        title: {type: string}
-      additionalProperties: true
-    WireArt:
-      type: object
-      properties:
-        altText: {type: string}
-        artType: {type: string}
-        contentType: {type: string}
-        url: {type: string, format: uri}
-        iconId: {type: string}
-        iconStyles: {type: string}
-      additionalProperties: true
-    WireProgress:
-      type: object
-      properties:
-        allowScrubbing: {type: boolean}
-        locationInfo: {type: string}
-        mediaLength: {type: integer}
-        mediaProgress: {type: integer}
-        showTiming: {type: boolean}
-        visible: {type: boolean}
-      additionalProperties: true
-    WireProvider:
-      type: object
-      properties:
-        artOverlay: {$ref: '#/components/schemas/WireArt'}
-        fallbackMainArt: {$ref: '#/components/schemas/WireArt'}
-        providerDisplayName: {type: string}
-        providerLogo: {$ref: '#/components/schemas/WireArt'}
-        providerName: {type: string}
-      additionalProperties: true
-    WireTemplate:
-      type: object
-      properties:
-        art: {$ref: '#/components/schemas/WireArt'}
-        backgroundImageUrl: {type: string, format: uri}
-        templateType: {type: string}
-      additionalProperties: true
-    WireTransport:
-      type: object
-      properties:
-        closedCaptions: {type: string}
-        layoutType: {type: string}
-        lyrics: {type: string}
-        next: {type: string}
-        playPause: {type: string}
-        previous: {type: string}
-        rateContentAction: {$ref: '#/components/schemas/WireRateContentAction'}
-        thumbsDown: {type: string}
-        thumbsUp: {type: string}
-      additionalProperties: true
-    WireRateContentAction:
-      type: object
-      properties:
-        mediaOwnerCustomerId: {type: string}
-        rating: {type: string}
-        type: {type: string}
-      additionalProperties: true
-    WireVolume:
-      type: object
-      properties:
-        muted: {type: boolean}
-        volume: {type: integer}
-      additionalProperties: true
+      - BearerToken: []
+      servers:
+      - description: Default authority in go-alexa.
+        url: https://alexa.na.gateway.devices.a2z.com
+      - description: EU authority constant in go-alexa.
+        url: https://alexa.eu.gateway.devices.a2z.com
+      - description: Japan authority constant in go-alexa.
+        url: https://alexa.fe.gateway.devices.a2z.com
+      summary: Open the long-lived directive response
+      tags:
+      - Event stream
+security:
+- BearerToken: []
+servers:
+- description: Default REST base URL in go-alexa.
+  url: https://api.amazonalexa.com
+  x-go-alexa-region: na
+- description: EU REST base URL constant in go-alexa.
+  url: https://api.eu.amazonalexa.com
+  x-go-alexa-region: eu
+- description: Japan REST base URL constant in go-alexa.
+  url: https://api.jp.amazonalexa.com
+  x-go-alexa-region: jp
+tags:
+- description: Caller-facing authorization entry point, code-pair registration, and
+    token operations implemented by go-alexa.
+  name: Account linking
+- description: Cookie-backed account and first-party device routes used by go-alexa.
+  name: Alexa web APIs
+- description: Behavior preview operations and their serialized sequence payloads.
+  name: Behaviors
+- description: Endpoint enumeration and direct endpoint operations implemented by
+    go-alexa.
+  name: Endpoints
+- description: Long-lived HTTP/2 connection and keepalive operations.
+  name: Event stream
+- description: Cookie-backed devices-v2 inventory operations implemented by go-alexa.
+  name: First-party devices
+- description: GraphQL HTTP envelope used by the Alexa web API.
+  name: GraphQL
+- description: Cookie-backed language preference operations implemented by go-alexa.
+  name: Language
+- description: First-party media routes used by go-alexa.
+  name: Media
+- description: Cookie-backed account profile operations implemented by go-alexa.
+  name: User info
+x-go-alexa-request-headers:
+- Accept
+- Authorization
+- Content-Type
+- Cookie
+- DNT
+- Origin
+- Referer
+- User-Agent
+- csrf
+- x-amzn-identity-auth-domain
