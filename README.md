@@ -67,7 +67,7 @@ func main() {
 
 `Client` holds reusable endpoint and transport configuration. Create an account `Session` with credentials before calling API methods, then close the session when finished. Every network operation accepts a context. See the [authentication guide](https://portpowered.github.io/go-alexa/docs/guides/authentication/) for token refresh and code-based linking.
 
-The first standalone CLI release is pending. Until then, run it from a checkout with `cd cmd/go-alexa && go run . help`. After publication, install it with `go install github.com/portpowered/go-alexa/cmd/go-alexa@latest`. See the [CLI guide](https://portpowered.github.io/go-alexa/docs/guides/cli/) for account linking, secure credential files, endpoint commands, player state, and event listening.
+Install the standalone CLI with `go install github.com/portpowered/go-alexa/cmd/go-alexa@v0.4.0`. See the [CLI guide](https://portpowered.github.io/go-alexa/docs/guides/cli/) for account linking, secure credential files, endpoint commands, player state, and event listening.
 
 ## Supported operations
 
