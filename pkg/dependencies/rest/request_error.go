@@ -31,7 +31,7 @@ func safePathSegment(segment string) bool {
 func safeRequestPath(rawURL string) string {
 	parsed, err := url.Parse(rawURL)
 	if err != nil || parsed.Path == "" {
-		return "/{path}"
+		return "unavailable"
 	}
 
 	segments := strings.Split(strings.Trim(parsed.Path, "/"), "/")

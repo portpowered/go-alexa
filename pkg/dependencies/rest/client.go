@@ -403,7 +403,17 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 	req.Header.Set(apiroutes.HeaderContentType, "application/json")
 	req.Header.Set(apiroutes.HeaderAccept, "application/json")
 
-	return c.doRequestWithRetries(ctx, req)
+	for attempt := range maxRequestAttempts {
+		response, err := c.httpClient.Do(req)
+
+		done, response, err := finishRequestAttempt(ctx, req, response, err, attempt)
+
+		if done || err != nil {
+			return response, err
+		}
+	}
+
+	return nil, requestFailure(req.Method, req.URL.String(), 0, "", "transport", &alexaapimodels.NetworkError{Message: "provider returned no response"})
 }
 
 // doJSONRequest performs a request and unmarshals the JSON response.
@@ -624,7 +634,17 @@ func (c *Client) doUnauthenticatedRequest(ctx context.Context, method, url strin
 	req.Header.Set(apiroutes.HeaderContentType, "application/json")
 	req.Header.Set(apiroutes.HeaderAccept, "application/json")
 
-	return c.doRequestWithRetries(ctx, req)
+	for attempt := range maxRequestAttempts {
+		response, err := c.httpClient.Do(req)
+
+		done, response, err := finishRequestAttempt(ctx, req, response, err, attempt)
+
+		if done || err != nil {
+			return response, err
+		}
+	}
+
+	return nil, requestFailure(req.Method, req.URL.String(), 0, "", "transport", &alexaapimodels.NetworkError{Message: "provider returned no response"})
 }
 
 // doUnauthenticatedJSONRequest performs an unauthenticated request and unmarshals the JSON response.
@@ -685,43 +705,41 @@ func (e *UnauthenticatedRequestError) Error() string {
 	return fmt.Sprintf("request failed with status %d", e.StatusCode)
 }
 
-// doRequestWithRetries owns intermediate responses and recreates POST bodies.
-func (c *Client) doRequestWithRetries(ctx context.Context, request *http.Request) (*http.Response, error) {
-	const maxAttempts = 3
-	for attempt := range maxAttempts {
-		response, err := c.httpClient.Do(request)
-		if err == nil && response.StatusCode < http.StatusInternalServerError {
-			return response, nil
-		}
+const maxRequestAttempts = 3
 
-		if attempt == maxAttempts-1 {
-			if err != nil {
-				return nil, requestFailure(request.Method, request.URL.String(), 0, "", "transport", networkFailureCause(ctx, err, "request failed after retries"))
-			}
-
-			return response, nil
-		}
-
-		if response != nil && response.Body != nil {
-			_ = response.Body.Close()
-		}
-
-		select {
-		case <-ctx.Done():
-			return nil, requestFailure(request.Method, request.URL.String(), 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
-		case <-time.After(time.Duration(attempt+1) * time.Second):
-		}
-
-		if request.GetBody != nil {
-			body, bodyErr := request.GetBody()
-			if bodyErr != nil {
-				return nil, requestFailure(request.Method, request.URL.String(), 0, "", "request_encode",
-					&alexaapimodels.BadRequestError{Message: "failed to recreate request body"})
-			}
-
-			request.Body = body
-		}
+// finishRequestAttempt closes intermediate bodies and prepares the same request for retry.
+func finishRequestAttempt(ctx context.Context, req *http.Request, response *http.Response, err error, attempt int) (bool, *http.Response, error) {
+	if err == nil && response.StatusCode < http.StatusInternalServerError {
+		return true, response, nil
 	}
 
-	return nil, requestFailure(request.Method, request.URL.String(), 0, "", "transport", &alexaapimodels.NetworkError{Message: "provider returned no response"})
+	if attempt == maxRequestAttempts-1 {
+		if err != nil {
+			return true, nil, requestFailure(req.Method, req.URL.String(), 0, "", "transport", networkFailureCause(ctx, err, "request failed after retries"))
+		}
+
+		return true, response, nil
+	}
+
+	if response != nil && response.Body != nil {
+		_ = response.Body.Close()
+	}
+
+	select {
+	case <-ctx.Done():
+		return true, nil, requestFailure(req.Method, req.URL.String(), 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
+	case <-time.After(time.Duration(attempt+1) * time.Second):
+	}
+
+	if req.GetBody != nil {
+		body, bodyErr := req.GetBody()
+		if bodyErr != nil {
+			return true, nil, requestFailure(req.Method, req.URL.String(), 0, "", "request_encode",
+				&alexaapimodels.BadRequestError{Message: "failed to recreate request body"})
+		}
+
+		req.Body = body
+	}
+
+	return false, nil, nil
 }

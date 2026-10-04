@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
+	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 )
 
 func TestCodePairFailuresExposeStatesWithoutProviderPayload(t *testing.T) {
@@ -75,8 +76,14 @@ func assertSafeErrorChain(t *testing.T, err error) {
 	}
 }
 
-func TestAuthenticationPOSTRetryRecreatesRequestBody(t *testing.T) {
+func TestPOSTRetryRecreatesRequestBody(t *testing.T) {
 	t.Parallel()
+	t.Run("authentication", func(t *testing.T) { t.Parallel(); assertPOSTRetryBody(t, true) })
+	t.Run("device request", func(t *testing.T) { t.Parallel(); assertPOSTRetryBody(t, false) })
+}
+
+func assertPOSTRetryBody(t *testing.T, authentication bool) {
+	t.Helper()
 
 	requests := make(chan string, 2)
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
@@ -97,11 +104,23 @@ func TestAuthenticationPOSTRetryRecreatesRequestBody(t *testing.T) {
 		_, _ = io.WriteString(response, `{"access_token":"synthetic-access","token_type":"bearer","expires_in":3600}`)
 	}))
 	t.Cleanup(server.Close)
-	client := NewClient(WithAmazonapiBaseURI(server.URL))
 
-	token, err := client.RefreshAccessToken(context.Background(), "synthetic-refresh", DefaultDeviceRegistrationConfig("serial", "name"))
-	if err != nil || token.AccessToken != "synthetic-access" {
-		t.Fatalf("refresh after retry: token=%#v err=%v", token, err)
+	client := NewClient(WithAmazonapiBaseURI(server.URL), WithAmazonalexaAPIBaseURI(server.URL), WithBearerToken("synthetic-access"))
+	if authentication {
+		token, err := client.RefreshAccessToken(context.Background(), "synthetic-refresh", DefaultDeviceRegistrationConfig("serial", "name"))
+		if err != nil || token.AccessToken != "synthetic-access" {
+			t.Fatalf("refresh after retry: token=%#v err=%v", token, err)
+		}
+	} else {
+		response, err := client.doRequest(context.Background(), apiroutes.MethodSubmitBehaviorPreview, apiroutes.PathSubmitBehaviorPreview, "synthetic-refresh")
+		if err != nil {
+			t.Fatalf("device request after retry: %v", err)
+		}
+
+		closeErr := response.Body.Close()
+		if closeErr != nil {
+			t.Fatal(closeErr)
+		}
 	}
 
 	first, second := <-requests, <-requests
