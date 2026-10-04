@@ -50,6 +50,8 @@ func TestWireConstructionRejectsHelperReturnedFixedValues(t *testing.T) {
 		`func inventedValue() string { return "brandNewUnregisteredValue" }`,
 		`func inventedValue() string { return intermediate() }; func intermediate() string { return "brandNewUnregisteredValue" }`,
 		`func inventedValue() string { value := "brandNewUnregisteredValue"; return value }`,
+		`func inventedValue() (result string) { result = "brandNewUnregisteredValue"; return }`,
+		`func inventedValue() (result string) { value := "brandNewUnregisteredValue"; result = value; return }`,
 	} {
 		set := token.NewFileSet()
 
@@ -70,6 +72,7 @@ func TestWirePackageStorageRejectsExternallySuppliedGeneratedPayload(t *testing.
 	t.Parallel()
 
 	set := token.NewFileSet()
+
 	files := []wireSourceFile{
 		parseWireSourceTestFile(t, set, "pkg/probe/storage.go", `package probe
 var saved map[string]any
@@ -84,5 +87,39 @@ func Retain(input *wire.Payload) { saved = input.Extra }
 	err := checkWireSourcePackage(files, set, wireConstructionTestModels())
 	if err == nil {
 		t.Fatal("cross-file generated map mutation accepted without a local helper call")
+	}
+}
+
+func TestWireConstructionRejectsNamedResultMapEscape(t *testing.T) {
+	t.Parallel()
+
+	set := token.NewFileSet()
+
+	file := parseWireSourceTestFile(t, set, "pkg/probe.go", `package probe
+import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
+func expose(input *wire.Payload) (result map[string]any) { result = input.Extra; return }
+func request(input *wire.Payload) { unknown(expose(input)) }
+`)
+
+	err := checkWireSourcePackage([]wireSourceFile{file}, set, wireConstructionTestModels())
+	if err == nil {
+		t.Fatal("named-result generated map escape accepted")
+	}
+}
+
+func TestWireConstructionAllowsNamedCallerResult(t *testing.T) {
+	t.Parallel()
+
+	set := token.NewFileSet()
+
+	file := parseWireSourceTestFile(t, set, "pkg/probe.go", `package probe
+import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
+func identity(caller string) (result string) { result = caller; return }
+func request(caller string) { _ = wire.Payload{Value: identity(caller)} }
+`)
+
+	err := checkWireSourcePackage([]wireSourceFile{file}, set, wireConstructionTestModels())
+	if err != nil {
+		t.Fatalf("named caller result rejected: %v", err)
 	}
 }

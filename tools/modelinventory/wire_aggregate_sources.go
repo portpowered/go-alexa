@@ -24,7 +24,7 @@ func generatedWireAggregate(
 }
 
 func generatedWireReturnedValue(
-	body *ast.BlockStmt, aliases map[string]bool, path string, models map[string]generatedModel,
+	function *ast.FuncType, body *ast.BlockStmt, aliases map[string]bool, path string, models map[string]generatedModel,
 	visiting map[wireSourceVariable]bool, assignments wireSourceAssignments,
 ) bool {
 	if body == nil {
@@ -45,7 +45,7 @@ func generatedWireReturnedValue(
 		}
 
 		if returned, valid := node.(*ast.ReturnStmt); valid {
-			for _, result := range returned.Results {
+			for _, result := range wireReturnExpressions(function, returned) {
 				if generatedWireReceiver(result, aliases, path, models, visiting, assignments) {
 					found = true
 				}
@@ -63,7 +63,8 @@ func generatedWireCallResult(
 	visiting map[wireSourceVariable]bool, assignments wireSourceAssignments,
 ) bool {
 	for _, function := range wireLocalHelpers(call.Fun, assignments, make(map[wireSourceVariable]bool)) {
-		if function != nil && generatedWireReturnedValue(assignments.functionBodies[function], aliases, path, models, visiting, assignments) {
+		if function != nil && generatedWireReturnedValue(function, assignments.functionBodies[function], aliases, path, models, visiting,
+			wireReturnParameterValues(function, call, assignments)) {
 			return true
 		}
 	}

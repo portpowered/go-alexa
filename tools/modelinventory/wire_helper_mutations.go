@@ -291,7 +291,7 @@ func wireReturnedHelpers(call *ast.CallExpr, assignments wireSourceAssignments, 
 			}
 
 			if returned, valid := node.(*ast.ReturnStmt); valid {
-				for _, value := range returned.Results {
+				for _, value := range wireReturnExpressions(factory, returned) {
 					functions = append(functions, wireLocalHelpers(value, assignments, visiting)...)
 				}
 			}

@@ -218,7 +218,7 @@ func generatedWireReceiver(
 	case *ast.CompositeLit:
 		return generatedWireAggregate(expression, aliases, path, models, visiting, assignments)
 	case *ast.FuncLit:
-		return generatedWireReturnedValue(expression.Body, aliases, path, models, visiting, assignments)
+		return generatedWireReturnedValue(expression.Type, expression.Body, aliases, path, models, visiting, assignments)
 	case *ast.Ident:
 		return generatedWireIdentifier(expression, aliases, path, models, visiting, assignments)
 	case *ast.CallExpr:
@@ -256,7 +256,9 @@ func generatedWireIdentifier(
 
 	switch declaration := declaration.(type) {
 	case *ast.Field:
-		return generatedWireDeclaredType(declaration.Type, aliases, path, models)
+		if generatedWireDeclaredType(declaration.Type, aliases, path, models) {
+			return true
+		}
 	case *ast.ValueSpec:
 		if generatedWireDeclaredType(declaration.Type, aliases, path, models) {
 			return true
@@ -268,9 +270,8 @@ func generatedWireIdentifier(
 		return true
 	}
 
-	for _, value := range assignments.values[key] {
-		if (assignments.globalVariables[key] || value.Pos() < identifier.Pos()) &&
-			generatedWireReceiver(value, aliases, path, models, visiting, assignments) {
+	for _, value := range wireAliasExpressions(identifier, assignments) {
+		if generatedWireReceiver(value, aliases, path, models, visiting, assignments) {
 			return true
 		}
 	}

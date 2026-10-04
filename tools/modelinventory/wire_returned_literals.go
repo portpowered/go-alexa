@@ -35,8 +35,8 @@ func inspectWireReturnedLiterals(
 			}
 
 			if returned, valid := node.(*ast.ReturnStmt); valid {
-				if len(returned.Results) != 0 {
-					inspectWireValueLiterals(returned.Results[0], visiting, report, bound)
+				if results := wireReturnExpressions(function, returned); len(results) != 0 {
+					inspectWireValueLiterals(results[0], visiting, report, bound)
 				}
 
 				return false
@@ -69,4 +69,26 @@ func wireReturnParameterValues(function *ast.FuncType, call *ast.CallExpr, assig
 	}
 
 	return assignments
+}
+
+// Bare returns refer to the declared result variables. Preserve their objects
+// so alias analysis follows assignments to named results just as explicit ones.
+func wireReturnExpressions(function *ast.FuncType, returned *ast.ReturnStmt) []ast.Expr {
+	if len(returned.Results) != 0 {
+		return returned.Results
+	}
+
+	if function.Results == nil {
+		return nil
+	}
+
+	var results []ast.Expr
+
+	for _, field := range function.Results.List {
+		for _, name := range field.Names {
+			results = append(results, name)
+		}
+	}
+
+	return results
 }
