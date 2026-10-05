@@ -26,12 +26,15 @@ type SyntheticExchange struct {
 	Response  SyntheticResponse `json:"response"`
 }
 
-// SyntheticRequest is the exact local HTTP request recorded for synthetic replay.
+// SyntheticRequest is the exact local HTTP request recorded for synthetic replay,
+// including a distinct HTTP authority when Request.Host overrides URL.Host.
 //
 //modelinventory:domain SyntheticRequest: hand-authored local request fields used to match method, origin, path, query, headers, and body.
 type SyntheticRequest struct {
-	Method      string      `json:"method"`
-	Origin      string      `json:"origin"`
+	Method string `json:"method"`
+	Origin string `json:"origin"`
+	// Host is the optional Request.Host authority override.
+	Host        string      `json:"host,omitempty"`
 	EscapedPath string      `json:"escaped_path"`
 	Query       url.Values  `json:"query"`
 	Headers     http.Header `json:"headers"`
@@ -97,13 +100,25 @@ func LoadSyntheticReplay(path string) (*SyntheticReplay, error) {
 func RecordSyntheticExchange(operation string, req *http.Request, status int, headers http.Header, responseBody string) (SyntheticExchange, error) {
 	var pair SyntheticExchange
 
+	identity, identityIssues := syntheticRequestIdentityFor(req)
+
+	if len(identityIssues) > 0 {
+		return pair, fmt.Errorf("%w request identity mismatch: %s", errSyntheticReplayInvalid, strings.Join(identityIssues, ", "))
+	}
+
+	hostOverride := ""
+	if req.Host != "" && req.Host != req.URL.Host {
+		hostOverride = req.Host
+	}
+
 	pair.Source = "synthetic"
 	pair.Operation = operation
 	pair.Request = SyntheticRequest{
 		Method:      req.Method,
-		Origin:      req.URL.Scheme + "://" + req.URL.Host,
-		EscapedPath: req.URL.EscapedPath(),
-		Query:       req.URL.Query(),
+		Origin:      identity.origin,
+		Host:        hostOverride,
+		EscapedPath: identity.escapedPath,
+		Query:       identity.query,
 		Headers:     req.Header.Clone(),
 		Body:        "",
 	}
@@ -146,7 +161,9 @@ func WriteSyntheticReplay(path string, pairs []SyntheticExchange) error {
 func (r *SyntheticReplay) RoundTrip(req *http.Request) (*http.Response, error) {
 	var body []byte
 
-	if req.Body != nil {
+	identity, identityIssues := syntheticRequestIdentityFor(req)
+
+	if req != nil && req.Body != nil {
 		var err error
 
 		body, err = io.ReadAll(req.Body)
@@ -164,24 +181,15 @@ func (r *SyntheticReplay) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	pair := &r.pairs[r.next]
 
-	origin := req.URL.Scheme + "://" + req.URL.Host
+	mismatchFields := syntheticRequestMismatchFields(req, pair.Request, identity, identityIssues, body)
 
-	requestMatches := req.Method == pair.Request.Method && origin == pair.Request.Origin &&
-		req.URL.EscapedPath() == pair.Request.EscapedPath &&
-		reflect.DeepEqual(req.URL.Query(), pair.Request.Query) &&
-		reflect.DeepEqual(req.Header, pair.Request.Headers) &&
-		bytes.Equal(body, []byte(pair.Request.Body))
-	if !requestMatches {
+	if len(mismatchFields) > 0 {
 		return nil, fmt.Errorf(
-			"%w %d (%s) mismatch: %s %s, query=%v, headers=%v, body=%q",
+			"%w %d (%s) mismatch: %s",
 			errSyntheticRequestMismatch,
 			r.next+1,
 			pair.Operation,
-			req.Method,
-			req.URL,
-			req.URL.Query(),
-			req.Header,
-			body,
+			strings.Join(mismatchFields, ", "),
 		)
 	}
 
@@ -194,6 +202,148 @@ func (r *SyntheticReplay) RoundTrip(req *http.Request) (*http.Response, error) {
 		Body:       io.NopCloser(strings.NewReader(pair.Response.Body)),
 		Request:    req,
 	}, nil
+}
+
+func syntheticRequestMismatchFields(
+	req *http.Request,
+	expected SyntheticRequest,
+	identity syntheticRequestIdentity,
+	identityIssues []string,
+	body []byte,
+) []string {
+	fields := append([]string{}, identityIssues...)
+	if req == nil {
+		fields = append(fields, "request")
+	} else {
+		if req.Method != expected.Method {
+			fields = append(fields, "method")
+		}
+
+		fields = append(fields, syntheticURLMismatchFields(req, expected, identity, identityIssues)...)
+		if !reflect.DeepEqual(req.Header, expected.Headers) {
+			fields = append(fields, "headers")
+		}
+	}
+
+	if !bytes.Equal(body, []byte(expected.Body)) {
+		fields = append(fields, "body")
+	}
+
+	return fields
+}
+
+func syntheticURLMismatchFields(
+	req *http.Request,
+	expected SyntheticRequest,
+	identity syntheticRequestIdentity,
+	identityIssues []string,
+) []string {
+	if req.URL == nil {
+		return nil
+	}
+
+	var fields []string
+	if identity.origin != expected.Origin {
+		fields = append(fields, "origin")
+	}
+
+	expectedAuthority, validOrigin := syntheticOriginAuthority(expected.Origin)
+	if !validOrigin {
+		fields = append(fields, "paired origin")
+	} else {
+		if expected.Host != "" {
+			expectedAuthority = expected.Host
+		}
+
+		if identity.authority != expectedAuthority {
+			fields = append(fields, "effective authority")
+		}
+	}
+
+	if identity.escapedPath != expected.EscapedPath {
+		fields = append(fields, "escaped path")
+	}
+
+	if !containsSyntheticIdentityIssue(identityIssues, "malformed query") &&
+		!reflect.DeepEqual(identity.query, expected.Query) {
+		fields = append(fields, "query")
+	}
+
+	return fields
+}
+
+type syntheticRequestIdentity struct {
+	origin      string
+	authority   string
+	escapedPath string
+	query       url.Values
+}
+
+func syntheticRequestIdentityFor(req *http.Request) (syntheticRequestIdentity, []string) {
+	if req == nil {
+		return syntheticRequestIdentity{
+			origin:      "",
+			authority:   "",
+			escapedPath: "",
+			query:       nil,
+		}, []string{"request"}
+	}
+
+	if req.URL == nil {
+		return syntheticRequestIdentity{
+			origin:      "",
+			authority:   "",
+			escapedPath: "",
+			query:       nil,
+		}, []string{"URL"}
+	}
+
+	var issues []string
+	if req.URL.User != nil {
+		issues = append(issues, "URL user information")
+	}
+
+	if req.URL.Opaque != "" {
+		issues = append(issues, "opaque URL")
+	}
+
+	query, err := url.ParseQuery(req.URL.RawQuery)
+	if err != nil {
+		issues = append(issues, "malformed query")
+	}
+
+	authority := req.Host
+	if authority == "" {
+		authority = req.URL.Host
+	}
+
+	return syntheticRequestIdentity{
+		origin:      req.URL.Scheme + "://" + req.URL.Host,
+		authority:   authority,
+		escapedPath: req.URL.EscapedPath(),
+		query:       query,
+	}, issues
+}
+
+func syntheticOriginAuthority(origin string) (string, bool) {
+	parsedOrigin, err := url.Parse(origin)
+	if err != nil || parsedOrigin.Scheme == "" || parsedOrigin.Host == "" ||
+		parsedOrigin.User != nil || parsedOrigin.Opaque != "" || parsedOrigin.Path != "" ||
+		parsedOrigin.RawQuery != "" || parsedOrigin.Fragment != "" {
+		return "", false
+	}
+
+	return parsedOrigin.Host, true
+}
+
+func containsSyntheticIdentityIssue(issues []string, issue string) bool {
+	for _, current := range issues {
+		if current == issue {
+			return true
+		}
+	}
+
+	return false
 }
 
 // AssertConsumed reports whether every configured exchange was used.
