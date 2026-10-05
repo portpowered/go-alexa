@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -22,6 +23,8 @@ func (a *App) runAuth(ctx context.Context, args []string) error {
 		return a.runAuthRefresh(ctx, args[1:])
 	case "export":
 		return a.runAuthExport(args[1:])
+	case "logout":
+		return a.runAuthLogout(args[1:])
 	default:
 		return errInvalidOptions
 	}
@@ -200,6 +203,65 @@ func (a *App) runAuthExport(args []string) error {
 		Exported        bool   `json:"exported"`
 		CredentialsFile string `json:"credentialsFile"`
 	}{Exported: true, CredentialsFile: *outputPath})
+}
+
+func (a *App) runAuthLogout(args []string) error {
+	flags := a.flagSet("go-alexa auth logout --credentials-file FILE")
+	credentialsPath := flags.String("credentials-file", "", "local credential file to remove")
+
+	err := a.parseFlags(flags, args)
+	if err != nil {
+		return err
+	}
+
+	if strings.TrimSpace(*credentialsPath) == "" {
+		if a.hasEnvironmentCredentials() {
+			return errEnvironmentCredentials
+		}
+
+		return errCredentialFileRequired
+	}
+
+	file, err := os.Lstat(*credentialsPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return writeJSON(a.output, authLogoutResult{
+			CredentialsFile:                  *credentialsPath,
+			Removed:                          false,
+			EnvironmentCredentialsConfigured: a.hasEnvironmentCredentials(),
+		})
+	}
+
+	if err != nil {
+		return fmt.Errorf("inspect credential file: %w", err)
+	}
+
+	if file.IsDir() {
+		return errCredentialPathDirectory
+	}
+
+	err = os.Remove(*credentialsPath)
+	if err != nil {
+		return fmt.Errorf("remove credential file: %w", err)
+	}
+
+	return writeJSON(a.output, authLogoutResult{
+		CredentialsFile:                  *credentialsPath,
+		Removed:                          true,
+		EnvironmentCredentialsConfigured: a.hasEnvironmentCredentials(),
+	})
+}
+
+type authLogoutResult struct {
+	CredentialsFile                  string `json:"credentialsFile"`
+	Removed                          bool   `json:"removed"`
+	EnvironmentCredentialsConfigured bool   `json:"environmentCredentialsConfigured"`
+}
+
+func (a *App) hasEnvironmentCredentials() bool {
+	accessToken, _ := a.lookupEnv("ALEXA_ACCESS_TOKEN")
+	refreshToken, _ := a.lookupEnv("ALEXA_REFRESH_TOKEN")
+
+	return accessToken != "" || refreshToken != ""
 }
 
 func (a *App) runEndpoints(ctx context.Context, args []string) error {

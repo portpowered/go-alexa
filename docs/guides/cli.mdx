@@ -21,6 +21,14 @@ go-alexa auth link --region US --credentials-out "$HOME/.config/go-alexa/credent
 
 The command prints a public code and approval URL. After you approve that code in your browser and press Enter, it writes the access token, refresh token, and device registration data to a new credential file. It does not print the private code or tokens. The output file must not already exist. On systems with POSIX file permissions, the CLI creates credential directories with mode `0700` and files with mode `0600`; on Windows, the file receives a protected ACL granting access only to the current user.
 
+Remove a local credential file when you no longer want the CLI to read it:
+
+```sh
+go-alexa auth logout --credentials-file "$HOME/.config/go-alexa/credentials.json"
+```
+
+Logout removes only the named file, succeeds if it is already absent, and does not contact Alexa or revoke tokens. Its JSON result reports whether environment credentials remain configured. When credentials come only from `ALEXA_ACCESS_TOKEN` or `ALEXA_REFRESH_TOKEN`, unset them in the shell or secret manager that supplies them; the CLI cannot change its parent shell's environment.
+
 Refresh explicitly into a second file so an existing credential file is never overwritten:
 
 ```sh

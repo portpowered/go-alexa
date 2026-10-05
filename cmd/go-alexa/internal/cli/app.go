@@ -54,6 +54,15 @@ var (
 	errSubscriptionRejected      = errors.New("subscription rejected")
 )
 
+var (
+	errCredentialFileRequired = errors.New("--credentials-file is required; auth logout removes a local credential file only")
+	errEnvironmentCredentials = errors.New(
+		"environment credentials cannot be removed by auth logout; " +
+			"unset ALEXA_ACCESS_TOKEN and ALEXA_REFRESH_TOKEN in your shell",
+	)
+	errCredentialPathDirectory = errors.New("auth logout path must name a file, not a directory")
+)
+
 // App connects command input and output to the public Alexa SDK.
 type App struct {
 	input         io.Reader
@@ -129,6 +138,7 @@ Usage:
   go-alexa auth link --credentials-out FILE
   go-alexa auth refresh --credentials-file FILE --credentials-out FILE
   go-alexa auth export --credentials-stdin --credentials-out FILE
+  go-alexa auth logout --credentials-file FILE
   go-alexa endpoints list [credential flags]
   go-alexa endpoint power --id ID --state on|off [credential flags]
   go-alexa player state --id ID [credential flags]
@@ -141,6 +151,7 @@ Credential flags for authenticated commands:
 
 Secrets are never accepted as command arguments or printed in normal output.
 Credential files are created with owner-only permissions and are never overwritten.
+Logout removes only the named local file; unset environment credentials in your shell.
 `)
 	if err != nil {
 		return fmt.Errorf("write help: %w", err)
@@ -151,8 +162,8 @@ Credential files are created with owner-only permissions and are never overwritt
 
 func (a *App) writeGroupHelp(command string) error {
 	help := map[string]string{
-		"auth": "Usage: go-alexa auth link|refresh|export\n" +
-			"Link accounts, explicitly refresh access tokens, or export credentials.\n",
+		"auth": "Usage: go-alexa auth link|refresh|export|logout\n" +
+			"Link accounts, explicitly refresh access tokens, export credentials, or remove a local credential file.\n",
 		"endpoints": "Usage: go-alexa endpoints list [flags]\n" +
 			"List account endpoints and optionally include current feature states.\n",
 		"endpoint": "Usage: go-alexa endpoint power [flags]\n" +

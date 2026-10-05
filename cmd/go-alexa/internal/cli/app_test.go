@@ -28,6 +28,12 @@ const (
 	syntheticPrivateCode  = "synthetic-private-code"
 )
 
+type authLogoutJSON struct {
+	CredentialsFile                  string `json:"credentialsFile"`
+	Removed                          bool   `json:"removed"`
+	EnvironmentCredentialsConfigured bool   `json:"environmentCredentialsConfigured"`
+}
+
 func TestAuthLinkUsesPairedRequestsAndWritesPrivateCredentials(t *testing.T) {
 	t.Parallel()
 
@@ -199,6 +205,129 @@ func TestAuthRefreshReplaysExactRequestAndRedactsFailure(t *testing.T) {
 
 		assertConsumed(t, player)
 	})
+}
+
+func TestAuthLogoutRemovesCredentialFileAndIsIdempotent(t *testing.T) {
+	//nolint:gosec // This is a synthetic environment value used to verify logout does not alter the caller's environment.
+	const environmentAccessToken = "synthetic-environment-access-token"
+
+	t.Setenv("ALEXA_ACCESS_TOKEN", environmentAccessToken)
+	t.Setenv("ALEXA_REFRESH_TOKEN", "")
+
+	credentialPath := filepath.Join(t.TempDir(), "credentials.json")
+
+	var stdout bytes.Buffer
+
+	application := cli.New(
+		strings.NewReader(`{"accessToken":"synthetic-access-token","refreshToken":"synthetic-refresh-token"}`),
+		&stdout,
+		io.Discard,
+	)
+
+	err := application.Run(context.Background(), []string{
+		"auth", "export", "--credentials-stdin", "--credentials-out", credentialPath,
+	})
+	if err != nil {
+		t.Fatalf("create protected credential file: %v", err)
+	}
+
+	info, err := os.Stat(credentialPath)
+	if err != nil {
+		t.Fatalf("stat exported credential file: %v", err)
+	}
+
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		t.Fatalf("credential file permissions = %v; want 0600", info.Mode().Perm())
+	}
+
+	firstResult := runAuthLogout(t, application, &stdout, credentialPath)
+
+	if firstResult.CredentialsFile != credentialPath || !firstResult.Removed || !firstResult.EnvironmentCredentialsConfigured {
+		t.Fatalf("first logout result = %#v", firstResult)
+	}
+
+	if os.Getenv("ALEXA_ACCESS_TOKEN") != environmentAccessToken {
+		t.Fatal("auth logout changed the caller's environment credentials")
+	}
+
+	_, err = os.Stat(credentialPath)
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("credential file remains after logout: %v", err)
+	}
+
+	repeatedResult := runAuthLogout(t, application, &stdout, credentialPath)
+
+	if repeatedResult.CredentialsFile != credentialPath || repeatedResult.Removed || !repeatedResult.EnvironmentCredentialsConfigured {
+		t.Fatalf("repeated logout result = %#v", repeatedResult)
+	}
+}
+
+func runAuthLogout(t *testing.T, application *cli.App, output *bytes.Buffer, credentialPath string) authLogoutJSON {
+	t.Helper()
+	output.Reset()
+
+	err := application.Run(context.Background(), []string{"auth", "logout", "--credentials-file", credentialPath})
+	if err != nil {
+		t.Fatalf("auth logout returned error: %v", err)
+	}
+
+	var result authLogoutJSON
+
+	err = json.Unmarshal(output.Bytes(), &result)
+	if err != nil {
+		t.Fatalf("decode auth logout result: %v", err)
+	}
+
+	return result
+}
+
+func TestAuthLogoutExplainsEnvironmentOnlyCredentials(t *testing.T) {
+	t.Setenv("ALEXA_ACCESS_TOKEN", syntheticAccessToken)
+	t.Setenv("ALEXA_REFRESH_TOKEN", "")
+
+	var stdout bytes.Buffer
+
+	application := cli.New(strings.NewReader(""), &stdout, io.Discard)
+	err := application.Run(context.Background(), []string{"auth", "logout"})
+
+	if err == nil || !strings.Contains(err.Error(), "unset ALEXA_ACCESS_TOKEN") {
+		t.Fatalf("environment-only logout error = %v, want instructions to unset environment credentials", err)
+	}
+
+	if stdout.Len() != 0 || os.Getenv("ALEXA_ACCESS_TOKEN") != syntheticAccessToken {
+		t.Fatalf("environment-only logout changed output or the caller's environment: stdout=%q token=%q",
+			stdout.String(), os.Getenv("ALEXA_ACCESS_TOKEN"))
+	}
+
+	if strings.Contains(err.Error(), syntheticAccessToken) {
+		t.Fatal("environment-only logout error disclosed the access token")
+	}
+}
+
+func TestAuthLogoutIsShownInHelp(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+
+	application := cli.New(strings.NewReader(""), &stdout, io.Discard)
+
+	for _, args := range [][]string{{"help"}, {"auth", "help"}} {
+		stdout.Reset()
+
+		err := application.Run(context.Background(), args)
+		if err != nil {
+			t.Fatalf("help command %v returned error: %v", args, err)
+		}
+
+		want := "go-alexa auth logout --credentials-file FILE"
+		if args[0] == "auth" {
+			want = "logout"
+		}
+
+		if !strings.Contains(stdout.String(), want) {
+			t.Errorf("help command %v did not describe auth logout: %s", args, stdout.String())
+		}
+	}
 }
 
 func TestEndpointListUsesPairedGraphQLAndRESTExchanges(t *testing.T) {
