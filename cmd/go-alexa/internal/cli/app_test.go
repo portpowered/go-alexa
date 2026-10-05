@@ -621,7 +621,7 @@ func exchangeByOperation(t *testing.T, exchanges []replay.SyntheticExchange, ope
 	return replay.SyntheticExchange{
 		Source: "", Operation: "",
 		Request: replay.SyntheticRequest{
-			Method: "", Origin: "", EscapedPath: "", Query: nil, Headers: nil, Body: "",
+			Method: "", Origin: "", Host: "", EscapedPath: "", Query: nil, Headers: nil, Body: "",
 		},
 		Response: replay.SyntheticResponse{Status: 0, Headers: nil, Body: ""},
 	}
