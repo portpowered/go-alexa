@@ -42,7 +42,7 @@ type WireDeviceV2 struct {
 	AdditionalProperties   map[string]interface{} `json:"-"`
 }
 
-// WireDevicesV2Response defines model for WireDevicesV2Response.
+// WireDevicesV2Response Example: {"devices":[{"accountName":"Synthetic account","appDeviceList":[{"deviceAccountId":"synthetic-device-account","deviceType":"synthetic-device","serialNumber":"synthetic-serial"}],"associatedUnitIds":[],"capabilities":["synthetic-capability"],"charging":false,"clusterMembers":[],"deviceAccountId":"synthetic-device-account","deviceFamily":"FIRE_TV","deviceOwnerCustomerId":"synthetic-customer","deviceType":"synthetic-device","deviceTypeFriendlyName":"Synthetic device","online":true,"parentClusters":[],"serialNumber":"synthetic-serial","softwareVersion":"synthetic-version"}]}
 type WireDevicesV2Response struct {
 	Devices              []WireDeviceV2         `json:"devices"`
 	AdditionalProperties map[string]interface{} `json:"-"`

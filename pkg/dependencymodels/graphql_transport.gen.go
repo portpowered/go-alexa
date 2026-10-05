@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-// WireGraphQLError defines model for WireGraphQLError.
+// WireGraphQLError Example: {"extensions":{"code":"SYNTHETIC_ERROR"},"locations":[{"column":1,"line":1}],"message":"Synthetic GraphQL operation error","path":["endpoint"]}
 type WireGraphQLError struct {
 	Extensions           *map[string]interface{}     `json:"extensions,omitempty"`
 	Locations            *[]WireGraphQLErrorLocation `json:"locations,omitempty"`
@@ -23,7 +23,7 @@ type WireGraphQLErrorLocation struct {
 	Line   int `json:"line"`
 }
 
-// WireGraphQLRequest defines model for WireGraphQLRequest.
+// WireGraphQLRequest Example: {"operationName":"SyntheticEndpoint","query":"query SyntheticEndpoint($id: String!) { endpoint(id: $id) { endpointId } }","variables":{"id":"synthetic-endpoint"}}
 type WireGraphQLRequest struct {
 	OperationName        *string                `json:"operationName,omitempty"`
 	Query                string                 `json:"query"`

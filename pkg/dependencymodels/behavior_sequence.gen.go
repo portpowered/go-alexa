@@ -478,13 +478,20 @@ func (e VideoPlaySearchPhraseOperationType) Valid() bool {
 }
 
 // AnnouncementMethod Values accepted by the implementation's announcement method switch.
+//
+// Example: speak
 type AnnouncementMethod string
 
 // AnnouncementOperationNode Implementation-derived node paired with the generated announcement payload; no sanitized live capture is available.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"content":[{"display":{"body":"Synthetic announcement","title":"Synthetic notice"},"locale":"en-US","speak":{"type":"text","value":"Synthetic announcement"}}],"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","expireAfter":"PT5S","locale":"en-US","skillId":"amzn1.ask.1p.saysomething","target":{"customerId":"synthetic-customer","devices":[{"deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device"}]}},"type":"AlexaAnnouncement"}
 type AnnouncementOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+	//
+	// Example: {"content":[{"display":{"body":"Synthetic announcement","title":"Synthetic notice"},"locale":"en-US","speak":{"type":"text","value":"Synthetic announcement"}}],"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","expireAfter":"PT5S","locale":"en-US","skillId":"amzn1.ask.1p.saysomething","target":{"customerId":"synthetic-customer","devices":[{"deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device"}]}}
 	OperationPayload AnnouncementPayload       `json:"operationPayload"`
 	OperationType    AnnouncementOperationType `json:"type"`
 }
@@ -493,68 +500,88 @@ type AnnouncementOperationNode struct {
 type AnnouncementOperationType string
 
 // AnnouncementPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+//
+// Example: {"content":[{"display":{"body":"Synthetic announcement","title":"Synthetic notice"},"locale":"en-US","speak":{"type":"text","value":"Synthetic announcement"}}],"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","expireAfter":"PT5S","locale":"en-US","skillId":"amzn1.ask.1p.saysomething","target":{"customerId":"synthetic-customer","devices":[{"deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device"}]}}
 type AnnouncementPayload struct {
-	Content            []BehaviorAnnouncementContent   `json:"content"`
-	CustomerID         string                          `json:"customerId"`
-	DeviceSerialNumber string                          `json:"deviceSerialNumber"`
-	DeviceType         string                          `json:"deviceType"`
-	ExpireAfter        BehaviorAnnouncementExpireAfter `json:"expireAfter"`
-	Locale             string                          `json:"locale"`
+	Content            []BehaviorAnnouncementContent `json:"content"`
+	CustomerID         string                        `json:"customerId"`
+	DeviceSerialNumber string                        `json:"deviceSerialNumber"`
+	DeviceType         string                        `json:"deviceType"`
+
+	// ExpireAfter Example: PT5S
+	ExpireAfter BehaviorAnnouncementExpireAfter `json:"expireAfter"`
+	Locale      string                          `json:"locale"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.
+	//
+	// Example: amzn1.ask.1p.alexadevicecontrols
 	SkillID BehaviorSkillID `json:"skillId"`
-	Target  Target          `json:"target"`
+
+	// Target Example: {"customerId":"synthetic-customer","devices":[{"deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device"}]}
+	Target Target `json:"target"`
 }
 
-// BehaviorAlexaURL defines model for BehaviorAlexaURL.
+// BehaviorAlexaURL Example: #v2/behaviors
 type BehaviorAlexaURL string
 
 // BehaviorAnnouncementContent Implementation-derived nested behavior content shape; no sanitized live capture is available.
+//
+// Example: {"display":{"body":"Synthetic announcement","title":"Synthetic notice"},"locale":"en-US","speak":{"type":"text","value":"Synthetic announcement"}}
 type BehaviorAnnouncementContent struct {
+	// Display Example: {"body":"Synthetic announcement","title":"Synthetic notice"}
 	Display BehaviorAnnouncementDisplay `json:"display"`
 	Locale  string                      `json:"locale"`
-	Speak   BehaviorAnnouncementSpeak   `json:"speak"`
+
+	// Speak Example: {"type":"text","value":"Synthetic announcement"}
+	Speak BehaviorAnnouncementSpeak `json:"speak"`
 }
 
-// BehaviorAnnouncementDisplay defines model for BehaviorAnnouncementDisplay.
+// BehaviorAnnouncementDisplay Example: {"body":"Synthetic announcement","title":"Synthetic notice"}
 type BehaviorAnnouncementDisplay struct {
 	Body  string `json:"body"`
 	Title string `json:"title"`
 }
 
-// BehaviorAnnouncementExpireAfter defines model for BehaviorAnnouncementExpireAfter.
+// BehaviorAnnouncementExpireAfter Example: PT5S
 type BehaviorAnnouncementExpireAfter string
 
-// BehaviorAnnouncementSpeak defines model for BehaviorAnnouncementSpeak.
+// BehaviorAnnouncementSpeak Example: {"type":"text","value":"Synthetic announcement"}
 type BehaviorAnnouncementSpeak struct {
+	// Type Example: text
 	Type  BehaviorAnnouncementSpeakType `json:"type"`
 	Value string                        `json:"value"`
 }
 
-// BehaviorAnnouncementSpeakType defines model for BehaviorAnnouncementSpeakType.
+// BehaviorAnnouncementSpeakType Example: text
 type BehaviorAnnouncementSpeakType string
 
-// BehaviorDefaultID defines model for BehaviorDefaultID.
+// BehaviorDefaultID Example: PREVIEW
 type BehaviorDefaultID string
 
-// BehaviorDefaultLocale defines model for BehaviorDefaultLocale.
+// BehaviorDefaultLocale Example: en-US
 type BehaviorDefaultLocale string
 
-// BehaviorDefaultStatus defines model for BehaviorDefaultStatus.
+// BehaviorDefaultStatus Example: ENABLED
 type BehaviorDefaultStatus string
 
 // BehaviorNodeDiscriminator Schema used by the implementation to read a behavior node discriminator before selecting its typed model.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode"}
 type BehaviorNodeDiscriminator struct {
 	Type string `json:"@type"`
 }
 
 // BehaviorOperationType Known operation names constructed by this implementation.
+//
+// Example: Alexa.DeviceControls.Volume
 type BehaviorOperationType string
 
 // BehaviorPayloadKey Known behavior payload property names, including compatibility keys.
+//
+// Example: deviceType
 type BehaviorPayloadKey string
 
-// BehaviorPreviewRequest defines model for BehaviorPreviewRequest.
+// BehaviorPreviewRequest Example: {"behaviorId":"PREVIEW","sequenceJson":"{\"@type\":\"com.amazon.alexa.behaviors.model.Sequence\",\"startNode\":{\"@type\":\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\",\"type\":\"Alexa.DeviceControls.Volume\",\"operationPayload\":{\"deviceType\":\"synthetic-device\",\"deviceSerialNumber\":\"synthetic-serial\",\"locale\":\"en-US\",\"customerId\":\"synthetic-customer\",\"value\":32,\"skillId\":\"amzn1.ask.1p.alexadevicecontrols\"}}}","status":"ENABLED"}
 type BehaviorPreviewRequest struct {
 	BehaviorID   string `json:"behaviorId"`
 	SequenceJSON string `json:"sequenceJson"`
@@ -562,19 +589,28 @@ type BehaviorPreviewRequest struct {
 }
 
 // BehaviorSequenceNodeInspection Schema used by the implementation to inspect composite behavior nodes before recursively validating children.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.SerialNode","nodesToExecute":[{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.alexadevicecontrols","value":32},"type":"Alexa.DeviceControls.Volume"}]}
 type BehaviorSequenceNodeInspection struct {
 	Type           string        `json:"@type"`
 	NodesToExecute []interface{} `json:"nodesToExecute"`
 }
 
 // BehaviorSkillID Skill identifiers used by the implementation-built behavior operations.
+//
+// Example: amzn1.ask.1p.alexadevicecontrols
 type BehaviorSkillID string
 
 // CannedTTSSpeakOperationNode Compatibility node and payload shape retained for an exported legacy payload key; not built by active REST methods.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"cannedTtsStringId":"synthetic-canned-tts","customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.saysomething"},"type":"Alexa.CannedTts.Speak"}
 type CannedTTSSpeakOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Compatibility payload shape retained for an exported legacy payload key; not built by active REST methods.
+	//
+	// Example: {"cannedTtsStringId":"synthetic-canned-tts","customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.saysomething"}
 	OperationPayload CannedTTSSpeakPayload       `json:"operationPayload"`
 	OperationType    CannedTTSSpeakOperationType `json:"type"`
 }
@@ -583,6 +619,8 @@ type CannedTTSSpeakOperationNode struct {
 type CannedTTSSpeakOperationType string
 
 // CannedTTSSpeakPayload Compatibility payload shape retained for an exported legacy payload key; not built by active REST methods.
+//
+// Example: {"cannedTtsStringId":"synthetic-canned-tts","customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.saysomething"}
 type CannedTTSSpeakPayload struct {
 	CannedTtsStringID  string `json:"cannedTtsStringId"`
 	CustomerID         string `json:"customerId"`
@@ -591,14 +629,21 @@ type CannedTTSSpeakPayload struct {
 	Locale             string `json:"locale"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.
+	//
+	// Example: amzn1.ask.1p.alexadevicecontrols
 	SkillID BehaviorSkillID `json:"skillId"`
 }
 
 // DeviceControlsStopOperationNode Implementation-derived node paired with the generated device-controls stop payload; no sanitized live capture is available.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.alexadevicecontrols"},"type":"Alexa.DeviceControls.Stop"}
 type DeviceControlsStopOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+	//
+	// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.alexadevicecontrols"}
 	OperationPayload DeviceControlsStopPayload       `json:"operationPayload"`
 	OperationType    DeviceControlsStopOperationType `json:"type"`
 }
@@ -607,6 +652,8 @@ type DeviceControlsStopOperationNode struct {
 type DeviceControlsStopOperationType string
 
 // DeviceControlsStopPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+//
+// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.alexadevicecontrols"}
 type DeviceControlsStopPayload struct {
 	CustomerID         string `json:"customerId"`
 	DeviceSerialNumber string `json:"deviceSerialNumber"`
@@ -614,14 +661,21 @@ type DeviceControlsStopPayload struct {
 	Locale             string `json:"locale"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.
+	//
+	// Example: amzn1.ask.1p.alexadevicecontrols
 	SkillID BehaviorSkillID `json:"skillId"`
 }
 
 // DeviceControlsVolumeOperationNode Implementation-derived node paired with the generated device-controls volume payload; no sanitized live capture is available.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.alexadevicecontrols","value":32},"type":"Alexa.DeviceControls.Volume"}
 type DeviceControlsVolumeOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+	//
+	// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.alexadevicecontrols","value":32}
 	OperationPayload DeviceControlsVolumePayload       `json:"operationPayload"`
 	OperationType    DeviceControlsVolumeOperationType `json:"type"`
 }
@@ -630,6 +684,8 @@ type DeviceControlsVolumeOperationNode struct {
 type DeviceControlsVolumeOperationType string
 
 // DeviceControlsVolumePayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+//
+// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.alexadevicecontrols","value":32}
 type DeviceControlsVolumePayload struct {
 	CustomerID         string `json:"customerId"`
 	DeviceSerialNumber string `json:"deviceSerialNumber"`
@@ -637,38 +693,54 @@ type DeviceControlsVolumePayload struct {
 	Locale             string `json:"locale"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.
+	//
+	// Example: amzn1.ask.1p.alexadevicecontrols
 	SkillID BehaviorSkillID `json:"skillId"`
 	Value   *int            `json:"value"`
 }
 
-// DeviceTarget defines model for DeviceTarget.
+// DeviceTarget Example: {"deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device"}
 type DeviceTarget struct {
 	DeviceSerialNumber string `json:"deviceSerialNumber"`
 	DeviceType         string `json:"deviceType"`
 }
 
 // FireTVOperationNode Implementation-derived node paired with the generated Fire TV payload; SendFireTVSequence preserves its caller-supplied operation type as an open string, with no sanitized live capture available.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"deviceAccountId":"synthetic-device-account","skillId":"amzn1.ask.1p.routines.firetv"},"type":"Alexa.Operation.FireTV.TurnOn"}
 type FireTVOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+	//
+	// Example: {"deviceAccountId":"synthetic-device-account","skillId":"amzn1.ask.1p.routines.firetv"}
 	OperationPayload FireTVOperationPayload `json:"operationPayload"`
 	OperationType    string                 `json:"type"`
 }
 
 // FireTVOperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+//
+// Example: {"deviceAccountId":"synthetic-device-account","skillId":"amzn1.ask.1p.routines.firetv"}
 type FireTVOperationPayload struct {
 	DeviceAccountID string `json:"deviceAccountId"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.
+	//
+	// Example: amzn1.ask.1p.alexadevicecontrols
 	SkillID BehaviorSkillID `json:"skillId"`
 }
 
 // MusicPlaySearchPhraseOperationNode Implementation-derived node paired with the generated music search payload; no sanitized live capture is available.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","musicProviderId":"synthetic-provider","sanitizedSearchPhrase":"synthetic song","searchPhrase":"synthetic song","waitTimeInSeconds":10},"type":"Alexa.Music.PlaySearchPhrase"}
 type MusicPlaySearchPhraseOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+	//
+	// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","musicProviderId":"synthetic-provider","sanitizedSearchPhrase":"synthetic song","searchPhrase":"synthetic song","waitTimeInSeconds":10}
 	OperationPayload MusicPlaySearchPhrasePayload       `json:"operationPayload"`
 	OperationType    MusicPlaySearchPhraseOperationType `json:"type"`
 }
@@ -677,6 +749,8 @@ type MusicPlaySearchPhraseOperationNode struct {
 type MusicPlaySearchPhraseOperationType string
 
 // MusicPlaySearchPhrasePayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+//
+// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","musicProviderId":"synthetic-provider","sanitizedSearchPhrase":"synthetic song","searchPhrase":"synthetic song","waitTimeInSeconds":10}
 type MusicPlaySearchPhrasePayload struct {
 	CustomerID            string `json:"customerId"`
 	DeviceSerialNumber    string `json:"deviceSerialNumber"`
@@ -689,10 +763,15 @@ type MusicPlaySearchPhrasePayload struct {
 }
 
 // NotificationsSendMobilePushOperationNode Implementation-derived node paired with the generated mobile notification payload; no sanitized live capture is available.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"alexaUrl":"#v2/behaviors","customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","notificationMessage":"Synthetic notification","skillId":"amzn1.ask.1p.alexanotifications","title":"Synthetic notice"},"type":"Alexa.Notifications.SendMobilePush"}
 type NotificationsSendMobilePushOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+	//
+	// Example: {"alexaUrl":"#v2/behaviors","customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","notificationMessage":"Synthetic notification","skillId":"amzn1.ask.1p.alexanotifications","title":"Synthetic notice"}
 	OperationPayload NotificationsSendMobilePushPayload       `json:"operationPayload"`
 	OperationType    NotificationsSendMobilePushOperationType `json:"type"`
 }
@@ -701,7 +780,10 @@ type NotificationsSendMobilePushOperationNode struct {
 type NotificationsSendMobilePushOperationType string
 
 // NotificationsSendMobilePushPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+//
+// Example: {"alexaUrl":"#v2/behaviors","customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","notificationMessage":"Synthetic notification","skillId":"amzn1.ask.1p.alexanotifications","title":"Synthetic notice"}
 type NotificationsSendMobilePushPayload struct {
+	// AlexaURL Example: #v2/behaviors
 	AlexaURL            BehaviorAlexaURL `json:"alexaUrl"`
 	CustomerID          string           `json:"customerId"`
 	DeviceSerialNumber  string           `json:"deviceSerialNumber"`
@@ -710,21 +792,24 @@ type NotificationsSendMobilePushPayload struct {
 	NotificationMessage string           `json:"notificationMessage"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.
+	//
+	// Example: amzn1.ask.1p.alexadevicecontrols
 	SkillID BehaviorSkillID `json:"skillId"`
 	Title   string          `json:"title"`
 }
 
-// OpaquePayloadOperationNode defines model for OpaquePayloadOperationNode.
+// OpaquePayloadOperationNode Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"syntheticValue":"placeholder"},"type":"synthetic.Operation"}
 type OpaquePayloadOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type             OpaquePayloadOperationNodeType `json:"@type"`
 	OperationPayload map[string]interface{}         `json:"operationPayload"`
 	OperationType    string                         `json:"type"`
 }
 
-// OpaquePayloadOperationNodeType defines model for OpaquePayloadOperationNodeType.
+// OpaquePayloadOperationNodeType Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 type OpaquePayloadOperationNodeType string
 
-// ParallelNode defines model for ParallelNode.
+// ParallelNode Example: {"@type":"com.amazon.alexa.behaviors.model.ParallelNode","nodesToExecute":[{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.saysomething","textToSpeak":"Synthetic spoken message"},"type":"Alexa.Speak"},{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","soundStringId":"synthetic-sound"},"type":"Alexa.Sound"}]}
 type ParallelNode struct {
 	Type           ParallelNodeType `json:"@type"`
 	NodesToExecute []interface{}    `json:"nodesToExecute"`
@@ -736,18 +821,19 @@ type ParallelNodeType string
 // SDKKnownProviderID Known library ProviderID values. Caller-supplied extensions remain open.
 type SDKKnownProviderID = string
 
-// Sequence defines model for Sequence.
+// Sequence Example: {"@type":"com.amazon.alexa.behaviors.model.Sequence","startNode":{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.alexadevicecontrols","value":32},"type":"Alexa.DeviceControls.Volume"}}
 type Sequence struct {
+	// Type Example: com.amazon.alexa.behaviors.model.Sequence
 	Type SequenceType `json:"@type"`
 
 	// StartNode The implementation emits generated typed nodes for known operations, an open-payload node for generic SendSequence callers, or a serial or parallel composite node.
 	StartNode interface{} `json:"startNode"`
 }
 
-// SequenceType defines model for SequenceType.
+// SequenceType Example: com.amazon.alexa.behaviors.model.Sequence
 type SequenceType string
 
-// SerialNode defines model for SerialNode.
+// SerialNode Example: {"@type":"com.amazon.alexa.behaviors.model.SerialNode","nodesToExecute":[{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.alexadevicecontrols","value":32},"type":"Alexa.DeviceControls.Volume"}]}
 type SerialNode struct {
 	Type           SerialNodeType `json:"@type"`
 	NodesToExecute []interface{}  `json:"nodesToExecute"`
@@ -757,10 +843,15 @@ type SerialNode struct {
 type SerialNodeType string
 
 // SoundOperationNode Implementation-derived node paired with the generated sound payload; no sanitized live capture is available.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","soundStringId":"synthetic-sound"},"type":"Alexa.Sound"}
 type SoundOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+	//
+	// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","soundStringId":"synthetic-sound"}
 	OperationPayload SoundPayload       `json:"operationPayload"`
 	OperationType    SoundOperationType `json:"type"`
 }
@@ -769,6 +860,8 @@ type SoundOperationNode struct {
 type SoundOperationType string
 
 // SoundPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+//
+// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","soundStringId":"synthetic-sound"}
 type SoundPayload struct {
 	CustomerID         string `json:"customerId"`
 	DeviceSerialNumber string `json:"deviceSerialNumber"`
@@ -778,10 +871,15 @@ type SoundPayload struct {
 }
 
 // SpeakOperationNode Implementation-derived node paired with the generated speech payload; no sanitized live capture is available.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.saysomething","textToSpeak":"Synthetic spoken message"},"type":"Alexa.Speak"}
 type SpeakOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+	//
+	// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.saysomething","textToSpeak":"Synthetic spoken message"}
 	OperationPayload SpeakPayload       `json:"operationPayload"`
 	OperationType    SpeakOperationType `json:"type"`
 }
@@ -790,6 +888,8 @@ type SpeakOperationNode struct {
 type SpeakOperationType string
 
 // SpeakPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+//
+// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","skillId":"amzn1.ask.1p.saysomething","textToSpeak":"Synthetic spoken message"}
 type SpeakPayload struct {
 	CustomerID         string `json:"customerId"`
 	DeviceSerialNumber string `json:"deviceSerialNumber"`
@@ -797,23 +897,30 @@ type SpeakPayload struct {
 	Locale             string `json:"locale"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.
+	//
+	// Example: amzn1.ask.1p.alexadevicecontrols
 	SkillID BehaviorSkillID `json:"skillId"`
 
 	// TextToSpeak Caller speech text, including the library audio-URI SSML wrapper. The URI is escaped before interpolation.
 	TextToSpeak string `json:"textToSpeak"`
 }
 
-// Target defines model for Target.
+// Target Example: {"customerId":"synthetic-customer","devices":[{"deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device"}]}
 type Target struct {
 	CustomerID string         `json:"customerId,omitempty"`
 	Devices    []DeviceTarget `json:"devices,omitempty"`
 }
 
 // VideoPlaySearchPhraseOperationNode Implementation-derived node paired with the generated video search payload; no sanitized live capture is available.
+//
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","sanitizedSearchPhrase":"synthetic video","searchPhrase":"synthetic video","waitTimeInSeconds":10},"type":"Alexa.Operation.Video.PlaySearchPhrase"}
 type VideoPlaySearchPhraseOperationNode struct {
+	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+	//
+	// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","sanitizedSearchPhrase":"synthetic video","searchPhrase":"synthetic video","waitTimeInSeconds":10}
 	OperationPayload VideoPlaySearchPhrasePayload       `json:"operationPayload"`
 	OperationType    VideoPlaySearchPhraseOperationType `json:"type"`
 }
@@ -822,6 +929,8 @@ type VideoPlaySearchPhraseOperationNode struct {
 type VideoPlaySearchPhraseOperationType string
 
 // VideoPlaySearchPhrasePayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
+//
+// Example: {"customerId":"synthetic-customer","deviceSerialNumber":"synthetic-serial","deviceType":"synthetic-device","locale":"en-US","sanitizedSearchPhrase":"synthetic video","searchPhrase":"synthetic video","waitTimeInSeconds":10}
 type VideoPlaySearchPhrasePayload struct {
 	CustomerID            string `json:"customerId"`
 	DeviceSerialNumber    string `json:"deviceSerialNumber"`

@@ -9,6 +9,8 @@ import (
 )
 
 // WireUserInfo May contain personal account information.
+//
+// Example: {"countryOfResidence":"US","email":"synthetic@example.invalid","fullName":"Synthetic User","id":"synthetic-user","marketPlaceDomainName":"synthetic.amazon.test","marketPlaceLocale":"en-US"}
 type WireUserInfo struct {
 	CountryOfResidence     *string                `json:"countryOfResidence,omitempty"`
 	EffectiveMarketPlaceId *string                `json:"effectiveMarketPlaceId,omitempty"`

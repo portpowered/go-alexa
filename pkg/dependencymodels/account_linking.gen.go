@@ -26,7 +26,7 @@ type WireChallengeEnvelope struct {
 	Challenge *WireChallenge `json:"challenge,omitempty"`
 }
 
-// WireChallengeResponse defines model for WireChallengeResponse.
+// WireChallengeResponse Example: {"response":{"challenge":{"challenge_reason":"MissingRequiredAuthenticationData","required_authentication_method":"GenericClaimPassword"}}}
 type WireChallengeResponse struct {
 	Response *WireChallengeEnvelope `json:"response,omitempty"`
 }
@@ -50,13 +50,13 @@ type WireCodePairAuth struct {
 	PublicCode  string `json:"public_code"`
 }
 
-// WireCodePairRequest defines model for WireCodePairRequest.
+// WireCodePairRequest Example: {"code_data":{"app_name":"synthetic-app","app_version":"1","device_model":"synthetic-model","device_name":"Synthetic device","device_serial":"synthetic-serial","device_type":"synthetic-device","domain":"synthetic.amazon.test","os_version":"0","secondary_registration":"False"},"scopes":[]}
 type WireCodePairRequest struct {
 	CodeData WireCodeData `json:"code_data"`
 	Scopes   []string     `json:"scopes"`
 }
 
-// WireCodePairResponse defines model for WireCodePairResponse.
+// WireCodePairResponse Example: {"private_code":"synthetic-private","public_code":"synthetic-public"}
 type WireCodePairResponse struct {
 	PrivateCode *string `json:"private_code,omitempty"`
 	PublicCode  *string `json:"public_code,omitempty"`
@@ -67,7 +67,7 @@ type WireCookieExchangeEnvelope struct {
 	Tokens *WireCookieTokens `json:"tokens,omitempty"`
 }
 
-// WireCookieExchangeRequest defines model for WireCookieExchangeRequest.
+// WireCookieExchangeRequest Example: {"app_name":"Amazon Alexa","domain":"synthetic.amazon.test","requested_token_type":"auth_cookies","source_token":"synthetic-refresh","source_token_type":"refresh_token"}
 type WireCookieExchangeRequest struct {
 	AppName            string `json:"app_name"`
 	Domain             string `json:"domain"`
@@ -76,7 +76,7 @@ type WireCookieExchangeRequest struct {
 	SourceTokenType    string `json:"source_token_type"`
 }
 
-// WireCookieExchangeResponse defines model for WireCookieExchangeResponse.
+// WireCookieExchangeResponse Example: {"response":{"tokens":{"cookies":{}}}}
 type WireCookieExchangeResponse struct {
 	Response *WireCookieExchangeEnvelope `json:"response,omitempty"`
 }
@@ -123,14 +123,14 @@ type WireRegistrationData struct {
 	OsVersion    string `json:"os_version"`
 }
 
-// WireRegistrationRequest defines model for WireRegistrationRequest.
+// WireRegistrationRequest Example: {"auth_data":{"code_pair":{"private_code":"synthetic-private","public_code":"synthetic-public"}},"registration_data":{"app_name":"synthetic-app","app_version":"1","device_model":"synthetic-model","device_name":"Synthetic device","device_serial":"synthetic-serial","device_type":"synthetic-device","domain":"synthetic.amazon.test","os_version":"0"},"requested_token_type":["bearer"]}
 type WireRegistrationRequest struct {
 	AuthData           WireAuthData         `json:"auth_data"`
 	RegistrationData   WireRegistrationData `json:"registration_data"`
 	RequestedTokenType []string             `json:"requested_token_type"`
 }
 
-// WireRegistrationResponse defines model for WireRegistrationResponse.
+// WireRegistrationResponse Example: {"response":{"success":{"tokens":{"bearer":{"access_token":"synthetic-access","refresh_token":"synthetic-refresh"}}}}}
 type WireRegistrationResponse struct {
 	Response *WireRegistrationResponseEnvelope `json:"response,omitempty"`
 }
@@ -150,7 +150,7 @@ type WireRegistrationTokens struct {
 	Bearer *WireBearerTokens `json:"bearer,omitempty"`
 }
 
-// WireTokenRefreshRequest defines model for WireTokenRefreshRequest.
+// WireTokenRefreshRequest Example: {"app_name":"synthetic-app","app_version":"1","device_metadata":{"device_model":"synthetic-model","device_serial":"synthetic-serial","device_type":"synthetic-device","manufacturer":"Synthetic","os_version":"0"},"requested_token_type":"access_token","source_token":"synthetic-refresh","source_token_type":"refresh_token"}
 type WireTokenRefreshRequest struct {
 	AppName            string             `json:"app_name"`
 	AppVersion         string             `json:"app_version"`
@@ -160,7 +160,7 @@ type WireTokenRefreshRequest struct {
 	SourceTokenType    string             `json:"source_token_type"`
 }
 
-// WireTokenRefreshResponse defines model for WireTokenRefreshResponse.
+// WireTokenRefreshResponse Example: {"access_token":"synthetic-access","expires_in":3600}
 type WireTokenRefreshResponse struct {
 	AccessToken *string `json:"access_token,omitempty"`
 	ExpiresIn   *int    `json:"expires_in,omitempty"`

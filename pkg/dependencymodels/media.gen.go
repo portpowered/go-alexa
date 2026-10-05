@@ -66,7 +66,7 @@ type WireInfoText struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// WireMediaCommand defines model for WireMediaCommand.
+// WireMediaCommand Example: {"type":"PauseCommand"}
 type WireMediaCommand struct {
 	Repeat  *bool `json:"repeat,omitempty"`
 	Shuffle *bool `json:"shuffle,omitempty"`
@@ -103,7 +103,7 @@ type WirePlayerInfo struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// WirePlayerStateResponse defines model for WirePlayerStateResponse.
+// WirePlayerStateResponse Example: {"playerInfo":{"hint":"Synthetic player state","infoText":{"multiLineMode":false,"subText1":"Synthetic subtitle","title":"Synthetic title"},"isPlayingInLemur":false,"mainArt":{"altText":"Synthetic artwork","contentType":"image/png","url":"https://images.example.invalid/synthetic.png"},"mediaId":"synthetic-media","progress":{"allowScrubbing":false,"mediaLength":180,"mediaProgress":45,"showTiming":true,"visible":true},"provider":{"providerDisplayName":"Synthetic provider","providerName":"synthetic"},"state":"PAUSED","template":{"templateType":"SYNTHETIC"},"transport":{"playPause":"SYNTHETIC_CONTROL"},"upNextItems":[],"volume":{"muted":false,"volume":32}}}
 type WirePlayerStateResponse struct {
 	PlayerInfo           *WirePlayerInfo        `json:"playerInfo,omitempty"`
 	AdditionalProperties map[string]interface{} `json:"-"`

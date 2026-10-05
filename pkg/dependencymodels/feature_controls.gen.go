@@ -9,44 +9,55 @@ import (
 )
 
 // ActionPayload The action name is caller- or device-defined. Additional top-level fields are caller-supplied action parameters and remain open by design.
+//
+// Example: {"action":"open","duration":12}
 type ActionPayload struct {
 	Action               string                 `json:"action"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// BrightnessAdjustPayload defines model for BrightnessAdjustPayload.
+// BrightnessAdjustPayload Example: {"brightnessDelta":-5}
 type BrightnessAdjustPayload struct {
 	BrightnessDelta int `json:"brightnessDelta"`
 }
 
-// BrightnessSetPayload defines model for BrightnessSetPayload.
+// BrightnessSetPayload Example: {"brightness":75}
 type BrightnessSetPayload struct {
 	Brightness int `json:"brightness"`
 }
 
-// ColorSetPayload defines model for ColorSetPayload.
+// ColorSetPayload Example: {"color":{"brightness":0.8,"hue":180,"saturation":0.5}}
 type ColorSetPayload struct {
+	// Color Example: {"brightness":0.8,"hue":180,"saturation":0.5}
 	Color FeatureColorValue `json:"color"`
 }
 
-// ColorTemperatureSetPayload defines model for ColorTemperatureSetPayload.
+// ColorTemperatureSetPayload Example: {"colorTemperatureInKelvin":3200}
 type ColorTemperatureSetPayload struct {
 	ColorTemperatureInKelvin int `json:"colorTemperatureInKelvin"`
 }
 
 // ControlKnownLockStateValue Known LockStateValue values from the checked-in GraphQL schema. Future string values remain open.
+//
+// Example: LOCKED
 type ControlKnownLockStateValue = string
 
 // ControlKnownTemperatureScale Known TemperatureScale values from the checked-in GraphQL schema. Future string values remain open.
+//
+// Example: CELSIUS
 type ControlKnownTemperatureScale = string
 
 // ControlKnownThermostatModeValue Known ThermostatModeValue values from the checked-in GraphQL schema. Future string values remain open.
+//
+// Example: ECO
 type ControlKnownThermostatModeValue = string
 
 // ControlKnownToggleStateValue Known ToggleStateValue values from the checked-in GraphQL schema. Future string values remain open.
+//
+// Example: ON
 type ControlKnownToggleStateValue = string
 
-// FeatureColorValue defines model for FeatureColorValue.
+// FeatureColorValue Example: {"brightness":0.8,"hue":180,"saturation":0.5}
 type FeatureColorValue struct {
 	Brightness float64 `json:"brightness"`
 	Hue        float64 `json:"hue"`
@@ -54,92 +65,104 @@ type FeatureColorValue struct {
 }
 
 // FeatureEmptyPayload Empty object payload used by color-temperature adjustment.
+//
+// Example: {}
 type FeatureEmptyPayload = struct{}
 
-// LockPayload defines model for LockPayload.
+// LockPayload Example: {"lockState":"LOCKED"}
 type LockPayload struct {
 	// LockState Known LockStateValue values from the checked-in GraphQL schema. Future string values remain open.
+	//
+	// Example: LOCKED
 	LockState ControlKnownLockStateValue `json:"lockState"`
 }
 
-// ModeAdjustPayload defines model for ModeAdjustPayload.
+// ModeAdjustPayload Example: {"modeDelta":"NEXT"}
 type ModeAdjustPayload struct {
 	// ModeDelta Device-specific adjustment supplied by the caller; no fixed provider-wide enum is assumed.
 	ModeDelta string `json:"modeDelta"`
 }
 
-// ModeSetPayload defines model for ModeSetPayload.
+// ModeSetPayload Example: {"mode":"ECO"}
 type ModeSetPayload struct {
 	// Mode Device-specific mode supplied by the caller; no fixed provider-wide enum is assumed.
 	Mode string `json:"mode"`
 }
 
-// PercentageAdjustPayload defines model for PercentageAdjustPayload.
+// PercentageAdjustPayload Example: {"percentageDelta":-5}
 type PercentageAdjustPayload struct {
 	PercentageDelta float64 `json:"percentageDelta"`
 }
 
-// PercentageSetPayload defines model for PercentageSetPayload.
+// PercentageSetPayload Example: {"percentage":25}
 type PercentageSetPayload struct {
 	Percentage float64 `json:"percentage"`
 }
 
-// PowerLevelAdjustPayload defines model for PowerLevelAdjustPayload.
+// PowerLevelAdjustPayload Example: {"powerLevelDelta":-8}
 type PowerLevelAdjustPayload struct {
 	PowerLevelDelta int `json:"powerLevelDelta"`
 }
 
-// PowerLevelSetPayload defines model for PowerLevelSetPayload.
+// PowerLevelSetPayload Example: {"powerLevel":68}
 type PowerLevelSetPayload struct {
 	PowerLevel int `json:"powerLevel"`
 }
 
-// RangeAdjustPayload defines model for RangeAdjustPayload.
+// RangeAdjustPayload Example: {"rangeValueDelta":-2.5}
 type RangeAdjustPayload struct {
 	RangeValueDelta float64 `json:"rangeValueDelta"`
 }
 
-// RangeSetPayload defines model for RangeSetPayload.
+// RangeSetPayload Example: {"rangeValue":12.5}
 type RangeSetPayload struct {
 	RangeValue float64 `json:"rangeValue"`
 }
 
-// SpeakerAdjustVolumePayload defines model for SpeakerAdjustVolumePayload.
+// SpeakerAdjustVolumePayload Example: {"volumeDelta":-4}
 type SpeakerAdjustVolumePayload struct {
 	VolumeDelta int `json:"volumeDelta"`
 }
 
-// SpeakerSetVolumePayload defines model for SpeakerSetVolumePayload.
+// SpeakerSetVolumePayload Example: {"volume":32}
 type SpeakerSetVolumePayload struct {
 	Volume int `json:"volume"`
 }
 
-// ThermostatModePayload defines model for ThermostatModePayload.
+// ThermostatModePayload Example: {"thermostatMode":"ECO"}
 type ThermostatModePayload struct {
 	// ThermostatMode Known ThermostatModeValue values from the checked-in GraphQL schema. Future string values remain open.
+	//
+	// Example: ECO
 	ThermostatMode ControlKnownThermostatModeValue `json:"thermostatMode"`
 }
 
-// ThermostatSetpoint defines model for ThermostatSetpoint.
+// ThermostatSetpoint Example: {"scale":"CELSIUS","value":21.5}
 type ThermostatSetpoint struct {
 	// Scale Known TemperatureScale values from the checked-in GraphQL schema. Future string values remain open.
+	//
+	// Example: CELSIUS
 	Scale ControlKnownTemperatureScale `json:"scale"`
 	Value float64                      `json:"value"`
 }
 
-// ThermostatSetpointAdjustPayload defines model for ThermostatSetpointAdjustPayload.
+// ThermostatSetpointAdjustPayload Example: {"targetSetpointDelta":{"scale":"CELSIUS","value":-1}}
 type ThermostatSetpointAdjustPayload struct {
+	// TargetSetpointDelta Example: {"scale":"CELSIUS","value":21.5}
 	TargetSetpointDelta ThermostatSetpoint `json:"targetSetpointDelta"`
 }
 
-// ThermostatSetpointSetPayload defines model for ThermostatSetpointSetPayload.
+// ThermostatSetpointSetPayload Example: {"targetSetpoint":{"scale":"CELSIUS","value":21.5}}
 type ThermostatSetpointSetPayload struct {
+	// TargetSetpoint Example: {"scale":"CELSIUS","value":21.5}
 	TargetSetpoint ThermostatSetpoint `json:"targetSetpoint"`
 }
 
-// TogglePayload defines model for TogglePayload.
+// TogglePayload Example: {"toggleState":"ON"}
 type TogglePayload struct {
 	// ToggleState Known ToggleStateValue values from the checked-in GraphQL schema. Future string values remain open.
+	//
+	// Example: ON
 	ToggleState ControlKnownToggleStateValue `json:"toggleState"`
 }
 

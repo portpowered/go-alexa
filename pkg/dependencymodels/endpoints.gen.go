@@ -16,7 +16,7 @@ type WireAssociatedUnitsFilter struct {
 // WireCapabilityInterface Open string value; the implementation does not reject unknown capability names.
 type WireCapabilityInterface = string
 
-// WireCommand defines model for WireCommand.
+// WireCommand Example: {"device_id":"synthetic-endpoint","name":"TurnOn","namespace":"Alexa.PowerController","payload":{"powerState":"ON"},"type":""}
 type WireCommand struct {
 	DeviceId             *string                `json:"device_id,omitempty"`
 	Name                 *string                `json:"name,omitempty"`
@@ -26,7 +26,7 @@ type WireCommand struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// WireDevice defines model for WireDevice.
+// WireDevice Example: {"capabilities":["synthetic-capability"],"id":"synthetic-endpoint","metadata":{},"name":"Synthetic endpoint","state":{},"type":"synthetic-device"}
 type WireDevice struct {
 	Capabilities         *[]WireCapabilityInterface `json:"capabilities,omitempty"`
 	Id                   *string                    `json:"id,omitempty"`
@@ -43,7 +43,7 @@ type WireEndpointIncludeFields struct {
 	States       *bool `json:"states,omitempty"`
 }
 
-// WireEndpointListResponse defines model for WireEndpointListResponse.
+// WireEndpointListResponse Example: {"nextToken":"synthetic-next","results":[{"capabilities":["synthetic-capability"],"id":"synthetic-endpoint","metadata":{},"name":"Synthetic endpoint","state":{},"type":"synthetic-device"}]}
 type WireEndpointListResponse struct {
 	NextToken            *string                `json:"nextToken,omitempty"`
 	Results              *[]WireDevice          `json:"results,omitempty"`
@@ -65,12 +65,12 @@ type WireEndpointQueryClause struct {
 	Model           *WireStringFilter          `json:"model,omitempty"`
 }
 
-// WireEndpointQueryRequest defines model for WireEndpointQueryRequest.
+// WireEndpointQueryRequest Example: {"query":{"and":[{"manufacturer":{"value":{"text":"Synthetic"}}}],"includeFields":{"capabilities":true,"states":true},"paginationContext":{"maxResults":10,"performPagination":false}}}
 type WireEndpointQueryRequest struct {
 	Query WireEndpointQuery `json:"query"`
 }
 
-// WireFriendlyNameRequest defines model for WireFriendlyNameRequest.
+// WireFriendlyNameRequest Example: {"friendlyName":{"type":"PLAIN","value":{"text":"Synthetic light"}}}
 type WireFriendlyNameRequest struct {
 	FriendlyName WireFriendlyNameValue `json:"friendlyName"`
 }
@@ -87,6 +87,8 @@ type WireFriendlyNameValue struct {
 }
 
 // WireInterfacePayload Caller-supplied JSON object; nil is serialized by this client as an empty object.
+//
+// Example: {"state":"ON"}
 type WireInterfacePayload map[string]interface{}
 
 // WirePaginationContext defines model for WirePaginationContext.
