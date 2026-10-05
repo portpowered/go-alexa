@@ -39,7 +39,7 @@ jobs:
             echo "Release module go.mod must not contain replace directives."
             exit 1
           fi
-          grep -Eq '^require github.com/portpowered/go-alexa v0\.4\.0$' go.mod
+          grep -Eq '^require github.com/portpowered/go-alexa v0\.5\.0$' go.mod
           go mod tidy -diff
           go mod verify
           unformatted="$(gofmt -l $(find . -name '*.go' -type f))"

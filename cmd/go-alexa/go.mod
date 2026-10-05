@@ -4,7 +4,7 @@ go 1.24.0
 
 toolchain go1.24.2
 
-require github.com/portpowered/go-alexa v0.4.0
+require github.com/portpowered/go-alexa v0.5.0
 
 require (
 	github.com/Khan/genqlient v0.8.1 // indirect
