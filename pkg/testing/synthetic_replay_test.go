@@ -161,6 +161,14 @@ func assertSyntheticReplayRejectsMismatches(
 			mutate: func(r *http.Request) { r.URL.Opaque = "//opaque-secret.invalid/private" },
 		},
 		{
+			name: "client RequestURI override", field: "RequestURI",
+			mutate: func(r *http.Request) { r.RequestURI = "/a%2Fb?access_token=secret-request-uri" },
+		},
+		{
+			name: "URL fragment", field: "URL fragment",
+			mutate: func(r *http.Request) { r.URL.Fragment = "secret-fragment" },
+		},
+		{
 			name: "header", field: "headers",
 			mutate: func(r *http.Request) { r.Header.Set("Authorization", "Bearer secret-header") },
 		},
@@ -223,6 +231,8 @@ func assertSyntheticReplayMismatchDiagnostic(t *testing.T, response *http.Respon
 		"credential-secret",
 		"password-secret",
 		"opaque-secret.invalid",
+		"secret-request-uri",
+		"secret-fragment",
 		"secret-header",
 		"secret-body",
 	} {

@@ -6,9 +6,9 @@ CLI_DIR := cmd/go-alexa
 export GOWORK := off
 
 .DEFAULT_GOAL := check
-.PHONY: check format-check vet build test lint fmt cli-check cli-vet cli-build cli-test cli-lint cli-fmt module cli-module generate generate-graphql generate-api model-inventory openapi-bundle openapi-bundle-check
+.PHONY: check format-check vet build test lint fmt cli-check cli-vet cli-build cli-test cli-lint cli-fmt module cli-module generate generate-graphql generate-api model-inventory openapi-bundle openapi-bundle-check schema-examples
 
-check: format-check lint vet build test model-inventory openapi-bundle-check module cli-module
+check: format-check lint vet build test model-inventory openapi-bundle-check schema-examples module cli-module
 
 ifeq ($(OS),Windows_NT)
 format-check:
@@ -73,6 +73,9 @@ openapi-bundle:
 
 openapi-bundle-check:
 	$(GO) run ./tools/openapibundle -check
+
+schema-examples:
+	$(GO) run ./tools/schemaexamples
 
 generate-graphql:
 	$(GO) tool genqlient

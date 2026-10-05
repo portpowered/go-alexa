@@ -235,6 +235,9 @@ components:
       type: object
       description: Caller-supplied JSON object; nil is serialized by this client as an empty object.
       additionalProperties: true
+      example:
+        state: 'ON'
+      x-example-evidence: synthetic
     WireFriendlyNameRequest:
       type: object
       properties:
@@ -242,6 +245,12 @@ components:
           $ref: '#/components/schemas/WireFriendlyNameValue'
       required:
       - friendlyName
+      example:
+        friendlyName:
+          type: PLAIN
+          value:
+            text: Synthetic light
+      x-example-evidence: synthetic
     WireFriendlyNameValue:
       type: object
       properties:
@@ -268,6 +277,19 @@ components:
           $ref: '#/components/schemas/WireEndpointQuery'
       required:
       - query
+      example:
+        query:
+          and:
+          - manufacturer:
+              value:
+                text: Synthetic
+          includeFields:
+            states: true
+            capabilities: true
+          paginationContext:
+            maxResults: 10
+            performPagination: false
+      x-example-evidence: synthetic
     WireEndpointQuery:
       type: object
       properties:
@@ -339,6 +361,17 @@ components:
         nextToken:
           type: string
       additionalProperties: true
+      example:
+        results:
+        - id: synthetic-endpoint
+          name: Synthetic endpoint
+          type: synthetic-device
+          capabilities:
+          - synthetic-capability
+          state: {}
+          metadata: {}
+        nextToken: synthetic-next
+      x-example-evidence: synthetic
     WireDevice:
       type: object
       properties:
@@ -359,6 +392,15 @@ components:
           type: object
           additionalProperties: true
       additionalProperties: true
+      example:
+        id: synthetic-endpoint
+        name: Synthetic endpoint
+        type: synthetic-device
+        capabilities:
+        - synthetic-capability
+        state: {}
+        metadata: {}
+      x-example-evidence: synthetic
     WireCapabilityInterface:
       type: string
       description: Open string value; the implementation does not reject unknown capability names.
@@ -377,6 +419,14 @@ components:
       required:
       - type
       additionalProperties: true
+      example:
+        type: ''
+        device_id: synthetic-endpoint
+        namespace: Alexa.PowerController
+        name: TurnOn
+        payload:
+          powerState: 'ON'
+      x-example-evidence: synthetic
   responses:
     UnhandledResponse:
       description: Response not decoded into a success model by this operation.

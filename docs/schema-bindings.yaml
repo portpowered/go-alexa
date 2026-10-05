@@ -1,0 +1,138 @@
+# This manifest connects generic GraphQL JSON fields and embedded payloads to
+# existing API-owned schemas. The referenced schemas are synthetic and
+# implementation-derived, not provider-issued contracts.
+graphql:
+  - type: FeatureControlRequest
+    field: payload
+    title: Known feature-control request payloads
+    description: These implementation-derived schemas match request payload variants constructed by this client; they do not claim a provider-verified contract.
+    schemas:
+      - document: api/feature-controls.yaml
+        component: FeatureEmptyPayload
+        label: Empty payload
+      - document: api/feature-controls.yaml
+        component: SpeakerSetVolumePayload
+        label: Speaker set volume
+      - document: api/feature-controls.yaml
+        component: SpeakerAdjustVolumePayload
+        label: Speaker adjust volume
+      - document: api/feature-controls.yaml
+        component: BrightnessSetPayload
+        label: Brightness set
+      - document: api/feature-controls.yaml
+        component: BrightnessAdjustPayload
+        label: Brightness adjust
+      - document: api/feature-controls.yaml
+        component: ColorSetPayload
+        label: Color set
+      - document: api/feature-controls.yaml
+        component: ColorTemperatureSetPayload
+        label: Color-temperature set
+      - document: api/feature-controls.yaml
+        component: LockPayload
+        label: Lock
+      - document: api/feature-controls.yaml
+        component: ModeSetPayload
+        label: Mode set
+      - document: api/feature-controls.yaml
+        component: ModeAdjustPayload
+        label: Mode adjust
+      - document: api/feature-controls.yaml
+        component: RangeSetPayload
+        label: Range set
+      - document: api/feature-controls.yaml
+        component: RangeAdjustPayload
+        label: Range adjust
+      - document: api/feature-controls.yaml
+        component: TogglePayload
+        label: Toggle
+      - document: api/feature-controls.yaml
+        component: PercentageSetPayload
+        label: Percentage set
+      - document: api/feature-controls.yaml
+        component: PercentageAdjustPayload
+        label: Percentage adjust
+      - document: api/feature-controls.yaml
+        component: PowerLevelSetPayload
+        label: Power level set
+      - document: api/feature-controls.yaml
+        component: PowerLevelAdjustPayload
+        label: Power level adjust
+      - document: api/feature-controls.yaml
+        component: ActionPayload
+        label: Action
+      - document: api/feature-controls.yaml
+        component: ThermostatSetpointSetPayload
+        label: Thermostat setpoint set
+      - document: api/feature-controls.yaml
+        component: ThermostatSetpointAdjustPayload
+        label: Thermostat setpoint adjust
+      - document: api/feature-controls.yaml
+        component: ThermostatModePayload
+        label: Thermostat mode
+  - type: LegacyAppliance
+    field: relations
+    title: Opaque relation values
+    description: The GraphQL SDL exposes relations as untyped JSON list items. This link documents only the open JSON value; it does not define relation fields or a relation-change envelope.
+    schemas:
+      - document: api/feature-events.yaml
+        component: RawJSON
+        label: Open JSON value; no relation item shape
+openapi:
+  - document: api/openapi.yaml
+    path: /api/behaviors/preview
+    method: post
+    title: Embedded behavior sequence schemas
+    description: These implementation-derived schemas cover the sequence envelope, composite nodes, and active typed operation nodes accepted by the current client. Generic caller payloads remain open where the schema says so.
+    schemas:
+      - document: api/behaviors.yaml
+        component: Sequence
+        label: Sequence envelope
+      - document: api/behaviors.yaml
+        component: SerialNode
+        label: Serial composite node
+      - document: api/behaviors.yaml
+        component: ParallelNode
+        label: Parallel composite node
+      - document: api/behaviors.yaml
+        component: OpaquePayloadOperationNode
+        label: Generic operation node
+      - document: api/behaviors.yaml
+        component: DeviceControlsStopOperationNode
+        label: Alexa.DeviceControls.Stop
+      - document: api/behaviors.yaml
+        component: DeviceControlsVolumeOperationNode
+        label: Alexa.DeviceControls.Volume
+      - document: api/behaviors.yaml
+        component: NotificationsSendMobilePushOperationNode
+        label: Alexa.Notifications.SendMobilePush
+      - document: api/behaviors.yaml
+        component: AnnouncementOperationNode
+        label: AlexaAnnouncement
+      - document: api/behaviors.yaml
+        component: SpeakOperationNode
+        label: Alexa.Speak
+      - document: api/behaviors.yaml
+        component: MusicPlaySearchPhraseOperationNode
+        label: Alexa.Music.PlaySearchPhrase
+      - document: api/behaviors.yaml
+        component: SoundOperationNode
+        label: Alexa.Sound
+      - document: api/behaviors.yaml
+        component: VideoPlaySearchPhraseOperationNode
+        label: Alexa.Operation.Video.PlaySearchPhrase
+      - document: api/behaviors.yaml
+        component: FireTVOperationNode
+        label: Fire TV operation
+asyncapi:
+  - document: api/asyncapi.yaml
+    operationId: receiveDirectives
+    title: Resource metadata and update schemas
+    description: The directive envelope contains JSON text for resource metadata. The data/entity projection is implementation-derived from the synthetic UPDATE_ENTITY example; the canonical resource payload remains open JSON where defined.
+    schemas:
+      - document: api/feature-events.yaml
+        component: ResourceMetadataPayload
+        label: Resource metadata envelope
+      - document: api/feature-events.yaml
+        component: ResourceMetadataPayloadData
+        label: Known data/entity update projection

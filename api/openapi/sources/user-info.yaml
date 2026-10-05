@@ -126,6 +126,14 @@ components:
         marketPlaceLocale:
           type: string
       additionalProperties: true
+      example:
+        countryOfResidence: US
+        email: synthetic@example.invalid
+        fullName: Synthetic User
+        id: synthetic-user
+        marketPlaceDomainName: synthetic.amazon.test
+        marketPlaceLocale: en-US
+      x-example-evidence: synthetic
   responses:
     UnhandledResponse:
       description: Response not decoded into a success model by this operation.

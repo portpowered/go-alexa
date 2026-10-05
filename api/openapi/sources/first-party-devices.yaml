@@ -102,6 +102,28 @@ components:
       required:
       - devices
       additionalProperties: true
+      example:
+        devices:
+        - accountName: Synthetic account
+          appDeviceList:
+          - deviceAccountId: synthetic-device-account
+            deviceType: synthetic-device
+            serialNumber: synthetic-serial
+          associatedUnitIds: []
+          capabilities:
+          - synthetic-capability
+          charging: false
+          clusterMembers: []
+          deviceAccountId: synthetic-device-account
+          deviceFamily: FIRE_TV
+          deviceOwnerCustomerId: synthetic-customer
+          deviceType: synthetic-device
+          deviceTypeFriendlyName: Synthetic device
+          online: true
+          parentClusters: []
+          serialNumber: synthetic-serial
+          softwareVersion: synthetic-version
+      x-example-evidence: synthetic
     WireDeviceV2:
       type: object
       properties:

@@ -50,6 +50,27 @@ components:
       - payload
       - type
       - timestamp
+      example:
+        metricName: EndpointPower
+        payload:
+          data:
+            __typename: Endpoint
+            features:
+            - __typename: Feature
+              name: power
+              properties:
+              - __typename: Power
+                name: powerState
+                powerStateValue: 'OFF'
+                timeOfSample: '2025-12-02T05:17:49Z'
+                accuracy: HIGH
+                type: RETRIEVABLE
+          entity:
+            __typename: Endpoint
+            id: synthetic-endpoint
+        type: UPDATE_ENTITY
+        timestamp: '2025-12-02T05:17:49Z'
+      x-example-evidence: synthetic
     ResourceMetadataPayloadData:
       type: object
       properties:
@@ -62,6 +83,23 @@ components:
       required:
       - data
       - entity
+      example:
+        data:
+          __typename: Endpoint
+          features:
+          - __typename: Feature
+            name: power
+            properties:
+            - __typename: Power
+              name: powerState
+              powerStateValue: 'OFF'
+              timeOfSample: '2025-12-02T05:17:49Z'
+              accuracy: HIGH
+              type: RETRIEVABLE
+        entity:
+          __typename: Endpoint
+          id: synthetic-endpoint
+      x-example-evidence: synthetic
     ColorTemperatureProperty:
       type: object
       properties:
@@ -123,6 +161,14 @@ components:
       - timeOfSample
       - accuracy
       - type
+      example:
+        __typename: Power
+        name: powerState
+        powerStateValue: 'OFF'
+        timeOfSample: '2025-12-02T05:17:49Z'
+        accuracy: HIGH
+        type: RETRIEVABLE
+      x-example-evidence: synthetic
     SpeakerProperty:
       type: object
       properties:
@@ -821,8 +867,15 @@ components:
           $ref: '#/components/schemas/EventKnownPropertyType'
       required:
       - type
+      example:
+        type: ERROR
+      x-example-evidence: synthetic
     RawJSON:
       x-go-type: json.RawMessage
+      description: "Open JSON value. The empty synthetic placeholder does not define feature-property fields or legacy relation item fields."
+      example:
+        {}
+      x-example-evidence: synthetic
     SDKKnownEventName:
       type: string
       x-go-type: string
@@ -860,6 +913,8 @@ components:
       - HIGH
       - LOW
       - UNKNOWN
+      example: "HIGH"
+      x-example-evidence: synthetic
     EventKnownActionStatus:
       type: string
       x-go-type: string
@@ -929,6 +984,8 @@ components:
       - 'ON'
       - 'OFF'
       - UNKNOWN
+      example: "OFF"
+      x-example-evidence: synthetic
     EventKnownPropertyType:
       type: string
       x-go-type: string
@@ -938,6 +995,8 @@ components:
       - RETRIEVABLE
       - NOT_RETRIEVABLE
       - ERROR
+      example: "RETRIEVABLE"
+      x-example-evidence: synthetic
     EventKnownReachabilityStatusValue:
       type: string
       x-go-type: string
@@ -1029,6 +1088,17 @@ components:
       - name
       - __typename
       - properties
+      example:
+        __typename: Feature
+        name: power
+        properties:
+        - __typename: Power
+          name: powerState
+          powerStateValue: 'OFF'
+          timeOfSample: '2025-12-02T05:17:49Z'
+          accuracy: HIGH
+          type: RETRIEVABLE
+      x-example-evidence: synthetic
     EventResourceMetadataPayloadDataData:
       type: object
       properties:
@@ -1043,6 +1113,19 @@ components:
       required:
       - __typename
       - features
+      example:
+        __typename: Endpoint
+        features:
+        - __typename: Feature
+          name: power
+          properties:
+          - __typename: Power
+            name: powerState
+            powerStateValue: 'OFF'
+            timeOfSample: '2025-12-02T05:17:49Z'
+            accuracy: HIGH
+            type: RETRIEVABLE
+      x-example-evidence: synthetic
     EventResourceMetadataPayloadDataEntity:
       type: object
       properties:
@@ -1055,6 +1138,10 @@ components:
       required:
       - __typename
       - id
+      example:
+        __typename: Endpoint
+        id: synthetic-endpoint
+      x-example-evidence: synthetic
     EventColorValue:
       type: object
       properties:

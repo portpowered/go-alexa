@@ -23,6 +23,11 @@ components:
       - behaviorId
       - sequenceJson
       - status
+      example:
+        behaviorId: PREVIEW
+        sequenceJson: '{"@type":"com.amazon.alexa.behaviors.model.Sequence","startNode":{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","type":"Alexa.DeviceControls.Volume","operationPayload":{"deviceType":"synthetic-device","deviceSerialNumber":"synthetic-serial","locale":"en-US","customerId":"synthetic-customer","value":32,"skillId":"amzn1.ask.1p.alexadevicecontrols"}}}'
+        status: ENABLED
+      x-example-evidence: synthetic
     Sequence:
       type: object
       properties:
@@ -35,6 +40,19 @@ components:
       required:
       - '@type'
       - startNode
+      example:
+        '@type': com.amazon.alexa.behaviors.model.Sequence
+        startNode:
+          '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+          type: Alexa.DeviceControls.Volume
+          operationPayload:
+            deviceType: synthetic-device
+            deviceSerialNumber: synthetic-serial
+            locale: en-US
+            customerId: synthetic-customer
+            value: 32
+            skillId: amzn1.ask.1p.alexadevicecontrols
+      x-example-evidence: synthetic
     BehaviorNodeDiscriminator:
       description: Schema used by the implementation to read a behavior node discriminator before selecting its typed model.
       type: object
@@ -44,6 +62,9 @@ components:
           x-go-name: Type
       required:
       - '@type'
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+      x-example-evidence: synthetic
     BehaviorSequenceNodeInspection:
       description: Schema used by the implementation to inspect composite behavior nodes before recursively validating children.
       type: object
@@ -58,6 +79,19 @@ components:
       required:
       - '@type'
       - nodesToExecute
+      example:
+        '@type': com.amazon.alexa.behaviors.model.SerialNode
+        nodesToExecute:
+        - '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+          type: Alexa.DeviceControls.Volume
+          operationPayload:
+            deviceType: synthetic-device
+            deviceSerialNumber: synthetic-serial
+            locale: en-US
+            customerId: synthetic-customer
+            value: 32
+            skillId: amzn1.ask.1p.alexadevicecontrols
+      x-example-evidence: synthetic
     SerialNode:
       type: object
       properties:
@@ -72,6 +106,19 @@ components:
       required:
       - '@type'
       - nodesToExecute
+      example:
+        '@type': com.amazon.alexa.behaviors.model.SerialNode
+        nodesToExecute:
+        - '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+          type: Alexa.DeviceControls.Volume
+          operationPayload:
+            deviceType: synthetic-device
+            deviceSerialNumber: synthetic-serial
+            locale: en-US
+            customerId: synthetic-customer
+            value: 32
+            skillId: amzn1.ask.1p.alexadevicecontrols
+      x-example-evidence: synthetic
     ParallelNode:
       type: object
       properties:
@@ -86,6 +133,27 @@ components:
       required:
       - '@type'
       - nodesToExecute
+      example:
+        '@type': com.amazon.alexa.behaviors.model.ParallelNode
+        nodesToExecute:
+        - '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+          type: Alexa.Speak
+          operationPayload:
+            deviceType: synthetic-device
+            deviceSerialNumber: synthetic-serial
+            locale: en-US
+            customerId: synthetic-customer
+            textToSpeak: Synthetic spoken message
+            skillId: amzn1.ask.1p.saysomething
+        - '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+          type: Alexa.Sound
+          operationPayload:
+            deviceType: synthetic-device
+            deviceSerialNumber: synthetic-serial
+            locale: en-US
+            customerId: synthetic-customer
+            soundStringId: synthetic-sound
+      x-example-evidence: synthetic
     OpaquePayloadOperationNode:
       type: object
       properties:
@@ -103,6 +171,12 @@ components:
       - '@type'
       - type
       - operationPayload
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: synthetic.Operation
+        operationPayload:
+          syntheticValue: placeholder
+      x-example-evidence: synthetic
     DeviceTarget:
       type: object
       properties:
@@ -115,6 +189,10 @@ components:
       required:
       - deviceType
       - deviceSerialNumber
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+      x-example-evidence: synthetic
     Target:
       type: object
       properties:
@@ -129,16 +207,26 @@ components:
           x-go-name: Devices
           x-go-type-skip-optional-pointer: true
       required: []
+      example:
+        customerId: synthetic-customer
+        devices:
+        - deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+      x-example-evidence: synthetic
     OpaquePayloadOperationNodeType:
       type: string
       enum: [com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode]
       x-enum-varnames: [ComAmazonAlexaBehaviorsModelOpaquePayloadOperationNode]
       x-go-compat-constant-names: [ModelTypeOpaquePayloadOperationNode]
+      example: "com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode"
+      x-example-evidence: synthetic
     SequenceType:
       type: string
       enum: [com.amazon.alexa.behaviors.model.Sequence]
       x-enum-varnames: [ComAmazonAlexaBehaviorsModelSequence]
       x-go-compat-constant-names: [ModelTypeSequence]
+      example: "com.amazon.alexa.behaviors.model.Sequence"
+      x-example-evidence: synthetic
     BehaviorOperationType:
       type: string
       description: Known operation names constructed by this implementation.
@@ -187,6 +275,8 @@ components:
       - OperationTypeFireTVResumeVideo
       - OperationTypeFireTVNavigateHome
       - OperationTypeSound
+      example: "Alexa.DeviceControls.Volume"
+      x-example-evidence: synthetic
     BehaviorPayloadKey:
       type: string
       description: Known behavior payload property names, including compatibility keys.
@@ -268,6 +358,8 @@ components:
       - PayloadKeyBody
       - PayloadKeyDevices
       - PayloadKeyType
+      example: "deviceType"
+      x-example-evidence: synthetic
     BehaviorSkillID:
       type: string
       description: Skill identifiers used by the implementation-built behavior operations.
@@ -289,6 +381,8 @@ components:
       - SkillIDAlexaNotifications
       - SkillIDSaySomething
       - SkillIDRoutinesFireTV
+      example: "amzn1.ask.1p.alexadevicecontrols"
+      x-example-evidence: synthetic
     BehaviorDefaultLocale:
       type: string
       enum: [en-US]
@@ -296,31 +390,43 @@ components:
       x-go-compat-constant-names: [DefaultLocale]
       x-go-compat-constant-values:
         SDKDefaultLocale: en-US
+      example: "en-US"
+      x-example-evidence: synthetic
     BehaviorDefaultID:
       type: string
       enum: [PREVIEW]
       x-enum-varnames: [BehaviorDefaultIDPreview]
       x-go-compat-constant-names: [DefaultBehaviorID]
+      example: "PREVIEW"
+      x-example-evidence: synthetic
     BehaviorDefaultStatus:
       type: string
       enum: [ENABLED]
       x-enum-varnames: [BehaviorDefaultStatusEnabled]
       x-go-compat-constant-names: [DefaultBehaviorStatus]
+      example: "ENABLED"
+      x-example-evidence: synthetic
     BehaviorAnnouncementExpireAfter:
       type: string
       enum: [PT5S]
       x-enum-varnames: [BehaviorAnnouncementExpireAfterFiveSeconds]
       x-go-compat-constant-names: [DefaultAnnouncementExpireAfter]
+      example: "PT5S"
+      x-example-evidence: synthetic
     BehaviorAnnouncementSpeakType:
       type: string
       enum: [text]
       x-enum-varnames: [BehaviorAnnouncementSpeakTypeText]
       x-go-compat-constant-names: [DefaultAnnouncementSpeakType]
+      example: "text"
+      x-example-evidence: synthetic
     BehaviorAlexaURL:
       type: string
       enum: ['#v2/behaviors']
       x-enum-varnames: [BehaviorAlexaURLBehaviors]
       x-go-compat-constant-names: [AlexaURLBehaviors]
+      example: "#v2/behaviors"
+      x-example-evidence: synthetic
     AnnouncementMethod:
       type: string
       description: Values accepted by the implementation's announcement method switch.
@@ -333,6 +439,8 @@ components:
       - AnnouncementMethodSpeak
       - AnnouncementMethodShow
       - AnnouncementMethodAll
+      example: "speak"
+      x-example-evidence: synthetic
     DeviceControlsStopPayload:
       description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
       type: object
@@ -343,6 +451,13 @@ components:
         customerId: {type: string, x-go-name: CustomerID}
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
       required: [deviceType, deviceSerialNumber, locale, customerId, skillId]
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+        locale: en-US
+        customerId: synthetic-customer
+        skillId: amzn1.ask.1p.alexadevicecontrols
+      x-example-evidence: synthetic
     DeviceControlsVolumePayload:
       description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
       type: object
@@ -354,6 +469,14 @@ components:
         value: {type: integer, nullable: true}
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
       required: [deviceType, deviceSerialNumber, locale, customerId, value, skillId]
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+        locale: en-US
+        customerId: synthetic-customer
+        value: 32
+        skillId: amzn1.ask.1p.alexadevicecontrols
+      x-example-evidence: synthetic
     NotificationsSendMobilePushPayload:
       description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
       type: object
@@ -367,6 +490,16 @@ components:
         title: {type: string}
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
       required: [deviceType, deviceSerialNumber, locale, customerId, notificationMessage, alexaUrl, title, skillId]
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+        locale: en-US
+        customerId: synthetic-customer
+        notificationMessage: Synthetic notification
+        alexaUrl: '#v2/behaviors'
+        title: Synthetic notice
+        skillId: amzn1.ask.1p.alexanotifications
+      x-example-evidence: synthetic
     AnnouncementPayload:
       description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
       type: object
@@ -382,6 +515,27 @@ components:
         target: {$ref: '#/components/schemas/Target'}
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
       required: [deviceType, deviceSerialNumber, locale, customerId, expireAfter, content, target, skillId]
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+        locale: en-US
+        customerId: synthetic-customer
+        expireAfter: PT5S
+        content:
+        - locale: en-US
+          display:
+            title: Synthetic notice
+            body: Synthetic announcement
+          speak:
+            type: text
+            value: Synthetic announcement
+        target:
+          customerId: synthetic-customer
+          devices:
+          - deviceType: synthetic-device
+            deviceSerialNumber: synthetic-serial
+        skillId: amzn1.ask.1p.saysomething
+      x-example-evidence: synthetic
     BehaviorAnnouncementContent:
       description: Implementation-derived nested behavior content shape; no sanitized live capture is available.
       type: object
@@ -390,18 +544,35 @@ components:
         display: {$ref: '#/components/schemas/BehaviorAnnouncementDisplay'}
         speak: {$ref: '#/components/schemas/BehaviorAnnouncementSpeak'}
       required: [locale, display, speak]
+      example:
+        locale: en-US
+        display:
+          title: Synthetic notice
+          body: Synthetic announcement
+        speak:
+          type: text
+          value: Synthetic announcement
+      x-example-evidence: synthetic
     BehaviorAnnouncementDisplay:
       type: object
       properties:
         title: {type: string}
         body: {type: string}
       required: [title, body]
+      example:
+        title: Synthetic notice
+        body: Synthetic announcement
+      x-example-evidence: synthetic
     BehaviorAnnouncementSpeak:
       type: object
       properties:
         type: {$ref: '#/components/schemas/BehaviorAnnouncementSpeakType'}
         value: {type: string}
       required: [type, value]
+      example:
+        type: text
+        value: Synthetic announcement
+      x-example-evidence: synthetic
     SpeakPayload:
       description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
       type: object
@@ -417,6 +588,14 @@ components:
             BehaviorAudioSSMLTemplate: "<audio src='%s'/>"
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
       required: [deviceType, deviceSerialNumber, locale, customerId, textToSpeak, skillId]
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+        locale: en-US
+        customerId: synthetic-customer
+        textToSpeak: Synthetic spoken message
+        skillId: amzn1.ask.1p.saysomething
+      x-example-evidence: synthetic
     CannedTTSSpeakPayload:
       description: Compatibility payload shape retained for an exported legacy payload key; not built by active REST methods.
       type: object
@@ -428,6 +607,14 @@ components:
         cannedTtsStringId: {type: string, x-go-name: CannedTtsStringID}
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
       required: [deviceType, deviceSerialNumber, locale, customerId, cannedTtsStringId, skillId]
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+        locale: en-US
+        customerId: synthetic-customer
+        cannedTtsStringId: synthetic-canned-tts
+        skillId: amzn1.ask.1p.saysomething
+      x-example-evidence: synthetic
     MusicPlaySearchPhrasePayload:
       description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
       type: object
@@ -441,6 +628,16 @@ components:
         musicProviderId: {type: string, x-go-name: MusicProviderID}
         waitTimeInSeconds: {type: integer, x-go-type-skip-optional-pointer: true}
       required: [deviceType, deviceSerialNumber, locale, customerId, searchPhrase, sanitizedSearchPhrase, musicProviderId]
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+        locale: en-US
+        customerId: synthetic-customer
+        searchPhrase: synthetic song
+        sanitizedSearchPhrase: synthetic song
+        musicProviderId: synthetic-provider
+        waitTimeInSeconds: 10
+      x-example-evidence: synthetic
     SoundPayload:
       description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
       type: object
@@ -451,6 +648,13 @@ components:
         customerId: {type: string, x-go-name: CustomerID}
         soundStringId: {type: string, x-go-name: SoundStringID}
       required: [deviceType, deviceSerialNumber, locale, customerId, soundStringId]
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+        locale: en-US
+        customerId: synthetic-customer
+        soundStringId: synthetic-sound
+      x-example-evidence: synthetic
     VideoPlaySearchPhrasePayload:
       description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
       type: object
@@ -466,6 +670,15 @@ components:
         sanitizedSearchPhrase: {type: string}
         waitTimeInSeconds: {type: integer, x-go-type-skip-optional-pointer: true}
       required: [deviceType, deviceSerialNumber, locale, customerId, searchPhrase, sanitizedSearchPhrase]
+      example:
+        deviceType: synthetic-device
+        deviceSerialNumber: synthetic-serial
+        locale: en-US
+        customerId: synthetic-customer
+        searchPhrase: synthetic video
+        sanitizedSearchPhrase: synthetic video
+        waitTimeInSeconds: 10
+      x-example-evidence: synthetic
     FireTVOperationPayload:
       description: Implementation-derived nested behavior payload shape; no sanitized live capture is available.
       type: object
@@ -473,6 +686,10 @@ components:
         deviceAccountId: {type: string, x-go-name: DeviceAccountID}
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
       required: [deviceAccountId, skillId]
+      example:
+        deviceAccountId: synthetic-device-account
+        skillId: amzn1.ask.1p.routines.firetv
+      x-example-evidence: synthetic
     DeviceControlsStopOperationType:
       type: string
       enum: [Alexa.DeviceControls.Stop]
@@ -517,6 +734,16 @@ components:
         type: {$ref: '#/components/schemas/DeviceControlsStopOperationType', x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/DeviceControlsStopPayload'}
       required: ['@type', type, operationPayload]
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: Alexa.DeviceControls.Stop
+        operationPayload:
+          deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+          locale: en-US
+          customerId: synthetic-customer
+          skillId: amzn1.ask.1p.alexadevicecontrols
+      x-example-evidence: synthetic
     DeviceControlsVolumeOperationNode:
       description: Implementation-derived node paired with the generated device-controls volume payload; no sanitized live capture is available.
       type: object
@@ -525,6 +752,17 @@ components:
         type: {$ref: '#/components/schemas/DeviceControlsVolumeOperationType', x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/DeviceControlsVolumePayload'}
       required: ['@type', type, operationPayload]
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: Alexa.DeviceControls.Volume
+        operationPayload:
+          deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+          locale: en-US
+          customerId: synthetic-customer
+          value: 32
+          skillId: amzn1.ask.1p.alexadevicecontrols
+      x-example-evidence: synthetic
     NotificationsSendMobilePushOperationNode:
       description: Implementation-derived node paired with the generated mobile notification payload; no sanitized live capture is available.
       type: object
@@ -533,6 +771,19 @@ components:
         type: {$ref: '#/components/schemas/NotificationsSendMobilePushOperationType', x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/NotificationsSendMobilePushPayload'}
       required: ['@type', type, operationPayload]
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: Alexa.Notifications.SendMobilePush
+        operationPayload:
+          deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+          locale: en-US
+          customerId: synthetic-customer
+          notificationMessage: Synthetic notification
+          alexaUrl: '#v2/behaviors'
+          title: Synthetic notice
+          skillId: amzn1.ask.1p.alexanotifications
+      x-example-evidence: synthetic
     AnnouncementOperationNode:
       description: Implementation-derived node paired with the generated announcement payload; no sanitized live capture is available.
       type: object
@@ -541,6 +792,30 @@ components:
         type: {$ref: '#/components/schemas/AnnouncementOperationType', x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/AnnouncementPayload'}
       required: ['@type', type, operationPayload]
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: AlexaAnnouncement
+        operationPayload:
+          deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+          locale: en-US
+          customerId: synthetic-customer
+          expireAfter: PT5S
+          content:
+          - locale: en-US
+            display:
+              title: Synthetic notice
+              body: Synthetic announcement
+            speak:
+              type: text
+              value: Synthetic announcement
+          target:
+            customerId: synthetic-customer
+            devices:
+            - deviceType: synthetic-device
+              deviceSerialNumber: synthetic-serial
+          skillId: amzn1.ask.1p.saysomething
+      x-example-evidence: synthetic
     SpeakOperationNode:
       description: Implementation-derived node paired with the generated speech payload; no sanitized live capture is available.
       type: object
@@ -549,6 +824,17 @@ components:
         type: {$ref: '#/components/schemas/SpeakOperationType', x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/SpeakPayload'}
       required: ['@type', type, operationPayload]
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: Alexa.Speak
+        operationPayload:
+          deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+          locale: en-US
+          customerId: synthetic-customer
+          textToSpeak: Synthetic spoken message
+          skillId: amzn1.ask.1p.saysomething
+      x-example-evidence: synthetic
     CannedTTSSpeakOperationNode:
       description: Compatibility node and payload shape retained for an exported legacy payload key; not built by active REST methods.
       type: object
@@ -557,6 +843,17 @@ components:
         type: {$ref: '#/components/schemas/CannedTTSSpeakOperationType', x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/CannedTTSSpeakPayload'}
       required: ['@type', type, operationPayload]
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: Alexa.CannedTts.Speak
+        operationPayload:
+          deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+          locale: en-US
+          customerId: synthetic-customer
+          cannedTtsStringId: synthetic-canned-tts
+          skillId: amzn1.ask.1p.saysomething
+      x-example-evidence: synthetic
     MusicPlaySearchPhraseOperationNode:
       description: Implementation-derived node paired with the generated music search payload; no sanitized live capture is available.
       type: object
@@ -565,6 +862,19 @@ components:
         type: {$ref: '#/components/schemas/MusicPlaySearchPhraseOperationType', x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/MusicPlaySearchPhrasePayload'}
       required: ['@type', type, operationPayload]
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: Alexa.Music.PlaySearchPhrase
+        operationPayload:
+          deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+          locale: en-US
+          customerId: synthetic-customer
+          searchPhrase: synthetic song
+          sanitizedSearchPhrase: synthetic song
+          musicProviderId: synthetic-provider
+          waitTimeInSeconds: 10
+      x-example-evidence: synthetic
     SoundOperationNode:
       description: Implementation-derived node paired with the generated sound payload; no sanitized live capture is available.
       type: object
@@ -573,6 +883,16 @@ components:
         type: {$ref: '#/components/schemas/SoundOperationType', x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/SoundPayload'}
       required: ['@type', type, operationPayload]
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: Alexa.Sound
+        operationPayload:
+          deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+          locale: en-US
+          customerId: synthetic-customer
+          soundStringId: synthetic-sound
+      x-example-evidence: synthetic
     VideoPlaySearchPhraseOperationNode:
       description: Implementation-derived node paired with the generated video search payload; no sanitized live capture is available.
       type: object
@@ -581,6 +901,18 @@ components:
         type: {$ref: '#/components/schemas/VideoPlaySearchPhraseOperationType', x-go-name: OperationType}
         operationPayload: {$ref: '#/components/schemas/VideoPlaySearchPhrasePayload'}
       required: ['@type', type, operationPayload]
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: Alexa.Operation.Video.PlaySearchPhrase
+        operationPayload:
+          deviceType: synthetic-device
+          deviceSerialNumber: synthetic-serial
+          locale: en-US
+          customerId: synthetic-customer
+          searchPhrase: synthetic video
+          sanitizedSearchPhrase: synthetic video
+          waitTimeInSeconds: 10
+      x-example-evidence: synthetic
     FireTVOperationNode:
       description: Implementation-derived node paired with the generated Fire TV payload; SendFireTVSequence preserves its caller-supplied operation type as an open string, with no sanitized live capture available.
       type: object
@@ -590,6 +922,13 @@ components:
         operationPayload: {$ref: '#/components/schemas/FireTVOperationPayload'}
       required: ['@type', type, operationPayload]
 
+      example:
+        '@type': com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
+        type: Alexa.Operation.FireTV.TurnOn
+        operationPayload:
+          deviceAccountId: synthetic-device-account
+          skillId: amzn1.ask.1p.routines.firetv
+      x-example-evidence: synthetic
     SDKKnownProviderID:
       type: string
       x-go-type: string

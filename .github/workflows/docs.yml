@@ -10,6 +10,7 @@ on:
       - 'api/**'
       - 'pkg/schemas/graphql/**'
       - 'tools/check_site_links.py'
+      - 'tools/schemalinks/**'
       - 'README.md'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
@@ -41,17 +42,20 @@ jobs:
       - name: Check bundled OpenAPI source
         run: go run ./tools/openapibundle -check
       - name: Build API documentation site
-        uses: portpowered/api-docs-website-github-action@v0.3.0
+        uses: portpowered/api-docs-website-github-action@88d47570320f9551a1c6d1f07437285e91f2bffa
         with:
           title: Alexa - implementation-derived
-          openapi: api/openapi.yaml
+          openapi: api/openapi.yaml,api/behaviors.yaml,api/feature-controls.yaml,api/feature-events.yaml
           asyncapi: api/asyncapi.yaml
           graphql: pkg/schemas/graphql/endpoints-schema.graphql
+          graphql-bindings: docs/schema-bindings.yaml
           discover: false
           guides-directory: docs/guides
           output: site
       - name: Check rendered site links
         run: python3 tools/check_site_links.py site
+      - name: Check schema-supplied links
+        run: go run ./tools/schemalinks -site site -schemas api/openapi.yaml,api/behaviors.yaml,api/feature-controls.yaml,api/feature-events.yaml,api/asyncapi.yaml,pkg/schemas/graphql/endpoints-schema.graphql,docs/schema-bindings.yaml -base-path /go-alexa
       - name: Generate coverage report and badge data
         if: github.event_name != 'pull_request'
         shell: bash
@@ -77,9 +81,10 @@ jobs:
           }, null, 2)}\n`);
           JS
       - name: Upload reviewable documentation build
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: documentation-site
+          name: rendered-api-docs-${{ github.sha }}
           path: site
           include-hidden-files: true
           retention-days: 14

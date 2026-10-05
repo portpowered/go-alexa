@@ -1,225 +1,182 @@
 # Independent review record
 
-Status: **open; fixes and two final independent approvals are required**.
+At the user's request on 2026-10-04, final dual review and checklist closure
+are deferred while known customer-facing fixes, required CI, and releases
+are completed. These reports audit earlier snapshots and do not approve
+the final release. Unverified checklist items remain open.
 
-The reports below audit `f125426a5f2c242d8100edd08814827ae18c9028`
-against shared template `05e93ff08899414207e9335717e7d7b0190ebd09`.
-They do not approve later changes or close the current
-[checklist](template-checklist.md).
+Status: **open; findings and final dual approval remain outstanding**.
 
-The current checklist pins shared template `62cc3cb5a1308dae8700f92052f99b1c455a1d98`.
+The two reports below independently audit all 16 checklist items at source
+`713031f0267ffccc18b4d34e849f108f9c65ed04`, against shared template
+`62cc3cb5a1308dae8700f92052f99b1c455a1d98`.
+They were delivered before either reviewer read this record or the other report.
+Later implementation changes require verification on the final commit.
+See the [current checklist](template-checklist.md). Historical reports remain
+in Git history. Passing CI does not resolve the findings below.
 
-## Findings being resolved
+## Reviewer 1 — initial independent audit
 
-- Unresolved imported helper output can reach schema-owned wire fields.
-- The route scanner excludes an added CLI network call.
-- A request body's backing byte slice can change after construction.
-- An injected HTTP cookie jar can share account state between sessions.
-- The upgrade example should use the generated friendly-name default.
-- The review record needs one consistent current set of verdicts.
+### Independent reviewer 1 — initial 16-item verdict
 
-The earlier reader-consumption probe was withdrawn: `net/http` clones that
-reader, so the probe did not change the emitted body. It is not an open finding.
+Reviewed source: `github.com/portpowered/go-alexa` at `713031f0267ffccc18b4d34e849f108f9c65ed04`.
+Review date: 2026-10-04.
+Scope: independent source, test, CI, documentation, and published-page audit. No source files were changed.
 
-Earlier reviews and publication evidence remain in Git history. SDK `v0.4.0`
-and CLI `cmd/go-alexa/v0.4.0` are published; publication does not approve the
-new fixes. Final reviewers must independently check the fixed source and
-publication state. The initial reviewers disclosed reading historical review
-excerpts; their reproduced findings are retained here, and a fresh pair will
-perform the final blind audit.
+#### Summary
 
-## Reviewer 1 — independently authored report
+This SHA is **not ready for checklist sign-off**. Four implementation blockers are established: item 2 lacks schema-owned examples and validation; item 4 fails to surface known feature payload variants in the generated reference and omits their schema from the docs build; item 15 has four reproducible HTTP request-matching bypasses; and item 16 has no CLI logout command. Item 7 still needs consumer proof for the planned new SDK/CLI release, item 13 awaits inspection of the deliberately deferred review record, and item 14 cannot pass while findings remain open and two final reviews are not complete.
 
-# Independent go-alexa checklist audit (Reviewer 1)
+`make lint` and `make check` both pass in a fresh isolated checkout. GitHub CI run `37251625662` and Documentation run `37251625675` both completed successfully on the exact reviewed SHA. The public SDK/CLI v0.4.0 release exists; its evidence does not establish consumer installation for the planned v0.5.0 release.
 
-## Review basis
+#### Review setup and evidence
 
-- Repository: `github.com/portpowered/go-alexa`
-- Exact reviewed source commit: `f125426a5f2c242d8100edd08814827ae18c9028` (detached clean clone)
-- Shared template revision: `05e93ff08899414207e9335717e7d7b0190ebd09`
-- Scope: independent audit of all 16 requirements in `docs/template-checklist.md`; source, generated output, tests, CI runs, release artifacts, and published docs were inspected. No repository files were edited. All negative controls below used temporary overlays in the clean clone and were restored.
-- Standards read from the shared template: `docs/library-standards.md`, `docs/verification.md`, `docs/client-design.md`, `docs/website.md`, and `docs/releasing.md`; also read the library checklist and `docs/verification.md`.
+The checkout was the isolated archive at `C:/Users/andre/AppData/Local/Temp/go-ring-blind-review-lfed1dfa/checkout`; its `go.mod` identifies the Alexa module. The parent-directory manifest confirms the archive matches the requested source SHA, except for a neutral placeholder replacing `docs/independent-review.md`. The checkout has a fresh root commit with no parent or remote; no old Git objects were fetched or inspected. I read `docs/template-checklist.md` from this source, which identifies the exact shared template commit `62cc3cb5a1308dae8700f92052f99b1c455a1d98`, and consulted the isolated shared library/client standards.
 
-**Blind-review disclosure:** While searching narrowly for authentication coverage, one broad `rg` command also printed matching excerpts from `docs/independent-review.md`. I did not intentionally open or inspect that report and did not use its contents or claims as evidence. I did not read it further. Because checklist item 13 requires every tracked documentation file to be reviewed, that item remains open. This report's findings and reproductions are my own.
+Using fresh temporary Go/lint caches, `make lint` passed with zero issues in both the SDK and nested CLI modules (golangci-lint 2.3.0). `make check` passed formatting, lint, vet, build, race tests, model inventory, OpenAPI bundle, module tidy, and module verification. The combined non-generated production coverage is 84.6% (2,409/2,849 statements), above the enforced 80% floor and below the stated 90% target; package figures include `pkg/alexa` 83.1%, `alexaapimodels` 85.6%, GraphQL 94.2%, REST 83.7%, and generated-model package 100% over three non-generated statements.
 
-## Verdicts
+I downloaded the exact-SHA documentation artifact. Its internal-link checker reported 44,914 internal links across 251 rendered pages. An independent content check found title and H1 content on all 246 generated documentation pages and substantive content on all 10 guides. I also inspected the published CLI and upgrade guides and a generated account-linking reference page for expected content; each returned the expected page content. The published v0.4.0 SDK and `cmd/go-alexa/v0.4.0` release notes point to those pages and the verification guidance.
 
-1. **PASS — reusable library remains application-independent.** The SDK exposes the provider package under `pkg/alexa`, generated provider models under `pkg/dependencymodels`, and transport packages under `pkg/dependencies`. The public README and guides address SDK callers, not a named consuming application. Application-side callback/PKCE responsibility is explicitly left to the consuming app.
+#### Item verdicts
 
-2. **PASS, with an unverified-value note — public API examples match exported shapes.** The README and customer guides show exported options, client methods, model shapes, authentication, errors, and transport injection. The upgrading guide (`docs/guides/upgrading.mdx:41-44`) uses `Type: "text"` for `FriendlyNameValue`; the schema marks this property as an open string with default `PLAIN` (`api/openapi/sources/endpoints.yaml:245-251`), and the generated constant/default outbound implementation use `PLAIN` (`pkg/dependencymodels/wire_constants.gen.go:52`, `pkg/dependencies/rest/endpoints.go:179-181`). The field is string-typed, so the example is API-shape-valid, but I found no provider evidence that `text` is a supported provider value. This is not evidence of a rejected request; the sample value should be treated as unverified rather than provider-confirmed. Customer docs consistently frame the contracts as implementation-derived, and synthetic material is separated from captures/history.
+1. **PASS.** The reusable package, README, examples, and guides describe the Alexa client and CLI without a consuming-application adapter or rollout plan. The README and customer examples are provider/library oriented.
 
-3. **PASS — README badges and repository identity are live.** README badges point to the current repository's Go version, CI, coverage, release, Go Reference, license, and documentation. Public Pages, release, coverage, pkg.go.dev, and repository destinations returned expected content/status in the checks performed.
+2. **OPEN — source blocker.** Customer guides cover operations, auth, errors, and transport injection with examples, and synthetic replay provenance is explicitly separated. However, `api/` has no schema `example`/`examples` entries, and CI does not validate sanitized request, response, and event examples against their owning schemas. In particular, there are no canonical full-envelope examples covering nested feature payloads, resource updates, relation changes, and failures as required by the checklist. Replay fixtures are identified as synthetic, which is good provenance practice but does not fill the schema-example requirement.
 
-4. **FAIL — source gates still have two concrete provenance gaps.** Existing evidence is strong: `go run ./tools/apiroutes --check` and `go run ./tools/modelinventory -check` pass at baseline; the inventory contains 1,492 model rows. Compile-valid temporary controls rejected novel fixed values/keys in generated payloads, later map writes, named-result/bare-return helpers, long helper chains, recursive fixed fallbacks, unreferenced handwritten wire structs, forged generated markers, map escapes, and invalid generated map mutations; caller-defined open input through `SendSequence` remained accepted. A named-result helper returning a generated map to an unverified callable was also rejected.
+3. **PASS.** `README.md` includes Go version, CI, coverage, release, Go Reference, license, and documentation badges. The targets use the live repository, workflow, Pages coverage artifact, Go module, and license locations.
 
-   Two required cases were not rejected:
+4. **OPEN — source blocker.** The wire/model inventory, generated models, schema gates, and rendered reference have substantial coverage, but the generated reference does not expose known feature-control variants. `api/feature-controls.yaml` defines known payload shapes, while `.github/workflows/docs.yml` passes only `api/openapi.yaml`, `api/asyncapi.yaml`, the GraphQL SDL, and guides to the site builder; it omits `api/feature-controls.yaml`. In the rendered GraphQL reference, `SetEndpointFeaturesInput` contains only `featureControlRequests`, and `FeatureControlRequest.payload` is rendered as generic JSON, without the known variants' required fields/result shapes. This is a direct violation of the checklist's generated-reference requirement.
 
-   - **Cross-package unresolved helper provenance:** a temporary helper in `pkg/alexaapimodels` returned `time.Now().Format(time.RFC3339Nano)`; a helper in `pkg/alexa` passed that value through the imported package into `dependencymodels.Sequence.Type` (a generated `SequenceType` enum). `go test -run '^$' ./pkg/alexa ./pkg/alexaapimodels` passed, and root-default `go run ./tools/modelinventory -write` and `-check` both exited 0. This is library-produced unresolved provenance, not caller input. The enum's `Valid` method does not make the unchecked conversion safe at the construction boundary.
-   - **CLI direct network primitive outside the route inventory:** a compile-valid overlay in `cmd/go-alexa/internal/cli` called `http.Get` on an unlisted URL. `go test -run '^$' ./internal/cli` passed. From the repository root, `go run ./tools/apiroutes --check`, `go run ./tools/modelinventory -write`, and `-check` all exited 0. `tools/apiroutes/main.go:697-711` walks only `root/pkg`, so direct network imports/calls added to the CLI are not gated by this inventory.
+5. **PASS.** The config pins golangci-lint v2.3.0, sets `linters.default: all`, and makes repository-wide lint blocking. `make lint`/`make check` passed independently, and exact-SHA blocking GitHub CI passed (`37251625662`). The reviewer was not the implementer. No lint exception or persisted JSON-key regression issue was found in this audit.
 
-   Request-object controls that I tested were correctly rejected: post-construction `req.URL.User` assignment, `req.GetBody` mutation, and `req.TransferEncoding`/`req.ContentLength` mutations all compiled and then failed the exact root-default route check with “Client.Do request was reassigned or mutated after its schema-bound constructor.” A first body-reader probe was withdrawn: `http.NewRequestWithContext` clones a `*bytes.Reader`, so consuming the original reader did not change the request body. No finding is based on that probe.
+6. **PASS.** Deterministic synthetic paired fixtures and session/error cases are present; `make check` ran the race suite. Coverage is measured by package and combined, with generated code excluded from the combined measure. Combined coverage is 84.6%, meeting the 80% gate though below the 90% target.
 
-5. **PASS — exact-commit blocking lint/check CI is green.** GitHub CI run `37192237178` is successful for exact `f125426…`; its verify job includes pinned golangci-lint v2.3.0, blocking `make lint`, `make check`, race tests, generation/inventory checks, and module checks. `.golangci.yml` has literal `linters.default: all`; no `issues-exit-code=0` or new-issues-only mode was found. Exceptions are path/rule-scoped with reasons. The independent review also passed the request-object negative controls on this exact source revision; checklist item 5 itself is marked only for completed CI at this revision.
+7. **OPEN — publication evidence pending; source layout passes.** The public package is under `pkg/alexa`; provider models and dependency types are in the requested packages; schemas are split by API responsibility; the checked-in model inventory records schema components, generated declarations, generators, and use sites. A prior v0.4.0 release exists, but this review is for the next planned release. Separate SDK and nested CLI consumer/proxy installation evidence must be produced for the new tags; v0.4 evidence cannot establish v0.5 compatibility.
 
-6. **PASS — offline synthetic replay and coverage gates meet the stated floor.** CI's combined non-generated production coverage is 84.6%, above the 80% floor and below the 90% target. Coverage exclusions are reported. REST, GraphQL, event, and native HTTP/2 tests use exact synthetic paired requests/responses; the replay matcher checks method, origin, escaped path, repeated query values, headers and body, rejects unexpected/duplicate calls, and asserts consumption. `TestEventNativeHTTP2PairedReplay` injects `net.Pipe` and waits for server completion after close. Repository documentation explicitly records that these are synthetic and not evidence of current provider behavior.
+8. **PASS.** `NewClient` uses functional options with defaults and validation. Account credentials enter explicit `Session` options, not reusable client configuration.
 
-7. **PASS — package boundaries and model inventory are in place.** Provider APIs, dependency wire models, and transport implementations have the requested package separation and responsibility schemas. Generated models are linked in `docs/model-inventory.md` to schema, generator, and use/conversion sites. The inventory covers legacy exports, anonymous wire objects, nested payloads, enums/constants, and custom decoders. Independent negative controls rejected unreferenced handwritten wire models, anonymous wire objects, and forged generated markers. Separate consumer module verification succeeded for SDK v0.4.0 (see item 16).
+9. **PASS.** Client configuration is reusable while credentials and cookie state live on explicit sessions. A nonnil injected `http.Client.Jar` is rejected with a distinguishable `HTTPClientCookieJarError`; two-session tests exercise isolation through a shared client. Session close and credential state are explicit.
 
-8. **PASS — functional options and configuration are explicit.** `pkg/alexa` clients are initialized with options and validated defaults. Base URL and HTTP client are injected; reusable client configuration does not retain account credentials. CLI credentials are supplied by documented environment/stdin/file paths rather than ordinary secret-bearing flags.
+10. **PASS.** The discovered production edges are REST, GraphQL, and the long-lived HTTP/2 event stream. Each has an injectable HTTP client or event transport seam, and tests drive the actual offline transport. No separate MQTT, WebSocket, RTC, or raw-socket production edge was found in the shipped modules.
 
-9. **PASS — account/session state is visible and separated.** The public client is reusable across accounts; session/token/stream lifecycles are represented explicitly. Session ownership and close/error state are caller-visible rather than hidden mutable account state on the client.
+11. **PASS.** Refresh and refresh-token cookie exchange are explicit operations that return credentials. Refresh does not silently replace session credentials; caller installation/storage obligations are documented in the authentication guide and API comments.
 
-10. **PASS — active network edges are replaceable offline.** REST and GraphQL accept injected HTTP transports, events expose the HTTP/2 connection/dial seam, and native HTTP/2 framing is exercised over `net.Pipe`. The pinned `golang.org/x/net/http2` dependency is versioned in module metadata and described in `api/external/http2.yaml` with source-matched exchange/call-site evidence. No WebSocket/MQTT/RTC edge is claimed as supported.
+12. **PASS.** Customer guides are MDX under `docs/guides/`, link to generated reference pages, and render expected content. The exact-SHA site artifact passed the repository's link check; the independent scan covered every rendered page. I reviewed the external/release-note targets, including published v0.4.0 release links to the upgrade/CLI guides and verification guidance. The `externalDocs` source search found no schema-supplied external documentation links requiring a separate runtime check.
 
-11. **PASS — token changes are explicit.** Token exchange and refresh operations return the resulting credentials to the caller. The reusable client does not silently refresh and retain new tokens; customer documentation describes caller storage/renewal responsibility.
+13. **OPEN — deferred document review.** I inspected the README and all tracked documentation files except `docs/independent-review.md`, which was deliberately withheld until this initial all-16 delivery. The remaining documents have clear contributor, release, customer, or fixture-maintenance purposes; customer pages are substantive and no duplicate internal review report was found outside the withheld file. Final verdict requires inspecting the deferred record and reconciling its links/findings.
 
-12. **PASS — customer guides render and reference links resolve.** The exact Documentation workflow `37192237182` succeeded for `f125426…`, including Fumadocs build, rendered link check, artifact upload, and Pages deploy. On the downloaded artifact, `python tools/check_site_links.py` checked 44,910 internal links across 251 rendered pages. The published guide routes and expected headings/content were checked, including CLI, authentication, events, endpoint operations, and upgrading; release guide and v0.4.0 verification links were also checked. No OpenAPI `externalDocs` entries are present to supply hidden runtime links. The live docs routes served the expected content rather than a generic HTTP-200 fallback.
+14. **OPEN.** This is reviewer 1's independent evidence. Two independent final reviews and dispositions for every finding are still required, and items 2, 4, 7, 13, 15, and 16 remain open.
 
-13. **OPEN — full tracked-doc audit cannot be signed off under the blind constraint.** README, CONTRIBUTING, all nine MDX guides, checklist, verification/release/model-inventory docs, schema note, and fixture READMEs were reviewed for audience and purpose; the rendered Pages artifact was also checked. I have not inspected `docs/independent-review.md` due the blind-review instruction and the contamination disclosure above. The requirement explicitly says every tracked documentation file, including excluded-from-site files, must be reviewed. The `Type: "text"` upgrade example is a low-confidence value note, not a proven API defect.
+15. **OPEN — source blocker.** `pkg/testing/synthetic_replay.go` matches method, origin from `req.URL`, escaped path, parsed `URL.Query()`, headers, and body, but does not validate effective authority (`Request.Host`), URL user information, opaque URLs, or malformed raw queries. A compile-valid harness in an isolated temporary copy configured one synthetic `GET https://example.invalid/item` pair and passed each of these mismatches to `SyntheticReplay.RoundTrip`; all four returned the paired response with nil error:
+    - `req.Host = "attacker.invalid"`;
+    - userinfo `https://secret-user:secret-pass@example.invalid/item`;
+    - malformed raw query `?token=%ZZ` (discarded by `URL.Query()`);
+    - opaque URL with an unrelated opaque target.
 
-14. **OPEN — no independent sign-off.** This report is one separate reviewer record only. Item 4 has two unresolved gate gaps, item 13 remains open, and any remediation must be rechecked by both independent reviewers at the final commit. No checklist sign-off is given.
+   The harness was outside the reviewed checkout and was compiled against the reviewed replay package. Existing negative tests cover method, URL host, path, repeated query, header, and body mismatches, but not these four cases. Mismatch diagnostics also include request headers/body/query values, so a follow-up should ensure secrets are not echoed.
 
-15. **PASS — paired synthetic replay covers supported wire lifecycles.** Replay fixtures classify themselves as synthetic, match full request/response pairs or ordered event frames, and assert consumption/cleanup. Native HTTP/2 close completes through the injected connection. Auth transport fixtures cover credential exchange, token refresh, cookies/CSRF and code-pair forms; OTP challenge handling has negative coverage. There are no sanitized captures in the repository, which is stated plainly. The SDK does not implement an OAuth callback or PKCE client flow; callback-state/PKCE responsibilities belong to the consuming application, so I did not infer an SDK implementation gap from that out-of-scope flow. Maintainer-reported real-account success is documented as unrecorded history, not reproducible evidence.
+16. **OPEN — source blocker.** The nested CLI covers code-pair linking, explicit refresh/export, discovery and endpoint operations, safe credential input/storage, JSON output, cancellation, and offline paired transports. The CLI guide documents ownership and storage. However, the auth dispatcher/help expose `link`, `refresh`, and `export` only (`cmd/go-alexa/internal/cli/commands.go`, `cmd/go-alexa/internal/cli/app.go`), and the guide has no logout sequence or command. The checklist expressly requires logout. The code-pair login does perform browser consent and the provider activation/register call; a localhost callback/PKCE listener appears inapplicable to this provider-specific device code flow. The missing logout alone keeps the item open.
 
-16. **PASS — published standalone CLI consumes the public SDK.** The separate module under `cmd/go-alexa` is tagged at the CLI v0.4.0 release and requires public SDK v0.4.0 without a local `replace`. A fresh consumer successfully installed the CLI using `go install github.com/portpowered/go-alexa/cmd/go-alexa@v0.4.0`; installed `--help` listed the documented commands. A separate SDK consumer successfully resolved v0.4.0 from the public Go proxy, imported public packages, tidied, and passed `go test ./...`. Exact-commit CI also passed CLI Windows lifecycle/build/vet/module checks. Release workflow `37183039192` succeeded for the implementation/release tag; the SDK release was published 2026-10-04. No release or merge was performed as part of this audit.
+#### Process note
 
-## CI and publication evidence
+One initial parallel command accidentally omitted its `workdir` and read a go-ring file/search result from the active workspace. I discarded that output and used no go-ring source, review record, Git history, or other reviewer report as Alexa evidence. The correct Alexa archive's parent folder name contains `go-ring`; the module declaration and manifest were checked before continuing. This report is written only to the independent-review temporary directory, not the repository.
 
-- Exact source SHA `f125426…`: CI run `37192237178` SUCCESS; Documentation run `37192237182` SUCCESS.
-- SDK v0.4.0 release workflow run `37183039192` SUCCESS; tagged implementation CI run `37183020394` SUCCESS.
-- PR1 merge commit: `e95cdaf612041487dd9f024dd1681a56203aad36`.
-- SDK source remained unchanged after `8a22252` through the reviewed documentation/CLI heads; the CLI module at its v0.4.0 tag matches current CLI source.
-- Published docs artifact internal-link check: 44,910 links / 251 pages.
-- Public SDK v0.4.0 consumer import/test and CLI v0.4.0 `go install` both passed in fresh temporary directories.
+Signed: /root/alexa_blind_final_1 (independent reviewer 1), 2026-10-04.
 
-## Final result
 
-Do not treat this audit as a release sign-off. Item 4 has two confirmed source-gate bypasses, item 13 remains open because one tracked report was not inspected under the blind-review constraint, and item 14 must remain open until those findings are resolved and independently verified at the final commit.
+## Reviewer 2 — initial independent audit
 
-## Reviewer 2 — independently authored report
+### Independent review 2 — initial baseline
 
-# Independent all-16 audit — go-alexa
+**Reviewed source commit:** \`713031f0267ffccc18b4d34e849f108f9c65ed04\`
 
-Reviewed revision: `f125426a5f2c242d8100edd08814827ae18c9028` (`docs: require diagnostics for unresolved wire provenance`, 2026-10-04). The audit used a clean detached clone at `C:\Users\andre\AppData\Local\Temp\go-alexa-review2-f125426`; it was clean at completion. No changes remain in the repository clone: compile-valid probes and a regenerated inventory were made only in that temporary detached clone, then removed/restored. The original checkout and its local changes were not touched.
+**Review date:** 2026-10-04 (America/Los_Angeles)
 
-Standards basis: target `docs/template-checklist.md` plus `go-third-party-template` at `05e93ff08899414207e9335717e7d7b0190ebd09` (`docs/library-standards.md`, `docs/verification.md`, `docs/client-design.md`, `docs/website.md`, and `docs/releasing.md`). The exact f125 source tree contains no SDK production-code changes beyond the already-reviewed implementation; its delta from `8a22252` is README, standalone CLI module metadata, customer CLI guide, checklist, and review-record documentation.
+**Reviewer:** Independent reviewer 2 (Codex)
 
-## Verdict summary
+**Scope:** All 16 items in \`docs/template-checklist.md\`, compared with shared template commit \`62cc3cb5a1308dae8700f92052f99b1c455a1d98\`.
 
-| Item | Verdict | Summary |
-|---:|---|---|
-| 1 | PASS | Library content remains application-independent. |
-| 2 | PASS | Customer instructions match the public API and state evidence limits. |
-| 3 | PASS | Required README badges point to live project reports. |
-| 4 | FAIL / OPEN | Documentation generation works, but a compile-valid unknown wire value passes the exact root `make check`; request-body backing aliases also escape the source gate. |
-| 5 | PASS | Full pinned all-linter, build, vet, race, replay, and generation checks pass. |
-| 6 | PASS WITH TARGET GAP | Combined non-generated coverage is 84.6%, above the 80% CI floor and below the stated 90% target. |
-| 7 | PASS | Package/schema boundaries are appropriate; public SDK and CLI install from public modules. |
-| 8 | PASS | Validated functional options configure endpoints and network clients. |
-| 9 | FAIL / OPEN | A caller-injected cookie jar is shared across account sessions and forwards one session's cookie to another. |
-| 10 | PASS | REST, GraphQL, and native HTTP/2 edges are injectable and tested offline. |
-| 11 | PASS | Refresh and cookie exchange are explicit caller-managed operations. |
-| 12 | PASS | Customer MDX guides render and link to generated references; the published site and link checks pass. |
-| 13 | FAIL / OPEN | Post-delivery review found overlapping reports for older commits/standards and no reconciled report for f125. |
-| 14 | FAIL / OPEN | Open source/session findings and the stale review record preclude final sign-off. |
-| 15 | PASS, scoped | Paired replay is complete for implemented REST, GraphQL, and event transports. OAuth callback state and PKCE are caller-owned because the SDK does not implement a browser callback flow. |
-| 16 | PASS | CLI is separate, public-installable, backed by the SDK, and has offline lifecycle/security tests. |
+#### Isolation and method
 
-**No release sign-off:** items 4, 9, 13, and 14 remain open. Coverage is below the 90% target but meets the explicit CI minimum.
+I inspected only \`C:\Users\andre\AppData\Local\Temp\go-ring-blind-review-sd4__1oi\checkout\`, an isolated source snapshot. Its parent manifest identifies source SHA \`713031f0267ffccc18b4d34e849f108f9c65ed04\`, snapshot SHA \`858d3da450e7d329a486af8e5d73e6c4faabd18f\`, archive SHA-256 \`0b5a756226b00ca134c972fc494842f6778a567554982bacb7e4cad6530dd70b\`, no parent/remote, and 292 file hashes matching the source. The one documented exception is \`docs/independent-review.md\`, replaced with a neutral placeholder; its original contents were not read or hashed. I did not use the original repository, its review record, old Git objects, remote history, or another reviewer's report. No source files were edited or committed.
 
-## Findings requiring disposition
+I read the repository checklist and the shared template's library, client design, verification, and website standards. I inventoried tracked documentation (21 Markdown/MDX files including README) and reviewed the rendered site artifact from Documentation run \`37251625675\`. I checked source code, schema and generated-model inventories, tests, workflows, and the exact commit's CI result.
 
-### F1 — Unknown library output is accepted as a wire value (item 4)
+#### Verification
 
-In the clean exact-SHA clone, I added a compile-valid exported probe in `pkg/dependencies/rest` whose `Scopes` field on generated `WireCodePairRequest` receives `uuid.NewString()`. The value is produced by an imported library, so its provenance is neither a schema constant nor caller input. `go test -run '^$' ./pkg/dependencies/rest` compiled it. After inventory regeneration for the overlay, the default root `go run ./tools/modelinventory -check` passed. Most importantly, the exact root `make check GOLANGCI_LINT=C:\Users\andre\go\bin\golangci-lint.exe` also exited 0 with the overlay present (Go toolchain pinned through `GOTOOLCHAIN=go1.24.2`). The probe and regenerated inventory were then removed/restored.
+- Go 1.24.2 and pinned golangci-lint v2.3.0 were used. \`make lint\` passed for the root and CLI modules (0 findings). The reviewed temporary wrapper only added \`--allow-parallel-runners\` after \`run\` to avoid a pre-existing global linter lock; it preserved the pinned executable, configuration, arguments, and exit status.
+- \`make check\` passed with temporary Go caches. It covered format, lint, vet, build, race tests, model inventory, OpenAPI bundle, and root/CLI module verification.
+- GitHub CI run \`37251625662\` for the exact source SHA completed successfully, including generation checks, blocking lint, build/race tests, and the 80% coverage gate. Documentation run \`37251625675\` completed successful build and deploy.
+- The downloaded documentation artifact passed the workflow link checker: 44,914 internal links across 251 rendered pages. I found no external anchor destinations in the rendered site and no schema \`externalDocs\` field. Release-note workflow links target the checked CLI guide.
+- A separate temporary consumer module using a local replacement to this exact source passed \`go test ./...\` while importing \`pkg/alexa\`, \`pkg/alexaapimodels\`, and \`pkg/dependencymodels\`. This verifies source import paths only. Publication/consumer-install evidence for the next SDK and CLI tags remains separate and pending; I did not query a public module proxy.
 
-This contradicts checklist item 4's fail-closed instruction: unresolved provenance must not be classified as caller-owned. `tools/modelinventory/wire_callable_escapes.go:25-31` rejects unknown calls when a generated wire value is passed *as an argument*; it does not reject an unknown call's return value when that value flows into a generated field. A two-file named-result helper returning `uuid.NewString()` showed the same acceptance in the focused compiler and inventory gates.
+#### Verdicts
 
-Positive negative-control probes behaved as expected: fixed literals returned through bare named results, recursive fixed fallback, a 128-helper sibling-file chain, named-result generated-map escape, forged generated marker, unlisted exported JSON struct, anonymous nested JSON object, and nested unknown map key/value were rejected by the root model inventory gate. Thus this finding is specifically unresolved external output provenance, not a blanket failure of the inventory controls.
+| # | Verdict | Evidence and reason |
+|---|---|---|
+| 1 | **PASS** | The module is \`github.com/portpowered/go-alexa\`; reusable code is in \`pkg/alexa\`, public projections in \`pkg/alexaapimodels\`, and examples/README/guides describe the Alexa client without a consuming application's adapter or rollout assumptions. The independent consumer probe imported the public packages. |
+| 2 | **OPEN — F-03** | \`README.md\` and the MDX guides document authentication, operations, errors, configuration, and evidence status; \`docs/verification.md\` distinguishes synthetic pairs from captures. However, \`rg '^\s+(example|examples):' api\` found no canonical schema examples, and CI has no gate validating request/response/event examples against their schemas. Synthetic pairs under \`tests/replay/fixtures/synthetic/\` are separately labeled, but do not meet the checklist's schema-example requirement. |
+| 3 | **PASS** | \`README.md\` contains Go version, CI, coverage, release, Go Reference, license, and documentation badges, all using \`portpowered/go-alexa\` destinations. |
+| 4 | **OPEN — F-04** | The source has checked-in OpenAPI, AsyncAPI, compatibility, feature-payload, and GraphQL schemas; generated models; \`docs/model-inventory.md\`; \`tools/modelinventory -check\`; \`tools/apiroutes --check\`; network inventories; and CI gates. The model/route checks passed on the reviewed SHA. The rendered reference still hides known nested payloads: the generated \`submitBehaviorPreview\` page displays \`sequenceJson: "string"\` and notes the embedded schema lives in \`api/behaviors.yaml\`, but does not show its fields or variants. The rendered GraphQL \`FeatureControlRequest\` describes \`payload\` only as scalar \`JSON\`; known control payload schemas exist in \`api/feature-controls.yaml\`, but \`.github/workflows/docs.yml\` does not feed that schema to the docs generator. The rendered pages therefore do not expose the required customer-usable nested payload variants/request examples. |
+| 5 | **PASS** | Root and CLI linter configs state \`linters.default: all\`; CI pins Go 1.24.2 and golangci-lint v2.3.0 and runs blocking full-module lint. Narrow exceptions name paths/rules and carry explanations. Local \`make lint\` and exact-source CI passed. |
+| 6 | **PASS** | Synthetic request/response, error, and session tests exist across REST, GraphQL, events, and CLI. CI runs race tests and filters generated code before enforcing combined non-generated coverage of at least 80%; the coverage page targets green at 90%. Exact-source CI passed. |
+| 7 | **PASS** (source) | Package boundaries follow the required \`pkg/alexa\`, \`pkg/alexaapimodels\`, \`pkg/dependencymodels\`, and transport structure. Inventory records generated and compatibility types. The isolated consumer probe passed. Public installation of the next release tag remains a separate publication check. |
+| 8 | **PASS** | \`pkg/alexa/client.go\` configures a reusable client through functional options and validates defaults/conflicts. Account credentials are session options, with explicit tests for invalid options and caller-visible token state. |
+| 9 | **PASS** | Account credentials/cookies and event state live in explicit sessions. Effective shared HTTP clients with a nonnil cookie jar produce typed \`HTTPClientCookieJarError\`; tests cover isolation of two accounts through one reusable client and full outbound requests (\`pkg/alexa/client_options_session_test.go\`). |
+| 10 | **PASS** | Active HTTP/REST, GraphQL, and HTTP/2 event edges accept injected clients/transports. \`WithEventTransport\` and an HTTP/2 \`DialTLSContext\` connection seam are documented; \`pkg/alexa/http2_native_replay_test.go\` exercises framed traffic using an offline connection. The pinned HTTP/2 dependency is inventoried in \`api/external/http2.yaml\`; the route scan covers the shipped modules and examples. |
+| 11 | **PASS** | \`GenerateCodePair\`, \`RegisterWithCodePair\`, and \`RefreshAccessToken\` are explicit client/session operations. Refresh returns caller-owned credentials; \`TestSessionRefreshReturnsCredentialsWithoutImplicitlyReplacingThem\` and the authentication guide document that token state/storage remains the caller's responsibility. |
+| 12 | **PASS** | All customer guides are MDX under \`docs/guides/\`, link to the generated reference, render in the exact Documentation artifact, and its link check covered the root plus generated pages. The workflow's link result was 44,914/251 with no failures. No runtime \`externalDocs\` links were present. |
+| 13 | **OPEN — audit limitation** | I reviewed the 20 readable tracked Markdown/MDX files for purpose, audience, duplication, and incoming links, and reviewed the rendered Pages artifact. The 21st file, \`docs/independent-review.md\`, was deliberately replaced with a neutral placeholder by the isolation manifest. The review-record content is therefore unexamined, so I cannot attest to the checklist requirement that every tracked document, including the current review record, is appropriate. |
+| 14 | **OPEN** | This is one independent initial report, on the baseline commit. The required second review, one current repository record containing both reviewers and every finding's final disposition, and re-verification of fixes at a final commit are not complete. This report does not check off item 14. |
+| 15 | **OPEN — F-01, F-02** | Paired exchanges and consumption checks exist, but temporary compile-valid probes against the public \`pkg/testing.SyntheticReplay\` API demonstrated the request-identity and diagnostic gaps below. |
+| 16 | **OPEN — F-05** | The separate CLI uses the public SDK, has auth link/refresh/export, discovery, power/player reads, event streaming, JSON output, cancellation/cleanup tests, secret redaction, and Windows credential permissions. However, \`cmd/go-alexa/internal/cli/commands.go\` handles only \`link\`, \`refresh\`, and \`export\`; root/group help lists those commands, and there is no logout or credential-removal command. The CLI guide explains private credential storage but provides no logout step. The next public SDK/CLI release-tag consumer installation is also a separate pending publication check. |
 
-### F2 — Mutable body backing storage is outside the route gate (item 4)
+#### Findings and dispositions
 
-A temporary compile-valid request-construction overlay passed the root `go run ./tools/apiroutes --check` when it changed the byte slice backing a `bytes.Reader` after `http.NewRequestWithContext` and before `Client.Do`. The paired replay test observed the modified body and failed its exact request match. The route gate does reject direct request mutations for method, URL path/aliases, URL user info, `GetBody`, `ContentLength`, `TransferEncoding`, and `Trailer`, but does not preserve/check aliases to the body reader's source bytes. This leaves a requested post-construction body-mutation control unimplemented even though the current paired replay catches a changed shipped request.
+##### F-01 — Synthetic replay accepts mismatched effective authority and URL identity (item 15)
 
-### F3 — Injected cookie jar crosses session boundaries (item 9)
+At \`pkg/testing/synthetic_replay.go:167-173\`, request matching compares method, \`URL.Scheme\` + \`URL.Host\`, escaped path, parsed \`URL.Query()\`, headers, and body. It does not compare \`Request.Host\`, \`URL.User\`, or \`URL.Opaque\`, and it does not reject malformed \`RawQuery\` input that \`URL.Query()\` silently drops.
 
-`pkg/alexa/client.go:171` shallow-copies `http.Client`; `NewSession` and `newRESTClient` reuse that client for every session (`client.go:225-264, 813-816`). An isolated synthetic probe injected an `http.Client` with `cookiejar.Jar`, had session one receive `Set-Cookie: account=first-session`, then called `GetUserInfo` from session two. Go's client automatically sent `Cookie: account=first-session` on the second session request. The probe passed by observing this cross-account cookie.
+A compile-valid temporary module using the exported replay API built the same synthetic pair, then asserted rejection after independently mutating each field. Its tests failed because each mismatch was accepted and the paired response returned:
+- \`Request.Host = "attacker.test"\`
+- URL userinfo
+- an opaque URL target
+- \`RawQuery = "expand=all&bad=%zz"\`
 
-This occurs only when the caller injects an HTTP client with a non-nil Jar; the default client has no Jar. The public `Client` comment says it is safe to reuse across Alexa accounts, and the options accept a complete `*http.Client` without documenting this shared mutable account state. Until the SDK isolates the jar or clearly constrains this option, item 9 is not proven.
+**Disposition:** Open on source SHA 713031f. Parent has assigned a source fix; this reviewer has not inspected it. Re-test against a fresh post-fix snapshot is required.
 
-### F4 — The repository review record does not match the current checklist (item 13)
+##### F-02 — Synthetic replay mismatch diagnostics disclose secrets (item 15)
 
-After delivering this report (so the blind-review constraint was honored), I reviewed `docs/independent-review.md`. Its heading describes two reports, but it contains multiple overlapping R2/publication sections for b74 and earlier states. It cites shared-standard pins `25aeb78` and `05e93ff`, says all sixteen items were checked at `d0b091b`, and records “no implementation finding remains open”; the actual target f125 checklist pins `05e93ff` and leaves items 4, 12, and 14 unchecked. The record has no f125 all-item disposition and repeats publication evidence. Item 13 requires one current, consistent review record linked from the checklist; the current record must be reconciled before that requirement can pass.
-## Item-by-item evidence
+At \`pkg/testing/synthetic_replay.go:175-183\`, the mismatch error formats the full URL, parsed query, request headers, and request body. The same temporary module asserted that a mismatch diagnostic redact Authorization values; it failed with the exact output:
 
-### 1. Application independence — PASS
+\`\`\`
+synthetic replay request 1 (probe) mismatch: POST https://expected.test/v1?expand=all, query=map[expand:[all]], headers=map[Authorization:[Bearer diagnostic-secret]], body=""
+\`\`\`
 
-The README and public SDK describe a reusable provider client, caller-managed credentials, and supported provider operations. Application adapters, rollout logic, and account-specific orchestration are not part of the package or examples. CLI material is separately scoped to `cmd/go-alexa`.
+**Disposition:** Open on source SHA 713031f. Parent has assigned a source fix; this reviewer has not inspected it. Re-test safe diagnostics and secret-bearing query/body/header cases against a fresh post-fix snapshot.
 
-### 2. API-accurate customer guidance — PASS
+##### F-03 — Canonical schema examples and schema-validation gate are missing (item 2)
 
-README and the nine MDX guides under `docs/guides/` show `NewClient`, `NewSession`, API types, explicit token refresh, event cleanup, and error handling consistent with exported methods. `docs/verification.md` calls schemas implementation-derived, labels the fixtures synthetic, and distinguishes unrecorded maintainer account tests from reproducible evidence. No official-provider claim is presented as verified.
+The canonical files under \`api/\` contain no OpenAPI/AsyncAPI \`example\` or \`examples\` declarations. CI bundles/checks OpenAPI and builds documentation, but it does not validate every sanitized request, response, and event example against its owning schema. The paired synthetic fixtures are explicitly classified as synthetic and are outside canonical schema components.
 
-### 3. README badges — PASS
+**Disposition:** Open. The baseline still lacks the required canonical examples and CI validation.
 
-README includes Go version, CI, coverage, release, Go Reference, license, and documentation badges, using the actual `portpowered/go-alexa` repository and live endpoints.
+##### F-04 — Published reference omits known nested payload variants (item 4)
 
-### 4. API reference and complete wire inventory — FAIL / OPEN
+The exact rendered artifact's \`docs/openapi/behaviors/submitBehaviorPreview/index.html\` shows a request snippet with \`sequenceJson: "string"\` and a description that directs readers to the separate \`api/behaviors.yaml\`; the nested sequence's required fields are not in the generated page. \`docs/graphql/types/featurecontrolrequest/index.html\` renders \`payload: JSON\`, and \`docs/graphql/types/json/index.html\` renders only \`scalar JSON\`. Known feature payload definitions and actual helpers exist in \`api/feature-controls.yaml\` and \`pkg/dependencies/graphql/features.go\`, but the docs workflow inputs are OpenAPI, AsyncAPI, GraphQL SDL, and guides; it does not publish the feature-payload schema or map each known operation to its required payload shape.
 
-The Documentation workflow successfully builds and publishes the Fumadocs reference from the checked-in OpenAPI, AsyncAPI, GraphQL SDL, and guides. `docs/model-inventory.md` records schema component, generated Go declaration, generator, and use; `-list-handwritten` independently enumerates 110 caller-input, semantic, and domain records (38, 66, and 6 respectively). Generated route/model/control inventories are checked by the default root gates. The GraphQL gate traces generated response/input models to actual emitted selections and validates abstract-type discriminator/decoder branches against SDL possible types; negative tests cover missing/extra selections, SDL drift, wrong concrete decoders, missing discriminator, and possible-type drift. The pinned external `golang.org/x/net/http2` v0.47.0 traffic is documented in `api/external/http2.yaml` and exercised through its injected `DialTLSContext` over `net.Pipe`.
+**Disposition:** Open. Customer-visible reference output needs generated nested variant content and usable request examples.
 
-The REST route gate correctly rejected the request-object mutations enumerated under F2's positive control, and the model gate rejected the malformed inventory probes listed under F1. However, F1 and F2 show two unfulfilled fail-closed cases in the new requirements; this item cannot pass.
+##### F-05 — CLI does not provide logout (item 16)
 
-### 5. Blocking lint and offline checks — PASS
+\`cmd/go-alexa/internal/cli/commands.go\` has no \`logout\` case/handler. \`cmd/go-alexa/internal/cli/app.go\` lists link, refresh, export, discovery, control, player, and events in root help. \`docs/guides/cli.mdx\` documents secure storage and credential inputs but has no logout instruction or removal command.
 
-`.golangci.yml` has literal `linters.default: all`; CI pins golangci-lint v2.3.0 and runs repository-wide lint as a blocking step. Exceptions in config are narrowly scoped and explained. On the clean exact-SHA clone, `make lint` and `make check` both passed with `GOTOOLCHAIN=go1.24.2` and the installed v2.3.0 binary. `make check` ran root and CLI race tests, vet/build, model inventory, OpenAPI bundle, module tidy/verify. Exact main CI run `37192237178` passed both `verify` and `cli-windows` on f125.
+**Disposition:** Open. Add a customer-visible logout/removal command and document it; verify the workflow offline and in the fresh CLI snapshot.
 
-### 6. Coverage — PASS WITH TARGET GAP
+#### Signature
 
-Exact CI run `37192237178` reports 84.6% non-generated production coverage, 2,397/2,834 statements, above the required 80% floor. `tools/coverage` reports package and combined statement totals and excludes generated files and `pkg/testing`. Both workflow documentation and `docs/verification.md` disclose the 90% target is not yet met.
+I independently attest that the verdicts above describe the isolated source snapshot identified above, with the explicit review-record exception stated in the manifest. No changes were made to that source snapshot.
 
-### 7. Package boundaries and consumer import — PASS
+**/s/ Independent reviewer 2 (Codex)**
 
-Reusable public types are in `pkg/alexa` and `pkg/alexaapimodels`; wire models in `pkg/dependencymodels`; transports in `pkg/dependencies/rest`, `pkg/dependencies/graphql`, and the event transport in `pkg/alexa`. Separate schema responsibilities and generated files cover the APIs. Compatibility/semantic types are kept separate from generated wire shapes. I independently created a fresh module with `require github.com/portpowered/go-alexa v0.4.0` and compiled/tested a public `NewClient`/`NewSession`/`ListEndpoints` use. The public SDK v0.4.0 release job also records a successful public-proxy consumer check.
-
-### 8. Client options — PASS
-
-`NewClient` accepts functional options for region, validated HTTP(S) base URLs, event authority, timeout, common or dedicated HTTP clients, and event transport; nil and conflicting event options fail validation. Session options own bearer/refresh tokens, customer ID, cookies, and CSRF values. Invalid region/URL/authority and duplicate conflicting scalar options are tested. The injected-Jar account-isolation issue is separately reported under item 9.
-
-### 9. Stateless client and explicit sessions — FAIL / OPEN
-
-Credentials and event connections are held by `Session`; session closure cancels and closes owned event streams, and tests cover multi-session token separation and cleanup. F3 is a reproducible exception: a mutable injected CookieJar remains shared at `Client` scope and carries response cookies between account sessions.
-
-### 10. Injection at every network edge — PASS
-
-REST and GraphQL requests use injected `http.Client`s; event streams accept `WithEventHTTPClient` or `WithEventTransport`. The event path uses pinned `x/net/http2` and its dial hook; no WebSocket, MQTT, RTC, or separate socket protocol is implemented. Offline native HTTP/2 paired replay verifies actual HTTP/2 requests, framing, parsed directive payload, keepalive, consumption, and teardown. Network call inventory is restricted to named injected-client call sites. Source controls reject uncovered call sites and substituted local/shadow clients.
-
-### 11. Explicit token exchange — PASS
-
-Code-pair registration, refresh, and refresh-token-to-cookie exchange are explicit calls. Refresh returns new credentials and does not silently install them: the authentication guide requires callers to store the returned token and explicitly call `SetAccessToken`. Cookie/CSRF material is likewise caller-requested.
-
-### 12. Customer documentation site — PASS
-
-All nine customer workflows are MDX under `docs/guides/` and link to corresponding generated reference pages. Exact Documentation run `37192237182` passed on f125, including API-reference build, rendered-site link check, and Pages deployment. The artifact contains 251 rendered pages; `tools/check_site_links.py` checked 44,910 internal links successfully. Root, docs root, CLI guide, upgrade guide, generated operation page, and GraphQL page were checked on the published site and returned HTTP 200 with expected content. The scanned API schemas contain no `externalDocs` entries, so runtime schema-supplied external links are absent; the rendered artifact also had no external anchor destinations. Release-note links point to the live upgrade/verification/CLI guidance.
-
-### 13. Documentation audience and redundancy — FAIL / OPEN
-
-README, contributor/release/verification docs, schema notes, synthetic fixture README, all customer guides, and the rendered Pages site were reviewed for audience, purpose, duplicative content, and stale claims. README stays customer-focused; inventory and verification details remain contributor-facing; no extra navigation for internal audits appears on the site. After delivering this blind report, I inspected the tracked `docs/independent-review.md`. It contains overlapping reviews for older implementation/docs commits, mixes shared-template pins `25aeb78` and `05e93ff`, and reports an all-items completion state at `d0b091b` while the exact target f125 checklist has items 4, 12, and 14 unchecked. It does not include or reconcile a verdict for f125. The file also repeats b74 publication evidence across multiple R2 sections. This is one physical record but not a single current, consistent report for the f125 checklist, so item 13 is not satisfied.
-### 14. Independent all-item review — FAIL / OPEN
-
-This report provides a separate verdict/evidence record for every numbered item at the exact f125 SHA. Items 4 and 9 have unresolved findings; post-delivery review of the existing record also found item 13 stale/inconsistent with f125. Per the checklist, item 14 must remain unchecked until the findings are fixed, the record is reconciled, the affected controls are rerun, and two independent reviewers verify the final commit.
-### 15. Paired request/response replay — PASS, scoped to implemented transports
-
-`SyntheticReplay.RoundTrip` compares exact method, origin, escaped path, full repeated-query multimap, complete headers, and body before returning the paired status/headers/body; unexpected, duplicate, mismatched, and unconsumed exchanges fail. REST replay contains 26 ordered synthetic exchanges, GraphQL covers all seven generated documents, and event replay covers stream open then ping. Native HTTP/2 replay exercises both sides of the real pinned codec with a directive frame and verifies EOF/close/server-goroutine completion. The existing fixtures are clearly synthetic and `pkg/alexa/testdata` response-only examples are explicitly segregated. No SDK browser callback/redirect exists, so OAuth state and PKCE are explicitly left to the consuming application; this is the scoped N/A for those two clauses. Synthetic auth fixtures reuse the same device-registration identity across code pair, registration, and refresh requests.
-
-### 16. Standalone CLI — PASS
-
-`cmd/go-alexa` is a separate module that imports the SDK. Its offline tests exercise linking, refresh failure/success, export, discovery, explicit power control, player state, and cancellable event listening with stream/session cleanup. Credentials come from environment, stdin, or files; output files are exclusive and owner-restricted (POSIX 0600 / Windows protected current-user ACL). CLI help says secrets are not accepted as arguments or printed in normal output. Exact main CI ran Windows ACL/lifecycle tests and build/vet/module checks; nested CLI release run `37183841537` successfully installed the tagged CLI via public Go proxy and published `cmd/go-alexa/v0.4.0`. I independently ran `go install github.com/portpowered/go-alexa/cmd/go-alexa@v0.4.0` in an isolated GOPATH and confirmed `go-alexa --help`; a separate public-module consumer also passed.
-
-## Publication and evidence scope
-
-- Main CI: [run 37192237178](https://github.com/portpowered/go-alexa/actions/runs/37192237178), success at exact f125 SHA.
-- Documentation build/deploy: [run 37192237182](https://github.com/portpowered/go-alexa/actions/runs/37192237182), success at exact f125 SHA; Pages deployment status is success at `https://portpowered.github.io/go-alexa/`.
-- SDK public release: `v0.4.0`, commit `8fbb9dc1bfe6064594dd500d8a170a74fba9ec42`; [release record](https://github.com/portpowered/go-alexa/releases/tag/v0.4.0) and release workflow run `37183039192` succeeded.
-- CLI public release: `cmd/go-alexa/v0.4.0`, commit `d6bc1d12c75705e0595ae8156ea223c249cd2e91`; [release record](https://github.com/portpowered/go-alexa/releases/tag/cmd/go-alexa/v0.4.0) and CLI release workflow run `37183841537` succeeded.
-- The fixtures are synthetic only. `docs/verification.md` records maintainer-reported account testing as historical, without dates, operation list, or sanitized captures. No live account credentials or real provider traffic were used for this audit.
+**Signed:** 2026-10-04 (America/Los_Angeles)

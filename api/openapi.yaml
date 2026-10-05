@@ -109,6 +109,10 @@ components:
           type: string
       type: object
     WireBehaviorPreviewRequest:
+      example:
+        behaviorId: PREVIEW
+        sequenceJson: '{"@type":"com.amazon.alexa.behaviors.model.Sequence","startNode":{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","type":"Alexa.DeviceControls.Volume","operationPayload":{"deviceType":"synthetic-device","deviceSerialNumber":"synthetic-serial","locale":"en-US","customerId":"synthetic-customer","value":32,"skillId":"amzn1.ask.1p.alexadevicecontrols"}}}'
+        status: ENABLED
       properties:
         behaviorId:
           type: string
@@ -125,6 +129,7 @@ components:
       - sequenceJson
       - status
       type: object
+      x-example-evidence: synthetic
     WireCapabilityInterface:
       description: Open string value; the implementation does not reject unknown capability
         names.
@@ -148,10 +153,16 @@ components:
           $ref: '#/components/schemas/WireChallenge'
       type: object
     WireChallengeResponse:
+      example:
+        response:
+          challenge:
+            challenge_reason: MissingRequiredAuthenticationData
+            required_authentication_method: GenericClaimPassword
       properties:
         response:
           $ref: '#/components/schemas/WireChallengeEnvelope'
       type: object
+      x-example-evidence: synthetic
     WireCodeData:
       properties:
         app_name:
@@ -196,6 +207,18 @@ components:
       - private_code
       type: object
     WireCodePairRequest:
+      example:
+        code_data:
+          app_name: synthetic-app
+          app_version: "1"
+          device_model: synthetic-model
+          device_name: Synthetic device
+          device_serial: synthetic-serial
+          device_type: synthetic-device
+          domain: synthetic.amazon.test
+          os_version: "0"
+          secondary_registration: "False"
+        scopes: []
       properties:
         code_data:
           $ref: '#/components/schemas/WireCodeData'
@@ -207,15 +230,27 @@ components:
       - code_data
       - scopes
       type: object
+      x-example-evidence: synthetic
     WireCodePairResponse:
+      example:
+        private_code: synthetic-private
+        public_code: synthetic-public
       properties:
         private_code:
           type: string
         public_code:
           type: string
       type: object
+      x-example-evidence: synthetic
     WireCommand:
       additionalProperties: true
+      example:
+        device_id: synthetic-endpoint
+        name: TurnOn
+        namespace: Alexa.PowerController
+        payload:
+          powerState: "ON"
+        type: ""
       properties:
         device_id:
           type: string
@@ -229,12 +264,19 @@ components:
       required:
       - type
       type: object
+      x-example-evidence: synthetic
     WireCookieExchangeEnvelope:
       properties:
         tokens:
           $ref: '#/components/schemas/WireCookieTokens'
       type: object
     WireCookieExchangeRequest:
+      example:
+        app_name: Amazon Alexa
+        domain: synthetic.amazon.test
+        requested_token_type: auth_cookies
+        source_token: synthetic-refresh
+        source_token_type: refresh_token
       properties:
         app_name:
           type: string
@@ -258,11 +300,17 @@ components:
       - source_token_type
       - source_token
       type: object
+      x-example-evidence: synthetic
     WireCookieExchangeResponse:
+      example:
+        response:
+          tokens:
+            cookies: {}
       properties:
         response:
           $ref: '#/components/schemas/WireCookieExchangeEnvelope'
       type: object
+      x-example-evidence: synthetic
     WireCookieRecord:
       properties:
         Expires:
@@ -292,6 +340,14 @@ components:
       type: object
     WireDevice:
       additionalProperties: true
+      example:
+        capabilities:
+        - synthetic-capability
+        id: synthetic-endpoint
+        metadata: {}
+        name: Synthetic endpoint
+        state: {}
+        type: synthetic-device
       properties:
         capabilities:
           items:
@@ -310,6 +366,7 @@ components:
         type:
           type: string
       type: object
+      x-example-evidence: synthetic
     WireDeviceMetadata:
       properties:
         device_model:
@@ -400,6 +457,27 @@ components:
       type: object
     WireDevicesV2Response:
       additionalProperties: true
+      example:
+        devices:
+        - accountName: Synthetic account
+          appDeviceList:
+          - deviceAccountId: synthetic-device-account
+            deviceType: synthetic-device
+            serialNumber: synthetic-serial
+          associatedUnitIds: []
+          capabilities:
+          - synthetic-capability
+          charging: false
+          clusterMembers: []
+          deviceAccountId: synthetic-device-account
+          deviceFamily: FIRE_TV
+          deviceOwnerCustomerId: synthetic-customer
+          deviceType: synthetic-device
+          deviceTypeFriendlyName: Synthetic device
+          online: true
+          parentClusters: []
+          serialNumber: synthetic-serial
+          softwareVersion: synthetic-version
       properties:
         devices:
           items:
@@ -408,6 +486,7 @@ components:
       required:
       - devices
       type: object
+      x-example-evidence: synthetic
     WireEmailPasswordAuth:
       properties:
         email:
@@ -428,6 +507,16 @@ components:
       type: object
     WireEndpointListResponse:
       additionalProperties: true
+      example:
+        nextToken: synthetic-next
+        results:
+        - capabilities:
+          - synthetic-capability
+          id: synthetic-endpoint
+          metadata: {}
+          name: Synthetic endpoint
+          state: {}
+          type: synthetic-device
       properties:
         nextToken:
           type: string
@@ -436,6 +525,7 @@ components:
             $ref: '#/components/schemas/WireDevice'
           type: array
       type: object
+      x-example-evidence: synthetic
     WireEndpointQuery:
       properties:
         and:
@@ -461,19 +551,38 @@ components:
           $ref: '#/components/schemas/WireStringFilter'
       type: object
     WireEndpointQueryRequest:
+      example:
+        query:
+          and:
+          - manufacturer:
+              value:
+                text: Synthetic
+          includeFields:
+            capabilities: true
+            states: true
+          paginationContext:
+            maxResults: 10
+            performPagination: false
       properties:
         query:
           $ref: '#/components/schemas/WireEndpointQuery'
       required:
       - query
       type: object
+      x-example-evidence: synthetic
     WireFriendlyNameRequest:
+      example:
+        friendlyName:
+          type: PLAIN
+          value:
+            text: Synthetic light
       properties:
         friendlyName:
           $ref: '#/components/schemas/WireFriendlyNameValue'
       required:
       - friendlyName
       type: object
+      x-example-evidence: synthetic
     WireFriendlyNameText:
       properties:
         text:
@@ -495,6 +604,15 @@ components:
       type: object
     WireGraphQLError:
       additionalProperties: true
+      example:
+        extensions:
+          code: SYNTHETIC_ERROR
+        locations:
+        - column: 1
+          line: 1
+        message: Synthetic GraphQL operation error
+        path:
+        - endpoint
       properties:
         extensions:
           additionalProperties: true
@@ -511,6 +629,7 @@ components:
       required:
       - message
       type: object
+      x-example-evidence: synthetic
     WireGraphQLErrorLocation:
       properties:
         column:
@@ -523,6 +642,12 @@ components:
       type: object
     WireGraphQLRequest:
       additionalProperties: true
+      example:
+        operationName: SyntheticEndpoint
+        query: 'query SyntheticEndpoint($id: String!) { endpoint(id: $id) { endpointId
+          } }'
+        variables:
+          id: synthetic-endpoint
       properties:
         operationName:
           type: string
@@ -535,8 +660,22 @@ components:
       required:
       - query
       type: object
+      x-example-evidence: synthetic
     WireGraphQLResponse:
       additionalProperties: true
+      examples:
+      - data:
+          endpoint:
+            endpointId: synthetic-endpoint
+      - errors:
+        - extensions:
+            code: SYNTHETIC_ERROR
+          locations:
+          - column: 1
+            line: 1
+          message: Synthetic GraphQL operation error
+          path:
+          - endpoint
       properties:
         data:
           additionalProperties: true
@@ -546,6 +685,7 @@ components:
             $ref: '#/components/schemas/WireGraphQLError'
           type: array
       type: object
+      x-example-evidence: synthetic
     WireInfoText:
       additionalProperties: true
       properties:
@@ -566,8 +706,13 @@ components:
       additionalProperties: true
       description: Caller-supplied JSON object; nil is serialized by this client as
         an empty object.
+      example:
+        state: "ON"
       type: object
+      x-example-evidence: synthetic
     WireMediaCommand:
+      example:
+        type: PauseCommand
       properties:
         repeat:
           type: boolean
@@ -578,6 +723,7 @@ components:
       required:
       - type
       type: object
+      x-example-evidence: synthetic
     WireMediaCommandType:
       description: Implementation-derived media command values used by the client.
       enum:
@@ -662,10 +808,42 @@ components:
       type: object
     WirePlayerStateResponse:
       additionalProperties: true
+      example:
+        playerInfo:
+          hint: Synthetic player state
+          infoText:
+            multiLineMode: false
+            subText1: Synthetic subtitle
+            title: Synthetic title
+          isPlayingInLemur: false
+          mainArt:
+            altText: Synthetic artwork
+            contentType: image/png
+            url: https://images.example.invalid/synthetic.png
+          mediaId: synthetic-media
+          progress:
+            allowScrubbing: false
+            mediaLength: 180
+            mediaProgress: 45
+            showTiming: true
+            visible: true
+          provider:
+            providerDisplayName: Synthetic provider
+            providerName: synthetic
+          state: PAUSED
+          template:
+            templateType: SYNTHETIC
+          transport:
+            playPause: SYNTHETIC_CONTROL
+          upNextItems: []
+          volume:
+            muted: false
+            volume: 32
       properties:
         playerInfo:
           $ref: '#/components/schemas/WirePlayerInfo'
       type: object
+      x-example-evidence: synthetic
     WireProgress:
       additionalProperties: true
       properties:
@@ -745,6 +923,22 @@ components:
       - device_name
       type: object
     WireRegistrationRequest:
+      example:
+        auth_data:
+          code_pair:
+            private_code: synthetic-private
+            public_code: synthetic-public
+        registration_data:
+          app_name: synthetic-app
+          app_version: "1"
+          device_model: synthetic-model
+          device_name: Synthetic device
+          device_serial: synthetic-serial
+          device_type: synthetic-device
+          domain: synthetic.amazon.test
+          os_version: "0"
+        requested_token_type:
+        - bearer
       properties:
         auth_data:
           $ref: '#/components/schemas/WireAuthData'
@@ -761,11 +955,20 @@ components:
       - registration_data
       - auth_data
       type: object
+      x-example-evidence: synthetic
     WireRegistrationResponse:
+      example:
+        response:
+          success:
+            tokens:
+              bearer:
+                access_token: synthetic-access
+                refresh_token: synthetic-refresh
       properties:
         response:
           $ref: '#/components/schemas/WireRegistrationResponseEnvelope'
       type: object
+      x-example-evidence: synthetic
     WireRegistrationResponseEnvelope:
       properties:
         success:
@@ -807,6 +1010,18 @@ components:
           type: string
       type: object
     WireTokenRefreshRequest:
+      example:
+        app_name: synthetic-app
+        app_version: "1"
+        device_metadata:
+          device_model: synthetic-model
+          device_serial: synthetic-serial
+          device_type: synthetic-device
+          manufacturer: Synthetic
+          os_version: "0"
+        requested_token_type: access_token
+        source_token: synthetic-refresh
+        source_token_type: refresh_token
       properties:
         app_name:
           type: string
@@ -833,7 +1048,11 @@ components:
       - requested_token_type
       - device_metadata
       type: object
+      x-example-evidence: synthetic
     WireTokenRefreshResponse:
+      example:
+        access_token: synthetic-access
+        expires_in: 3600
       properties:
         access_token:
           format: password
@@ -841,6 +1060,7 @@ components:
         expires_in:
           type: integer
       type: object
+      x-example-evidence: synthetic
     WireTransport:
       additionalProperties: true
       properties:
@@ -866,6 +1086,13 @@ components:
     WireUserInfo:
       additionalProperties: true
       description: May contain personal account information.
+      example:
+        countryOfResidence: US
+        email: synthetic@example.invalid
+        fullName: Synthetic User
+        id: synthetic-user
+        marketPlaceDomainName: synthetic.amazon.test
+        marketPlaceLocale: en-US
       properties:
         countryOfResidence:
           type: string
@@ -892,6 +1119,7 @@ components:
         marketPlaceLocale:
           type: string
       type: object
+      x-example-evidence: synthetic
     WireVolume:
       additionalProperties: true
       properties:

@@ -122,6 +122,38 @@ components:
         playerInfo:
           $ref: '#/components/schemas/WirePlayerInfo'
       additionalProperties: true
+      example:
+        playerInfo:
+          hint: Synthetic player state
+          infoText:
+            title: Synthetic title
+            subText1: Synthetic subtitle
+            multiLineMode: false
+          isPlayingInLemur: false
+          mainArt:
+            altText: Synthetic artwork
+            contentType: image/png
+            url: https://images.example.invalid/synthetic.png
+          mediaId: synthetic-media
+          progress:
+            allowScrubbing: false
+            mediaLength: 180
+            mediaProgress: 45
+            showTiming: true
+            visible: true
+          provider:
+            providerDisplayName: Synthetic provider
+            providerName: synthetic
+          state: PAUSED
+          template:
+            templateType: SYNTHETIC
+          transport:
+            playPause: SYNTHETIC_CONTROL
+          upNextItems: []
+          volume:
+            muted: false
+            volume: 32
+      x-example-evidence: synthetic
     WirePlayerInfo:
       type: object
       properties:
@@ -290,6 +322,9 @@ components:
           type: boolean
       required:
       - type
+      example:
+        type: PauseCommand
+      x-example-evidence: synthetic
     WireMediaCommandType:
       description: Implementation-derived media command values used by the client.
       type: string

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -127,11 +128,20 @@ func assertReplayRejectsMismatchedRequests(
 ) {
 	t.Helper()
 
-	for _, bad := range []*http.Request{
+	requestURIOverride := request("https://example.invalid/one?a=1&a=2", `{"id":1}`, "first")
+	requestURIOverride.RequestURI = "/one?access_token=request-uri-secret"
+
+	fragmentOverride := request("https://example.invalid/one?a=1&a=2", `{"id":1}`, "first")
+	fragmentOverride.URL.Fragment = "fragment-secret"
+
+	badRequests := []*http.Request{
 		request("https://example.invalid/one?a=1", `{"id":1}`, "first"),
 		request("https://example.invalid/one?a=1&a=2", `{"id":1}`, "wrong"),
 		request("https://example.invalid/one?a=1&a=2", `{"id":2}`, "first"),
-	} {
+		requestURIOverride,
+		fragmentOverride,
+	}
+	for _, bad := range badRequests {
 		response, err := replay.RoundTrip(bad)
 		if response != nil {
 			closeErr := response.Body.Close()
@@ -143,10 +153,22 @@ func assertReplayRejectsMismatchedRequests(
 		if err == nil || response != nil {
 			t.Fatalf("mismatched request returned response %v, error %v", response, err)
 		}
+
+		assertReplayErrorHidesSensitiveValues(t, err)
 	}
 
 	err := replay.AssertConsumed()
 	if err == nil {
 		t.Fatal("unconsumed capture was not detected")
+	}
+}
+
+func assertReplayErrorHidesSensitiveValues(t *testing.T, err error) {
+	t.Helper()
+
+	for _, secret := range []string{"request-uri-secret", "fragment-secret"} {
+		if strings.Contains(err.Error(), secret) {
+			t.Errorf("replay mismatch diagnostic exposed %q: %v", secret, err)
+		}
 	}
 }

@@ -89,6 +89,16 @@ components:
           x-go-wire-key-constant-name: EventDirectiveKey
       required: [directive]
       additionalProperties: true
+      example:
+        directive:
+          header:
+            namespace: Alexa.Mobile.Push
+            name: RenderUpdate
+            messageId: synthetic-message
+          payload:
+            renderingUpdates:
+            - resourceMetadata: '{"metricName":"EndpointPower","payload":{"data":{"__typename":"Endpoint","features":[{"__typename":"Feature","name":"power","properties":[{"__typename":"Power","name":"powerState","powerStateValue":"OFF","timeOfSample":"2025-12-02T05:17:49Z","accuracy":"HIGH","type":"RETRIEVABLE"}]}]},"entity":{"__typename":"Endpoint","id":"synthetic-endpoint"}},"type":"UPDATE_ENTITY","timestamp":"2025-12-02T05:17:49Z"}'
+      x-example-evidence: synthetic
     Directive:
       type: object
       properties:
@@ -100,6 +110,15 @@ components:
           x-go-wire-key-constant-name: EventPayloadKey
       required: [header, payload]
       additionalProperties: true
+      example:
+        header:
+          namespace: Alexa.Mobile.Push
+          name: RenderUpdate
+          messageId: synthetic-message
+        payload:
+          renderingUpdates:
+          - resourceMetadata: '{"metricName":"EndpointPower","payload":{"data":{"__typename":"Endpoint","features":[{"__typename":"Feature","name":"power","properties":[{"__typename":"Power","name":"powerState","powerStateValue":"OFF","timeOfSample":"2025-12-02T05:17:49Z","accuracy":"HIGH","type":"RETRIEVABLE"}]}]},"entity":{"__typename":"Endpoint","id":"synthetic-endpoint"}},"type":"UPDATE_ENTITY","timestamp":"2025-12-02T05:17:49Z"}'
+      x-example-evidence: synthetic
     DirectiveHeader:
       type: object
       description: The current parser reads `messageId`; it does not validate other header fields.
@@ -110,6 +129,11 @@ components:
           type: string
           x-go-wire-key-constant-name: EventMessageIDKey
       additionalProperties: true
+      example:
+        namespace: Alexa.Mobile.Push
+        name: RenderUpdate
+        messageId: synthetic-message
+      x-example-evidence: synthetic
     DirectivePayload:
       type: object
       properties:
@@ -120,6 +144,10 @@ components:
             $ref: '#/components/schemas/RenderingUpdate'
       required: [renderingUpdates]
       additionalProperties: true
+      example:
+        renderingUpdates:
+        - resourceMetadata: '{"metricName":"EndpointPower","payload":{"data":{"__typename":"Endpoint","features":[{"__typename":"Feature","name":"power","properties":[{"__typename":"Power","name":"powerState","powerStateValue":"OFF","timeOfSample":"2025-12-02T05:17:49Z","accuracy":"HIGH","type":"RETRIEVABLE"}]}]},"entity":{"__typename":"Endpoint","id":"synthetic-endpoint"}},"type":"UPDATE_ENTITY","timestamp":"2025-12-02T05:17:49Z"}'
+      x-example-evidence: synthetic
     RenderingUpdate:
       type: object
       properties:
@@ -134,3 +162,6 @@ components:
             $ref: './feature-events.yaml#/components/schemas/ResourceMetadataPayload'
       required: [resourceMetadata]
       additionalProperties: true
+      example:
+        resourceMetadata: '{"metricName":"EndpointPower","payload":{"data":{"__typename":"Endpoint","features":[{"__typename":"Feature","name":"power","properties":[{"__typename":"Power","name":"powerState","powerStateValue":"OFF","timeOfSample":"2025-12-02T05:17:49Z","accuracy":"HIGH","type":"RETRIEVABLE"}]}]},"entity":{"__typename":"Endpoint","id":"synthetic-endpoint"}},"type":"UPDATE_ENTITY","timestamp":"2025-12-02T05:17:49Z"}'
+      x-example-evidence: synthetic

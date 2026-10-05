@@ -71,6 +71,8 @@ jobs:
         run: |
           go mod tidy
           git diff --exit-code -- go.mod go.sum
+      - name: Validate canonical schema examples
+        run: make schema-examples
       - name: Check formatting
         shell: bash
         run: |

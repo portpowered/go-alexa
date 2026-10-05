@@ -13,30 +13,45 @@ components:
       additionalProperties: false
       x-go-type: struct{}
       description: Empty object payload used by color-temperature adjustment.
+      example:
+        {}
+      x-example-evidence: synthetic
     SpeakerSetVolumePayload:
       type: object
       additionalProperties: false
       required: [volume]
       properties:
         volume: {type: integer}
+      example:
+        volume: 32
+      x-example-evidence: synthetic
     SpeakerAdjustVolumePayload:
       type: object
       additionalProperties: false
       required: [volumeDelta]
       properties:
         volumeDelta: {type: integer}
+      example:
+        volumeDelta: -4
+      x-example-evidence: synthetic
     BrightnessSetPayload:
       type: object
       additionalProperties: false
       required: [brightness]
       properties:
         brightness: {type: integer}
+      example:
+        brightness: 75
+      x-example-evidence: synthetic
     BrightnessAdjustPayload:
       type: object
       additionalProperties: false
       required: [brightnessDelta]
       properties:
         brightnessDelta: {type: integer}
+      example:
+        brightnessDelta: -5
+      x-example-evidence: synthetic
     FeatureColorValue:
       type: object
       additionalProperties: false
@@ -45,24 +60,41 @@ components:
         hue: {type: number, x-go-type: float64}
         saturation: {type: number, x-go-type: float64}
         brightness: {type: number, x-go-type: float64}
+      example:
+        hue: 180
+        saturation: 0.5
+        brightness: 0.8
+      x-example-evidence: synthetic
     ColorSetPayload:
       type: object
       additionalProperties: false
       required: [color]
       properties:
         color: {$ref: '#/components/schemas/FeatureColorValue'}
+      example:
+        color:
+          hue: 180
+          saturation: 0.5
+          brightness: 0.8
+      x-example-evidence: synthetic
     ColorTemperatureSetPayload:
       type: object
       additionalProperties: false
       required: [colorTemperatureInKelvin]
       properties:
         colorTemperatureInKelvin: {type: integer}
+      example:
+        colorTemperatureInKelvin: 3200
+      x-example-evidence: synthetic
     LockPayload:
       type: object
       additionalProperties: false
       required: [lockState]
       properties:
         lockState: {$ref: '#/components/schemas/ControlKnownLockStateValue'}
+      example:
+        lockState: LOCKED
+      x-example-evidence: synthetic
     ModeSetPayload:
       type: object
       additionalProperties: false
@@ -71,6 +103,9 @@ components:
         mode:
           type: string
           description: Device-specific mode supplied by the caller; no fixed provider-wide enum is assumed.
+      example:
+        mode: ECO
+      x-example-evidence: synthetic
     ModeAdjustPayload:
       type: object
       additionalProperties: false
@@ -79,48 +114,72 @@ components:
         modeDelta:
           type: string
           description: Device-specific adjustment supplied by the caller; no fixed provider-wide enum is assumed.
+      example:
+        modeDelta: NEXT
+      x-example-evidence: synthetic
     RangeSetPayload:
       type: object
       additionalProperties: false
       required: [rangeValue]
       properties:
         rangeValue: {type: number, x-go-type: float64}
+      example:
+        rangeValue: 12.5
+      x-example-evidence: synthetic
     RangeAdjustPayload:
       type: object
       additionalProperties: false
       required: [rangeValueDelta]
       properties:
         rangeValueDelta: {type: number, x-go-type: float64}
+      example:
+        rangeValueDelta: -2.5
+      x-example-evidence: synthetic
     TogglePayload:
       type: object
       additionalProperties: false
       required: [toggleState]
       properties:
         toggleState: {$ref: '#/components/schemas/ControlKnownToggleStateValue'}
+      example:
+        toggleState: 'ON'
+      x-example-evidence: synthetic
     PercentageSetPayload:
       type: object
       additionalProperties: false
       required: [percentage]
       properties:
         percentage: {type: number, x-go-type: float64}
+      example:
+        percentage: 25
+      x-example-evidence: synthetic
     PercentageAdjustPayload:
       type: object
       additionalProperties: false
       required: [percentageDelta]
       properties:
         percentageDelta: {type: number, x-go-type: float64}
+      example:
+        percentageDelta: -5
+      x-example-evidence: synthetic
     PowerLevelSetPayload:
       type: object
       additionalProperties: false
       required: [powerLevel]
       properties:
         powerLevel: {type: integer}
+      example:
+        powerLevel: 68
+      x-example-evidence: synthetic
     PowerLevelAdjustPayload:
       type: object
       additionalProperties: false
       required: [powerLevelDelta]
       properties:
         powerLevelDelta: {type: integer}
+      example:
+        powerLevelDelta: -8
+      x-example-evidence: synthetic
     ActionPayload:
       type: object
       required: [action]
@@ -130,6 +189,10 @@ components:
       description: >-
         The action name is caller- or device-defined. Additional top-level fields are
         caller-supplied action parameters and remain open by design.
+      example:
+        action: open
+        duration: 12
+      x-example-evidence: synthetic
     ThermostatSetpoint:
       type: object
       additionalProperties: false
@@ -137,18 +200,32 @@ components:
       properties:
         value: {type: number, x-go-type: float64}
         scale: {$ref: '#/components/schemas/ControlKnownTemperatureScale'}
+      example:
+        value: 21.5
+        scale: CELSIUS
+      x-example-evidence: synthetic
     ThermostatSetpointSetPayload:
       type: object
       additionalProperties: false
       required: [targetSetpoint]
       properties:
         targetSetpoint: {$ref: '#/components/schemas/ThermostatSetpoint'}
+      example:
+        targetSetpoint:
+          value: 21.5
+          scale: CELSIUS
+      x-example-evidence: synthetic
     ThermostatSetpointAdjustPayload:
       type: object
       additionalProperties: false
       required: [targetSetpointDelta]
       properties:
         targetSetpointDelta: {$ref: '#/components/schemas/ThermostatSetpoint'}
+      example:
+        targetSetpointDelta:
+          value: -1
+          scale: CELSIUS
+      x-example-evidence: synthetic
     ThermostatModePayload:
       type: object
       additionalProperties: false
@@ -156,6 +233,9 @@ components:
       properties:
         thermostatMode: {$ref: '#/components/schemas/ControlKnownThermostatModeValue'}
 
+      example:
+        thermostatMode: ECO
+      x-example-evidence: synthetic
     ControlKnownLockStateValue:
       type: string
       x-go-type: string
@@ -163,6 +243,8 @@ components:
       x-go-graphql-enum: LockStateValue
       x-extensible-enum: ['LOCKED', 'UNLOCKED', 'UNKNOWN']
 
+      example: "LOCKED"
+      x-example-evidence: synthetic
     ControlKnownTemperatureScale:
       type: string
       x-go-type: string
@@ -170,6 +252,8 @@ components:
       x-go-graphql-enum: TemperatureScale
       x-extensible-enum: ['FAHRENHEIT', 'CELSIUS', 'KELVIN']
 
+      example: "CELSIUS"
+      x-example-evidence: synthetic
     ControlKnownThermostatModeValue:
       type: string
       x-go-type: string
@@ -177,9 +261,13 @@ components:
       x-go-graphql-enum: ThermostatModeValue
       x-extensible-enum: ['COOL', 'HEAT', 'OFF', 'AUTO', 'ECO', 'EM_HEAT']
 
+      example: "ECO"
+      x-example-evidence: synthetic
     ControlKnownToggleStateValue:
       type: string
       x-go-type: string
       description: Known ToggleStateValue values from the checked-in GraphQL schema. Future string values remain open.
       x-go-graphql-enum: ToggleStateValue
       x-extensible-enum: ['ON', 'OFF']
+      example: "ON"
+      x-example-evidence: synthetic

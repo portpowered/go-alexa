@@ -299,12 +299,20 @@ func syntheticRequestIdentityFor(req *http.Request) (syntheticRequestIdentity, [
 	}
 
 	var issues []string
+	if req.RequestURI != "" {
+		issues = append(issues, "RequestURI")
+	}
+
 	if req.URL.User != nil {
 		issues = append(issues, "URL user information")
 	}
 
 	if req.URL.Opaque != "" {
 		issues = append(issues, "opaque URL")
+	}
+
+	if req.URL.Fragment != "" {
+		issues = append(issues, "URL fragment")
 	}
 
 	query, err := url.ParseQuery(req.URL.RawQuery)

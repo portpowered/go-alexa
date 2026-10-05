@@ -63,7 +63,8 @@ func (t *ReplayCaptureRoundTripper) RoundTrip(req *http.Request) (*http.Response
 	}
 
 	pair := &t.captures[t.next]
-	if req.Method != pair.Request.Method || req.URL.String() != pair.Request.URL ||
+	if req.RequestURI != "" || req.URL.Fragment != "" ||
+		req.Method != pair.Request.Method || req.URL.String() != pair.Request.URL ||
 		!reflect.DeepEqual(req.Header, pair.Request.Headers) || !bytes.Equal(body, pair.Request.Body) {
 		return nil, fmt.Errorf("%w %d mismatch in method, URL, headers, or body", errReplayRequestMismatch, t.next+1)
 	}

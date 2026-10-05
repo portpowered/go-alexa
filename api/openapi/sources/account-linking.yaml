@@ -247,6 +247,10 @@ components:
           format: password
         expires_in:
           type: integer
+      example:
+        access_token: synthetic-access
+        expires_in: 3600
+      x-example-evidence: synthetic
     WireTokenRefreshRequest:
       type: object
       properties:
@@ -274,6 +278,19 @@ components:
       - source_token
       - requested_token_type
       - device_metadata
+      example:
+        app_name: synthetic-app
+        app_version: '1'
+        source_token_type: refresh_token
+        source_token: synthetic-refresh
+        requested_token_type: access_token
+        device_metadata:
+          device_type: synthetic-device
+          device_model: synthetic-model
+          os_version: '0'
+          device_serial: synthetic-serial
+          manufacturer: Synthetic
+      x-example-evidence: synthetic
     WireDeviceMetadata:
       type: object
       properties:
@@ -300,6 +317,14 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/WireRegistrationResponseEnvelope'
+      example:
+        response:
+          success:
+            tokens:
+              bearer:
+                access_token: synthetic-access
+                refresh_token: synthetic-refresh
+      x-example-evidence: synthetic
     WireRegistrationResponseEnvelope:
       type: object
       properties:
@@ -341,6 +366,23 @@ components:
       - requested_token_type
       - registration_data
       - auth_data
+      example:
+        requested_token_type:
+        - bearer
+        registration_data:
+          app_name: synthetic-app
+          app_version: '1'
+          device_type: synthetic-device
+          domain: synthetic.amazon.test
+          device_model: synthetic-model
+          os_version: '0'
+          device_serial: synthetic-serial
+          device_name: Synthetic device
+        auth_data:
+          code_pair:
+            public_code: synthetic-public
+            private_code: synthetic-private
+      x-example-evidence: synthetic
     WireAuthData:
       type: object
       properties:
@@ -412,6 +454,11 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/WireCookieExchangeEnvelope'
+      example:
+        response:
+          tokens:
+            cookies: {}
+      x-example-evidence: synthetic
     WireCookieExchangeEnvelope:
       type: object
       properties:
@@ -468,6 +515,13 @@ components:
       - domain
       - source_token_type
       - source_token
+      example:
+        app_name: Amazon Alexa
+        requested_token_type: auth_cookies
+        domain: synthetic.amazon.test
+        source_token_type: refresh_token
+        source_token: synthetic-refresh
+      x-example-evidence: synthetic
     WireCodePairResponse:
       type: object
       properties:
@@ -475,6 +529,10 @@ components:
           type: string
         private_code:
           type: string
+      example:
+        public_code: synthetic-public
+        private_code: synthetic-private
+      x-example-evidence: synthetic
     WireCodePairRequest:
       type: object
       properties:
@@ -487,6 +545,19 @@ components:
       required:
       - code_data
       - scopes
+      example:
+        code_data:
+          app_name: synthetic-app
+          app_version: '1'
+          device_type: synthetic-device
+          domain: synthetic.amazon.test
+          device_model: synthetic-model
+          os_version: '0'
+          device_serial: synthetic-serial
+          device_name: Synthetic device
+          secondary_registration: 'False'
+        scopes: []
+      x-example-evidence: synthetic
     WireCodeData:
       type: object
       properties:
@@ -525,6 +596,12 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/WireChallengeEnvelope'
+      example:
+        response:
+          challenge:
+            challenge_reason: MissingRequiredAuthenticationData
+            required_authentication_method: GenericClaimPassword
+      x-example-evidence: synthetic
     WireChallengeEnvelope:
       type: object
       properties:

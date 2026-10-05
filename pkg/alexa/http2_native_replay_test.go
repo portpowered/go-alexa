@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/portpowered/go-alexa/pkg/alexa"
+	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 	replay "github.com/portpowered/go-alexa/pkg/testing"
 	"golang.org/x/net/http2"
 )
@@ -125,13 +126,20 @@ func nativeEventReplayHandler(
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.ProtoMajor != 2 {
 			t.Errorf("request used %s instead of HTTP/2", request.Proto)
+			writer.WriteHeader(http.StatusBadRequest)
+
+			return
 		}
 
-		// Restore origin components omitted from an HTTP server's parsed URL.
-		request.URL.Scheme = "https"
-		request.URL.Host = request.Host
+		replayRequest, ok := normalizeNativeEventReplayRequest(request)
+		if !ok {
+			t.Errorf("unexpected inbound HTTP/2 request identity")
+			writer.WriteHeader(http.StatusBadRequest)
 
-		response, err := player.RoundTrip(request)
+			return
+		}
+
+		response, err := player.RoundTrip(replayRequest)
 		if err != nil {
 			t.Errorf("paired HTTP/2 request mismatch: %v", err)
 			writer.WriteHeader(http.StatusBadRequest)
@@ -156,7 +164,7 @@ func nativeEventReplayHandler(
 			return
 		}
 
-		if request.URL.Path == "/ping" {
+		if replayRequest.URL.Path == apiroutes.PathPingDirectiveStream {
 			pinged <- struct{}{}
 
 			return
@@ -171,4 +179,33 @@ func nativeEventReplayHandler(
 
 		<-request.Context().Done()
 	})
+}
+
+func normalizeNativeEventReplayRequest(request *http.Request) (*http.Request, bool) {
+	if !isExpectedNativeEventRequest(request) {
+		return nil, false
+	}
+
+	replayRequest := request.Clone(request.Context())
+	replayRequest.RequestURI = ""
+	replayRequest.URL.Scheme = "https"
+	replayRequest.URL.Host = replayRequest.Host
+
+	return replayRequest, true
+}
+
+func isExpectedNativeEventRequest(request *http.Request) bool {
+	if request == nil || request.URL == nil || request.Host != "events.synthetic.test" ||
+		request.RequestURI == "" || request.RequestURI != request.URL.RequestURI() {
+		return false
+	}
+
+	switch request.URL.Path {
+	case apiroutes.ChannelDirectivesAddress:
+		return request.Method == apiroutes.MethodOpenDirectiveStream
+	case apiroutes.PathPingDirectiveStream:
+		return request.Method == apiroutes.MethodPingDirectiveStream
+	default:
+		return false
+	}
 }

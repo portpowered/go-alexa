@@ -23,6 +23,9 @@ linters:
       rules:
         repository-dependencies:
           list-mode: strict
+          files:
+            - $all
+            - "!**/tools/schemaexamples/**"
           allow:
             - $gostd
             - github.com/Khan/genqlient
@@ -34,6 +37,15 @@ linters:
             - github.com/vektah/gqlparser/v2/parser
             - golang.org/x/net
             - gopkg.in/yaml.v2
+            - gopkg.in/yaml.v3
+        schema-examples:
+          list-mode: strict
+          files:
+            - "**/tools/schemaexamples/**"
+          allow:
+            - $gostd
+            - github.com/santhosh-tekuri/jsonschema/v6
+            - gopkg.in/yaml.v3
     exhaustruct:
       # API DTOs and HTTP transport config intentionally rely on zero values for
       # optional wire fields and standard-library defaults.

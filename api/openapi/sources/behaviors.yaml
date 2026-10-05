@@ -103,6 +103,11 @@ components:
       - behaviorId
       - sequenceJson
       - status
+      example:
+        behaviorId: PREVIEW
+        sequenceJson: '{"@type":"com.amazon.alexa.behaviors.model.Sequence","startNode":{"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","type":"Alexa.DeviceControls.Volume","operationPayload":{"deviceType":"synthetic-device","deviceSerialNumber":"synthetic-serial","locale":"en-US","customerId":"synthetic-customer","value":32,"skillId":"amzn1.ask.1p.alexadevicecontrols"}}}'
+        status: ENABLED
+      x-example-evidence: synthetic
   responses:
     UnhandledResponse:
       description: Response not decoded into a success model by this operation.

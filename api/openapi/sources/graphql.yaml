@@ -103,6 +103,20 @@ components:
           items:
             $ref: '#/components/schemas/WireGraphQLError'
       additionalProperties: true
+      examples:
+        - data:
+            endpoint:
+              endpointId: synthetic-endpoint
+        - errors:
+          - message: Synthetic GraphQL operation error
+            locations:
+            - line: 1
+              column: 1
+            path:
+            - endpoint
+            extensions:
+              code: SYNTHETIC_ERROR
+      x-example-evidence: synthetic
     WireGraphQLError:
       type: object
       properties:
@@ -121,6 +135,16 @@ components:
       required:
       - message
       additionalProperties: true
+      example:
+        message: Synthetic GraphQL operation error
+        locations:
+        - line: 1
+          column: 1
+        path:
+        - endpoint
+        extensions:
+          code: SYNTHETIC_ERROR
+      x-example-evidence: synthetic
     WireGraphQLErrorLocation:
       type: object
       properties:
@@ -145,6 +169,12 @@ components:
       required:
       - query
       additionalProperties: true
+      example:
+        operationName: SyntheticEndpoint
+        query: 'query SyntheticEndpoint($id: String!) { endpoint(id: $id) { endpointId } }'
+        variables:
+          id: synthetic-endpoint
+      x-example-evidence: synthetic
   responses:
     UnhandledResponse:
       description: Response not decoded into a success model by this operation.
