@@ -4,6 +4,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -1111,8 +1113,8 @@ func TestNetworkInventoryGate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct{ name, source, want string }{
-		{"new Client.Post", `package rest
-		func send() { client.Post("https://example.com", "application/json", nil) }`, "unregistered outbound network primitive Post"},
+		{"new http.Post", `package rest
+		func send() { http.Post("https://example.com", "application/json", nil) }`, "unregistered outbound network primitive Post"},
 		{"new Client.Do", `package rest
 		func send() { client.Do(req) }`, "unregistered outbound network primitive Do"},
 		{"new request constructor", `package rest
@@ -1527,6 +1529,125 @@ func TestNetworkInventoryRejectsOutboundPrimitives(t *testing.T) {
 				t.Fatalf("gate result %q, want %q", got, test.want)
 			}
 		})
+	}
+}
+
+func TestProductionNetworkInventoryScansCommandsAndExamples(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	for _, source := range []struct {
+		path string
+		body string
+	}{
+		{path: filepath.Join("cmd", "go-alexa", "main.go"), body: `package main
+import "net/http"
+func main() { _, _ = http.Get(url) }
+`},
+		{path: filepath.Join("examples", "sample", "main.go"), body: `package main
+import "net/http"
+func main() { _, _ = http.Get(url) }
+`},
+	} {
+		fullPath := filepath.Join(root, source.path)
+
+		err := os.MkdirAll(filepath.Dir(fullPath), 0o700)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = os.WriteFile(fullPath, []byte(source.body), 0o600)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	var violations []string
+
+	err := checkAdditionalProductionNetworkInventory(root, []string{"cmd", "tools", "examples"}, &violations)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := strings.ReplaceAll(strings.Join(violations, "\n"), `\`, "/")
+	for _, want := range []string{
+		"cmd/go-alexa/main.go",
+		"examples/sample/main.go",
+		"unregistered network import \"net/http\"",
+		"unregistered outbound network primitive Get",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("production network inventory output %q did not contain %q", got, want)
+		}
+	}
+}
+
+func TestNetworkInventoryRejectsMutationOfRequestBodyBackingBytes(t *testing.T) {
+	t.Parallel()
+
+	for _, mutation := range []string{
+		"body[0] = 'x'",
+		"alias := body; alias[0] = 'x'",
+		"copy(body, []byte(\"x\"))",
+	} {
+		t.Run(mutation, func(t *testing.T) {
+			t.Parallel()
+
+			fset := token.NewFileSet()
+			file := parseTestFile(t, fset, "pkg/dependencies/rest/auth.go", `package rest
+import (
+ "bytes"
+ "context"
+ "net/http"
+)
+type Client struct { httpClient *http.Client }
+func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, body []byte) {
+ reader := bytes.NewReader(body)
+ req, _ := http.NewRequestWithContext(ctx, method, target, reader)
+ `+mutation+`
+ c.httpClient.Do(req)
+}
+`)
+
+			var violations []string
+
+			checkNetworkInventory(file, fset, "pkg/dependencies/rest/auth.go", &violations)
+
+			if got := strings.Join(violations, "\n"); !strings.Contains(got, "request body backing bytes were mutated") {
+				t.Fatalf("backing byte mutation was accepted: %s", got)
+			}
+		})
+	}
+}
+
+func TestNetworkInventoryAllowsReadingOriginalBytesReaderAfterRequestConstruction(t *testing.T) {
+	t.Parallel()
+
+	fset := token.NewFileSet()
+	file := parseTestFile(t, fset, "pkg/dependencies/rest/auth.go", `package rest
+import (
+ "bytes"
+ "context"
+ "io"
+ "net/http"
+)
+type Client struct { httpClient *http.Client }
+func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, body []byte) {
+ reader := bytes.NewReader(body)
+ req, _ := http.NewRequestWithContext(ctx, method, target, reader)
+ _, _ = io.ReadAll(reader)
+ c.httpClient.Do(req)
+}
+`)
+
+	var violations []string
+
+	checkNetworkInventory(file, fset, "pkg/dependencies/rest/auth.go", &violations)
+
+	for _, violation := range violations {
+		if strings.Contains(violation, "request body backing bytes were mutated") {
+			t.Fatalf("reading the original bytes.Reader was treated as backing-byte mutation: %s", violation)
+		}
 	}
 }
 

@@ -114,6 +114,11 @@ func verifiedImportedWireCallable(file *ast.File, selector *ast.SelectorExpr) bo
 		}
 	}
 
+	htmlOwner := primitivePackage{ImportPath: "html", Name: "html", Directory: ""}
+	if primitiveImportAliases(file, htmlOwner)[identifier.Name] {
+		return selector.Sel.Name == "EscapeString"
+	}
+
 	timeOwner := primitivePackage{ImportPath: "time", Name: "time", Directory: ""}
 	if primitiveImportAliases(file, timeOwner)[identifier.Name] {
 		return selector.Sel.Name == "Parse" || selector.Sel.Name == "ParseInLocation"

@@ -77,17 +77,37 @@ func checkWireSourcePackage(files []wireSourceFile, set *token.FileSet, models m
 
 	assignments := wireSourceAssignments{
 		values:              make(map[wireSourceVariable][]ast.Expr),
+		callArguments:       make(map[wireSourceVariable][]ast.Expr),
+		boundParameters:     make(map[wireSourceVariable]bool),
 		generatedParameters: make(map[wireSourceVariable]bool),
 		globalVariables:     make(map[wireSourceVariable]bool),
 		sdkDependencies:     make(map[string]bool),
 		sdkOwner:            nil,
 		callableFields:      make(map[string][]ast.Expr),
 		functionBodies:      make(map[*ast.FuncType]*ast.BlockStmt),
+		functionDecls:       make(map[*ast.FuncType]*ast.FuncDecl),
 		methods:             make(map[string][]*ast.FuncDecl),
+		sourceContexts:      make(map[ast.Node]wireSourceContext),
+		resultIndexes:       make(map[wireSourceVariable]map[ast.Expr]int),
+		resultSelections:    make(map[*ast.CallExpr]int),
 	}
 
 	for _, source := range files {
-		local := indexWireSourceAssignments(source.file)
+		local := indexWireSourceAssignments(source.file, source.path)
+		for node, context := range local.sourceContexts {
+			assignments.sourceContexts[node] = context
+		}
+
+		for variable, indexes := range local.resultIndexes {
+			if assignments.resultIndexes[variable] == nil {
+				assignments.resultIndexes[variable] = make(map[ast.Expr]int)
+			}
+
+			for expression, index := range indexes {
+				assignments.resultIndexes[variable][expression] = index
+			}
+		}
+
 		for variable, global := range local.globalVariables {
 			assignments.globalVariables[variable] = global
 		}
@@ -98,6 +118,10 @@ func checkWireSourcePackage(files []wireSourceFile, set *token.FileSet, models m
 
 		for function, body := range local.functionBodies {
 			assignments.functionBodies[function] = body
+		}
+
+		for function, declaration := range local.functionDecls {
+			assignments.functionDecls[function] = declaration
 		}
 
 		for name, values := range local.callableFields {
@@ -118,6 +142,7 @@ func checkWireSourcePackage(files []wireSourceFile, set *token.FileSet, models m
 	}
 
 	indexWirePackageHelperParameters(files, models, assignments)
+	indexWirePackageValueArguments(files, assignments)
 
 	for _, source := range files {
 		err := rejectRawGeneratedWireConstructionsWithAssignments(source.file, set, source.path, models, assignments)
@@ -144,4 +169,71 @@ func indexWirePackageHelperParameters(files []wireSourceFile, models map[string]
 			return
 		}
 	}
+}
+
+//nolint:gocognit // The ordered parameter walk binds helper calls to positional and variadic arguments.
+func indexWirePackageValueArguments(files []wireSourceFile, assignments wireSourceAssignments) {
+	for _, source := range files {
+		ast.Inspect(source.file, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+
+			for _, function := range wireLocalHelpers(call.Fun, assignments, make(map[wireSourceVariable]bool)) {
+				if function == nil || function.Params == nil {
+					continue
+				}
+
+				argument := 0
+
+				for _, field := range function.Params.List {
+					variadic := false
+					if _, ok := field.Type.(*ast.Ellipsis); ok {
+						variadic = true
+					}
+
+					if len(field.Names) == 0 {
+						argument++
+
+						continue
+					}
+
+					for _, name := range field.Names {
+						if argument >= len(call.Args) {
+							break
+						}
+
+						key := wireSourceVariable{declaration: field, name: name.Name}
+
+						if variadic {
+							for _, value := range call.Args[argument:] {
+								assignWireCallArgument(assignments, key, value)
+							}
+
+							argument = len(call.Args)
+
+							break
+						}
+
+						assignWireCallArgument(assignments, key, call.Args[argument])
+
+						argument++
+					}
+				}
+			}
+
+			return true
+		})
+	}
+}
+
+func assignWireCallArgument(assignments wireSourceAssignments, key wireSourceVariable, expression ast.Expr) {
+	for _, previous := range assignments.callArguments[key] {
+		if previous == expression {
+			return
+		}
+	}
+
+	assignments.callArguments[key] = append(assignments.callArguments[key], expression)
 }

@@ -51,6 +51,9 @@ func inspectWireReturnedLiterals(
 
 func wireReturnParameterValues(function *ast.FuncType, call *ast.CallExpr, assignments wireSourceAssignments) wireSourceAssignments {
 	assignments.values = maps.Clone(assignments.values)
+
+	assignments.boundParameters = maps.Clone(assignments.boundParameters)
+
 	if function.Params == nil {
 		return assignments
 	}
@@ -62,6 +65,7 @@ func wireReturnParameterValues(function *ast.FuncType, call *ast.CallExpr, assig
 			if index < len(call.Args) {
 				key := wireSourceVariable{declaration: field, name: name.Name}
 				assignments.values[key] = []ast.Expr{call.Args[index]}
+				assignments.boundParameters[key] = true
 			}
 
 			index++

@@ -1,6 +1,12 @@
 ---
-title: 'Upgrade from v0.3'
+title: 'Upgrading'
 ---
+
+## Upgrade from v0.4 to v0.5
+
+Effective REST, GraphQL, and event HTTP clients must have `Jar == nil`. A nonnil jar on a client selected through `WithHTTPClient`, `WithRESTHTTPClient`, `WithGraphQLHTTPClient`, or `WithEventHTTPClient` makes `NewClient` return `*alexa.HTTPClientCookieJarError`; its `Edge` field identifies the client. Custom transports remain injectable with a nil jar. For account-specific REST cookie authentication, pass cookies and the CSRF token to each session with `NewSession(alexa.WithCookies(...), alexa.WithCSRFToken(...))`.
+
+## Upgrade from v0.3 to v0.4
 
 The v0.4 model changes affect callers that construct dependency models directly or inspect event payload types. Review these changes before updating your module version.
 
@@ -39,7 +45,7 @@ For example, a name value can be constructed as:
 import dependencymodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 
 name := dependencymodels.FriendlyNameValue{
-    Type: "text",
+    Type: dependencymodels.DefaultFriendlyNameType,
     Value: dependencymodels.FriendlyNameText{Text: "Living room"},
 }
 ```

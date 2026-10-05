@@ -42,6 +42,7 @@ func rejectRawGeneratedWireConstructionsWithAssignments(
 					problems = append(problems, fmt.Sprintf("%s: fixed wire copy %q must be generated from schema", set.Position(raw.Pos()), decoded))
 				}
 			})
+			inspectWireMutationValueCalls(file, call, aliases, path, models, assignments, set, &problems)
 		}
 
 		if assignment, isAssignment := node.(*ast.AssignStmt); isAssignment {
@@ -59,15 +60,81 @@ func rejectRawGeneratedWireConstructionsWithAssignments(
 				problems = append(problems, fmt.Sprintf("%s: fixed wire value %q must be generated from schema", set.Position(raw.Pos()), decoded))
 			}
 		}, assignments)
+		inspectGeneratedWireValueCalls(literal, file, path, aliases, models, assignments, set, &problems)
 
 		return false
 	})
+
+	problems = uniqueWireConstructionProblems(problems)
 
 	if len(problems) != 0 {
 		return diagnosticf("%s", strings.Join(problems, "\n"))
 	}
 
 	return nil
+}
+
+func uniqueWireConstructionProblems(problems []string) []string {
+	seen := make(map[string]bool, len(problems))
+
+	unique := make([]string, 0, len(problems))
+
+	for _, problem := range problems {
+		if seen[problem] {
+			continue
+		}
+
+		seen[problem] = true
+
+		unique = append(unique, problem)
+	}
+
+	return unique
+}
+
+func inspectWireMutationValueCalls(
+	file *ast.File, call *ast.CallExpr, aliases map[string]bool, path string, models map[string]generatedModel,
+	assignments wireSourceAssignments, set *token.FileSet, problems *[]string,
+) {
+	if len(call.Args) < 2 || !generatedWireReceiver(call.Args[0], aliases, path, models, make(map[wireSourceVariable]bool), assignments) {
+		return
+	}
+
+	if function, builtin := call.Fun.(*ast.Ident); builtin && function.Obj == nil {
+		if function.Name != builtinAppendName && function.Name != builtinDeleteName {
+			return
+		}
+	} else if !isWireCopyFunction(file, call.Fun, assignments, make(map[wireSourceVariable]bool)) {
+		return
+	}
+
+	for _, value := range call.Args[1:] {
+		inspectUnresolvedWireValueCalls(value, file, path, aliases, models, assignments, func(position token.Pos, message string) {
+			*problems = append(*problems, fmt.Sprintf("%s: %s", set.Position(position), message))
+		})
+	}
+}
+
+func inspectGeneratedWireValueCalls(
+	literal *ast.CompositeLit, file *ast.File, path string, aliases map[string]bool, models map[string]generatedModel,
+	assignments wireSourceAssignments, set *token.FileSet, problems *[]string,
+) {
+	inspect := func(expression ast.Expr) {
+		inspectUnresolvedWireValueCalls(expression, file, path, aliases, models, assignments, func(position token.Pos, message string) {
+			*problems = append(*problems, fmt.Sprintf("%s: %s", set.Position(position), message))
+		})
+	}
+
+	for _, element := range literal.Elts {
+		if field, keyed := element.(*ast.KeyValueExpr); keyed {
+			inspect(field.Key)
+			inspect(field.Value)
+
+			continue
+		}
+
+		inspect(element)
+	}
 }
 
 func isGeneratedWireConstruction(expression ast.Expr, aliases map[string]bool, path string, models map[string]generatedModel) bool {
@@ -180,15 +247,31 @@ func wireAliasValue(name string, declaration ast.Node) ast.Expr {
 	switch declaration := declaration.(type) {
 	case *ast.ValueSpec:
 		for index, identifier := range declaration.Names {
-			if identifier.Name == name && index < len(declaration.Values) {
+			if identifier.Name != name {
+				continue
+			}
+
+			if index < len(declaration.Values) {
 				return declaration.Values[index]
+			}
+
+			if len(declaration.Values) == 1 && len(declaration.Names) > 1 {
+				return declaration.Values[0]
 			}
 		}
 	case *ast.AssignStmt:
 		for index, left := range declaration.Lhs {
 			identifier, isIdentifier := left.(*ast.Ident)
-			if isIdentifier && identifier.Name == name && index < len(declaration.Rhs) {
+			if !isIdentifier || identifier.Name != name {
+				continue
+			}
+
+			if index < len(declaration.Rhs) {
 				return declaration.Rhs[index]
+			}
+
+			if len(declaration.Rhs) == 1 && len(declaration.Lhs) > 1 {
+				return declaration.Rhs[0]
 			}
 		}
 	}
@@ -325,5 +408,11 @@ func inspectWireMutationAssignment(
 		inspectWireReceiverKeys(receiver, make(map[wireSourceVariable]bool), report, assignments)
 		inspectWireValueLiterals(key, make(map[wireSourceVariable]bool), report, assignments)
 		inspectWireValueLiterals(assignment.Rhs[index], make(map[wireSourceVariable]bool), report, assignments)
+		// Mutation values can contain library-created strings just like initializers.
+		for _, expression := range []ast.Expr{key, assignment.Rhs[index]} {
+			inspectUnresolvedWireValueCalls(expression, nil, path, aliases, models, assignments, func(position token.Pos, message string) {
+				*problems = append(*problems, fmt.Sprintf("%s: %s", set.Position(position), message))
+			})
+		}
 	}
 }

@@ -115,7 +115,7 @@ func TestWireConstructionAllowsNamedCallerResult(t *testing.T) {
 	file := parseWireSourceTestFile(t, set, "pkg/probe.go", `package probe
 import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
 func identity(caller string) (result string) { result = caller; return }
-func request(caller string) { _ = wire.Payload{Value: identity(caller)} }
+func Request(caller string) { _ = wire.Payload{Value: identity(caller)} }
 `)
 
 	err := checkWireSourcePackage([]wireSourceFile{file}, set, wireConstructionTestModels())

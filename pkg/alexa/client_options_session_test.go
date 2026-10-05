@@ -4,8 +4,12 @@ package alexa
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -35,6 +39,55 @@ func syntheticResponse(request *http.Request, body string, headers http.Header) 
 		Header:     headers,
 		Body:       io.NopCloser(strings.NewReader(body)),
 		Request:    request,
+	}
+}
+
+func assignLateCookieJar(t *testing.T, callerClient *http.Client, effectiveClients ...*http.Client) {
+	t.Helper()
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatalf("create caller cookie jar: %v", err)
+	}
+
+	jarURL, err := url.Parse("https://web.synthetic.test/api/users/me")
+	if err != nil {
+		t.Fatalf("parse synthetic request URL: %v", err)
+	}
+
+	jar.SetCookies(jarURL, []*http.Cookie{{Name: "late-only", Value: "caller-client"}})
+	callerClient.Jar = jar
+
+	for _, client := range effectiveClients {
+		if client.Jar != nil {
+			t.Fatal("NewClient's effective client observed a CookieJar assigned to the caller client after construction")
+		}
+	}
+}
+
+func assertSessionCookieAuthRequest(t *testing.T, request *http.Request, index int, wantHeaders []http.Header) {
+	t.Helper()
+
+	const endpoint = "https://web.synthetic.test/api/users/me?platform=synthetic-app&version=1.2.3"
+
+	if request.Method != http.MethodGet || request.URL.String() != endpoint || request.URL.Scheme != "https" ||
+		request.URL.Host != "web.synthetic.test" || request.URL.Path != "/api/users/me" ||
+		request.URL.RawQuery != "platform=synthetic-app&version=1.2.3" || request.URL.User != nil ||
+		request.URL.Fragment != "" || request.Host != "web.synthetic.test" {
+		t.Errorf("request %d target = %s %s (Host %q), want GET %s", index, request.Method, request.URL,
+			request.Host, endpoint)
+	}
+
+	if request.Proto != "HTTP/1.1" || request.ProtoMajor != 1 || request.ProtoMinor != 1 ||
+		request.Body != nil || request.GetBody != nil || request.ContentLength != 0 ||
+		len(request.TransferEncoding) != 0 || request.Close {
+		t.Errorf("request %d framing = proto %q (%d.%d), body=%v GetBody=%t length=%d transfer=%v close=%t",
+			index, request.Proto, request.ProtoMajor, request.ProtoMinor, request.Body,
+			request.GetBody != nil, request.ContentLength, request.TransferEncoding, request.Close)
+	}
+
+	if !reflect.DeepEqual(request.Header, wantHeaders[index]) {
+		t.Errorf("request %d headers = %#v, want %#v", index, request.Header, wantHeaders[index])
 	}
 }
 
@@ -103,6 +156,218 @@ func assertDefaultRegionTimeoutOptions(t *testing.T, client *Client) {
 	if client.region != alexaapimodels.RegionJP || client.restHTTPClient.Timeout != 2*time.Second ||
 		client.graphqlHTTPClient.Timeout != 2*time.Second {
 		t.Fatalf("region defaults or timeout not applied: %#v", client)
+	}
+}
+
+func TestNewClientRejectsEffectiveHTTPClientCookieJars(t *testing.T) {
+	t.Parallel()
+
+	type optionsForClient func(*http.Client) []Option
+
+	cases := []struct {
+		name    string
+		edge    string
+		options optionsForClient
+	}{
+		{
+			name: "shared client",
+			edge: "REST",
+			options: func(client *http.Client) []Option {
+				return []Option{WithHTTPClient(client)}
+			},
+		},
+		{
+			name: "REST client",
+			edge: "REST",
+			options: func(client *http.Client) []Option {
+				return []Option{WithRESTHTTPClient(client)}
+			},
+		},
+		{
+			name: "GraphQL client",
+			edge: "GraphQL",
+			options: func(client *http.Client) []Option {
+				return []Option{WithGraphQLHTTPClient(client)}
+			},
+		},
+		{
+			name: "event client",
+			edge: "event",
+			options: func(client *http.Client) []Option {
+				return []Option{WithEventHTTPClient(client)}
+			},
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			jar, err := cookiejar.New(nil)
+			if err != nil {
+				t.Fatalf("create synthetic cookie jar: %v", err)
+			}
+
+			transport := &labeledTransport{label: "synthetic"}
+			redirect := func(*http.Request, []*http.Request) error { return nil }
+			callerClient := &http.Client{
+				Transport:     transport,
+				Jar:           jar,
+				Timeout:       17 * time.Second,
+				CheckRedirect: redirect,
+			}
+
+			client, err := NewClient(test.options(callerClient)...)
+			if client != nil {
+				t.Fatalf("NewClient returned a client with a stateful %s HTTP client", test.edge)
+			}
+
+			var jarErr *HTTPClientCookieJarError
+			if !errors.As(err, &jarErr) {
+				t.Fatalf("NewClient error = %v, want *HTTPClientCookieJarError", err)
+			}
+
+			if jarErr.Edge != test.edge {
+				t.Fatalf("HTTPClientCookieJarError.Edge = %q, want %q", jarErr.Edge, test.edge)
+			}
+
+			if callerClient.Transport != transport || callerClient.Jar != jar ||
+				callerClient.Timeout != 17*time.Second ||
+				reflect.ValueOf(callerClient.CheckRedirect).Pointer() != reflect.ValueOf(redirect).Pointer() {
+				t.Fatal("NewClient mutated the caller's injected HTTP client")
+			}
+		})
+	}
+}
+
+func TestNewClientAllowsUnusedSharedHTTPClientCookieJar(t *testing.T) {
+	t.Parallel()
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatalf("create synthetic cookie jar: %v", err)
+	}
+
+	sharedTransport := &labeledTransport{label: "unused"}
+	shared := &http.Client{Transport: sharedTransport, Jar: jar, Timeout: 11 * time.Second}
+	restTransport := &labeledTransport{label: "REST"}
+	graphqlTransport := &labeledTransport{label: "GraphQL"}
+
+	client, err := NewClient(
+		WithHTTPClient(shared),
+		WithRESTHTTPClient(&http.Client{Transport: restTransport}),
+		WithGraphQLHTTPClient(&http.Client{Transport: graphqlTransport}),
+	)
+	if err != nil {
+		t.Fatalf("NewClient rejected an unused common client jar: %v", err)
+	}
+
+	if client.restHTTPClient.Transport != restTransport || client.restHTTPClient.Jar != nil ||
+		client.graphqlHTTPClient.Transport != graphqlTransport || client.graphqlHTTPClient.Jar != nil {
+		t.Fatal("dedicated stateless HTTP clients were not selected")
+	}
+
+	if shared.Transport != sharedTransport || shared.Jar != jar || shared.Timeout != 11*time.Second {
+		t.Fatal("NewClient mutated the caller's unused shared HTTP client")
+	}
+}
+
+func TestSessionsKeepCookieAuthRequestsIsolatedWithInjectedHTTPClient(t *testing.T) {
+	t.Parallel()
+
+	wantHeaders := []http.Header{
+		{
+			"Accept":     {"application/json"},
+			"Cookie":     {"session-id=first-account"},
+			"Csrf":       {"first-csrf"},
+			"Dnt":        {"1"},
+			"Origin":     {"https://alexa.amazon.com"},
+			"Referer":    {"https://alexa.amazon.com/spa/index.html"},
+			"User-Agent": {"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"},
+		},
+		{
+			"Accept":     {"application/json"},
+			"Cookie":     {"session-id=second-account"},
+			"Csrf":       {"second-csrf"},
+			"Dnt":        {"1"},
+			"Origin":     {"https://alexa.amazon.com"},
+			"Referer":    {"https://alexa.amazon.com/spa/index.html"},
+			"User-Agent": {"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0"},
+		},
+	}
+
+	requestCount := 0
+	transport := responseTransport(func(request *http.Request) (*http.Response, error) {
+		if requestCount >= len(wantHeaders) {
+			t.Errorf("unexpected extra synthetic request: %s %s", request.Method, request.URL)
+
+			return syntheticResponse(request, `{}`, nil), nil
+		}
+
+		assertSessionCookieAuthRequest(t, request, requestCount, wantHeaders)
+
+		responseHeaders := make(http.Header)
+		if requestCount == 0 {
+			responseHeaders.Set("Set-Cookie", "server-session=first-only; Path=/")
+		}
+
+		requestCount++
+
+		return syntheticResponse(request, `{}`, responseHeaders), nil
+	})
+	redirect := func(*http.Request, []*http.Request) error { return nil }
+	injectedClient := &http.Client{Transport: transport, Timeout: 17 * time.Second, CheckRedirect: redirect}
+
+	client, err := NewClient(
+		WithHTTPClient(injectedClient),
+		WithAlexaWebBaseURL("https://web.synthetic.test"),
+	)
+	if err != nil {
+		t.Fatalf("NewClient returned an error: %v", err)
+	}
+
+	assignLateCookieJar(t, injectedClient, client.restHTTPClient, client.graphqlHTTPClient)
+
+	first, err := client.NewSession(
+		WithCookies(map[string]*http.Cookie{"session-id": {Name: "session-id", Value: "first-account"}}),
+		WithCSRFToken("first-csrf"),
+	)
+	if err != nil {
+		t.Fatalf("create first session: %v", err)
+	}
+
+	t.Cleanup(func() { closeTestSession(t, first) })
+
+	second, err := client.NewSession(
+		WithCookies(map[string]*http.Cookie{"session-id": {Name: "session-id", Value: "second-account"}}),
+		WithCSRFToken("second-csrf"),
+	)
+	if err != nil {
+		t.Fatalf("create second session: %v", err)
+	}
+
+	t.Cleanup(func() { closeTestSession(t, second) })
+
+	request := alexaapimodels.UserInfoRequest{Platform: "synthetic-app", Version: "1.2.3", CSRFToken: ""}
+
+	_, err = first.GetUserInfo(context.Background(), request)
+	if err != nil {
+		t.Fatalf("first session GetUserInfo: %v", err)
+	}
+
+	_, err = second.GetUserInfo(context.Background(), request)
+	if err != nil {
+		t.Fatalf("second session GetUserInfo: %v", err)
+	}
+
+	if requestCount != 2 {
+		t.Fatalf("synthetic request count = %d, want 2", requestCount)
+	}
+
+	if reflect.ValueOf(injectedClient.Transport).Pointer() != reflect.ValueOf(transport).Pointer() ||
+		injectedClient.Jar == nil || injectedClient.Timeout != 17*time.Second ||
+		reflect.ValueOf(injectedClient.CheckRedirect).Pointer() != reflect.ValueOf(redirect).Pointer() {
+		t.Fatal("NewClient or the session requests mutated the caller's injected HTTP client")
 	}
 }
 

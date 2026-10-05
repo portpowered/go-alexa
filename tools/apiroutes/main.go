@@ -35,6 +35,7 @@ const (
 	routeOutputFilePermissions      = 0o600
 	regionalServerCapacity          = 3
 	requestWithContextArgumentCount = 3
+	requestConstructorArgumentCount = 4
 	requestArgumentCount            = 2
 )
 
@@ -756,10 +757,55 @@ func checkProductionRouteLiterals(root string, routes []route, endpoints regiona
 		return fmt.Errorf("scan Go files for route literals: %w", err)
 	}
 
+	err = checkAdditionalProductionNetworkInventory(root, []string{"cmd", "tools", "examples"}, &violations)
+	if err != nil {
+		return fmt.Errorf("scan additional production Go modules for network edges: %w", err)
+	}
+
 	if len(violations) > 0 {
 		sort.Strings(violations)
 
 		return fmt.Errorf("production route strings must come from generated schema definitions:\n%s", strings.Join(violations, "\n"))
+	}
+
+	return nil
+}
+
+func checkAdditionalProductionNetworkInventory(root string, directories []string, violations *[]string) error {
+	for _, directory := range directories {
+		base := filepath.Join(root, directory)
+
+		_, err := os.Stat(base)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		} else if err != nil {
+			return fmt.Errorf("stat production source directory %s: %w", directory, err)
+		}
+
+		err = filepath.WalkDir(base, func(path string, entry fs.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+
+			if entry.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") || strings.HasSuffix(path, ".gen.go") {
+				return nil
+			}
+
+			fset := token.NewFileSet()
+
+			file, err := parser.ParseFile(fset, path, nil, 0)
+			if err != nil {
+				return fmt.Errorf("parse Go file %s: %w", path, err)
+			}
+
+			relative := filepath.ToSlash(strings.TrimPrefix(path, root+string(filepath.Separator)))
+			checkNetworkInventory(file, fset, relative, violations)
+
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("walk production source directory %s: %w", directory, err)
+		}
 	}
 
 	return nil
@@ -1674,24 +1720,44 @@ func isNetworkImport(path string) bool {
 		strings.Contains(lower, "mqtt") || strings.Contains(lower, "grpc") || strings.Contains(lower, "quic")
 }
 
-func networkPrimitive(call *ast.CallExpr) string {
+func networkPrimitive(call *ast.CallExpr, imports packageImports) string {
 	selector, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok {
 		return ""
 	}
 
-	return networkPrimitiveSelector(selector)
+	return networkPrimitiveSelector(selector, imports)
 }
 
-func networkPrimitiveSelector(selector *ast.SelectorExpr) string {
+func networkPrimitiveSelector(selector *ast.SelectorExpr, imports packageImports) string {
 	switch selector.Sel.Name {
-	case "Get", "Post", "PostForm", "Head", "Do", "RoundTrip",
-		"Dial", "DialContext", "DialTLS", "DialTLSContext", "Upgrade",
-		"NewRequest", newRequestWithContextName:
+	case "NewRequest", newRequestWithContextName:
+		return selector.Sel.Name
+	case "Get", "Post", "PostForm", "Head":
+		if isNetHTTPQualifier(selector.X, imports) {
+			return selector.Sel.Name
+		}
+	case "Do", "RoundTrip", "Dial", "DialContext", "DialTLS", "DialTLSContext", "Upgrade":
 		return selector.Sel.Name
 	default:
-		return ""
 	}
+
+	return ""
+}
+
+func isNetHTTPQualifier(expression ast.Expr, imports packageImports) bool {
+	identifier, ok := expression.(*ast.Ident)
+	if !ok || identifier.Obj != nil {
+		return false
+	}
+
+	if importPath, exists := imports[identifier.Name]; exists {
+		return importPath == netHTTPImportPath
+	}
+
+	// Keep parser-only gate tests concise while avoiding arbitrary methods named
+	// Get/Post/Head such as reflect.StructTag.Get or OpenAPI operation fields.
+	return identifier.Name == "http"
 }
 
 type networkSend struct {
@@ -1709,6 +1775,11 @@ type networkFunctionScan struct {
 	requestAssignments map[string][]token.Pos
 	requestAliases     map[string][]string
 	requestEscapes     map[string][]token.Pos
+	requestBodies      map[string][]string
+	bodyReaders        map[string][]string
+	bodyAliases        map[string]map[string]bool
+	bodyMutations      map[string][]token.Pos
+	constructorTargets map[token.Pos]string
 	sends              []networkSend
 	seen               map[string]int
 	violations         *[]string
@@ -1717,7 +1788,8 @@ type networkFunctionScan struct {
 func checkNetworkInventory(file *ast.File, fset *token.FileSet, path string, violations *[]string) {
 	checkProtectedPackageImports(file, fset, violations)
 	checkNetworkImports(file, fset, path, violations)
-	checkNetworkMethodValues(file, fset, violations)
+	imports := packageImportsFromFile(file)
+	checkNetworkMethodValues(file, fset, imports, violations)
 
 	for _, declaration := range file.Decls {
 		decl, ok := declaration.(*ast.FuncDecl)
@@ -1725,7 +1797,7 @@ func checkNetworkInventory(file *ast.File, fset *token.FileSet, path string, vio
 			continue
 		}
 
-		checkNetworkFunction(decl, fset, path, packageImportsFromFile(file), violations)
+		checkNetworkFunction(decl, fset, path, imports, violations)
 	}
 }
 
@@ -1749,6 +1821,11 @@ func checkNetworkFunction(decl *ast.FuncDecl, fset *token.FileSet, path string, 
 		requestAssignments: make(map[string][]token.Pos),
 		requestAliases:     make(map[string][]string),
 		requestEscapes:     make(map[string][]token.Pos),
+		requestBodies:      make(map[string][]string),
+		bodyReaders:        make(map[string][]string),
+		bodyAliases:        make(map[string]map[string]bool),
+		bodyMutations:      make(map[string][]token.Pos),
+		constructorTargets: make(map[token.Pos]string),
 		sends:              nil,
 		seen:               make(map[string]int),
 		violations:         violations,
@@ -1767,7 +1844,7 @@ func checkNetworkFunction(decl *ast.FuncDecl, fset *token.FileSet, path string, 
 	scan.checkRequiredCalls(decl.Pos())
 }
 
-func checkNetworkMethodValues(body ast.Node, fset *token.FileSet, violations *[]string) {
+func checkNetworkMethodValues(body ast.Node, fset *token.FileSet, imports packageImports, violations *[]string) {
 	var parents []ast.Node
 
 	ast.Inspect(body, func(node ast.Node) bool {
@@ -1777,7 +1854,7 @@ func checkNetworkMethodValues(body ast.Node, fset *token.FileSet, violations *[]
 			return true
 		}
 
-		if selector, ok := node.(*ast.SelectorExpr); ok && networkPrimitiveSelector(selector) != "" {
+		if selector, ok := node.(*ast.SelectorExpr); ok && networkPrimitiveSelector(selector, imports) != "" {
 			var direct bool
 
 			if len(parents) != 0 {
@@ -1798,13 +1875,14 @@ func checkNetworkMethodValues(body ast.Node, fset *token.FileSet, violations *[]
 
 func (scan *networkFunctionScan) inspectNode(node ast.Node) {
 	scan.recordRequestAssignments(node)
+	scan.recordBodyBackingMutation(node)
 
 	call, ok := node.(*ast.CallExpr)
 	if !ok {
 		return
 	}
 
-	primitive := networkPrimitive(call)
+	primitive := networkPrimitive(call, scan.imports)
 	if primitive != "Do" {
 		if selector, ok := call.Fun.(*ast.SelectorExpr); ok && !isDirectRequestHeaderMethod(selector) {
 			for _, variable := range routeMutableArgumentSources(selector.X, scan.imports) {
@@ -1834,6 +1912,7 @@ func (scan *networkFunctionScan) inspectNode(node ast.Node) {
 
 	if primitive == newRequestWithContextName {
 		scan.checkRequestConstructor(call)
+		scan.recordRequestBodyBacking(call)
 	}
 
 	if primitive == "Do" {
@@ -1876,6 +1955,8 @@ func (scan *networkFunctionScan) recordRequestAssignments(node ast.Node) {
 			scan.requestAssignments[variable.Name] = append(scan.requestAssignments[variable.Name], declaration.Pos())
 
 			if index < len(declaration.Values) {
+				scan.recordBodyBackingAlias(variable.Name, declaration.Values[index])
+				scan.recordBodyReader(variable.Name, declaration.Values[index])
 				scan.requestAliases[variable.Name] = append(
 					scan.requestAliases[variable.Name], requestAliasSources(declaration.Values[index], scan.imports)...,
 				)
@@ -1898,18 +1979,169 @@ func (scan *networkFunctionScan) recordRequestAssignments(node ast.Node) {
 
 	for index, value := range assignment.Rhs {
 		if index < len(assignment.Lhs) {
+			if variable, isIdent := assignment.Lhs[index].(*ast.Ident); isIdent {
+				scan.recordBodyBackingAlias(variable.Name, value)
+				scan.recordBodyReader(variable.Name, value)
+			}
+
 			if variable := rootIdentifier(assignment.Lhs[index]); variable != "" && scan.constructors[variable] == token.NoPos {
 				scan.requestAliases[variable] = append(scan.requestAliases[variable], requestAliasSources(value, scan.imports)...)
 			}
 		}
 
 		call, isCall := value.(*ast.CallExpr)
-		if !isCall || networkPrimitive(call) != newRequestWithContextName || index >= len(assignment.Lhs) {
+		if !isCall || networkPrimitive(call, scan.imports) != newRequestWithContextName || index >= len(assignment.Lhs) {
 			continue
 		}
 
 		if variable, isIdent := assignment.Lhs[index].(*ast.Ident); isIdent {
 			scan.constructors[variable.Name] = call.Pos()
+			scan.constructorTargets[call.Pos()] = variable.Name
+		}
+	}
+}
+
+func (scan *networkFunctionScan) recordBodyBackingAlias(variable string, expression ast.Expr) {
+	if variable == "" {
+		return
+	}
+
+	for _, source := range bodyBackingAliasIdentifiers(expression, scan.imports) {
+		if source == "" || source == variable {
+			continue
+		}
+
+		if scan.bodyAliases[variable] == nil {
+			scan.bodyAliases[variable] = make(map[string]bool)
+		}
+
+		if scan.bodyAliases[source] == nil {
+			scan.bodyAliases[source] = make(map[string]bool)
+		}
+
+		scan.bodyAliases[variable][source] = true
+		scan.bodyAliases[source][variable] = true
+	}
+}
+
+func bodyBackingAliasIdentifiers(expression ast.Expr, imports packageImports) []string {
+	switch value := expression.(type) {
+	case *ast.Ident:
+		return []string{value.Name}
+	case *ast.ParenExpr:
+		return bodyBackingAliasIdentifiers(value.X, imports)
+	case *ast.StarExpr:
+		return bodyBackingAliasIdentifiers(value.X, imports)
+	case *ast.SliceExpr:
+		return bodyBackingAliasIdentifiers(value.X, imports)
+	case *ast.SelectorExpr:
+		if value.Sel.Name == "Bytes" {
+			return []string{rootIdentifier(value.X)}
+		}
+	case *ast.CallExpr:
+		if selector, ok := value.Fun.(*ast.SelectorExpr); ok && selector.Sel.Name == "Bytes" {
+			return []string{rootIdentifier(selector.X)}
+		}
+
+		if selector, ok := value.Fun.(*ast.SelectorExpr); ok && imports.hasQualifier(selector.X, "bytes") &&
+			(selector.Sel.Name == "NewReader" || selector.Sel.Name == "NewBuffer") && len(value.Args) == 1 {
+			return bodyBackingAliasIdentifiers(value.Args[0], imports)
+		}
+
+		if identifier, ok := value.Fun.(*ast.Ident); ok && identifier.Obj == nil && identifier.Name == "append" && len(value.Args) != 0 {
+			return bodyBackingAliasIdentifiers(value.Args[0], imports)
+		}
+	}
+
+	return nil
+}
+
+func (scan *networkFunctionScan) recordRequestBodyBacking(call *ast.CallExpr) {
+	if len(call.Args) < requestConstructorArgumentCount {
+		return
+	}
+
+	variable := scan.constructorTargets[call.Pos()]
+	if variable == "" {
+		return
+	}
+
+	backing := byteReaderBackingVariables(call.Args[3], scan.imports)
+	if len(backing) == 0 {
+		for _, source := range bodyBackingAliasIdentifiers(call.Args[3], scan.imports) {
+			backing = append(backing, scan.bodyReaders[source]...)
+		}
+	}
+
+	scan.requestBodies[variable] = append(scan.requestBodies[variable], backing...)
+}
+
+func (scan *networkFunctionScan) recordBodyReader(variable string, expression ast.Expr) {
+	if variable == "" {
+		return
+	}
+
+	backing := byteReaderBackingVariables(expression, scan.imports)
+	if len(backing) == 0 {
+		for _, source := range bodyBackingAliasIdentifiers(expression, scan.imports) {
+			backing = append(backing, scan.bodyReaders[source]...)
+		}
+	}
+
+	if len(backing) == 0 {
+		return
+	}
+
+	scan.bodyReaders[variable] = append(scan.bodyReaders[variable], variable)
+	scan.bodyReaders[variable] = append(scan.bodyReaders[variable], backing...)
+}
+
+func byteReaderBackingVariables(expression ast.Expr, imports packageImports) []string {
+	call, isCall := unparenthesizedExpr(expression).(*ast.CallExpr)
+	if !isCall || len(call.Args) != 1 {
+		return nil
+	}
+
+	selector, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || selector.Sel.Name != "NewReader" && selector.Sel.Name != "NewBuffer" ||
+		!imports.hasQualifier(selector.X, "bytes") {
+		return nil
+	}
+
+	return bodyBackingAliasIdentifiers(call.Args[0], imports)
+}
+
+func (scan *networkFunctionScan) recordBodyBackingMutation(node ast.Node) {
+	var targets []ast.Expr
+
+	switch value := node.(type) {
+	case *ast.AssignStmt:
+		for _, target := range value.Lhs {
+			switch target.(type) {
+			case *ast.IndexExpr, *ast.SliceExpr:
+				targets = append(targets, target)
+			}
+		}
+	case *ast.IncDecStmt:
+		targets = append(targets, value.X)
+	case *ast.CallExpr:
+		identifier, builtin := value.Fun.(*ast.Ident)
+		if builtin && identifier.Obj == nil && len(value.Args) != 0 {
+			switch identifier.Name {
+			case "append", "clear", "copy":
+				targets = append(targets, value.Args[0])
+			}
+		} else if selector, selected := value.Fun.(*ast.SelectorExpr); selected {
+			switch selector.Sel.Name {
+			case "Write", "WriteByte", "WriteString", "Reset":
+				targets = append(targets, selector.X)
+			}
+		}
+	}
+
+	for _, target := range targets {
+		if variable := rootIdentifier(target); variable != "" {
+			scan.bodyMutations[variable] = append(scan.bodyMutations[variable], node.Pos())
 		}
 	}
 }
@@ -2045,6 +2277,44 @@ func (scan *networkFunctionScan) checkRequestSend(send networkSend) {
 			}
 		}
 	}
+
+	backing := scan.bodyBackingClosure(scan.requestBodies[send.variable])
+	for variable, positions := range scan.bodyMutations {
+		if !backing[variable] {
+			continue
+		}
+
+		for _, position := range positions {
+			if position > constructor && position < send.position {
+				scan.addViolation(send.position, "Client.Do request body backing bytes were mutated after its schema-bound constructor")
+
+				return
+			}
+		}
+	}
+}
+
+func (scan *networkFunctionScan) bodyBackingClosure(sources []string) map[string]bool {
+	backing := make(map[string]bool)
+
+	queue := append([]string(nil), sources...)
+	for len(queue) > 0 {
+		variable := queue[0]
+		queue = queue[1:]
+
+		if backing[variable] {
+			continue
+		}
+
+		backing[variable] = true
+		for alias := range scan.bodyAliases[variable] {
+			if !backing[alias] {
+				queue = append(queue, alias)
+			}
+		}
+	}
+
+	return backing
 }
 
 func (scan *networkFunctionScan) isRequestAlias(variable, request string, seen map[string]bool) bool {

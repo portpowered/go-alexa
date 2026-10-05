@@ -772,7 +772,7 @@ func isDynamicPayloadMapConstruction(node ast.Node, aliases map[string]bool) boo
 		}
 
 		function, isBuiltin := unparenthesize(typed.Fun).(*ast.Ident)
-		if !isBuiltin || (function.Name != "make" && function.Name != "new") || len(typed.Args) == 0 {
+		if !isBuiltin || (function.Name != "make" && function.Name != builtinNewName) || len(typed.Args) == 0 {
 			return false
 		}
 
@@ -807,7 +807,7 @@ func isDynamicMapIndex(expression ast.Expr, aliases map[string]bool, dynamicName
 
 func mutatesDynamicMap(call *ast.CallExpr, aliases map[string]bool, dynamicNames map[string]bool) bool {
 	function, isBuiltin := unparenthesize(call.Fun).(*ast.Ident)
-	if !isBuiltin || len(call.Args) == 0 || (function.Name != builtinDeleteName && function.Name != "clear") {
+	if !isBuiltin || len(call.Args) == 0 || (function.Name != builtinDeleteName && function.Name != builtinClearName) {
 		return false
 	}
 

@@ -13,6 +13,13 @@ import (
 
 const sdkPrimitiveOutput = "pkg/alexaapimodels/wire_constants.gen.go"
 
+const (
+	jsonEncodeName        = "Encode"
+	jsonMarshalName       = "Marshal"
+	jsonMarshalIndentName = "MarshalIndent"
+	jsonNewEncoderName    = "NewEncoder"
+)
+
 type sdkPrimitive struct {
 	Schema    string
 	Component string
@@ -131,11 +138,16 @@ func checkRawWirePrimitiveValues() error {
 		return err
 	}
 
+	models, err := readGeneratedModels()
+	if err != nil {
+		return err
+	}
+
 	generated := registeredGeneratedFiles()
 	// Route constants are regenerated and drift-checked by tools/apiroutes.
 	generated["pkg/internal/apiroutes/routes.gen.go"] = true
 
-	err = rejectRawWirePrimitiveValues("pkg", values, generated)
+	err = rejectRawWirePrimitiveValues("pkg", values, generated, models)
 	if err != nil {
 		return err
 	}
@@ -184,8 +196,18 @@ func collectGeneratedStringValues(file *ast.File, values map[string]bool) {
 	}
 }
 
-func rejectRawWirePrimitiveValues(root string, values map[string]bool, generated map[string]bool) error {
+func rejectRawWirePrimitiveValues(
+	root string, values map[string]bool, generated map[string]bool, registeredModels ...map[string]generatedModel,
+) error {
 	var problems []string
+
+	models := map[string]generatedModel{}
+
+	if len(registeredModels) != 0 {
+		models = registeredModels[0]
+	}
+
+	fieldNames := generatedWireFieldNames(models)
 
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -210,19 +232,7 @@ func rejectRawWirePrimitiveValues(root string, values map[string]bool, generated
 			return fmt.Errorf("parse wire primitive source %s: %w", path, err)
 		}
 
-		ast.Inspect(file, func(node ast.Node) bool {
-			literal, ok := node.(*ast.BasicLit)
-			if !ok || literal.Kind != token.STRING {
-				return true
-			}
-
-			value, err := strconv.Unquote(literal.Value)
-			if err == nil && values[value] {
-				problems = append(problems, fmt.Sprintf("%s: raw schema-known wire value %q must use a generated constant", set.Position(literal.Pos()), value))
-			}
-
-			return true
-		})
+		problems = append(problems, rawWirePrimitiveProblems(file, set, path, values, models, fieldNames)...)
 
 		return nil
 	})
@@ -235,6 +245,156 @@ func rejectRawWirePrimitiveValues(root string, values map[string]bool, generated
 	}
 
 	return nil
+}
+
+func rawWirePrimitiveProblems(
+	file *ast.File, set *token.FileSet, path string, values map[string]bool,
+	models map[string]generatedModel, fieldNames map[string]bool,
+) []string {
+	aliases := primitiveImportAliases(file, primitivePackage{
+		ImportPath: wireImportPath, Name: "alexamodels", Directory: "pkg/dependencymodels",
+	})
+	sdkAliases := primitiveImportAliases(file, primitivePackage{
+		ImportPath: sdkImportPath, Name: "alexaapimodels", Directory: "pkg/alexaapimodels",
+	})
+	assignments := indexWireSourceAssignments(file, path)
+	seen := make(map[token.Pos]bool)
+
+	var problems []string
+
+	for _, expression := range rawWirePrimitiveSinkExpressions(file, path, models, aliases, sdkAliases, fieldNames) {
+		inspectWireValueLiterals(expression, make(map[wireSourceVariable]bool), func(literal *ast.BasicLit) {
+			if seen[literal.Pos()] {
+				return
+			}
+
+			seen[literal.Pos()] = true
+			value, err := strconv.Unquote(literal.Value)
+
+			if err == nil && values[value] {
+				problems = append(problems, fmt.Sprintf("%s: raw schema-known wire value %q must use a generated constant", set.Position(literal.Pos()), value))
+			}
+		}, assignments)
+	}
+
+	return problems
+}
+
+func rawWirePrimitiveSinkExpressions(
+	file *ast.File, path string, models map[string]generatedModel,
+	aliases, sdkAliases, fieldNames map[string]bool,
+) []ast.Expr {
+	var sinks []ast.Expr
+
+	ast.Inspect(file, func(node ast.Node) bool {
+		switch value := node.(type) {
+		case *ast.CompositeLit:
+			if generatedWireDeclaredType(value.Type, aliases, path, models) || generatedSDKDeclaredType(value.Type, sdkAliases) {
+				sinks = append(sinks, value)
+
+				return false
+			}
+
+			if generatedWireSchemaMap(value, fieldNames) {
+				sinks = append(sinks, value)
+			}
+		case *ast.CallExpr:
+			if jsonWireSerializerCall(file, value) {
+				sinks = append(sinks, value.Args...)
+			}
+		}
+
+		return true
+	})
+
+	return sinks
+}
+
+func generatedWireFieldNames(models map[string]generatedModel) map[string]bool {
+	names := make(map[string]bool)
+
+	for _, model := range models {
+		if !strings.HasPrefix(model.File, "pkg/dependencymodels/") {
+			continue
+		}
+
+		for name := range model.Fields {
+			names[name] = true
+		}
+	}
+
+	return names
+}
+
+func generatedSDKDeclaredType(expression ast.Expr, aliases map[string]bool) bool {
+	selector, isSelector := expression.(*ast.SelectorExpr)
+	if !isSelector {
+		return false
+	}
+
+	identifier, isIdentifier := selector.X.(*ast.Ident)
+
+	return isIdentifier && identifier.Obj == nil && aliases[identifier.Name]
+}
+
+func generatedWireSchemaMap(literal *ast.CompositeLit, fieldNames map[string]bool) bool {
+	if _, isMap := literal.Type.(*ast.MapType); !isMap {
+		return false
+	}
+
+	for _, element := range literal.Elts {
+		entry, isEntry := element.(*ast.KeyValueExpr)
+		if !isEntry {
+			continue
+		}
+
+		key, isString := entry.Key.(*ast.BasicLit)
+		if !isString || key.Kind != token.STRING {
+			continue
+		}
+
+		name, err := strconv.Unquote(key.Value)
+		if err == nil && fieldNames[name] {
+			return true
+		}
+	}
+
+	return false
+}
+
+func jsonWireSerializerCall(file *ast.File, call *ast.CallExpr) bool {
+	selector, isSelector := call.Fun.(*ast.SelectorExpr)
+	if !isSelector {
+		return false
+	}
+
+	jsonAliases := primitiveImportAliases(file, primitivePackage{
+		ImportPath: "encoding/json", Name: "json", Directory: "",
+	})
+
+	identifier, isIdentifier := selector.X.(*ast.Ident)
+
+	if isIdentifier && identifier.Obj == nil && jsonAliases[identifier.Name] {
+		return selector.Sel.Name == jsonMarshalName || selector.Sel.Name == jsonMarshalIndentName
+	}
+
+	if selector.Sel.Name != jsonEncodeName {
+		return false
+	}
+
+	encoder, isEncoder := selector.X.(*ast.CallExpr)
+	if !isEncoder {
+		return false
+	}
+
+	constructor, isConstructor := encoder.Fun.(*ast.SelectorExpr)
+	if !isConstructor || constructor.Sel.Name != jsonNewEncoderName {
+		return false
+	}
+
+	jsonAlias, isAlias := constructor.X.(*ast.Ident)
+
+	return isAlias && jsonAlias.Obj == nil && jsonAliases[jsonAlias.Name]
 }
 
 func verifySDKPrimitiveDeclarations(file *ast.File, primitives map[string]sdkPrimitive) error {

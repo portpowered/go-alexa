@@ -22,6 +22,17 @@ import (
 
 const defaultClientTimeout = 30 * time.Second
 
+// HTTPClientCookieJarError reports that an effective injected HTTP client has
+// a CookieJar, which could share mutable cookie state between account sessions.
+type HTTPClientCookieJarError struct {
+	// Edge identifies the configured client, such as REST, GraphQL, or event.
+	Edge string
+}
+
+func (err *HTTPClientCookieJarError) Error() string {
+	return err.Edge + " HTTP client: CookieJar must be nil to keep session cookies isolated"
+}
+
 // Client contains immutable service endpoints and network transports. It is
 // safe to reuse for multiple Alexa accounts; account credentials live on Session.
 type Client struct {
@@ -162,10 +173,32 @@ func NewClient(opts ...Option) (*Client, error) {
 		eventClient = &http.Client{Transport: cfg.eventTransport}
 	}
 
+	err = validateHTTPClientCookieJars(restClient, graphqlClient, eventClient)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Client{region: cfg.region, apiBaseURL: cfg.apiBaseURL, amazonBaseURL: cfg.amazonBaseURL,
 		webBaseURL: cfg.webBaseURL, graphqlBaseURL: cfg.graphqlBaseURL, eventAuthority: cfg.eventAuthority,
 		restHTTPClient: restClient, graphqlHTTPClient: graphqlClient, eventHTTPClient: eventClient,
 		eventTransport: cfg.eventTransport}, nil
+}
+
+func validateHTTPClientCookieJars(restClient, graphqlClient, eventClient *http.Client) error {
+	for _, configured := range []struct {
+		name   string
+		client *http.Client
+	}{
+		{name: "REST", client: restClient},
+		{name: "GraphQL", client: graphqlClient},
+		{name: "event", client: eventClient},
+	} {
+		if configured.client != nil && configured.client.Jar != nil {
+			return &HTTPClientCookieJarError{Edge: configured.name}
+		}
+	}
+
+	return nil
 }
 
 func cloneHTTPClient(client *http.Client) *http.Client {
@@ -530,7 +563,10 @@ func WithEventAuthority(authority string) Option {
 	}
 }
 
-// WithHTTPClient injects the shared HTTP client for REST and GraphQL.
+// WithHTTPClient injects the shared HTTP client for REST and GraphQL. Any
+// effective client must have a nil CookieJar; NewClient rejects a configured
+// jar so mutable cookie state cannot be shared between account sessions. Use
+// WithCookies on each session for account-specific REST cookies.
 func WithHTTPClient(client *http.Client) Option {
 	return func(cfg *clientConfig) error {
 		if client == nil {
@@ -546,7 +582,9 @@ func WithHTTPClient(client *http.Client) Option {
 // WithHttpClient is a spelling-compatible alias for WithHTTPClient.
 func WithHttpClient(client *http.Client) Option { return WithHTTPClient(client) }
 
-// WithRESTHTTPClient injects the REST network edge independently.
+// WithRESTHTTPClient injects the REST network edge independently. The
+// effective client must have a nil CookieJar so mutable cookie state cannot be
+// shared between account sessions; use WithCookies on each session instead.
 func WithRESTHTTPClient(client *http.Client) Option {
 	return func(cfg *clientConfig) error {
 		if client == nil {
@@ -559,7 +597,9 @@ func WithRESTHTTPClient(client *http.Client) Option {
 	}
 }
 
-// WithGraphQLHTTPClient injects the GraphQL network edge independently.
+// WithGraphQLHTTPClient injects the GraphQL network edge independently. The
+// effective client must have a nil CookieJar so mutable cookie state cannot be
+// shared between account sessions.
 func WithGraphQLHTTPClient(client *http.Client) Option {
 	return func(cfg *clientConfig) error {
 		if client == nil {
@@ -572,7 +612,9 @@ func WithGraphQLHTTPClient(client *http.Client) Option {
 	}
 }
 
-// WithEventHTTPClient injects the long-lived HTTP/2 event-stream client.
+// WithEventHTTPClient injects the long-lived HTTP/2 event-stream client. The
+// effective client must have a nil CookieJar so mutable cookie state cannot be
+// shared between account sessions.
 func WithEventHTTPClient(client *http.Client) Option {
 	return func(cfg *clientConfig) error {
 		if client == nil {

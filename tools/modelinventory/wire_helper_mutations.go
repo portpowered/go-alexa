@@ -33,6 +33,7 @@ func indexWireHelperParameters(
 	}
 }
 
+//nolint:cyclop // One bounded AST walk resolves generic functions, methods, aliases, and callable fields.
 func wireLocalHelpers(expression ast.Expr, assignments wireSourceAssignments, visiting map[wireSourceVariable]bool) []*ast.FuncType {
 	switch expression := expression.(type) {
 	case *ast.CallExpr:
@@ -87,6 +88,13 @@ func wireLocalHelpers(expression ast.Expr, assignments wireSourceAssignments, vi
 
 	for _, value := range wireAliasExpressions(identifier, assignments) {
 		functions = append(functions, wireLocalHelpers(value, assignments, visiting)...)
+	}
+
+	if field, parameter := declaration.(*ast.Field); parameter && wireFunctionParameter(field, assignments) &&
+		!wireCallerOwnedParameter(field, assignments) && !assignments.boundParameters[key] {
+		for _, value := range assignments.callArguments[key] {
+			functions = append(functions, wireLocalHelpers(value, assignments, visiting)...)
+		}
 	}
 
 	return wireHelperCandidates(functions)

@@ -2,7 +2,12 @@ package main
 
 import "go/ast"
 
-const builtinDeleteName = "delete"
+const (
+	builtinAppendName = "append"
+	builtinClearName  = "clear"
+	builtinDeleteName = "delete"
+	builtinNewName    = "new"
+)
 
 func wireTypeConversion(expression ast.Expr) bool {
 	switch expression := expression.(type) {
@@ -28,7 +33,7 @@ func inspectWireBuiltinMutation(
 	assignments wireSourceAssignments, report func(*ast.BasicLit),
 ) {
 	name, builtin := call.Fun.(*ast.Ident)
-	if !builtin || name.Obj != nil || (name.Name != "append" && name.Name != builtinDeleteName) || len(call.Args) < 2 ||
+	if !builtin || name.Obj != nil || (name.Name != builtinAppendName && name.Name != builtinDeleteName) || len(call.Args) < 2 ||
 		!generatedWireReceiver(call.Args[0], aliases, path, models, make(map[wireSourceVariable]bool), assignments) {
 		return
 	}

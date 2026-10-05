@@ -11,6 +11,9 @@ func TestWireMutationRejectsCopyAndLocalHelperEscapes(t *testing.T) {
 
 	for _, mutation := range []string{
 		`maps.Copy(input.Extra, map[string]any{"brandNewKey": caller})`,
+		`append(input.Values, uuid.NewString())`,
+		`delete(input.Extra, uuid.NewString())`,
+		`maps.Copy(input.Extra, map[string]any{uuid.NewString(): caller})`,
 		`unknown(input.Extra, caller)`,
 		`unknownAny([]any{input.Extra})`,
 		`unknownAny(struct{ Extra map[string]any }{input.Extra})`,
@@ -42,6 +45,7 @@ func TestWireMutationRejectsCopyAndLocalHelperEscapes(t *testing.T) {
 
 		file, err := parser.ParseFile(set, "probe.go", `package probe
 import "maps"
+import "github.com/google/uuid"
 import external "example.com/unverified"
 import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
 type mapAlias map[string]any
@@ -78,7 +82,7 @@ func TestWireMutationAllowsOpenInputsThroughHelpers(t *testing.T) {
 import "maps"
 import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
 func mutate(extra map[string]any, caller string) { extra[caller] = caller }
-func request(input *wire.Payload, caller string) {
+func Request(input *wire.Payload, caller string) {
  maps.Copy(input.Extra, map[string]any{wire.RegisteredValue: caller})
  mutate(input.Extra, caller)
 }

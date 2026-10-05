@@ -348,16 +348,18 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 
 	for domainName, cookieList := range *response.Response.Tokens.Cookies {
 		for _, cookieData := range cookieList {
-			cookie := &http.Cookie{
-				Name:     valueOrZero(cookieData.Name),
-				Value:    valueOrZero(cookieData.Value),
-				Path:     valueOrZero(cookieData.Path),
-				Secure:   valueOrZero(cookieData.Secure),
-				HttpOnly: valueOrZero(cookieData.HttpOnly),
-			}
+			cookie := &http.Cookie{}
+			assignOptional(&cookie.Name, cookieData.Name)
+			assignOptional(&cookie.Value, cookieData.Value)
+			assignOptional(&cookie.Path, cookieData.Path)
+			assignOptional(&cookie.Secure, cookieData.Secure)
+			assignOptional(&cookie.HttpOnly, cookieData.HttpOnly)
 
 			// Parse expiration if provided
-			expires := valueOrZero(cookieData.Expires)
+			expires := ""
+
+			assignOptional(&expires, cookieData.Expires)
+
 			if expires != "" {
 				{
 					expTime, err := time.Parse(time.RFC1123, expires)
@@ -402,8 +404,12 @@ func registrationChallengeFromError(err error) (RegistrationChallengeError, bool
 		return RegistrationChallengeError{ChallengeReason: "", RequiredAuthenticationMethod: ""}, false, nil
 	}
 
-	return RegistrationChallengeError{
-		ChallengeReason:              valueOrZero(challenge.ChallengeReason),
-		RequiredAuthenticationMethod: valueOrZero(challenge.RequiredAuthenticationMethod),
-	}, true, nil
+	challengeError := RegistrationChallengeError{
+		ChallengeReason:              "",
+		RequiredAuthenticationMethod: "",
+	}
+	assignOptional(&challengeError.ChallengeReason, challenge.ChallengeReason)
+	assignOptional(&challengeError.RequiredAuthenticationMethod, challenge.RequiredAuthenticationMethod)
+
+	return challengeError, true, nil
 }

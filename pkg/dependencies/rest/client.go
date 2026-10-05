@@ -56,15 +56,10 @@ func convertWireModel[T any](source any) (*T, error) {
 	return &result, nil
 }
 
-//nolint:ireturn // This generic helper returns the caller's selected concrete value type.
-func valueOrZero[T any](value *T) T {
+func assignOptional[T any](destination *T, value *T) {
 	if value != nil {
-		return *value
+		*destination = *value
 	}
-
-	var zero T
-
-	return zero
 }
 
 // ClientOption is a function that configures a Client.

@@ -55,7 +55,7 @@ func TestWireConstructionAllowsCallerInputsAndGeneratedConstants(t *testing.T) {
 
 	file, err := parser.ParseFile(set, "probe.go", `package probe
 import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
-func request(caller string, input *wire.Payload) {
+func Request(caller string, input *wire.Payload) {
  _ = wire.Payload{Value: caller}
  _ = wire.Payload{Value: wire.RegisteredValue}
  input.Extra[caller] = caller
@@ -84,8 +84,16 @@ func wireConstructionTestModels() map[string]generatedModel {
 	payload.Name = "Payload"
 	payload.File = "pkg/dependencymodels/payload.gen.go"
 	payload.Generated = true
+	sequence := generatedModel{
+		Name: "Sequence", File: "pkg/dependencymodels/behavior_sequence.gen.go", Schema: "", Generator: "",
+		Fields: nil, Type: nil, Alias: false, Generated: true,
+	}
+	sequenceType := generatedModel{
+		Name: "SequenceType", File: "pkg/dependencymodels/behavior_sequence.gen.go", Schema: "", Generator: "",
+		Fields: nil, Type: nil, Alias: false, Generated: true,
+	}
 
-	return map[string]generatedModel{"Payload": payload}
+	return map[string]generatedModel{"Payload": payload, "Sequence": sequence, "SequenceType": sequenceType}
 }
 
 func TestWireMutationRejectsNewFixedValuesAfterInitialization(t *testing.T) {
@@ -141,7 +149,7 @@ func TestWireConstructionDoesNotTreatFieldNamesOrSiblingAssignmentsAsValues(t *t
 	file, err := parser.ParseFile(set, "probe.go", `package probe
 import wire "github.com/portpowered/go-alexa/pkg/dependencymodels"
 const Value = "not a wire value"
-func request(caller string) {
+func Request(caller string) {
  local, diagnostic := caller, "diagnostic"
  _ = diagnostic
  _ = wire.Payload{Nested: wire.Payload{Value: local}}
@@ -163,6 +171,7 @@ func rejectRawGeneratedWireConstructions(file *ast.File, set *token.FileSet, mod
 	aliases := primitiveImportAliases(file, owner)
 	assignments := indexWireSourceAssignments(file)
 	indexWireHelperParameters(file, aliases, path, models, assignments)
+	indexWirePackageValueArguments([]wireSourceFile{{path: path, file: file}}, assignments)
 
 	return rejectRawGeneratedWireConstructionsWithAssignments(file, set, path, models, assignments)
 }
