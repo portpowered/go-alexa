@@ -16,7 +16,6 @@ import (
 
 	"github.com/portpowered/go-alexa/pkg/alexa"
 	"github.com/portpowered/go-alexa/pkg/alexaapimodels"
-	alexamodels "github.com/portpowered/go-alexa/pkg/dependencymodels"
 )
 
 func TestLoginPersistsCBLCredentialsAndReusesThem(t *testing.T) {
@@ -49,20 +48,21 @@ func TestLoginPersistsCBLCredentialsAndReusesThem(t *testing.T) {
 				t.Errorf("registration must use CBL: %s", payload["auth_data"])
 			}
 
-			var registration alexamodels.WireRegistrationData
+			var registration map[string]string
 
-			if err := json.Unmarshal(payload["registration_data"], &registration); err != nil {
+			err = json.Unmarshal(payload["registration_data"], &registration)
+			if err != nil {
 				t.Error(err)
 			}
 
-			if deviceNames[registration.DeviceName] {
+			if deviceNames[registration["device_name"]] {
 				response.WriteHeader(http.StatusBadRequest)
 				_, _ = io.WriteString(response, `{"response":{"error":{"code":"DuplicateDeviceName"}}}`)
 
 				return
 			}
 
-			deviceNames[registration.DeviceName] = true
+			deviceNames[registration["device_name"]] = true
 
 			_, _ = io.WriteString(response, `{"response":{"success":{"tokens":{"bearer":{"access_token":"ACCESS","refresh_token":"REFRESH"}}}}}`)
 		case "/auth/token":

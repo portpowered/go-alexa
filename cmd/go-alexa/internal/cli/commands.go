@@ -71,16 +71,12 @@ func (a *App) runCodeLink(ctx context.Context, args []string, login bool) error 
 		*serial = generated
 	}
 
-	if *name == "" {
-		*name = "go-alexa CLI " + *serial
-	}
-
 	client, err := a.newRecordedClient(*regionName, *recordDir)
 	if err != nil {
 		return err
 	}
 
-	config := alexaapimodels.DefaultDeviceRegistrationConfig(*serial, *name)
+	config := alexaapimodels.DefaultDeviceRegistrationConfig(*serial, codeLinkDeviceName(*name, *serial))
 
 	pair, err := client.GenerateCodePair(ctx, config)
 	if err != nil {
@@ -597,6 +593,14 @@ func (a *App) runEvents(ctx context.Context, args []string) error {
 			}
 		}
 	}
+}
+
+func codeLinkDeviceName(name, serial string) string {
+	if name != "" {
+		return name
+	}
+
+	return "go-alexa CLI " + serial
 }
 
 func findEndpoint(endpoints []*alexaapimodels.Endpoint, id string) *alexaapimodels.Endpoint {
