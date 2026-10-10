@@ -41,7 +41,7 @@ func (a *App) runCodeLink(ctx context.Context, args []string, login bool) error 
 	flags := a.flagSet(usage)
 	outputPath := flags.String("credentials-out", "", "new owner-only credential file (must not already exist)")
 	serial := flags.String("device-serial", "", "device serial identifier; generated when omitted")
-	name := flags.String("device-name", "go-alexa CLI", "device name shown in account settings")
+	name := flags.String("device-name", "", "device name shown in account settings; generated uniquely when omitted")
 
 	regionName := flags.String("region", "US", "service region: US, EU, or JP")
 	recordDir := flags.String("record-dir", "", "directory for private request/response captures")
@@ -76,7 +76,7 @@ func (a *App) runCodeLink(ctx context.Context, args []string, login bool) error 
 		return err
 	}
 
-	config := alexaapimodels.DefaultDeviceRegistrationConfig(*serial, *name)
+	config := alexaapimodels.DefaultDeviceRegistrationConfig(*serial, codeLinkDeviceName(*name, *serial))
 
 	pair, err := client.GenerateCodePair(ctx, config)
 	if err != nil {
@@ -593,6 +593,14 @@ func (a *App) runEvents(ctx context.Context, args []string) error {
 			}
 		}
 	}
+}
+
+func codeLinkDeviceName(name, serial string) string {
+	if name != "" {
+		return name
+	}
+
+	return "go-alexa CLI " + serial
 }
 
 func findEndpoint(endpoints []*alexaapimodels.Endpoint, id string) *alexaapimodels.Endpoint {
