@@ -332,6 +332,7 @@ func (a *App) runEndpoints(ctx context.Context, args []string) error {
 	defer func() { _ = session.Close() }()
 
 	response, err := session.ListEndpoints(ctx, alexaapimodels.EndpointQuery{
+		EndpointIDs:   nil,
 		IncludeFields: &alexaapimodels.EndpointIncludeFields{Features: true, Properties: *includeStates},
 	})
 	if err != nil {
@@ -395,6 +396,7 @@ func (a *App) runEndpoint(ctx context.Context, args []string) error {
 	defer func() { _ = session.Close() }()
 
 	listing, err := session.ListEndpoints(ctx, alexaapimodels.EndpointQuery{
+		EndpointIDs:   nil,
 		IncludeFields: &alexaapimodels.EndpointIncludeFields{Features: true, Properties: false},
 	})
 	if err != nil {
@@ -470,7 +472,7 @@ func (a *App) runPlayer(ctx context.Context, args []string) error {
 
 	defer func() { _ = session.Close() }()
 
-	listing, err := session.ListEndpoints(ctx, alexaapimodels.EndpointQuery{IncludeFields: nil})
+	listing, err := session.ListEndpoints(ctx, alexaapimodels.EndpointQuery{EndpointIDs: nil, IncludeFields: nil})
 	if err != nil {
 		return fmt.Errorf("find endpoint: %w", err)
 	}
