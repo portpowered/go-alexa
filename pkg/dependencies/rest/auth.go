@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -89,10 +88,7 @@ func (c *Client) RegisterWithEmailPassword(
 			return nil, &challenge
 		}
 
-		return nil, &alexaapimodels.NetworkError{
-			Message: "failed to register with email/password",
-			Err:     err,
-		}
+		return nil, safeAuthenticationFailure(err, "failed to register with email/password")
 	}
 
 	converted, err := convertWireModel[alexamodels.RegistrationResponse](response)
@@ -229,10 +225,7 @@ func (c *Client) RefreshAccessToken(ctx context.Context, refreshToken string, co
 	{
 		err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodRefreshAccessToken, url, req, &response)
 		if err != nil {
-			return nil, &alexaapimodels.NetworkError{
-				Message: "failed to refresh access token",
-				Err:     err,
-			}
+			return nil, safeAuthenticationFailure(err, "failed to refresh access token")
 		}
 	}
 
@@ -251,7 +244,12 @@ type RegistrationChallengeError struct {
 }
 
 func (e *RegistrationChallengeError) Error() string {
-	return "registration challenge: " + e.ChallengeReason
+	switch e.ChallengeReason {
+	case alexamodels.AuthChallengeMissingData, alexamodels.AuthChallengeWebView, alexamodels.AuthChallengeFailed:
+		return "registration challenge: " + e.ChallengeReason
+	default:
+		return "registration challenge"
+	}
 }
 
 // IsOTPRequired checks if the error indicates OTP is required.
@@ -289,7 +287,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 	if err != nil {
 		return nil, &alexaapimodels.BadRequestError{
 			Message: "failed to marshal request",
-			Err:     err,
+			Err:     safeTransportCause(err),
 		}
 	}
 
@@ -297,7 +295,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 	if err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to create request",
-			Err:     err,
+			Err:     safeTransportCause(err),
 		}
 	}
 
@@ -308,7 +306,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 	if err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to exchange token for cookies",
-			Err:     err,
+			Err:     safeTransportCause(err),
 		}
 	}
 
@@ -317,11 +315,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-
-		return nil, &alexaapimodels.NetworkError{
-			Message: fmt.Sprintf("cookie exchange failed with status %d: %s", resp.StatusCode, string(bodyBytes)),
-		}
+		return nil, &alexaapimodels.NetworkError{Message: fmt.Sprintf("cookie exchange failed with status %d", resp.StatusCode), Err: statusCause(resp.StatusCode)}
 	}
 
 	{
@@ -329,7 +323,7 @@ func (c *Client) ExchangeRefreshTokenForCookies(ctx context.Context, refreshToke
 		if err != nil {
 			return nil, &alexaapimodels.NetworkError{
 				Message: "failed to decode response",
-				Err:     err,
+				Err:     safeTransportCause(err),
 			}
 		}
 	}
@@ -406,4 +400,19 @@ func registrationChallengeFromError(err error) (RegistrationChallengeError, bool
 	assignOptional(&challengeError.RequiredAuthenticationMethod, challenge.RequiredAuthenticationMethod)
 
 	return challengeError, true, nil
+}
+
+func safeAuthenticationFailure(err error, message string) error {
+	var responseError *UnauthenticatedRequestError
+	if errors.As(err, &responseError) {
+		return &alexaapimodels.NetworkError{
+			Message: message,
+			Err: &alexaapimodels.HTTPError{
+				StatusCode: responseError.StatusCode,
+				Status:     http.StatusText(responseError.StatusCode),
+			},
+		}
+	}
+
+	return &alexaapimodels.NetworkError{Message: message, Err: safeTransportCause(err)}
 }

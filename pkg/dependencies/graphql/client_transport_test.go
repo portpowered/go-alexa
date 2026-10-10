@@ -130,22 +130,22 @@ func TestExecuteReportsHTTPGraphQLDecodeAndTokenErrors(t *testing.T) {
 			tokenError: nil,
 			wantText:   "401",
 		},
-		{name: "invalid JSON", status: http.StatusOK, body: "not-json", tokenError: nil, wantText: "decode response"},
+		{name: "invalid JSON", status: http.StatusOK, body: "not-json", tokenError: nil, wantText: "response_decode"},
 		{
 			name:       "GraphQL errors",
 			status:     http.StatusOK,
 			body:       `{"errors":[{"message":"synthetic query failure"}]}`,
 			tokenError: nil,
-			wantText:   "graphql errors",
+			wantText:   "graphql_response",
 		},
 		{
 			name:       "invalid result data",
 			status:     http.StatusOK,
 			body:       `{"data":{"count":"not-an-integer"}}`,
 			tokenError: nil,
-			wantText:   "unmarshal result",
+			wantText:   "response_decode",
 		},
-		{name: "token getter", status: 0, body: "", tokenError: syntheticFailureError("synthetic token failure"), wantText: "failed to get token"},
+		{name: "token getter", status: 0, body: "", tokenError: syntheticFailureError("synthetic token failure"), wantText: "authentication"},
 	}
 
 	for _, testCase := range cases {
@@ -207,7 +207,7 @@ func TestExecuteRejectsUnschematizedGraphQLOperationBeforeTransport(t *testing.T
 	}))
 
 	err := client.Execute(context.Background(), "query Unlisted { unknownField }", nil, nil)
-	if err == nil || !strings.Contains(err.Error(), "not in the generated schema set") {
+	if err == nil || !strings.Contains(err.Error(), "request_encode") {
 		t.Fatalf("expected schema gate error, got %v", err)
 	}
 }

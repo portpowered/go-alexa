@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -168,41 +167,32 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 	// Get token
 	token, err := a.getToken(ctx)
 	if err != nil {
-		return &alexaapimodels.TokenError{
-			Message: "failed to get token",
-			Err:     err,
-		}
+		return graphQLRequestFailure(0, "authentication", &alexaapimodels.TokenError{Message: "failed to get token", Err: graphQLTransportCause(err)})
 	}
 
 	// Marshal request
 	bodyBytes, err := json.Marshal(req)
 	if err != nil {
-		return &alexaapimodels.BadRequestError{
-			Message: "failed to marshal request",
-			Err:     err,
-		}
+		return graphQLRequestFailure(0, "request_encode", &alexaapimodels.BadRequestError{Message: "failed to marshal request"})
 	}
 
 	var wireRequest alexamodels.WireGraphQLRequest
 	{
 		err := json.Unmarshal(bodyBytes, &wireRequest)
 		if err != nil {
-			return &alexaapimodels.BadRequestError{Message: "failed to decode request", Err: err}
+			return graphQLRequestFailure(0, "request_encode", &alexaapimodels.BadRequestError{Message: "failed to decode request"})
 		}
 	}
 
 	bodyBytes, err = json.Marshal(wireRequest)
 	if err != nil {
-		return &alexaapimodels.BadRequestError{Message: "failed to marshal generated request", Err: err}
+		return graphQLRequestFailure(0, "request_encode", &alexaapimodels.BadRequestError{Message: "failed to marshal generated request"})
 	}
 
 	// Create HTTP request
 	httpReq, err := http.NewRequestWithContext(ctx, apiroutes.MethodExecuteNexusGraphQL, a.baseURL+apiroutes.PathExecuteNexusGraphQL, bytes.NewReader(bodyBytes))
 	if err != nil {
-		return &alexaapimodels.NetworkError{
-			Message: "failed to create request",
-			Err:     err,
-		}
+		return graphQLRequestFailure(0, "request_create", &alexaapimodels.NetworkError{Message: "failed to create request"})
 	}
 
 	httpReq.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
@@ -212,10 +202,7 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 	// Execute request
 	httpResp, err := a.httpClient.Do(httpReq)
 	if err != nil {
-		return &alexaapimodels.NetworkError{
-			Message: "request failed",
-			Err:     err,
-		}
+		return graphQLRequestFailure(0, "transport", &alexaapimodels.NetworkError{Message: "request failed", Err: graphQLTransportCause(err)})
 	}
 
 	defer func() {
@@ -225,15 +212,14 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 	// Read response
 	bodyBytes, err = io.ReadAll(httpResp.Body)
 	if err != nil {
-		return &alexaapimodels.NetworkError{
-			Message: "failed to read response",
-			Err:     err,
-		}
+		return graphQLRequestFailure(httpResp.StatusCode, "response_read",
+			&alexaapimodels.NetworkError{Message: "failed to read response", Err: graphQLTransportCause(err)})
 	}
 
 	// Check status code
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return alexaapimodels.NewHTTPError(httpResp, string(bodyBytes))
+		return graphQLRequestFailure(httpResp.StatusCode, "provider_response",
+			&alexaapimodels.HTTPError{StatusCode: httpResp.StatusCode, Status: http.StatusText(httpResp.StatusCode)})
 	}
 
 	// Decode through the schema-generated HTTP response model before adapting
@@ -242,30 +228,25 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 	{
 		err := json.Unmarshal(bodyBytes, &wireResponse)
 		if err != nil {
-			return &alexaapimodels.BadRequestError{
-				Message: "failed to decode response",
-				Err:     err,
-			}
+			return graphQLRequestFailure(httpResp.StatusCode, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to decode response"})
 		}
 	}
 
 	bodyBytes, err = json.Marshal(wireResponse)
 	if err != nil {
-		return &alexaapimodels.BadRequestError{Message: "failed to marshal generated response", Err: err}
+		return graphQLRequestFailure(httpResp.StatusCode, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to marshal generated response"})
 	}
 
 	{
 		err := json.Unmarshal(bodyBytes, resp)
 		if err != nil {
-			return &alexaapimodels.BadRequestError{Message: "failed to adapt response", Err: err}
+			return graphQLRequestFailure(httpResp.StatusCode, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to adapt response"})
 		}
 	}
 
 	// Check for GraphQL errors
 	if len(resp.Errors) > 0 {
-		return &alexaapimodels.BadRequestError{
-			Message: fmt.Sprintf("graphql errors: %v", resp.Errors),
-		}
+		return graphQLRequestFailure(httpResp.StatusCode, "graphql_response", &alexaapimodels.BadRequestError{Message: "provider rejected GraphQL operation"})
 	}
 
 	return nil

@@ -684,10 +684,12 @@ components:
       type: object
       properties:
         deviceAccountId: {type: string, x-go-name: DeviceAccountID}
+        customerId: {type: string, x-go-name: CustomerID}
         skillId: {$ref: '#/components/schemas/BehaviorSkillID', x-go-name: SkillID}
-      required: [deviceAccountId, skillId]
+      required: [deviceAccountId, customerId, skillId]
       example:
         deviceAccountId: synthetic-device-account
+        customerId: synthetic-customer
         skillId: amzn1.ask.1p.routines.firetv
       x-example-evidence: synthetic
     DeviceControlsStopOperationType:
@@ -927,6 +929,7 @@ components:
         type: Alexa.Operation.FireTV.TurnOn
         operationPayload:
           deviceAccountId: synthetic-device-account
+          customerId: synthetic-customer
           skillId: amzn1.ask.1p.routines.firetv
       x-example-evidence: synthetic
     SDKKnownProviderID:
