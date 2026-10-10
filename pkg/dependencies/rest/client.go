@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -361,6 +360,11 @@ func (c *Client) fetchCSRFTokenFromAPI(ctx context.Context) (string, error) {
 	return "", errFailedToRetrieveCSRFToken
 }
 
+const (
+	diagnosticBodyLimit     = 16 * 1024
+	authenticationBodyLimit = 64 * 1024
+)
+
 // doRequest performs an HTTP request with retry logic.
 func (c *Client) doRequest(ctx context.Context, method, path string, body interface{}) (*http.Response, error) {
 	var bodyReader io.Reader
@@ -368,10 +372,8 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 	if body != nil {
 		bodyBytes, err := json.Marshal(body)
 		if err != nil {
-			return nil, &alexaapimodels.BadRequestError{
-				Message: "failed to marshal request body",
-				Err:     err,
-			}
+			return nil, requestFailure(method, path, 0, "", "request_encode",
+				&alexaapimodels.BadRequestError{Message: "failed to marshal request body"})
 		}
 
 		bodyReader = bytes.NewReader(bodyBytes)
@@ -381,55 +383,22 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 
 	req, err := http.NewRequestWithContext(ctx, method, url, bodyReader)
 	if err != nil {
-		return nil, &alexaapimodels.NetworkError{
-			Message: "failed to create request",
-			Err:     err,
-		}
+		return nil, requestFailure(method, path, 0, "", "request_create",
+			&alexaapimodels.NetworkError{Message: "failed to create request"})
 	}
 
 	// Get token and set authorization header
 	token, err := c.getToken(ctx)
 	if err != nil {
-		return nil, &alexaapimodels.TokenError{
-			Message: "failed to get token",
-			Err:     err,
-		}
+		return nil, requestFailure(method, path, 0, "", "authentication",
+			tokenFailureCause(ctx, err))
 	}
 
 	req.Header.Set(apiroutes.HeaderAuthorization, "Bearer "+token)
 	req.Header.Set(apiroutes.HeaderContentType, "application/json")
 	req.Header.Set(apiroutes.HeaderAccept, "application/json")
 
-	// Retry logic
-	maxRetries := 3
-
-	var resp *http.Response
-
-	for attempt := range maxRetries {
-		resp, err = c.httpClient.Do(req)
-		if err == nil && resp.StatusCode < 500 {
-			break
-		}
-
-		if attempt < maxRetries-1 {
-			// Exponential backoff
-			backoff := time.Duration(attempt+1) * time.Second
-			select {
-			case <-ctx.Done():
-				return nil, fmt.Errorf("request retry canceled: %w", ctx.Err())
-			case <-time.After(backoff):
-			}
-		}
-	}
-
-	if err != nil {
-		return nil, &alexaapimodels.NetworkError{
-			Message: "request failed after retries",
-			Err:     err,
-		}
-	}
-
-	return resp, nil
+	return c.doRequestWithRetries(ctx, req)
 }
 
 // doJSONRequest performs a request and unmarshals the JSON response.
@@ -444,18 +413,23 @@ func (c *Client) doJSONRequest(ctx context.Context, method, path string, body in
 	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		bodyBytes, _ := io.ReadAll(resp.Body)
+		bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, diagnosticBodyLimit))
+		reason := providerReason(bodyBytes)
 
-		return alexaapimodels.NewHTTPError(resp, string(bodyBytes))
+		stage := "provider_response"
+		if readErr != nil {
+			stage = "response_read"
+		}
+
+		return requestFailure(method, path, resp.StatusCode, reason, stage,
+			&alexaapimodels.HTTPError{StatusCode: resp.StatusCode, Status: http.StatusText(resp.StatusCode)})
 	}
 
 	if result != nil {
 		err := json.NewDecoder(resp.Body).Decode(result)
 		if err != nil {
-			return &alexaapimodels.BadRequestError{
-				Message: "failed to decode response",
-				Err:     err,
-			}
+			return requestFailure(method, path, resp.StatusCode, "", "response_decode",
+				&alexaapimodels.BadRequestError{Message: "failed to decode response"})
 		}
 	}
 
@@ -480,21 +454,18 @@ func (c *Client) doRequestWithFullURL(
 
 		bodyReader, err = marshalFullURLBody(body)
 		if err != nil {
-			return nil, err
+			return nil, requestFailure(method, fullURL, 0, "", "request_encode", &alexaapimodels.BadRequestError{Message: "failed to marshal request body"})
 		}
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, fullURL, bodyReader)
 	if err != nil {
-		return nil, &alexaapimodels.NetworkError{
-			Message: "failed to create request",
-			Err:     err,
-		}
+		return nil, requestFailure(method, fullURL, 0, "", "request_create", &alexaapimodels.NetworkError{Message: "failed to create request"})
 	}
 
 	err = c.setFullURLAuthentication(ctx, req.Header, useCookieAuth)
 	if err != nil {
-		return nil, err
+		return nil, requestFailure(method, fullURL, 0, "", "authentication", tokenFailureCause(ctx, err))
 	}
 
 	req.Header.Set(apiroutes.HeaderAccept, "application/json")
@@ -511,39 +482,13 @@ func (c *Client) doRequestWithFullURL(
 		req.Header.Set(key, value)
 	}
 
-	const maxRetries = 3
-
-	var response *http.Response
-
-	var requestErr error
-
-	for attempt := range maxRetries {
-		response, requestErr = c.httpClient.Do(req)
-		if requestErr != nil {
-			return nil, &alexaapimodels.NetworkError{Message: "request failed", Err: requestErr}
-		}
-
-		if response.StatusCode >= http.StatusOK && response.StatusCode < http.StatusMultipleChoices {
-			return response, nil
-		}
-
-		statusErr := fullURLResponseError(response)
-		if statusErr != nil {
-			return nil, statusErr
-		}
-
-		if attempt < maxRetries-1 {
-			backoff := time.Duration(attempt+1) * time.Second
-			select {
-			case <-ctx.Done():
-				return nil, fmt.Errorf("request retry canceled: %w", ctx.Err())
-			case <-time.After(backoff):
-			}
-		}
+	response, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, requestFailure(method, fullURL, 0, "", "transport", networkFailureCause(ctx, err, "request failed"))
 	}
 
-	if requestErr != nil {
-		return nil, &alexaapimodels.NetworkError{Message: "request failed after retries", Err: requestErr}
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		return nil, fullURLResponseError(method, fullURL, response)
 	}
 
 	return response, nil
@@ -567,7 +512,7 @@ func (c *Client) setFullURLAuthentication(ctx context.Context, headers http.Head
 		if err != nil {
 			return &alexaapimodels.TokenError{
 				Message: "failed to get token",
-				Err:     err,
+				Err:     nil,
 			}
 		}
 
@@ -602,23 +547,18 @@ func (c *Client) setFullURLAuthentication(ctx context.Context, headers http.Head
 	return nil
 }
 
-func fullURLResponseError(response *http.Response) error {
-	switch response.StatusCode {
-	case http.StatusUnauthorized:
-		return &alexaapimodels.UnauthorizedError{Message: "unauthorized", Err: errUnauthorizedResponse}
-	case http.StatusNotFound:
-		return &alexaapimodels.NotFoundError{Message: "not found", Err: errNotFoundResponse}
+func fullURLResponseError(method, fullURL string, response *http.Response) error {
+	defer func() { _ = response.Body.Close() }()
+
+	body, err := io.ReadAll(io.LimitReader(response.Body, diagnosticBodyLimit))
+
+	stage := "provider_response"
+
+	if err != nil {
+		stage = "response_read"
 	}
 
-	if response.StatusCode >= http.StatusBadRequest && response.StatusCode < http.StatusInternalServerError {
-		return &alexaapimodels.BadRequestError{Message: "bad request", Err: errBadRequestResponse}
-	}
-
-	if response.StatusCode >= http.StatusInternalServerError {
-		return &alexaapimodels.InternalServerError{Message: "internal server error", Err: errServerErrorResponse}
-	}
-
-	return nil
+	return requestFailure(method, fullURL, response.StatusCode, providerReason(body), stage, statusCause(response.StatusCode))
 }
 
 // doJSONRequestWithFullURL performs a request with a full URL and unmarshals the JSON response
@@ -641,31 +581,10 @@ func (c *Client) doJSONRequestWithFullURL(
 		_ = resp.Body.Close()
 	}()
 
-	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-
-		return &alexaapimodels.BadRequestError{
-			Message: "bad request",
-			Err:     errors.New(string(bodyBytes)), //nolint:err113 // Preserve the provider response body verbatim in its error text.
-		}
-	}
-
-	if resp.StatusCode >= http.StatusInternalServerError {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-
-		return &alexaapimodels.InternalServerError{
-			Message: "internal server error",
-			Err:     errors.New(string(bodyBytes)), //nolint:err113 // Preserve the provider response body verbatim in its error text.
-		}
-	}
-
 	if result != nil {
 		err := json.NewDecoder(resp.Body).Decode(result)
 		if err != nil {
-			return &alexaapimodels.BadRequestError{
-				Message: "failed to decode response",
-				Err:     err,
-			}
+			return requestFailure(method, fullURL, resp.StatusCode, "", "response_decode", &alexaapimodels.BadRequestError{Message: "failed to decode response"})
 		}
 	}
 
@@ -682,7 +601,7 @@ func (c *Client) doUnauthenticatedRequest(ctx context.Context, method, url strin
 		if err != nil {
 			return nil, &alexaapimodels.BadRequestError{
 				Message: "failed to marshal request body",
-				Err:     err,
+				Err:     nil,
 			}
 		}
 
@@ -693,43 +612,14 @@ func (c *Client) doUnauthenticatedRequest(ctx context.Context, method, url strin
 	if err != nil {
 		return nil, &alexaapimodels.NetworkError{
 			Message: "failed to create request",
-			Err:     err,
+			Err:     nil,
 		}
 	}
 
 	req.Header.Set(apiroutes.HeaderContentType, "application/json")
 	req.Header.Set(apiroutes.HeaderAccept, "application/json")
 
-	// Retry logic
-	maxRetries := 3
-
-	var resp *http.Response
-
-	for attempt := range maxRetries {
-		resp, err = c.httpClient.Do(req)
-		if err == nil && resp.StatusCode < 500 {
-			break
-		}
-
-		if attempt < maxRetries-1 {
-			// Exponential backoff
-			backoff := time.Duration(attempt+1) * time.Second
-			select {
-			case <-ctx.Done():
-				return nil, fmt.Errorf("request retry canceled: %w", ctx.Err())
-			case <-time.After(backoff):
-			}
-		}
-	}
-
-	if err != nil {
-		return nil, &alexaapimodels.NetworkError{
-			Message: "request failed after retries",
-			Err:     err,
-		}
-	}
-
-	return resp, nil
+	return c.doRequestWithRetries(ctx, req)
 }
 
 // doUnauthenticatedJSONRequest performs an unauthenticated request and unmarshals the JSON response.
@@ -745,7 +635,10 @@ func (c *Client) doUnauthenticatedJSONRequest(ctx context.Context, method, url s
 		_ = resp.Body.Close()
 	}()
 
-	bodyBytes, _ := io.ReadAll(resp.Body)
+	bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, authenticationBodyLimit))
+	if readErr != nil {
+		return &alexaapimodels.NetworkError{Message: "failed to read authentication response", Err: safeTransportCause(readErr)}
+	}
 
 	// For authentication endpoints, we need to handle different status codes
 	// 200 = success, 400/401 = challenge or error
@@ -769,7 +662,7 @@ func (c *Client) doUnauthenticatedJSONRequest(ctx context.Context, method, url s
 		if err != nil {
 			return &alexaapimodels.BadRequestError{
 				Message: "failed to decode response",
-				Err:     err,
+				Err:     nil,
 			}
 		}
 	}
@@ -784,5 +677,46 @@ type UnauthenticatedRequestError struct {
 }
 
 func (e *UnauthenticatedRequestError) Error() string {
-	return fmt.Sprintf("request failed with status %d: %s", e.StatusCode, e.Body)
+	return fmt.Sprintf("request failed with status %d", e.StatusCode)
+}
+
+// doRequestWithRetries owns intermediate responses and recreates POST bodies.
+func (c *Client) doRequestWithRetries(ctx context.Context, request *http.Request) (*http.Response, error) {
+	const maxAttempts = 3
+	for attempt := range maxAttempts {
+		response, err := c.httpClient.Do(request)
+		if err == nil && response.StatusCode < http.StatusInternalServerError {
+			return response, nil
+		}
+
+		if attempt == maxAttempts-1 {
+			if err != nil {
+				return nil, requestFailure(request.Method, request.URL.String(), 0, "", "transport", networkFailureCause(ctx, err, "request failed after retries"))
+			}
+
+			return response, nil
+		}
+
+		if response != nil && response.Body != nil {
+			_ = response.Body.Close()
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, requestFailure(request.Method, request.URL.String(), 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
+		case <-time.After(time.Duration(attempt+1) * time.Second):
+		}
+
+		if request.GetBody != nil {
+			body, bodyErr := request.GetBody()
+			if bodyErr != nil {
+				return nil, requestFailure(request.Method, request.URL.String(), 0, "", "request_encode",
+					&alexaapimodels.BadRequestError{Message: "failed to recreate request body"})
+			}
+
+			request.Body = body
+		}
+	}
+
+	return nil, requestFailure(request.Method, request.URL.String(), 0, "", "transport", &alexaapimodels.NetworkError{Message: "provider returned no response"})
 }

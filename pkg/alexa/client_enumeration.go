@@ -78,25 +78,12 @@ func (c *Session) ListEndpoints(
 		includeCapabilities = true
 	}
 
-	// Build GraphQL input from query parameters
-	graphqlInput := graphql.ListEndpointsInput{
-		MaxAgeInMillis:          0,
-		LatencyTolerance:        "",
-		DisplayCategory:         "",
-		AllDisplayCategories:    "",
-		Enablement:              "",
-		Filters:                 nil,
-		FilterExpressions:       nil,
-		QueryExpression:         nil,
-		MaxPagesToFetch:         0,
-		EndpointIds:             nil,
-		IncludeHouseholdDevices: false,
-		PaginationParams: graphql.PaginationParams{
-			PageSize:          defaultEndpointPageSize,
-			DisablePagination: true,
-			NextToken:         "",
-		},
+	if includeStates && len(query.EndpointIDs) > 0 {
+		return c.selectedEndpointStates(ctx, query.EndpointIDs)
 	}
+
+	// Build GraphQL input from query parameters
+	graphqlInput := listEndpointsInput(false, query.EndpointIDs)
 
 	var (
 		graphqlEndpointsWithoutStates []graphql.EndpointsEndpointsEndpointsResponseItemsEndpoint
@@ -168,6 +155,7 @@ func (c *Session) ListEndpoints(
 		mergeData,
 	)
 	unifiedEndpoints = mergeDistinctEndpoints(unifiedEndpoints, airQualityMonitorEndpoints)
+	unifiedEndpoints = filterEndpointsByIDs(unifiedEndpoints, query.EndpointIDs)
 
 	return &alexaapimodels.UnifiedEndpointListResponse{
 		Results: unifiedEndpoints,

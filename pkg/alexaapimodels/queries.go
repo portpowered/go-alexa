@@ -5,6 +5,8 @@ package alexaapimodels
 //modelinventory:client-input EndpointQuery: consumer options selecting which endpoint fields ListEndpoints includes.
 type EndpointQuery struct {
 	IncludeFields *EndpointIncludeFields `json:"includeFields,omitempty"`
+	// EndpointIDs scopes reads to provider identities; unrelated results are excluded.
+	EndpointIDs []string `json:"endpointIds,omitempty"`
 }
 
 // EndpointIncludeFields controls which optional endpoint details are returned.

@@ -62,7 +62,7 @@ func (c *Session) Control(
 	case alexaapimodels.FeatureNameAction:
 		return c.controlAction(ctx, req)
 	case alexaapimodels.FeatureNamePlayback:
-		return c.controlPlayback(ctx, req)
+		return c.controlPlaybackWithContext(ctx, req)
 	case alexaapimodels.FeatureNamePower:
 		return c.controlPower(ctx, req)
 	case alexaapimodels.FeatureNameSpeaker:

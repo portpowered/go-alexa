@@ -707,22 +707,23 @@ type DeviceTarget struct {
 
 // FireTVOperationNode Implementation-derived node paired with the generated Fire TV payload; SendFireTVSequence preserves its caller-supplied operation type as an open string, with no sanitized live capture available.
 //
-// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"deviceAccountId":"synthetic-device-account","skillId":"amzn1.ask.1p.routines.firetv"},"type":"Alexa.Operation.FireTV.TurnOn"}
+// Example: {"@type":"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode","operationPayload":{"customerId":"synthetic-customer","deviceAccountId":"synthetic-device-account","skillId":"amzn1.ask.1p.routines.firetv"},"type":"Alexa.Operation.FireTV.TurnOn"}
 type FireTVOperationNode struct {
 	// Type Example: com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode
 	Type OpaquePayloadOperationNodeType `json:"@type"`
 
 	// OperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
 	//
-	// Example: {"deviceAccountId":"synthetic-device-account","skillId":"amzn1.ask.1p.routines.firetv"}
+	// Example: {"customerId":"synthetic-customer","deviceAccountId":"synthetic-device-account","skillId":"amzn1.ask.1p.routines.firetv"}
 	OperationPayload FireTVOperationPayload `json:"operationPayload"`
 	OperationType    string                 `json:"type"`
 }
 
 // FireTVOperationPayload Implementation-derived nested behavior payload shape; no sanitized live capture is available.
 //
-// Example: {"deviceAccountId":"synthetic-device-account","skillId":"amzn1.ask.1p.routines.firetv"}
+// Example: {"customerId":"synthetic-customer","deviceAccountId":"synthetic-device-account","skillId":"amzn1.ask.1p.routines.firetv"}
 type FireTVOperationPayload struct {
+	CustomerID      string `json:"customerId"`
 	DeviceAccountID string `json:"deviceAccountId"`
 
 	// SkillID Skill identifiers used by the implementation-built behavior operations.

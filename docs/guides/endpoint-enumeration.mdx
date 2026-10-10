@@ -25,6 +25,13 @@ for _, endpoint := range response.Results {
 
 If the secondary REST request fails, the result may omit REST-only fields. Feature names describe reported capabilities; they do not guarantee a command will succeed on a device.
 
+Set `EndpointIDs` to the exact vendor identifiers you previously discovered to
+scope a state read. With `Properties: true`, selected reads use GraphQL directly
+and do not fetch account-wide REST device metadata. Results exclude unrelated
+provider identities, and supplement missing air-quality sensor properties only
+for the selected identities. Discovery remains responsible for physical device
+and owner context. Unavailable properties remain distinct from measured zero.
+
 ## API reference
 
 - GraphQL: [list endpoint data](../../graphql/operations/query/listendpoints/) and [query endpoint collections](../../graphql/operations/query/endpoints/).
