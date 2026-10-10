@@ -1626,14 +1626,17 @@ var injectedClientReceivers = map[string]string{
 }
 
 var allowedNetworkImports = map[string]map[string]bool{
-	"pkg/alexa/client.go":                 {"net/http": true},
-	"pkg/alexa/interface.go":              {"net/http": true},
-	"pkg/alexa/http2.go":                  {"net/http": true, "golang.org/x/net/http2": true},
-	"pkg/alexaapimodels/errors.go":        {"net/http": true},
-	"pkg/dependencies/graphql/client.go":  {"net/http": true},
-	"pkg/dependencies/graphql/queries.go": {"net/http": true},
-	"pkg/dependencies/rest/auth.go":       {"net/http": true},
-	"pkg/dependencies/rest/client.go":     {"net/http": true, "net/http/cookiejar": true},
+	"cmd/go-alexa/internal/cli/app.go":            {"net/http": true},
+	"cmd/go-alexa/internal/cli/wire_recording.go": {"net/http": true},
+	"pkg/alexa/client.go":                         {"net/http": true},
+	"pkg/alexa/interface.go":                      {"net/http": true},
+	"pkg/alexa/http2.go":                          {"net/http": true, "golang.org/x/net/http2": true},
+	"pkg/alexaapimodels/errors.go":                {"net/http": true},
+	"pkg/dependencies/graphql/client.go":          {"net/http": true},
+	"pkg/dependencies/graphql/queries.go":         {"net/http": true},
+	"pkg/dependencies/rest/auth.go":               {"net/http": true},
+	"pkg/dependencies/rest/code_pair_errors.go":   {"net/http": true},
+	"pkg/dependencies/rest/client.go":             {"net/http": true, "net/http/cookiejar": true},
 }
 
 func checkProtectedPackageImports(file *ast.File, fset *token.FileSet, violations *[]string) {
@@ -1811,6 +1814,12 @@ func checkNetworkImports(file *ast.File, fset *token.FileSet, path string, viola
 }
 
 func checkNetworkFunction(decl *ast.FuncDecl, fset *token.FileSet, path string, imports packageImports, violations *[]string) {
+	if path+"#"+decl.Name.Name == wireRecordingDelegate {
+		checkWireRecordingDelegate(decl, fset, imports, violations)
+
+		return
+	}
+
 	scan := networkFunctionScan{
 		fset:               fset,
 		imports:            imports,

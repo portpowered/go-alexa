@@ -9,11 +9,11 @@ info:
 
     and response models used by the current go-alexa source. It is not an
 
-    Amazon-issued API contract. There are no sanitized live HTTP captures in
+    Amazon-issued API contract. A sanitized CBL login capture from 2026-10-10
 
-    this repository, so these shapes have not been verified against current
+    verifies one NA account and device profile. Other operations remain
 
-    service behavior. Synthetic test data is not evidence of provider behavior.
+    implementation-derived. Synthetic tests are not evidence of provider behavior.
 
     See the Alexa AsyncAPI document for the directive stream parsed by the
 

@@ -1871,7 +1871,7 @@ func (trace *graphqlGoTraceContext) traceProjectedField(
 	path []string,
 	field graphqlGoField,
 ) error {
-	fieldDefinition := schemaField(trace.evidence.schema.Types[gqlType], field.Name)
+	fieldDefinition := selectedGraphQLSchemaField(trace.document.WireOperation.SelectionSet, trace.evidence.schema, gqlType, path, field.Name)
 	if field.Name != graphqlTypeNameField && fieldDefinition == nil {
 		return graphqlEvidenceErrorf("GraphQL interface implementation %s field %s is absent from schema type %s", modelName, field.Name, gqlType)
 	}
@@ -1889,7 +1889,7 @@ func (trace *graphqlGoTraceContext) traceSelectedField(
 	path []string,
 	field graphqlGoField,
 ) error {
-	fieldDefinition := schemaField(trace.evidence.schema.Types[gqlType], field.Name)
+	fieldDefinition := selectedGraphQLSchemaField(trace.document.WireOperation.SelectionSet, trace.evidence.schema, gqlType, path, field.Name)
 	if field.Name == graphqlTypeNameField && fieldDefinition == nil {
 		return nil
 	}
@@ -1921,7 +1921,7 @@ func graphQLInterfaceFieldPath(selection graphqlast.SelectionSet, schema *graphq
 		return nil
 	}
 
-	fieldDefinition := schemaField(schema.Types[gqlType], field.Name)
+	fieldDefinition := selectedGraphQLSchemaField(selection, schema, gqlType, path, field.Name)
 	if fieldDefinition == nil {
 		return nil
 	}
@@ -1939,6 +1939,21 @@ func graphQLInterfaceFieldPath(selection graphqlast.SelectionSet, schema *graphq
 	}
 
 	return nil
+}
+
+// Response model JSON tags name aliases, while SDL definitions name source fields.
+// Resolve through the selected operation before checking the schema; unselected
+// compatibility projections retain the original direct-field check.
+func selectedGraphQLSchemaField(
+	selection graphqlast.SelectionSet, schema *graphqlast.Schema, gqlType string,
+	path []string, responseName string,
+) *graphqlast.FieldDefinition {
+	selected := findSelectedGraphQLField(selection, appendPath(path, responseName))
+	if selected != nil {
+		return schemaField(schema.Types[gqlType], selected.Name)
+	}
+
+	return schemaField(schema.Types[gqlType], responseName)
 }
 
 func traceGraphQLInputType(

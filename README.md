@@ -69,6 +69,13 @@ func main() {
 
 Install the standalone CLI with `go install github.com/portpowered/go-alexa/cmd/go-alexa@v0.5.0`. See the [CLI guide](https://portpowered.github.io/go-alexa/docs/guides/cli/) for account linking, secure credential files, endpoint commands, player state, and event listening.
 
+The CLI in this checkout also supports `alexa auth login` when built with the
+executable name `alexa`. It uses Amazon CBL and stores private credentials under
+the OS user configuration directory in `go-alexa/credentials.json`. Later commands
+reuse that file automatically; `alexa auth refresh` renews it and `alexa auth logout`
+removes it. `GO_ALEXA_CREDENTIALS` overrides the saved credential path. See the
+[local CLI guide](docs/guides/cli.mdx) for building against this checkout.
+
 ## Supported operations
 
 | Operation | Method | Notes |

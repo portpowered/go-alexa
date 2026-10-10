@@ -206,6 +206,28 @@ components:
       - public_code
       - private_code
       type: object
+    WireCodePairErrorDetail:
+      properties:
+        code:
+          type: string
+      type: object
+    WireCodePairErrorEnvelope:
+      properties:
+        error:
+          $ref: '#/components/schemas/WireCodePairErrorDetail'
+      type: object
+    WireCodePairErrorResponse:
+      description: Known CBL error codes; diagnostic indices and messages are not
+        retained by the public error types.
+      example:
+        error: authorization_pending
+      properties:
+        error:
+          type: string
+        response:
+          $ref: '#/components/schemas/WireCodePairErrorEnvelope'
+      type: object
+      x-example-evidence: synthetic
     WireCodePairRequest:
       example:
         code_data:
@@ -1143,9 +1165,9 @@ info:
   description: |
     This is an implementation-derived description of HTTP routes, request shapes,
     and response models used by the current go-alexa source. It is not an
-    Amazon-issued API contract. There are no sanitized live HTTP captures in
-    this repository, so these shapes have not been verified against current
-    service behavior. Synthetic test data is not evidence of provider behavior.
+    Amazon-issued API contract. A sanitized CBL login capture from 2026-10-10
+    verifies one NA account and device profile. Other operations remain
+    implementation-derived. Synthetic tests are not evidence of provider behavior.
     See the Alexa AsyncAPI document for the directive stream parsed by the
     library, and the GraphQL schema for its GraphQL subset.
   license:
@@ -1435,7 +1457,11 @@ paths:
                 $ref: '#/components/schemas/WireCodePairResponse'
           description: Response decoded by the current code-pair client.
         default:
-          $ref: '#/components/responses/UnhandledResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireCodePairErrorResponse'
+          description: Code-pair generation rejection.
       security: []
       servers:
       - url: https://api.amazon.com

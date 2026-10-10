@@ -50,6 +50,24 @@ type WireCodePairAuth struct {
 	PublicCode  string `json:"public_code"`
 }
 
+// WireCodePairErrorDetail defines model for WireCodePairErrorDetail.
+type WireCodePairErrorDetail struct {
+	Code *string `json:"code,omitempty"`
+}
+
+// WireCodePairErrorEnvelope defines model for WireCodePairErrorEnvelope.
+type WireCodePairErrorEnvelope struct {
+	Error *WireCodePairErrorDetail `json:"error,omitempty"`
+}
+
+// WireCodePairErrorResponse Known CBL error codes; diagnostic indices and messages are not retained by the public error types.
+//
+// Example: {"error":"authorization_pending"}
+type WireCodePairErrorResponse struct {
+	Error    *string                    `json:"error,omitempty"`
+	Response *WireCodePairErrorEnvelope `json:"response,omitempty"`
+}
+
 // WireCodePairRequest Example: {"code_data":{"app_name":"synthetic-app","app_version":"1","device_model":"synthetic-model","device_name":"Synthetic device","device_serial":"synthetic-serial","device_type":"synthetic-device","domain":"synthetic.amazon.test","os_version":"0","secondary_registration":"False"},"scopes":[]}
 type WireCodePairRequest struct {
 	CodeData WireCodeData `json:"code_data"`

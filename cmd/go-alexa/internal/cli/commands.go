@@ -17,8 +17,10 @@ func (a *App) runAuth(ctx context.Context, args []string) error {
 	}
 
 	switch args[0] {
+	case "login":
+		return a.runCodeLink(ctx, args[1:], true)
 	case "link":
-		return a.runAuthLink(ctx, args[1:])
+		return a.runCodeLink(ctx, args[1:], false)
 	case "refresh":
 		return a.runAuthRefresh(ctx, args[1:])
 	case "export":
@@ -30,19 +32,30 @@ func (a *App) runAuth(ctx context.Context, args []string) error {
 	}
 }
 
-func (a *App) runAuthLink(ctx context.Context, args []string) error {
-	flags := a.flagSet(
-		"go-alexa auth link --credentials-out FILE [--device-serial ID] [--device-name NAME] [--region US|EU|JP]",
-	)
+func (a *App) runCodeLink(ctx context.Context, args []string, login bool) error {
+	usage := "go-alexa auth link --credentials-out FILE [--device-serial ID] [--device-name NAME] [--region US|EU|JP]"
+	if login {
+		usage = "alexa auth login [--credentials-out FILE] [--device-serial ID] [--device-name NAME] [--region US|EU|JP]"
+	}
+
+	flags := a.flagSet(usage)
 	outputPath := flags.String("credentials-out", "", "new owner-only credential file (must not already exist)")
 	serial := flags.String("device-serial", "", "device serial identifier; generated when omitted")
 	name := flags.String("device-name", "go-alexa CLI", "device name shown in account settings")
 
 	regionName := flags.String("region", "US", "service region: US, EU, or JP")
+	recordDir := flags.String("record-dir", "", "directory for private request/response captures")
 
 	err := a.parseFlags(flags, args)
 	if err != nil {
 		return err
+	}
+
+	if login && *outputPath == "" {
+		*outputPath, err = a.defaultCredentialPath()
+		if err != nil {
+			return err
+		}
 	}
 
 	if strings.TrimSpace(*outputPath) == "" {
@@ -58,7 +71,7 @@ func (a *App) runAuthLink(ctx context.Context, args []string) error {
 		*serial = generated
 	}
 
-	client, err := a.newClient(*regionName)
+	client, err := a.newRecordedClient(*regionName, *recordDir)
 	if err != nil {
 		return err
 	}
@@ -78,7 +91,7 @@ func (a *App) runAuthLink(ctx context.Context, args []string) error {
 		Next             string `json:"next"`
 	}{
 		PublicCode:       pair.PublicCode,
-		AuthorizationURL: authorizationURL(*regionName),
+		AuthorizationURL: "https://www.amazon.com/code",
 		Next:             "approve this code in your browser, then press Enter here",
 	})
 	if err != nil {
@@ -98,13 +111,17 @@ func (a *App) runAuthLink(ctx context.Context, args []string) error {
 	a.addSecret(registration.AccessToken)
 	a.addSecret(registration.RefreshToken)
 
+	if registration.AccessToken == "" || registration.RefreshToken == "" {
+		return errIncompleteRegistration
+	}
+
 	credentials := credentialFile{
 		AccessToken:        registration.AccessToken,
 		RefreshToken:       registration.RefreshToken,
 		DeviceRegistration: config,
 	}
 
-	err = saveCredentials(*outputPath, credentials)
+	err = a.saveLinkedCredentials(ctx, client, *outputPath, credentials, login)
 	if err != nil {
 		return err
 	}
@@ -116,24 +133,29 @@ func (a *App) runAuthLink(ctx context.Context, args []string) error {
 }
 
 func (a *App) runAuthRefresh(ctx context.Context, args []string) error {
-	flags := a.flagSet("go-alexa auth refresh --credentials-file FILE --credentials-out FILE [--region US|EU|JP]")
+	flags := a.flagSet("alexa auth refresh [--credentials-file FILE] [--credentials-out FILE] [--region US|EU|JP]")
 	credentialsSource := addCredentialFlags(flags)
 	outputPath := flags.String("credentials-out", "", "new owner-only credential file (must not already exist)")
 
 	regionName := flags.String("region", "US", "service region: US, EU, or JP")
+	recordDir := flags.String("record-dir", "", "directory for private request/response captures")
 
 	err := a.parseCredentialFlags(flags, credentialsSource, args)
 	if err != nil {
 		return err
 	}
 
-	if strings.TrimSpace(*outputPath) == "" {
-		return errCredentialOutput
-	}
-
 	credentials, err := a.readCredentials(credentialsSource)
 	if err != nil {
 		return err
+	}
+
+	if *outputPath == "" {
+		if credentialsSource.file == "" {
+			return errCredentialOutput
+		}
+
+		*outputPath = credentialsSource.file
 	}
 
 	if credentials.RefreshToken == "" {
@@ -144,7 +166,7 @@ func (a *App) runAuthRefresh(ctx context.Context, args []string) error {
 		return errDeviceRegistrationMissing
 	}
 
-	client, err := a.newClient(*regionName)
+	client, err := a.newRecordedClient(*regionName, *recordDir)
 	if err != nil {
 		return err
 	}
@@ -157,11 +179,20 @@ func (a *App) runAuthRefresh(ctx context.Context, args []string) error {
 		return fmt.Errorf("refresh access token: %w", err)
 	}
 
+	if refreshed.AccessToken == "" || refreshed.ExpiresInSeconds <= 0 {
+		return errIncompleteRefresh
+	}
+
 	a.addSecret(refreshed.AccessToken)
 
 	credentials.AccessToken = refreshed.AccessToken
 
-	err = saveCredentials(*outputPath, credentials)
+	if sameCredentialPath(*outputPath, credentialsSource.file) {
+		err = replaceCredentials(*outputPath, credentials)
+	} else {
+		err = saveCredentials(*outputPath, credentials)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -219,7 +250,10 @@ func (a *App) runAuthLogout(args []string) error {
 			return errEnvironmentCredentials
 		}
 
-		return errCredentialFileRequired
+		*credentialsPath, err = a.defaultCredentialPath()
+		if err != nil {
+			return err
+		}
 	}
 
 	file, err := os.Lstat(*credentialsPath)
@@ -569,15 +603,4 @@ func findEndpoint(endpoints []*alexaapimodels.Endpoint, id string) *alexaapimode
 	}
 
 	return nil
-}
-
-func authorizationURL(region string) string {
-	switch strings.ToUpper(strings.TrimSpace(region)) {
-	case "EU":
-		return alexaapimodels.AuthorizationUriEu
-	case "JP":
-		return alexaapimodels.AuthorizationUriJp
-	default:
-		return alexaapimodels.AuthorizationUriNa
-	}
 }

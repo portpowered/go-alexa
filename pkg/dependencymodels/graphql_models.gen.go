@@ -8058,6 +8058,7 @@ type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointF
 	Name             string                                                                                                                      `json:"name"`
 	Accuracy         Accuracy                                                                                                                    `json:"accuracy"`
 	Type             PropertyType                                                                                                                `json:"type"`
+	VolumeValue      *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolumeVolumeValue       `json:"volumeValue"`
 	Timestamp        int64                                                                                                                       `json:"timestamp"`
 	TimeOfSample     string                                                                                                                      `json:"timeOfSample"`
 	TimeOfLastChange string                                                                                                                      `json:"timeOfLastChange"`
@@ -8082,6 +8083,11 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 // GetType returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolume.Type, and is useful for accessing the field via an interface.
 func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolume) GetType() PropertyType {
 	return v.Type
+}
+
+// GetVolumeValue returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolume.VolumeValue, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolume) GetVolumeValue() *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolumeVolumeValue {
+	return v.VolumeValue
 }
 
 // GetTimestamp returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolume.Timestamp, and is useful for accessing the field via an interface.
@@ -8118,6 +8124,16 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 // GetMessage returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolumeErrorErrorResponse.Message, and is useful for accessing the field via an interface.
 func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolumeErrorErrorResponse) GetMessage() string {
 	return v.Message
+}
+
+// ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolumeVolumeValue includes the requested fields of the GraphQL type VolumeValue.
+type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolumeVolumeValue struct {
+	Value *int `json:"value"`
+}
+
+// GetValue returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolumeVolumeValue.Value, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesVolumeVolumeValue) GetValue() *int {
+	return v.Value
 }
 
 // ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesWaterAlarm includes the requested fields of the GraphQL type WaterAlarm.

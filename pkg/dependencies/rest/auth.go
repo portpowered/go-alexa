@@ -145,10 +145,7 @@ func (c *Client) RegisterWithCodePair(
 	{
 		err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodRegisterDevice, url, req, &response)
 		if err != nil {
-			return nil, &alexaapimodels.NetworkError{
-				Message: "failed to register with code pair",
-				Err:     err,
-			}
+			return nil, mapCodePairRegistrationError(err)
 		}
 	}
 
@@ -191,10 +188,7 @@ func (c *Client) GenerateCodePair(ctx context.Context, config *DeviceRegistratio
 	{
 		err := c.doUnauthenticatedJSONRequest(ctx, apiroutes.MethodCreateCodePair, url, req, &response)
 		if err != nil {
-			return nil, &alexaapimodels.NetworkError{
-				Message: "failed to generate code pair",
-				Err:     err,
-			}
+			return nil, mapCodePairGenerationError(err)
 		}
 	}
 

@@ -1,0 +1,8093 @@
+# Live North America schema captured 2026-10-10; metadata only.
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type AbsoluteHomeModeSchedulePayload implements HomeModeSchedulePayload {
+  timeZone: TimeZone!
+  recurrencePattern: String!
+  triggerTime: LocalTime!
+}
+
+enum Accuracy {
+  HIGH
+  LOW
+  UNKNOWN
+}
+
+type ActionCategoryLabel {
+  friendlyNames: [NameValueObject]!
+}
+
+type ActionConfig {
+  supportedStates: [ActionStateEnum]!
+  categoryLabel: ActionCategoryLabel!
+  supportedActions: [ActionSupportedAction]!
+}
+
+type ActionConfiguration {
+  action: ActionConfig!
+  target: TargetConfig
+}
+
+type ActionState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  actionStateValue: ActionStateValue
+}
+
+enum ActionStateEnum {
+  START
+  STOP
+  PAUSE
+  RESUME
+  UNKNOWN
+}
+
+type ActionStateValue {
+  status: ActionStatus!
+  timeInterval: TimeInterval
+  actionId: String
+  targetIds: [String]
+}
+
+enum ActionStatus {
+  IDLE
+  UNAVAILABLE
+  RUNNING
+  PAUSED
+  COMPLETED
+  INCOMPLETE
+  UNKNOWN
+}
+
+type ActionSupportedAction {
+  id: String!
+  friendlyNames: [NameValueObject]!
+}
+
+type ActionSupportedTarget {
+  friendlyNames: [NameValueObject]!
+  id: String!
+}
+
+input ActivateAutomationInput {
+  automationId: String!
+  automationType: AutomationType!
+  context: TargetContextInput
+}
+
+type ActivateAutomationResponse {
+  automation: Automation
+}
+
+enum ActivityTypeEnum {
+  HOME
+  AWAY
+  SLEEP
+  Unknown
+}
+
+type ActivityTypeScheduleObject {
+  activityType: ActivityTypeEnum!
+}
+
+type AdaptiveRecoveryStatus implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  adaptiveRecoveryStatusValue: AdaptiveRecoveryStatusValue
+}
+
+type AdaptiveRecoveryStatusValue {
+  value: ThermostatAdaptiveRecoveryStatusValue!
+}
+
+input AddCustomizedContentInput {
+  contentType: String!
+  resourceId: String!
+  resourceRank: Int!
+  resourceType: String
+}
+
+type AddCustomizedContentResponse {
+  resourceId: String!
+  contentType: String
+}
+
+input AddFavoriteInput {
+  rank: Int
+  resourceId: String
+  type: String
+  locale: String
+  version: String
+}
+
+type AddFavoriteResponse {
+  resource: Resource!
+}
+
+scalar AddressId
+
+enum AggregationResolution {
+  FIVE_MINS
+  ONE_HOUR
+  ONE_DAY
+}
+
+type AirQualityData {
+  endpointIds: [EndpointId!]!
+  timestamp: DateTime!
+  value: Float!
+}
+
+input AirQualityDeviceInput {
+  endpointId: EndpointId!
+  interfaceName: String!
+  instance: String
+}
+
+input AirQualityHistoryInput {
+  devices: [AirQualityDeviceInput!]!
+  startDate: DateTime!
+  endDate: DateTime!
+  aggregationResolution: AggregationResolution!
+}
+
+type AirQualityHistoryResponse {
+  data: [AirQualityData!]!
+  resolution: AggregationResolution!
+  interfaceName: String!
+  instance: String
+  averageValue: Float!
+}
+
+input AirbusArmStateValueInput {
+  value: ArmStateValue!
+}
+
+input AirbusBrightnessValueInput {
+  value: Int
+}
+
+input AirbusCameraSnapshotValue {
+  value: String!
+}
+
+input AirbusCameraSnapshotValueInput {
+  value: AirbusCameraSnapshotValue!
+}
+
+input AirbusColorTemperatureValueInput {
+  value: Int
+}
+
+input AirbusColorValueInput {
+  value: ColorValueInput
+}
+
+input AirbusDelayStateValue {
+  state: SupportedDelayState!
+  delayInSeconds: Int
+}
+
+input AirbusDelayStateValueInput {
+  value: AirbusDelayStateValue!
+}
+
+input AirbusDetectionStateValueInput {
+  value: DetectionStateValue
+}
+
+input AirbusEndpointConnectivityValue {
+  value: ReachabilityStatusValue!
+}
+
+input AirbusEndpointConnectivityValueInput {
+  value: AirbusEndpointConnectivityValue!
+}
+
+input AirbusEndpointFeaturesInput {
+  endpointId: String!
+  features: [AirbusFeatureInput!]!
+  error: AirbusFeatureOperationErrorInput
+}
+
+input AirbusEndpointInput {
+  id: String!
+  friendlyName: String!
+  isEnabled: Boolean!
+  displayCategory: String!
+  applianceId: String!
+  features: [AirbusFeatureInput!]!
+  manufacturer: String
+  reporterId: String
+  connections: [ConnectionType!]
+  error: AirbusFeatureOperationErrorInput
+}
+
+input AirbusEndpointSpaceInput {
+  id: String!
+  Name: String!
+  type: SpaceType!
+  endpointIds: [String!]!
+}
+
+input AirbusFeatureInput {
+  name: String!
+  instance: String
+  version: String!
+  powerValue: AirbusPowerValueInput
+  brightnessValue: AirbusBrightnessValueInput
+  percentageValue: AirbusPercentageValueInput
+  powerLevelValue: AirbusPowerLevelValueInput
+  volumeValue: AirbusVolumeValueInput
+  lockValue: AirbusLockValueInput
+  endpointConnectivityValue: AirbusEndpointConnectivityValueInput
+  statusCodeValue: AirbusStatusCodeValueInput
+  statusCodeSemantics: AirbusStatusCodeSemanticsInput
+  temperatureValue: AirbusTemperatureValueInput
+  thermostatModeValue: AirbusThermostatModeValueInput
+  cameraSnapshotValue: AirbusCameraSnapshotValueInput
+  upperSetpointValue: AirbusTemperatureValueInput
+  lowerSetpointValue: AirbusTemperatureValueInput
+  targetSetpointValue: AirbusTemperatureValueInput
+  toggleStateValue: AirbusToggleStateValueInput
+  rangeValue: AirbusRangeValueInput
+  modeValue: AirbusModeValueInput
+  detectionStateValue: AirbusDetectionStateValueInput
+  colorValue: AirbusColorValueInput
+  colorTemperatureValue: AirbusColorTemperatureValueInput
+  armStateValue: AirbusArmStateValueInput
+  delayStateValue: AirbusDelayStateValueInput
+  sirenStateValue: AirbusSirenStateValueInput
+  timeOfSample: Long
+  timeOfLastChange: Long
+  accuracy: Accuracy!
+  verificationRequired: Boolean!
+  verificationsRequired: [VerificationInput!]
+  retrievability: Retrievability
+  deviceNativeScale: TemperatureScale
+  operations: [FeatureOperationInput]
+  modeConfiguration: AirbusModeConfigurationInput
+  rangeConfiguration: AirbusRangeConfigurationInput
+  toggleConfiguration: AirbusToggleConfigurationInput
+  thermostatConfiguration: AirbusThermostatConfigurationInput
+  securityPanelConfiguration: AirbusSecurityPanelConfigurationInput
+}
+
+enum AirbusFeatureOperationError {
+  CONSENT_NOT_GRANTED
+  ALREADY_IN_OPERATION
+  BRIDGE_UNREACHABLE
+  CLOUD_CONTROL_DISABLED
+  ENDPOINT_BUSY
+  ENDPOINT_LOW_POWER
+  ENDPOINT_UNREACHABLE
+  EXPIRED_AUTHORIZATION_CREDENTIAL
+  FIRMWARE_OUT_OF_DATE
+  HARDWARE_MALFUNCTION
+  INSUFFICIENT_PERMISSIONS
+  INTERNAL_ERROR
+  INVALID_AUTHORIZATION_CREDENTIAL
+  INVALID_DIRECTIVE
+  INVALID_VALUE
+  NO_SUCH_ENDPOINT
+  NOT_CALIBRATED
+  NOT_SUPPORTED_IN_CURRENT_MODE
+  NOT_SUPPORTED_WITH_CURRENT_BATTERY_CHARGE_STATE
+  NOT_IN_OPERATION
+  POWER_LEVEL_NOT_SUPPORTED
+  RATE_LIMIT_EXCEEDED
+  TEMPERATURE_VALUE_OUT_OF_RANGE
+  TOO_MANY_FAILED_ATTEMPTS
+  VALUE_OUT_OF_RANGE
+  NO_SUPPORTED_ACTIONS
+}
+
+input AirbusFeatureOperationErrorInput {
+  status: AirbusFeatureOperationError!
+}
+
+input AirbusLockValueInput {
+  value: LockStateValue
+}
+
+input AirbusModeConfigurationInput {
+  friendlyName: String!
+  order: OrderValue!
+  modeOptions: [ModeOptionInput!]!
+}
+
+input AirbusModeValueInput {
+  value: String
+}
+
+input AirbusPercentageValueInput {
+  value: Int
+}
+
+input AirbusPowerLevelValueInput {
+  value: Int
+}
+
+input AirbusPowerValueInput {
+  value: PowerStateValue
+}
+
+input AirbusRangeConfigurationInput {
+  friendlyName: String!
+  supportedRange: SupportedRangeInput!
+  unitOfMeasure: String
+  presets: [PresetInput]
+}
+
+input AirbusRangeValueInput {
+  value: Float!
+}
+
+input AirbusSecurityPanelConfigurationInput {
+  supportedArmStates: [ArmStateValue!]!
+}
+
+input AirbusSirenStateValue {
+  state: SupportedSirenState!
+}
+
+input AirbusSirenStateValueInput {
+  value: AirbusSirenStateValue!
+}
+
+input AirbusStatusCodeSemanticsInput {
+  values: [AirbusStatusCodeSemanticsValue!]!
+}
+
+input AirbusStatusCodeSemanticsValue {
+  code: String!
+  statuses: [String!]!
+}
+
+input AirbusStatusCodeValue {
+  code: String!
+  timeOfDetection: Long
+}
+
+input AirbusStatusCodeValueInput {
+  values: [AirbusStatusCodeValue]!
+}
+
+input AirbusTemperatureValue {
+  value: Float!
+  scale: TemperatureScale!
+}
+
+input AirbusTemperatureValueInput {
+  value: AirbusTemperatureValue!
+}
+
+input AirbusThermostatConfigurationInput {
+  supportedModes: [ThermostatModeValue!]
+}
+
+input AirbusThermostatModeValue {
+  value: ThermostatModeValue!
+}
+
+input AirbusThermostatModeValueInput {
+  value: AirbusThermostatModeValue!
+}
+
+input AirbusToggleConfigurationInput {
+  friendlyName: String!
+}
+
+input AirbusToggleStateValueInput {
+  value: ToggleStateValue
+}
+
+input AirbusVolumeValueInput {
+  value: Int
+}
+
+enum AlarmValue {
+  OK
+  ALARM
+  UNKNOWN
+}
+
+type Alert {
+  defaultPlaylistId: String
+  type: AlertType
+}
+
+enum AlertType {
+  CHIME
+  SIREN
+  ENTRY_DELAY
+  EXIT_DELAY
+  UNKNOWN
+}
+
+type AlexaEnabledMetadata {
+  category: String
+  iconId: String
+  isVisible: Boolean
+  capabilities: [String!]!
+}
+
+type AlexaScene implements Automation {
+  id: String!
+  name: String!
+  type: AutomationType!
+  createdAt: DateTime
+  lastActivatedAt: DateTime
+  presetTargetMappingList: [PresetTargetMapping]
+}
+
+input AllOfWorkflowTargetItem {
+  target: InputSetupWorkflowTargetV3
+  anyOf: AnyOfWorkflowTargets
+}
+
+input AllOfWorkflowTargets {
+  items: [AllOfWorkflowTargetItem!]!
+}
+
+type AlternateIdentifiers {
+  legacyIdentifiers: LegacyIdentifiers!
+}
+
+scalar AmazonFloorPlanLayoutV1
+
+scalar AmazonFloorPlanLayoutVectorV1
+
+type AnswerGeneratedForSessionResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  sessionId: String!
+  sessionDomain: String!
+  answer: SignalingMessage!
+}
+
+input AnyOfWorkflowTargets {
+  candidates: [InputSetupWorkflowTargetV3!]!
+}
+
+interface ApplicationFacingInterface {
+  name: String!
+  instance: String
+}
+
+type ApplicationProtocol {
+  type: ApplicationProtocolType!
+  maxVersion: String!
+  minVersion: String
+  name: String
+  transportProtocols: [TransportProtocol!]
+  commissioneeTypes: CommissioneeTypes!
+}
+
+enum ApplicationProtocolType {
+  ZIGBEE
+  PHILIPS_HUE
+  WEMO
+  IPP
+  BLE_MESH
+  AMA
+  SIDEWALK
+  MATTER
+  OTHER
+}
+
+union ArmSecurityPanelError = AuthorizationRequired | BypassNeeded | NotReady | UnclearedAlarm | UnclearedTrouble | DependencyError | ValidationError | ResourceNotFound | EndpointUnreachable
+
+input ArmSecurityPanelInput {
+  endpointId: EndpointId!
+  bypassSensors: Boolean!
+  armState: ArmedState!
+}
+
+type ArmSecurityPanelResponse {
+  isSuccess: Boolean!
+  error: ArmSecurityPanelError
+}
+
+type ArmState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  armStateValue: ArmStateValue
+}
+
+enum ArmStateValue {
+  ARMED_AWAY
+  ARMED_STAY
+  ARMED_NIGHT
+  DISARMED
+  UNKNOWN
+}
+
+enum ArmedState {
+  ARMED_STAY
+  ARMED_AWAY
+  ARMED_NIGHT
+}
+
+scalar Asin
+
+type Asset {
+  id: String
+  url: String
+}
+
+type AssetData {
+  productImageUrls: [ProductImageUrlEntry!]
+}
+
+enum AssignableDisplayCategory {
+  SMARTPLUG
+  LIGHT
+  SWITCH
+  FAN
+  TV
+  CHARGER
+  FIREPLACE
+  CHRISTMAS_TREE
+  HEATER
+  COFFEE_MAKER
+  COMPUTER
+  FOUNTAIN
+  AIR_CONDITIONER
+  SPEAKER
+}
+
+enum AssociateExternalLocationResult {
+  ASSOCIATED
+  ALREADY_ASSOCIATED
+}
+
+input AssociateExternalLocationWithHomeInput {
+  homeId: HomeId!
+  externalLocation: ExternalLocationInput!
+  friendlyName: String
+}
+
+type AssociateExternalLocationWithHomeResponse {
+  result: AssociateExternalLocationResult
+  error: HomeManagementError
+}
+
+enum AuthenticationType {
+  ACCESS_TOKEN
+  UNKNOWN
+}
+
+type AuthorizationRequired implements Error {
+  message: String
+}
+
+enum AuthorizationType {
+  FOUR_DIGIT_PIN
+  UNKNOWN
+}
+
+input AutomaticLightingActionInput {
+  operation: AutomaticLightingOperation!
+  turnOffOperationDelay: String
+  desiredState: AutomaticLightingState
+  enabled: Boolean
+  paused: Boolean
+  pauseMetadata: PauseMetadataInput
+}
+
+type AutomaticLightingActionOutput {
+  operation: AutomaticLightingOperation!
+  turnOffOperationDelay: String
+  enabled: Boolean
+  paused: Boolean
+  pauseMetadata: PauseMetadataOutput
+}
+
+enum AutomaticLightingApplianceCategory {
+  MOTION
+  PRESENCE
+  LIGHT
+  AMBIENT_LIGHT
+}
+
+input AutomaticLightingApplianceInput {
+  category: AutomaticLightingApplianceCategory!
+  endpointId: String!
+  status: String
+}
+
+type AutomaticLightingApplianceOutput {
+  category: AutomaticLightingApplianceCategory!
+  endpointId: String!
+  status: String
+}
+
+input AutomaticLightingConfigurationInput {
+  scheduleId: String
+  schedule: ScheduleInput!
+  luxValue: Int!
+  occupancy: [AutomaticLightingApplianceInput]!
+  ambientLight: [AutomaticLightingApplianceInput]!
+  targets: [AutomaticLightingApplianceInput]!
+  actions: [AutomaticLightingActionInput]!
+}
+
+type AutomaticLightingConfigurationOutput {
+  scheduleId: String
+  schedule: ScheduleOutput!
+  luxValue: Int!
+  occupancy: [AutomaticLightingApplianceOutput]!
+  ambientLight: [AutomaticLightingApplianceOutput]!
+  targets: [AutomaticLightingApplianceOutput]!
+  actions: [AutomaticLightingActionOutput]!
+}
+
+enum AutomaticLightingDayType {
+  WEEKDAY
+  WEEKEND
+}
+
+input AutomaticLightingEventsRequest {
+  groupEndpointId: String!
+}
+
+type AutomaticLightingEventsResponse {
+  groupEndpointId: String!
+  historyEvents: [HistoryEvent!]
+}
+
+type AutomaticLightingLightConfiguration {
+  endpointIds: [EndpointId!]!
+  allowNewEligibleDevicesInGroup: Boolean!
+}
+
+input AutomaticLightingLightConfigurationInput {
+  endpointIds: [EndpointId!]!
+  allowNewEligibleDevicesInGroup: Boolean!
+}
+
+type AutomaticLightingMotionSensorConfiguration {
+  endpointIds: [EndpointId!]!
+  allowNewEligibleDevicesInGroup: Boolean!
+}
+
+input AutomaticLightingMotionSensorConfigurationInput {
+  endpointIds: [EndpointId!]!
+  allowNewEligibleDevicesInGroup: Boolean!
+}
+
+enum AutomaticLightingOperation {
+  TURN_ON
+  TURN_OFF
+}
+
+type AutomaticLightingScene {
+  id: String!
+  name: String
+  type: PresetType!
+  category: PresetCategory
+  properties: [AutomaticLightingSceneProperty!]!
+  effect: PresetEffect
+  createdAt: String
+}
+
+input AutomaticLightingSceneInput {
+  id: String!
+  name: String
+  type: PresetType!
+  category: PresetCategoryInput
+  properties: [AutomaticLightingScenePropertyInput!]!
+  effect: PresetEffectInput
+  createdAt: String
+}
+
+type AutomaticLightingSceneProperty {
+  colorProperty: ColorProperty
+  brightnessProperty: BrightnessProperty
+  colorTemperatureProperty: ColorTemperatureProperty
+}
+
+input AutomaticLightingScenePropertyInput {
+  colorProperty: ColorPropertyInput
+  brightnessProperty: BrightnessPropertyInput
+  colorTemperatureProperty: ColorTemperaturePropertyInput
+}
+
+type AutomaticLightingSchedule {
+  role: AutomaticLightingScheduleRole!
+  name: String!
+  dayType: AutomaticLightingDayType!
+  enablementStatus: AutomationEnablementType!
+  startTime: LocalTime!
+  endTime: LocalTime!
+  turnOnEnablementStatus: AutomationEnablementType!
+  turnOffEnablementStatus: AutomationEnablementType!
+  scene: AutomaticLightingScene!
+  overridden: Boolean!
+}
+
+type AutomaticLightingScheduleConfiguration {
+  turnOffWaitInMinutes: Int
+  schedules: [AutomaticLightingSchedule!]
+}
+
+input AutomaticLightingScheduleConfigurationInput {
+  turnOffWaitInMinutes: Int
+  schedules: [AutomaticLightingScheduleInput!]
+}
+
+input AutomaticLightingScheduleInput {
+  role: AutomaticLightingScheduleRole!
+  name: String!
+  dayType: AutomaticLightingDayType!
+  enablementStatus: AutomationEnablementType!
+  startTime: LocalTime!
+  endTime: LocalTime!
+  turnOnEnablementStatus: AutomationEnablementType!
+  turnOffEnablementStatus: AutomationEnablementType!
+  scene: AutomaticLightingSceneInput!
+  overridden: Boolean!
+}
+
+enum AutomaticLightingScheduleRole {
+  DAYTIME
+  NIGHTTIME
+  CUSTOM
+}
+
+type AutomaticLightingSettings {
+  enablementStatus: AutomationEnablementType!
+  groupEndpointId: DeviceGroupId
+  motionSensorConfiguration: AutomaticLightingMotionSensorConfiguration!
+  dayTimeConfiguration: AutomaticLightingTimeConfiguration
+  sleepTimeConfiguration: AutomaticLightingTimeConfiguration
+  lightConfiguration: AutomaticLightingLightConfiguration
+  automaticLightingScheduleConfiguration: AutomaticLightingScheduleConfiguration
+  recurrence: String
+}
+
+input AutomaticLightingSettingsInput {
+  enablementStatus: AutomationEnablementType!
+  groupEndpointId: DeviceGroupId
+  motionSensorConfiguration: AutomaticLightingMotionSensorConfigurationInput!
+  dayTimeConfiguration: AutomaticLightingTimeConfigurationInput
+  sleepTimeConfiguration: AutomaticLightingTimeConfigurationInput
+  lightConfiguration: AutomaticLightingLightConfigurationInput
+  automaticLightingScheduleConfiguration: AutomaticLightingScheduleConfigurationInput
+  recurrence: String
+}
+
+enum AutomaticLightingState {
+  ENABLE
+  DISABLE
+  PAUSE
+}
+
+type AutomaticLightingStatusOutput {
+  groupId: String
+  hasAutomaticLighting: Boolean
+  missingApplianceCategories: [AutomaticLightingApplianceCategory]
+  automaticLightingConfiguration: AutomaticLightingConfigurationOutput
+  appliances: [AutomaticLightingApplianceOutput]
+}
+
+input AutomaticLightingStatusRequest {
+  groupIds: [String!]!
+}
+
+type AutomaticLightingStatusResponse {
+  statuses: [AutomaticLightingStatusOutput]!
+}
+
+type AutomaticLightingTimeConfiguration {
+  startTime: LocalTime!
+  endTime: LocalTime!
+  lightConfiguration: AutomaticLightingLightConfiguration!
+  turnOnEnablementStatus: AutomationEnablementType!
+  turnOffEnablementStatus: AutomationEnablementType!
+  turnOffWaitInMinutes: Int!
+  brightness: Int!
+  offsetInMinutes: Int
+}
+
+input AutomaticLightingTimeConfigurationInput {
+  startTime: LocalTime!
+  endTime: LocalTime!
+  lightConfiguration: AutomaticLightingLightConfigurationInput!
+  turnOnEnablementStatus: AutomationEnablementType!
+  turnOffEnablementStatus: AutomationEnablementType!
+  turnOffWaitInMinutes: Int!
+  brightness: Int!
+  offsetInMinutes: Int
+}
+
+interface Automation {
+  id: String!
+  name: String
+  type: AutomationType!
+  createdAt: DateTime
+  lastActivatedAt: DateTime
+}
+
+enum AutomationActivationType {
+  ACTIVATED
+  DEACTIVATED
+}
+
+enum AutomationEnablementType {
+  ENABLED
+  DISABLED
+}
+
+input AutomationFilter {
+  types: [AutomationType]!
+  targetFilter: AutomationTargetFilter
+}
+
+scalar AutomationId
+
+enum AutomationInterruptionType {
+  PAUSED
+  RESUMED
+}
+
+type AutomationManagementAutomationStatus {
+  status: AutomationManagementStatusEnum!
+  interfaceName: String!
+  instance: String
+  source: AutomationManagementSourceEnum!
+}
+
+type AutomationManagementAutomationStatuses implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  automationManagementAutomationStatusesValue: AutomationManagementAutomationStatusesValue
+}
+
+type AutomationManagementAutomationStatusesValue {
+  automationStatuses: [AutomationManagementAutomationStatus!]
+}
+
+enum AutomationManagementSourceEnum {
+  EXTERNAL
+  UNKNOWN
+}
+
+enum AutomationManagementStatusEnum {
+  AUTOMATED
+  NOT_AUTOMATED
+  UNKNOWN
+}
+
+input AutomationMetadataCriteria {
+  automationId: String
+  automationTypes: [AutomationType!]
+  executionEnvironment: ExecutionEnvironment
+}
+
+input AutomationSort {
+  field: AutomationSortField!
+  direction: AutomationSortDirection
+}
+
+enum AutomationSortDirection {
+  ASC
+  DESC
+}
+
+enum AutomationSortField {
+  LAST_ACTIVATED_AT
+}
+
+type AutomationState {
+  enablementStatus: AutomationEnablementType!
+  resumeAtTime: DateTime
+}
+
+input AutomationStateInput {
+  enablementStatus: AutomationEnablementType!
+  resumeAtTime: DateTime
+}
+
+input AutomationTargetFilter {
+  type: String!
+  targetId: String!
+}
+
+enum AutomationType {
+  UNKNOWN
+  ROUTINE
+  ALEXA_SCENE
+  THIRD_PARTY_SCENE
+  CIRCADIAN_LIGHTING
+  AUTOMATIC_LIGHTING
+  AWAY_LIGHTING
+  CAMERA_ANNOUNCEMENT
+  CAMERA_GREETINGS
+  MISSING_HABIT
+  ONE_TIME_ANNOUNCEMENT
+  TELL_ME_WHEN_YOU_SEE
+  SMART_REAL_TIME_ANNOUNCEMENT
+  GENERIC_IFTTT
+  CUSTOM
+}
+
+input AutomationsInput {
+  filter: AutomationFilter
+  sort: AutomationSort
+  limit: Int
+  nextToken: String
+  locale: String
+  filterStrategy: [FilterStrategy!]
+  includeSourceCode: Boolean
+}
+
+type AutomationsResponse {
+  items: [Automation]!
+  nextToken: String
+}
+
+enum AuxiliaryHeaterStageEnum {
+  ON
+  OFF
+  UNKNOWN
+}
+
+type AuxiliaryHeaterStageValue {
+  value: AuxiliaryHeaterStageEnum!
+}
+
+input AvailableSetupExperiencesInput {
+  filter: SetupExperienceFilter
+}
+
+type AvailableSetupExperiencesOutput {
+  setupExperiences: [SetupExperience!]!
+}
+
+type AwayLightingConfig {
+  enabled: Boolean
+  activeTime: String
+  addressId: String
+  personId: String
+  autoAddNewLights: Boolean
+  targetEndpointList: AwayLightingEndpointList!
+}
+
+type AwayLightingConfigResponse {
+  awayLightingConfig: AwayLightingConfig
+}
+
+type AwayLightingEndpointList {
+  items: [Endpoint!]
+  nextToken: String
+}
+
+input AwayLightingTargetEndpointsInput {
+  pagination: AwayLightingTargetEndpointsPagination!
+  homeId: String
+}
+
+input AwayLightingTargetEndpointsPagination {
+  limit: Int!
+  nextToken: String
+}
+
+input BatchCreateAutomationsInput {
+  automations: [ScriptedAutomationInput!]!
+}
+
+type BatchCreateAutomationsResponse {
+  results: [ScriptedAutomationBatchOperationResult!]!
+}
+
+input BatchUpdateAutomationsInput {
+  automations: [ScriptedAutomationInput!]!
+}
+
+type BatchUpdateAutomationsResponse {
+  results: [ScriptedAutomationBatchOperationResult!]!
+}
+
+type Battery implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  batteryValue: BatteryValue
+}
+
+type BatteryChargingHealth {
+  state: BatteryHealthState!
+  reason: BatteryChargingHealthReason
+}
+
+enum BatteryChargingHealthReason {
+  LOW_POWER
+  INCOMPATIBLE_CHARGER
+  UNKNOWN
+}
+
+type BatteryHealth {
+  state: BatteryHealthState!
+  reasons: [BatteryHealthReason!]!
+}
+
+enum BatteryHealthReason {
+  COLD
+  DEAD
+  LOW_CHARGE
+  NO_BATTERY
+  OVERHEATED
+  OVER_VOLTAGE
+  WIRED
+  UNKNOWN
+}
+
+enum BatteryHealthState {
+  OK
+  WARNING
+  CRITICAL
+  UNKNOWN
+}
+
+type BatteryValue {
+  levelPercentage: Int
+  health: BatteryHealth
+  chargingHealth: BatteryChargingHealth
+}
+
+type BleSetupMetadata {
+  iosBLECompatibleHubUrl: String
+  androidBLECompatibleHubUrl: String
+}
+
+input BooleanSetupExperienceFilter {
+  and: [SetupExperienceFilter!]!
+  or: [SetupExperienceFilter!]!
+}
+
+scalar BrandId
+
+type Brightness implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  brightnessStateValue: Int
+}
+
+type BrightnessInterface implements ApplicationFacingInterface {
+  name: String!
+  instance: String
+  brightnessProperties: BrightnessInterfaceProperties
+  brightnessDirectives: [BrightnessInterfaceDirective]
+}
+
+type BrightnessInterfaceBrightness {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: BrightnessInterfaceBrightnessStateValue
+}
+
+type BrightnessInterfaceBrightnessStateValue {
+  value: Float!
+}
+
+type BrightnessInterfaceDirective {
+  name: String!
+  path: String
+}
+
+type BrightnessInterfaceProperties {
+  brightness: BrightnessInterfaceBrightness
+}
+
+type BrightnessProperty {
+  name: String
+  brightnessStateValue: Int
+}
+
+input BrightnessPropertyInput {
+  name: String
+  brightnessStateValue: Int
+}
+
+type BurglaryAlarm implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  burglaryAlarmValue: AlarmValue
+}
+
+type BypassEndpoint {
+  friendlyName: NameValueObject!
+  endpointId: EndpointId!
+}
+
+type BypassNeeded implements Error {
+  message: String
+  endpoints: [BypassEndpoint!]
+}
+
+scalar CHRSDeviceType
+
+enum CameraCapabilitySubType {
+  VIDEO_SEARCH
+  UNKNOWN
+}
+
+type CameraCapabilitySupportedEventCategory {
+  name: SupportedEventCategoryType!
+  subType: CameraCapabilitySubType!
+}
+
+scalar CameraDetailsMap
+
+enum CameraEventSubType {
+  MOTION
+  PACKAGE
+  PERSON
+  DOORBELL
+  ANIMAL
+  VEHICLE
+  UNKNOWN
+}
+
+type CameraEventSupportedEventCategory {
+  name: SupportedEventCategoryType!
+  subType: CameraEventSubType!
+}
+
+type CameraMediaAmazonPhotosSharedMedia implements CameraMediaSharedMedia {
+  type: CameraMediaShareOptionType!
+}
+
+enum CameraMediaAuthenticationType {
+  ACCESS_TOKEN
+  NONE
+  UNKNOWN
+}
+
+input CameraMediaContent {
+  type: CameraMediaContentType!
+  tileContent: CameraMediaTileContentInput
+  customizedContent: CameraMediaCustomizedContentInput
+}
+
+enum CameraMediaContentType {
+  TILE
+  CUSTOMIZED
+  UNKNOWN
+}
+
+input CameraMediaCustomizedContentInput {
+  mediaItems: [CameraMediaItem!]!
+}
+
+input CameraMediaEndpointRecording {
+  type: CameraMediaItemType!
+  endpointId: EndpointId!
+  recordingClip: CameraMediaRecordingClip!
+  recording: CameraMediaRecording
+}
+
+input CameraMediaItem {
+  type: CameraMediaItemType!
+  endpointRecording: CameraMediaEndpointRecording
+}
+
+enum CameraMediaItemType {
+  ENDPOINT_RECORDING
+  UNKNOWN
+}
+
+type CameraMediaPublicUrlSharedMedia implements CameraMediaSharedMedia {
+  type: CameraMediaShareOptionType!
+  mediaResponseUris: [CameraMediaResponseUri!]!
+}
+
+input CameraMediaRecording {
+  id: String!
+  startTime: DateTime!
+  endTime: DateTime!
+}
+
+input CameraMediaRecordingClip {
+  startTime: DateTime!
+  endTime: DateTime!
+}
+
+type CameraMediaResponseUri {
+  uri: String!
+  mediaResponseUriMetadata: CameraMediaResponseUriMetadata!
+}
+
+type CameraMediaResponseUriMetadata {
+  authenticationType: CameraMediaAuthenticationType!
+  linkExpirationMinutes: Long!
+  contentType: String!
+}
+
+input CameraMediaShareOption {
+  type: CameraMediaShareOptionType!
+}
+
+enum CameraMediaShareOptionType {
+  AMAZON_PHOTOS
+  PUBLIC_URL
+  UNKNOWN
+}
+
+interface CameraMediaSharedMedia {
+  type: CameraMediaShareOptionType!
+}
+
+input CameraMediaTileContentInput {
+  tileId: String!
+}
+
+input CameraShareMediaInput {
+  content: CameraMediaContent!
+  shareOption: CameraMediaShareOption!
+}
+
+type CameraShareMediaResponse {
+  sharedMedia: CameraMediaSharedMedia!
+}
+
+interface CameraTile {
+  id: String!
+  type: CameraTileType!
+  category: CameraTileCategory!
+  relevance: CameraTileRelevance!
+  createdAt: DateTime!
+  lastUpdatedAt: DateTime!
+  expiresAt: DateTime!
+  thumbnail: CameraTileUrlResource
+  tileStatus: CameraTileStatusType!
+  decorations: [CameraTileDecoration!]!
+  previews: [CameraTilePreview!]!
+}
+
+type CameraTileAnnouncement {
+  habitMissedText: String!
+  habitReminderOfferText: String!
+  habitReminderConfirmedText: String!
+  automationIds: [String!]!
+}
+
+type CameraTileCategory {
+  type: CameraTileCategoryType!
+  typeDisplayText: String!
+  subTypeDisplayText: String!
+  subType: String!
+  titleGeneratedText: String!
+  subTitleGeneratedText: String!
+  descriptionGeneratedText: String!
+}
+
+enum CameraTileCategoryType {
+  INFORMATIVE
+  PERSONALIZED
+  UNKNOWN
+}
+
+interface CameraTileDecoration {
+  type: CameraTileDecorationType!
+  timestamp: DateTime
+}
+
+enum CameraTileDecorationType {
+  IMAGE
+  ENDPOINT_STATE
+  UNKNOWN
+}
+
+scalar CameraTilePersonRelevanceMap
+
+interface CameraTilePlayer {
+  type: CameraTilePlayerType!
+  relatedEndpointIds: [EndpointId!]!
+  thumbnail: CameraTileUrlResource
+  decorations: [CameraTileDecoration!]!
+  explanation: String
+  familiarObjectsExplanation: String
+}
+
+enum CameraTilePlayerType {
+  VIDEO_URL
+  IMAGE_URL
+  WEB_RTC_RECORDING
+  UNKNOWN
+}
+
+type CameraTilePlaylistCollection {
+  playlist: [CameraTilePlayer!]!
+}
+
+interface CameraTilePreview {
+  type: CameraTilePreviewType!
+}
+
+enum CameraTilePreviewType {
+  GIF
+  SNAPSHOTS
+  UNKNOWN
+}
+
+type CameraTileRelevance {
+  score: Float!
+  personIdRelevances: CameraTilePersonRelevanceMap
+}
+
+input CameraTileSearchQueryByTileCategoryType {
+  tileCategoryType: CameraTileCategoryType!
+}
+
+input CameraTileSearchQueryByTileIds {
+  tileIds: [String!]!
+}
+
+enum CameraTileSortOrderType {
+  RELEVANCE
+}
+
+enum CameraTileStatusType {
+  ACTIVE
+  EXPIRED
+  UNKNOWN
+}
+
+enum CameraTileType {
+  PLAYLIST
+  REMINDER
+  UNKNOWN
+}
+
+type CameraTileUrlResource {
+  url: String!
+  authenticationType: CameraTileUrlResourceAuthenticationType!
+  altText: String
+}
+
+enum CameraTileUrlResourceAuthenticationType {
+  ACCESS_TOKEN
+  NONE
+  UNKNOWN
+}
+
+input CameraTilesInput {
+  searchQuery: CameraTilesSearchQuery
+  maxResults: Int
+  sortOrder: CameraTileSortOrderType
+  nextToken: String
+}
+
+type CameraTilesResponse {
+  items: [CameraTile!]!
+  nextToken: String
+}
+
+input CameraTilesSearchQuery {
+  byTileCategoryType: CameraTileSearchQueryByTileCategoryType
+  byTileIds: CameraTileSearchQueryByTileIds
+}
+
+type CarbonMonoxideAlarm implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  carbonMonoxideAlarmValue: AlarmValue
+}
+
+scalar CategoryId
+
+type ChrEndpointIdentifier {
+  endpointId: String!
+}
+
+type ChrsIdentifier {
+  entityId: String!
+}
+
+type CircadianLightingAutomationState {
+  enablementStatus: AutomationEnablementType!
+}
+
+type CircadianLightingSettings {
+  enablementStatus: AutomationEnablementType!
+  groupEndpointId: DeviceGroupId
+  endpointIds: [EndpointId!]!
+  wakeTimeConfiguration: CircadianLightingTimeConfiguration!
+  bedTimeConfiguration: CircadianLightingTimeConfiguration!
+  alwaysControl: Boolean
+}
+
+input CircadianLightingSettingsInput {
+  enablementStatus: AutomationEnablementType!
+  groupEndpointId: DeviceGroupId
+  endpointIds: [EndpointId!]!
+  wakeTimeConfiguration: CircadianLightingTimeConfigurationInput!
+  bedTimeConfiguration: CircadianLightingTimeConfigurationInput!
+  alwaysControl: Boolean
+}
+
+type CircadianLightingTimeConfiguration {
+  startTime: LocalTime!
+}
+
+input CircadianLightingTimeConfigurationInput {
+  startTime: LocalTime!
+}
+
+type CodeToStatusesMapping {
+  code: String
+  statuses: [String!]
+}
+
+enum CoffeeMakerOperationalStateEnum {
+  RUN
+  ABORTING
+  ACTION_REQUIRED
+  ERROR
+  FINISHED
+  INACTIVE
+  READY
+  PAUSE
+  DISCONNECTED
+  DELAYED_START
+  UNKNOWN
+}
+
+enum CollectionOperationOptions {
+  ADD
+  REMOVE
+  REPLACE
+}
+
+type Color implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  colorStateValue: ColorValue
+}
+
+type ColorProperty {
+  name: String
+  colorStateValue: ColorValue
+}
+
+input ColorPropertyInput {
+  name: String
+  colorStateValue: ColorValueInput
+}
+
+type ColorTemperature implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  colorTemperatureInKelvinStateValue: Int
+}
+
+type ColorTemperatureProperty {
+  name: String
+  colorTemperatureInKelvinStateValue: Int
+}
+
+input ColorTemperaturePropertyInput {
+  name: String
+  colorTemperatureInKelvinStateValue: Int
+}
+
+type ColorValue {
+  hue: Float!
+  saturation: Float!
+  brightness: Float!
+}
+
+input ColorValueInput {
+  hue: Float!
+  saturation: Float!
+  brightness: Float!
+}
+
+type CommissioneeTypes {
+  displayCategories: [String!]!
+  deviceTypes: [String!]
+}
+
+interface CommissioningInformation {
+  localProtocol: String
+}
+
+type CommissioningInformationReport implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  value: CommissioningInformationReportValue
+}
+
+type CommissioningInformationReportValue {
+  commissioningInformation: [CommissioningInformation!]
+}
+
+type CompletedFlow {
+  configurationKey: String!
+  status: ConfigurationStatus!
+}
+
+union Configuration = ThermostatConfiguration | ToggleConfiguration | ModeConfiguration | RangeConfiguration | SecurityPanelConfiguration | SecurityPanelAlertConfiguration | StatusCodeConfiguration | ActionConfiguration | VideoSearchConfiguration | DetectionEventsConfiguration | RecordingProviderConfiguration | SimpleEventSourceConfiguration | HvacConfiguration | ThermostatScheduleConfiguration | ThermostatConfigurationConfiguration | ObjectDetectionConfiguration | ConsentRequirementsConfiguration | RemoteVideoPlayerConfiguration | ProactiveNotificationSourceConfiguration | LauncherConfiguration | InventoryConfiguration | DeviceDiscoveryHubConfiguration | DeviceUsageMeterConfiguration | DynamicLightingEffectConfiguration | SceneDescriptionProviderConfiguration | GenericConfiguration
+
+enum ConfigurationClass {
+  LEGAL
+  ORGANIZATION
+  FEATURE_ENABLEMENT
+}
+
+input ConfigurationFilter {
+  include: Boolean!
+  endpointIds: [EndpointId!]
+}
+
+type ConfigurationOpportunity {
+  type: ConfigurationOpportunityType!
+  payload: JSON!
+}
+
+type ConfigurationOpportunityList {
+  configurationOpportunities: [ConfigurationOpportunity!]
+}
+
+enum ConfigurationOpportunityType {
+  CONFIGURATION
+}
+
+enum ConfigurationStatus {
+  ACCEPTED
+  DISMISSED
+  FAILED
+}
+
+type Connection {
+  type: ConnectionType!
+  macAddress: String
+  bleMeshDeviceUuid: String
+  matterDiscriminator: String
+  matterProductId: String
+  matterVendorId: String
+}
+
+enum ConnectionType {
+  TCP_IP
+  MATTER
+  ZIGBEE
+  BLUETOOTH_MESH
+  UNKNOWN
+}
+
+type ConsentRequirement {
+  name: ConsentRequirementName!
+}
+
+enum ConsentRequirementName {
+  PSE
+  UNKNOWN
+}
+
+type ConsentRequirementsConfiguration {
+  consents: [ConsentRequirement!]!
+}
+
+input ContextualRequest {
+  setupClientContext: SWOSetupClientContext!
+}
+
+type ContinuousRecordingFeature implements RecordingFeature {
+  name: String!
+}
+
+union CreateAbsoluteHomeModeScheduleError = HomeModeScheduleDayConflictError | HomeModeScheduleError
+
+input CreateAbsoluteHomeModeScheduleInput {
+  mode: HomeModeType!
+  schedule: CreateAbsoluteHomeModeSchedulePayloadInput!
+  homeId: String
+}
+
+input CreateAbsoluteHomeModeSchedulePayloadInput {
+  triggerTime: LocalTime!
+  timeZone: TimeZone!
+  recurrencePattern: String!
+}
+
+type CreateAbsoluteHomeModeScheduleResponse {
+  homeModeSchedule: HomeModeSchedule
+  error: CreateAbsoluteHomeModeScheduleError
+}
+
+input CreateAutomaticLightingInput {
+  settings: AutomaticLightingSettingsInput!
+}
+
+input CreateAwayLightingConfigInput {
+  homeId: String
+}
+
+input CreateCircadianLightingInput {
+  settings: CircadianLightingSettingsInput!
+}
+
+input CreateDeviceGroupInput {
+  friendlyName: String!
+  memberDeviceIds: [String!]
+  associatedUnitIds: [String!]
+  childDeviceGroupIds: [String!]
+  memberPaginationParams: PaginationParams
+  homeIds: [HomeId!]
+}
+
+type CreateDeviceGroupResponse {
+  deviceGroup: DeviceGroup!
+}
+
+input CreateOrUpdateAutomaticLightingInput {
+  groupId: String!
+  automaticLightingConfiguration: AutomaticLightingConfigurationInput!
+}
+
+type CreateOrUpdateAutomaticLightingResponse {
+  automaticLightingStatus: AutomaticLightingStatusOutput!
+}
+
+input CreatePremisesInput {
+  friendlyName: String!
+  tags: [PremisesTagEnum]
+}
+
+type CreatePremisesResponse {
+  id: String
+}
+
+type CreatedGroupDiscoveryDelta {
+  id: String!
+  friendlyName: NameValueObject!
+  memberDevices: [String!]
+  memberGroups: [String!]
+}
+
+scalar CrsId
+
+type CurrentProgram implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  currentProgramValue: CurrentProgramStateValue
+}
+
+type CurrentProgramStateValue {
+  value: String
+}
+
+type CustomSetupMetadata {
+  subtype: String!
+  payload: JSON
+}
+
+type CustomYaleDoorState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  customYaleDoorStateValue: CustomYaleDoorStateValue
+}
+
+enum CustomYaleDoorStateEnum {
+  DoorOpen
+  DoorClosed
+  DoorJammed
+  DoorForcedOpen
+  DoorUnspecifiedError
+  DoorAjar
+  Unknown
+}
+
+type CustomYaleDoorStateValue {
+  value: CustomYaleDoorStateEnum!
+}
+
+type CustomYaleLockState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  customYaleLockStateValue: CustomYaleLockStateValue
+}
+
+enum CustomYaleLockStateEnum {
+  Locked
+  Unlocked
+  NotFullyLocked
+  Unlatched
+  Unknown
+}
+
+type CustomYaleLockStateValue {
+  value: CustomYaleLockStateEnum!
+}
+
+type CustomYaleOneTouchLocking implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  customYaleOneTouchLockingValue: CustomYaleOneTouchLockingValue
+}
+
+type CustomYaleOneTouchLockingValue {
+  value: Boolean!
+}
+
+type CustomYaleOperatingMode implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  customYaleOperatingModeValue: CustomYaleOperatingModeValue
+}
+
+enum CustomYaleOperatingModeEnum {
+  Normal
+  Vacation
+  Privacy
+  NoRemoteLockUnlock
+  Passage
+  Unknown
+}
+
+type CustomYaleOperatingModeValue {
+  value: CustomYaleOperatingModeEnum!
+}
+
+type CustomYaleSoundVolume implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  customYaleSoundVolumeValue: CustomYaleSoundVolumeValue
+}
+
+enum CustomYaleSoundVolumeEnum {
+  Silent
+  Low
+  Medium
+  High
+  Unknown
+}
+
+type CustomYaleSoundVolumeValue {
+  value: CustomYaleSoundVolumeEnum!
+}
+
+type CustomYaleUserResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  userIndex: Int
+  userStatus: CustomYaleUserStatusEnum
+  userName: String
+  userType: CustomYaleUserTypeEnum
+  nextUserIndex: Int
+}
+
+enum CustomYaleUserStatusEnum {
+  Available
+  OccupiedEnabled
+  OccupiedDisabled
+  Unknown
+}
+
+enum CustomYaleUserTypeEnum {
+  UnrestrictedUser
+  YearDayScheduleUser
+  WeekDayScheduleUser
+  ProgrammingUser
+  NonAccessUser
+  ForcedUser
+  DisposableUser
+  ExpiringUser
+  ScheduleRestrictedUser
+  RemoteOnlyUser
+  Unknown
+}
+
+input CustomerDeviceLocationsByDirectiveInput {
+  skillId: String!
+}
+
+type CustomerDeviceLocationsByDirectiveResponse {
+  items: [DirectiveEndpointLocation!]!
+}
+
+input CustomerSessionsDeletionTarget {
+  all: Boolean
+}
+
+type CustomizedContentResource {
+  resourceId: String!
+  rank: Int!
+  type: String
+}
+
+type CvLiveTrackingEligibility {
+  enabled: Boolean!
+  inEligibilityReasons: [String!]
+}
+
+input DatastoreDelivery {
+  deviceSerialNumber: String!
+  deviceType: String!
+  deviceAccountId: String!
+}
+
+type DatastoreInfo {
+  region: String!
+  namespace: String!
+  keys: [String!]!
+}
+
+type DatastorePushFailure {
+  deviceAccountId: String!
+  failedPushes: [FailedPush!]!
+}
+
+type DatastorePushResponse {
+  deviceAccountId: String!
+  pushedDataInfo: PushedDataInfo!
+}
+
+scalar DateTime
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+scalar DdmUuid
+
+input DeactivateAutomationInput {
+  automationId: String!
+  automationType: AutomationType!
+  context: TargetContextInput
+}
+
+type DeactivateAutomationResponse {
+  automation: Automation
+}
+
+enum DefaultEnablementStatus {
+  ENABLED
+  DISABLED
+}
+
+type DelayState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  delayStateValue: DelayStateValue
+}
+
+type DelayStateValue {
+  state: SupportedDelayState
+  delayInSeconds: Int
+  playlistId: String
+  playOrder: [PlayListItem!]!
+}
+
+input DeleteAllHomeModesInput {
+  homeId: String
+}
+
+type DeleteAllHomeModesResponse {
+  success: Boolean!
+}
+
+input DeleteAllSetupWorkflowSessionsV3Input {
+  contextualRequest: ContextualRequest!
+}
+
+input DeleteAutomationInput {
+  automationId: String!
+  automationType: AutomationType!
+}
+
+type DeleteAutomationResponse {
+  automationId: String
+}
+
+input DeleteAwayLightingConfigInput {
+  homeId: String
+}
+
+type DeleteAwayLightingConfigResponse {
+  status: Boolean
+}
+
+input DeleteDeviceGroupInput {
+  deviceGroupId: String!
+}
+
+type DeleteDeviceGroupResponse {
+  deviceGroupId: String!
+}
+
+union DeleteHomeModeScheduleError = HomeModeScheduleError
+
+input DeleteHomeModeScheduleInput {
+  automationId: AutomationId!
+  homeId: String
+}
+
+type DeleteHomeModeScheduleResponse {
+  error: DeleteHomeModeScheduleError
+}
+
+input DeletePremisesInput {
+  id: String!
+}
+
+type DeletePremisesResponse {
+  id: String
+}
+
+type DeleteSetupWorkflowSessionResult {
+  deleted: Int
+}
+
+input DeleteSetupWorkflowSessionStateV2Input {
+  target: DeletionTarget
+}
+
+input DeleteSetupWorkflowSessionStateV3Input {
+  session: SessionIdentifier!
+  contextualRequest: ContextualRequest!
+}
+
+input DeletionTarget {
+  subject: SubjectDeletionTarget
+  session: SessionIdentifier
+  customerSessions: CustomerSessionsDeletionTarget
+}
+
+type DemandResponseActiveSignal {
+  name: String!
+  currentInterval: Int!
+}
+
+type DemandResponseEventStatus implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  eventStatusValue: DemandResponseEventStatusValue
+}
+
+enum DemandResponseEventStatusEnum {
+  SCHEDULED
+  OPTED_OUT
+  OPTED_IN
+  COMPLETED
+  CANCELED
+  ABORTED
+  NO_EVENT
+  STARTED
+  UNKNOWN
+}
+
+type DemandResponseEventStatusValue {
+  eventId: String!
+  status: DemandResponseEventStatusEnum!
+  activeSignals: [DemandResponseActiveSignal!]
+}
+
+type DemandResponseInterval {
+  id: Int!
+  duration: String!
+  loadControl: DemandResponseLoadControl!
+}
+
+type DemandResponseLoadControl {
+  type: DemandResponseLoadControlTypeEnum!
+  coolLevelOffset: Temperature
+  heatLevelOffset: Temperature
+  coolPercentOffset: Int
+  heatPercentOffset: Int
+  coolSetpoint: Temperature
+  heatSetpoint: Temperature
+  capacityLimit: Int
+  capacityPeriod: String
+}
+
+enum DemandResponseLoadControlTypeEnum {
+  LoadControlLevelOffset
+  LoadControlPercentOffset
+  LoadControlSetpoint
+  LoadControlCapacity
+  UNKNOWN
+}
+
+enum DemandResponseOptTypeEnum {
+  OPT_IN
+  OPT_OUT
+}
+
+type DemandResponseSchedulePayload {
+  eventId: String!
+  startTime: String!
+  requestGenerationTime: String
+  optType: DemandResponseOptTypeEnum
+  signals: [DemandResponseSignal!]!
+}
+
+type DemandResponseSignal {
+  name: String!
+  intervals: [DemandResponseInterval!]!
+}
+
+type DependencyError implements Error {
+  message: String
+}
+
+input DeregisterEndpointInput {
+  endpointId: EndpointId!
+  deregistrationReason: String
+}
+
+type DeregisterEndpointResponse {
+  endpointId: EndpointId!
+}
+
+type DestinationEndpointRelationship {
+  type: EndpointRelationshipType!
+  sourceEndpointId: EndpointId!
+}
+
+input DetectedEntitiesMetadataInput {
+  detectedEntityIdentifiers: [DetectedEntityIdentifierInput!]!
+  fields: [DetectedEntityMetadataField!]
+}
+
+type DetectedEntitiesMetadataResponse {
+  entities: [DetectedEntityMetadata!]
+}
+
+type DetectedEntityIdentifier {
+  id: String!
+  idType: String!
+}
+
+input DetectedEntityIdentifierInput {
+  id: String!
+  idType: String!
+}
+
+type DetectedEntityMetadata {
+  identifier: DetectedEntityIdentifier!
+  name: String
+  profileUrl: String
+}
+
+enum DetectedEntityMetadataField {
+  NAME
+  PROFILE_URL
+}
+
+type DetectedEntityPresenceState {
+  identifier: DetectedEntityIdentifier!
+  entityType: String!
+  lastDetected: DateTime!
+  friendlyName: String
+  profileUrl: String
+  detections: [EntityDetection!]
+}
+
+type DetectionEventsConfiguration {
+  supportedEvents: [DetectionEventsSupportedEvent!]
+}
+
+type DetectionEventsSupportedEvent {
+  category: SupportedEventCategory!
+  displayText: String!
+  filterIconImageUri: String!
+  fallbackImageUri: String!
+  altTextForFallbackImage: String!
+}
+
+type DetectionRange implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  detectionRangeValue: DetectionRangeValue
+}
+
+enum DetectionRangeValue {
+  LOW
+  MEDIUM
+  HIGH
+  UNKNOWN
+}
+
+type DetectionSensitivity implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  detectionSensitivityValue: DetectionSensitivityValue
+}
+
+enum DetectionSensitivityValue {
+  LOW
+  MEDIUM
+  HIGH
+  UNKNOWN
+}
+
+type DetectionState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  detectionStateValue: DetectionStateValue
+}
+
+enum DetectionStateValue {
+  DETECTED
+  NOT_DETECTED
+  UNKNOWN
+}
+
+type DetectionTechnology implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  detectionTechnologyValue: DetectionTechnologyValue
+}
+
+enum DetectionTechnologyValue {
+  ULTRASONIC_BASIC
+  ULTRASONIC_ENHANCED_WITH_WIFI_CSI
+  ULTRASONIC_ENHANCED_WITH_WIFI_RADAR
+  UNKNOWN
+}
+
+scalar DeviceAccountId
+
+type DeviceCodeSetupRequired implements Error {
+  message: String
+}
+
+type DeviceConfigurationProfile {
+  apids: [String!]
+  deviceTypes: [FFSDeviceType!]
+  accessPoint: String
+  isChangeWifiSupported: Boolean
+  privacyLink: String
+  termsAndConditionsLink: String
+  supportedSubtypes: [String!]
+}
+
+type DeviceDiscoveryHubConfiguration {
+  applicationProtocols: [ApplicationProtocol!]!
+}
+
+type DeviceDisplayProperties {
+  sourceOpportunityType: String!
+  friendlyName: NameValueObject
+  creationTime: DateTime
+  brandName: String
+  model: String
+  manufacturer: String
+  deviceCategories: [String!]
+  assetData: AssetData
+}
+
+type DeviceGroup {
+  id: String!
+  friendlyName: NameValueObject
+  memberDevices: PaginatedEndpoints
+  childDeviceGroups: [DeviceGroup]
+  powerState: GroupPowerState
+  speakerConfiguration: DeviceGroupSpeakerConfiguration
+}
+
+scalar DeviceGroupId
+
+type DeviceGroupSpeakerConfiguration {
+  selectedSpeakers: [GroupEndpointSpeaker!]!
+  lastUpdated: DateTime
+  playMusicTargetingType: GroupPlayMusicTargetingType!
+  managedBy: String
+  automaticSelectionProcessingStatus: String
+  selectedBy: String
+  message: String
+}
+
+input DeviceInfo {
+  deviceSerialNumber: String!
+  deviceType: String!
+}
+
+type DeviceMarketplaceAndLocaleInfo {
+  marketplaceId: MarketplaceId
+  locale: Locale
+}
+
+input DeviceMarketplaceAndLocaleInput {
+  marketplaceId: MarketplaceId
+  locale: Locale
+}
+
+type DeviceMetadataTimeZone {
+  ianaId: TimeZone!
+  region: String!
+}
+
+scalar DeviceModelId
+
+input DeviceSetupPaginationInput {
+  limit: Int
+  nextToken: String
+}
+
+type DeviceTypeGroup {
+  id: String!
+  friendlyName: String!
+  displayCategory: DisplayCategory!
+  deviceGroupId: String!
+  endpoints: [Endpoint!]!
+}
+
+input DeviceTypeGroupInput {
+  id: String!
+  locale: String!
+  latencyTolerance: LatencyToleranceValue = LOW
+}
+
+type DeviceUsageMeasurementInterval {
+  usage: Float!
+  start: DateTime!
+  end: DateTime!
+}
+
+type DeviceUsageMeterConfiguration {
+  electricity: EnergySourceConfigurationParameters
+  naturalGas: EnergySourceConfigurationParameters
+}
+
+type DeviceUsageMeterElectricityReading implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  value: Float
+}
+
+type DeviceUsageMeterNaturalGasReading implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  value: Float
+}
+
+type DeviceUsagePropertyReading {
+  namespace: String
+  name: String
+  value: Float!
+  timeOfSample: DateTime!
+  uncertaintyInMilliseconds: Int!
+}
+
+input DirectDelivery {
+  deviceSerialNumber: String!
+  deviceType: String!
+}
+
+type DirectiveDeviceLocation {
+  partnerLocationId: String!
+  locationId: String
+  name: String
+  address1: String
+  address2: String
+  city: String
+  state: String
+  country: String
+  zipCode: String
+  latitude: Float
+  longitude: Float
+}
+
+type DirectiveEndpointLocation {
+  partnerEndpointId: String!
+  endpointId: String
+  location: DirectiveDeviceLocation
+  error: DirectiveLocationError
+  placement: String
+  cvLiveTracking: CvLiveTrackingEligibility!
+}
+
+type DirectiveLocationError {
+  code: String!
+  message: String!
+}
+
+input DisableAutomationInput {
+  automationId: String!
+  automationType: AutomationType!
+}
+
+type DisableAutomationResponse {
+  automation: Automation
+}
+
+union DisarmSecurityPanelError = DeviceCodeSetupRequired | Unauthorized | TooManyFailedAttempts | DependencyError | ValidationError | ResourceNotFound | EndpointUnreachable
+
+input DisarmSecurityPanelInput {
+  endpointId: EndpointId!
+}
+
+type DisarmSecurityPanelResponse {
+  isSuccess: Boolean!
+  error: DisarmSecurityPanelError
+}
+
+input DisarmWithPinInput {
+  endpointId: EndpointId!
+  pin: String!
+}
+
+type DisarmWithPinResponse implements SecurityOperationWithPinResponse {
+  isSuccess: Boolean!
+  error: SecurityOperationWithPinError
+}
+
+input DisassociateExternalLocationFromHomeInput {
+  homeId: HomeId!
+  externalLocation: ExternalLocationInput!
+}
+
+type DisassociateExternalLocationFromHomeResponse {
+  result: DisassociateExternalLocationResult
+  error: HomeManagementError
+}
+
+enum DisassociateExternalLocationResult {
+  DISASSOCIATED
+  NOT_ASSOCIATED
+}
+
+input DismissMissedHabitTileInput {
+  tileId: String!
+}
+
+type DismissMissedHabitTileOutput {
+  success: Boolean!
+}
+
+type DisplayCategories {
+  all: [DisplayCategory]
+  primary: DisplayCategory
+}
+
+type DisplayCategory {
+  isCustomerSpecified: Boolean
+  isDiscovered: Boolean
+  sources: [DisplayCategorySource]
+  value: String
+}
+
+enum DisplayCategorySource {
+  CUSTOMER
+  ENDPOINT_REPORTER
+}
+
+type DisplayInfo {
+  displayCategories: DisplayCategories!
+  homeInfo: HomeInfo
+}
+
+enum DisplayResolution {
+  LOW
+  MEDIUM_LOW
+  MEDIUM
+  HIGH
+}
+
+type DmsEndpointIdentifier {
+  deviceSerialNumber: String!
+  deviceType: String!
+  softwareVersion: String
+}
+
+type DmsGroupEndpointSpeaker implements GroupEndpointSpeaker {
+  type: GroupEndpointSpeakerType!
+  endpointId: String!
+  dmsIdentifier: DmsInfo!
+}
+
+type DmsIdentifier {
+  deviceType: NameValueObject
+  deviceSerialNumber: NameValueObject
+}
+
+type DmsInfo {
+  deviceType: String
+  dsn: String!
+}
+
+enum DynamicLightingEffectColorModeEnum {
+  HUE_SATURATION
+  COLOR_TEMPERATURE
+  UNKNOWN
+}
+
+type DynamicLightingEffectColorObject {
+  brightness: Float!
+  hue: Float
+  saturation: Float
+  colorTemperatureinKelvin: Int
+}
+
+type DynamicLightingEffectConfiguration {
+  supportedEffectTypes: [DynamicLightingEffectSupportedEffectType!]!
+  supportedColorModes: [DynamicLightingEffectColorModeEnum!]!
+  maxSupportedColorsPerEffect: Int!
+  supportedSynchronizationTypes: [DynamicLightingEffectSynchronizationTypeEnum!]
+}
+
+type DynamicLightingEffectEffect implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  dynamicLightingEffectEffectValue: DynamicLightingEffectEffectValue
+}
+
+type DynamicLightingEffectEffectValue {
+  status: DynamicLightingEffectStatusEnum
+  typeId: String
+  colorPalette: [DynamicLightingEffectColorObject!]
+  speedMultiplier: Float
+}
+
+enum DynamicLightingEffectStatusEnum {
+  INACTIVE
+  RUNNING
+  UNKNOWN
+}
+
+type DynamicLightingEffectSupportedEffectType {
+  id: String!
+  friendlyNames: [NameValueObject!]!
+  maxSupportedTransitionsPerEffect: Int
+}
+
+enum DynamicLightingEffectSynchronizationTypeEnum {
+  TIME
+  AUDIO
+  UNKNOWN
+}
+
+enum EffectType {
+  ALEXA_WAVE
+  ALEXA_PULSE
+  ALEXA_RIPPLE
+  ALEXA_FLICKER
+  ALEXA_SPARKLE
+  ALEXA_GLOW
+  ALEXA_FADE
+  ALEXA_STROBE
+  ALEXA_SURGE
+  ALEXA_DIM
+  ALEXA_TRANSITIONS
+  ALEXA_COLOR_CYCLE
+  ALEXA_COLOR_RANDOM
+}
+
+enum EligibleExperienceType {
+  SETUP
+  CONFIGURATION
+}
+
+input EligibleExperiencesClientContext {
+  supportedSetupConfigurationKeys: [String!]
+}
+
+input EligibleExperiencesFilterStrategy {
+  filters: ExperienceFilters
+}
+
+input EligibleExperiencesInput {
+  filterStrategy: EligibleExperiencesFilterStrategy!
+  maxResults: Int
+  nextToken: String
+  clientContext: EligibleExperiencesClientContext
+}
+
+type EligibleExperiencesList {
+  items: [SmartHomeEligibleExperience!]!
+  nextToken: String
+}
+
+type EligibleFlow {
+  configurationKey: String!
+}
+
+input EnableAutomationInput {
+  automationId: String!
+  automationType: AutomationType!
+}
+
+type EnableAutomationResponse {
+  automation: Automation
+}
+
+enum Enablement {
+  ENABLED
+  DISABLED_BY_CUSTOMER
+}
+
+type EnablementState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  enablementStateValue: EnablementStateValue
+}
+
+enum EnablementStateValue {
+  ENABLED
+  DISABLED
+  UNKNOWN
+}
+
+type Endpoint {
+  firstPartyMetadata: FirstPartyDeviceMetadata
+  interfaces: [ApplicationFacingInterface]
+  id: String!
+  parentComponent: Endpoint
+  childComponents: [Endpoint!]!
+  endpointId: String!
+  legacyIdentifiers: LegacyIdentifiers
+  deviceAccountId: DeviceAccountId
+  dmsIdentifier: DmsInfo
+  description: NameValueObject
+  manufacturer: NameValueObject
+  friendlyName: String
+  friendlyNameObject: NameValueObject
+  model: NameValueObject
+  serialNumber: NameValueObject
+  softwareVersion: NameValueObject
+  creationTime: DateTime
+  associatedUnits: [Unit]
+  associateUnits: String
+  alexaEnabledMetadata: AlexaEnabledMetadata
+  isEnabled: Boolean
+  displayCategories: DisplayCategories
+  enablement: Enablement
+  endpointStatus: EndpointStatus
+  connections: [Connection]
+  features(latencyToleranceValue: LatencyToleranceValue): [Feature]
+  operations: [EndpointOperation]
+  endpointReports: [EndpointReport!]!
+  legacyAppliance: LegacyAppliance
+  relationships: EndpointRelationshipConfiguration
+  isSpaceEligible: Boolean
+  owner: EndpointOwner
+  settings: EndpointSettings
+}
+
+input EndpointConfigurationStatus {
+  endpointId: EndpointId!
+  status: ConfigurationStatus!
+}
+
+type EndpointCustomerPreference {
+  id: EndpointId!
+  preference: EndpointPreference!
+}
+
+input EndpointCustomerPreferencesInput {
+  ids: [EndpointId!]!
+}
+
+type EndpointCustomerPreferencesResponse {
+  items: [EndpointCustomerPreference!]!
+}
+
+enum EndpointEnablement {
+  ENABLED
+  DISABLED_BY_CUSTOMER
+}
+
+type EndpointEntry {
+  endpointId: EndpointId!
+  recommendations: [EndpointRecommendation!]!
+  completed: [CompletedFlow!]!
+  eligibleFlows: [EligibleFlow!]!
+  allCompleted: Boolean!
+  parentEndpointId: EndpointId
+}
+
+type EndpointErrorResponse implements Error {
+  endpointId: EndpointId!
+  type: String!
+  message: String
+}
+
+type EndpointHealthBattery {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: EndpointHealthEndpointHealthBatteryValue
+}
+
+type EndpointHealthBatteryChargingHealth {
+  state: EndpointHealthEndpointHealthBatteryChargingHealthState
+  reason: EndpointHealthEndpointHealthBatteryChargingHealthReason
+}
+
+type EndpointHealthBatteryHealth {
+  state: EndpointHealthEndpointHealthBatteryHealthState
+  reasons: [EndpointHealthBatteryHealthReasons]
+}
+
+enum EndpointHealthBatteryHealthReasons {
+  COLD
+  DEAD
+  OVERHEATED
+  OVER_VOLTAGE
+  NO_BATTERY
+  LOW_CHARGE
+  UNKNOWN
+  WIRED
+}
+
+enum EndpointHealthEndpointHealthBatteryChargingHealthReason {
+  LOW_POWER
+  INCOMPATIBLE_CHARGER
+  UNKNOWN
+}
+
+enum EndpointHealthEndpointHealthBatteryChargingHealthState {
+  OK
+  WARNING
+  CRITICAL
+}
+
+enum EndpointHealthEndpointHealthBatteryHealthState {
+  OK
+  WARNING
+  CRITICAL
+}
+
+type EndpointHealthEndpointHealthBatteryValue {
+  health: EndpointHealthBatteryHealth
+  chargingHealth: EndpointHealthBatteryChargingHealth
+  levelPercentage: Int
+}
+
+type EndpointHealthInterface implements ApplicationFacingInterface {
+  name: String!
+  instance: String
+  endpointHealthProperties: EndpointHealthProperties
+}
+
+type EndpointHealthNetworkThroughput {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: EndpointHealthNetworkThroughputValue
+}
+
+type EndpointHealthNetworkThroughputValue {
+  quality: String
+  bitsPerSecond: Int
+}
+
+type EndpointHealthProperties {
+  battery: EndpointHealthBattery
+  radioDiagnostics: EndpointHealthRadioDiagnostics
+  networkThroughput: EndpointHealthNetworkThroughput
+}
+
+type EndpointHealthRadioDiagnostics {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: EndpointHealthRadioDiagnosticsValues
+}
+
+type EndpointHealthRadioDiagnosticsValue {
+  radioType: String
+  signalStrength: EndpointHealthSignalStrength
+  signalToNoiseRatio: EndpointHealthSignalToNoiseRatio
+}
+
+type EndpointHealthRadioDiagnosticsValues {
+  values: [EndpointHealthRadioDiagnosticsValue]
+}
+
+type EndpointHealthSignalStrength {
+  quality: String
+  rssiInDBM: Int
+}
+
+type EndpointHealthSignalToNoiseRatio {
+  quality: String
+  snrInDB: Int
+}
+
+scalar EndpointId
+
+union EndpointIdentifier = ChrEndpointIdentifier | DmsEndpointIdentifier
+
+type EndpointOperation {
+  name: String!
+}
+
+type EndpointOwner {
+  id: String!
+}
+
+type EndpointPreference {
+  securitySensitiveFeatureEnabledGUI: Boolean
+  securitySensitiveFeatureEnabledVUI: Boolean
+  securitySensitiveFeatureEnabledVoiceCode: Boolean
+  securitySensitiveFeatureVoiceCode: String
+  securitySensitiveFeatureEnabledAuthorization: EndpointPreferenceAuthorizations
+  doorbellCustomChimeFileName: String
+  doorbellCustomChimeDisplayName: String
+  managedNetworkAccessDevice: EndpointPreferenceManagedNetworkAccessDeviceType
+}
+
+type EndpointPreferenceAuthorizations {
+  vui: EndpointPreferenceVoiceCodeType
+}
+
+input EndpointPreferenceAuthorizationsInput {
+  vui: EndpointPreferenceVoiceCodeType
+}
+
+enum EndpointPreferenceManagedNetworkAccessDeviceType {
+  MANAGED
+  UNMANAGED
+  UNKNOWN
+}
+
+enum EndpointPreferenceVoiceCodeType {
+  ALEXA_VOICE_CODE
+  ALEXA_ACCESS_CODE
+  THIRD_PARTY_FOUR_DIGIT_PIN
+  NONE
+  UNKNOWN
+}
+
+input EndpointQualityOfServiceInput {
+  endpoints: [EndpointId!]!
+  configuration: QualityOfServiceConfiguration!
+}
+
+type EndpointQualityOfServiceResponse {
+  durationInSeconds: Int
+  errors: [ErrorResponse]
+}
+
+type EndpointRecommendation {
+  configurationKey: String!
+}
+
+type EndpointRelationshipConfiguration {
+  sourceFor: [SourceEndpointRelationship!]!
+  destinationFor: [DestinationEndpointRelationship!]!
+}
+
+enum EndpointRelationshipType {
+  IS_COMPONENT_OF
+  HAS_CONNECTED_SPEAKER
+  IS_CONTROLLED_BY
+  IS_INSTALLED_ON
+  IS_BRIDGED_VIA
+  IS_CLUSTER_OF
+  UNKNOWN
+}
+
+type EndpointReport {
+  reporter: Reporter
+  externallyReportedId: NameValueObject
+  skillStatus: SkillStatus!
+}
+
+interface EndpointSetting {
+  id: String!
+  endpointId: EndpointId!
+  name: String!
+  error: ErrorResponse
+}
+
+input EndpointSettingInput {
+  endpointId: EndpointId!
+  settingName: String!
+}
+
+type EndpointSettingJson implements EndpointSetting {
+  id: String!
+  endpointId: EndpointId!
+  name: String!
+  jsonValue: JSON
+  error: ErrorResponse
+}
+
+input EndpointSettingJsonInput {
+  endpointId: EndpointId!
+  settingName: String!
+  value: JSON!
+}
+
+type EndpointSettingJsonResponse {
+  setting: EndpointSettingJson!
+}
+
+type EndpointSettingResponse {
+  setting: EndpointSetting!
+}
+
+type EndpointSettingString implements EndpointSetting {
+  id: String!
+  endpointId: EndpointId!
+  name: String!
+  stringValue: String
+  error: ErrorResponse
+}
+
+input EndpointSettingStringInput {
+  endpointId: EndpointId!
+  settingName: String!
+  value: String!
+}
+
+type EndpointSettingStringResponse {
+  setting: EndpointSettingString!
+}
+
+type EndpointSettingToggle implements EndpointSetting {
+  id: String!
+  endpointId: EndpointId!
+  name: String!
+  toggleValue: Boolean
+  error: ErrorResponse
+}
+
+input EndpointSettingToggleInput {
+  endpointId: EndpointId!
+  settingName: String!
+  value: Boolean!
+}
+
+type EndpointSettingToggleResponse {
+  setting: EndpointSettingToggle!
+}
+
+type EndpointSettings {
+  doNotDisturb: EndpointSettingToggle
+}
+
+input EndpointSettingsInput {
+  endpointId: EndpointId!
+  settingNames: [String!]!
+}
+
+type EndpointSettingsResponse {
+  settings: [EndpointSetting!]!
+}
+
+type EndpointStateCameraTileDecoration implements CameraTileDecoration {
+  type: CameraTileDecorationType!
+  timestamp: DateTime
+  endpointId: EndpointId!
+  icon: CameraTileUrlResource
+}
+
+enum EndpointStatus {
+  RESPONSIVE
+  UNRESPONSIVE
+  DISCONNECTED
+  DISABLED
+}
+
+input EndpointTarget {
+  id: EndpointId!
+}
+
+type EndpointUnreachable implements Error {
+  message: String
+}
+
+input EndpointsQueryParams {
+  featureLatencyTolerance: FeatureLatencyToleranceValue
+  filters: [Filter!]
+  paginationParams: PaginationParams
+  includeHouseholdDevices: Boolean = false
+}
+
+type EndpointsResponse {
+  items: [Endpoint!]
+  paginationInfo: PaginationInfo
+}
+
+type EndpointsSubscribeResult {
+  subscriptionDuration: Long!
+  successResults: [SubscribeEndpointsResponseSuccessResult!]!
+  failureResults: [SubscribeEndpointsResponseFailureResult!]!
+}
+
+input EndpointsSubscription {
+  configIdentifier: String!
+  endpointIds: [String!]!
+}
+
+input EndpointsToUpdate {
+  operation: String!
+  endpointId: EndpointId!
+}
+
+type EnergySourceConfigurationParameters {
+  unit: EnergySourcesUnitEnum!
+  defaultResolution: Int!
+  measuringMethod: MeasuringMethodEnum!
+}
+
+enum EnergySourcesUnitEnum {
+  MILLIWATT_HOUR
+  BTU
+  CUBIC_FOOT
+  UNKNOWN
+}
+
+type EnrollmentImage {
+  imageId: ID!
+  url: String!
+  createdAt: Long
+}
+
+type Entitlement {
+  benefitId: String
+  status: EntitlementStatus
+}
+
+enum EntitlementStatus {
+  ENTITLED
+  NOT_ENTITLED
+  CANNOT_BE_DETERMINED
+}
+
+type EntityDetection {
+  endpoint: EndpointIdentifier!
+  lastDetected: DateTime!
+}
+
+interface Error {
+  message: String
+}
+
+type ErrorResponse implements Error {
+  type: String!
+  message: String
+}
+
+enum ExecutionEnvironment {
+  LOCAL
+  CLOUD
+}
+
+type ExperienceDevice {
+  displayProperties: DeviceDisplayProperties
+  asin: Asin
+  setupDeviceModelId: SetupDeviceModelId
+  endpointId: EndpointId
+  opportunityPayload: OpportunityPayload!
+}
+
+input ExperienceFilters {
+  setupFilter: SetupFilter!
+  configurationFilter: ConfigurationFilter!
+}
+
+scalar ExperienceId
+
+input ExperienceInitializationTarget {
+  id: SetupExperienceId!
+  type: ExperienceType!
+}
+
+enum ExperienceType {
+  GOLDEN_BUNDLE_EXPERIENCE
+  SETUP
+  TROUBLESHOOTING
+  GUIDED_CONFIGURATION
+}
+
+type ExternalLocation {
+  type: ExternalLocationType!
+  id: String!
+}
+
+input ExternalLocationInput {
+  type: ExternalLocationType!
+  id: String!
+}
+
+enum ExternalLocationType {
+  RING_LOCATION
+}
+
+type FFSBarCodeMetadata {
+  barcodeImageUrls: [ImageAsset!]
+  barcodeInstructionPageInstruction: String
+  barcodeScanPageInstruction: String
+  barcodeTroubleshootPageInstruction: String
+  ugsCustomizedInstructions: [String!]
+  softApCustomizedInstructions: [String!]
+}
+
+scalar FFSDeviceType
+
+type FFSSetupMetadata {
+  barCodeMetadata: FFSBarCodeMetadata
+  deviceConfigurationProfile: DeviceConfigurationProfile
+  requiresPhoneCapabilityCheck: Boolean
+}
+
+type FabricDetail {
+  label: String!
+  fabricIndex: Int!
+  fabricId: String!
+  vendorId: Int!
+  isRemovable: Boolean!
+}
+
+type FabricList implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  maxSupportedFabrics: Int!
+  currentFabricCount: Int!
+  fabrics: [FabricDetail!]
+}
+
+type FabricRemoval implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  fabric: RemoveFabricDetail!
+}
+
+type FailedPush {
+  name: String!
+  errorCode: String!
+}
+
+type FamiliarObject {
+  id: ID!
+  partnerSkillId: String!
+  partnerName: String
+  imageNetClass: String
+  name: FamiliarObjectName
+  category: String
+  updatedAt: Long
+}
+
+type FamiliarObjectDetection {
+  isAvailable: Boolean
+  unavailabilityReason: UnavailabilityReasonEnum
+  proactivelyReported: Boolean
+  retrievable: Boolean
+}
+
+type FamiliarObjectName {
+  text: String!
+  locale: String
+}
+
+input FamiliarObjectsFilterInput {
+  partners: [PartnerFilterInput!]
+}
+
+type FamiliarObjectsImagesResponse {
+  items: [IdentityImages!]!
+  nextToken: String
+}
+
+type FamiliarObjectsResponse {
+  items: [FamiliarObject!]!
+  unavailablePartners: [UnavailablePartner!]!
+  nextToken: String
+}
+
+enum FanModeEnum {
+  ON
+  AUTO
+  CIRCULATE
+  Unknown
+}
+
+type FanSettingObject {
+  mode: FanModeEnum!
+}
+
+type Favorite {
+  resource: Resource!
+  favoriteFriendlyName: String
+  active: Boolean
+  rank: Int!
+  type: String!
+  displayInfo: DisplayInfo
+  alternateIdentifiers: AlternateIdentifiers
+  variant: String
+}
+
+type FavoriteCoffeeProgram {
+  favoriteProgramIdentifier: String!
+  favoriteProgramName: String!
+}
+
+type FavoriteCoffeePrograms implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  favoritePrograms: [FavoriteCoffeeProgram!]!
+}
+
+type FavoritesSubscribeResult {
+  subscriptionDuration: Int!
+}
+
+input FavoritesSubscription {
+  marketplaceId: String!
+  locale: String!
+  subscriptionDuration: Int!
+}
+
+type Feature {
+  name: String!
+  instance: String
+  properties: [FeatureProperty]
+  featureOperations: [FeatureOperation]
+  operations: [FeatureOperation]
+  configuration: Configuration
+  semantics: Semantics
+  supersededInterfaces: [InterfaceReference]
+}
+
+type FeatureControlError {
+  endpointId: String!
+  featureName: FeatureName!
+  instance: String
+  featureOperationName: FeatureOperationName!
+  payload: JSON
+  code: String!
+  message: String
+}
+
+input FeatureControlRequest {
+  entityId: String
+  endpointId: String
+  featureName: FeatureName!
+  instance: String
+  featureOperationName: FeatureOperationName!
+  payload: JSON
+}
+
+type FeatureControlResponse {
+  endpointId: String!
+  featureName: FeatureName!
+  instance: String
+  featureOperationName: FeatureOperationName!
+  payload: JSON
+  code: String!
+  responsePayload: FeatureResponsePayload
+}
+
+enum FeatureLatencyToleranceValue {
+  HIGH
+  LOW
+}
+
+enum FeatureName {
+  power
+  speaker
+  connectivity
+  brightness
+  percentage
+  powerLevel
+  color
+  colorTemperature
+  thermostat
+  lock
+  temperatureSensor
+  commissionable
+  contactSensor
+  motionSensor
+  mode
+  range
+  toggle
+  fabricManagement
+  action
+  customBoschHomeConnectCoffeeMaker
+  customYaleDoorLock
+  hvac
+  thermostatSchedule
+  thermostatAutomation
+  thermostatConfiguration
+  objectDetection
+  automationManagement
+  remoteVideoPlayer
+  proactiveNotificationSource
+  rtcSession
+  launcher
+  inventory
+  doorbell
+  deviceDiscoveryHub
+  deviceUsageMeter
+  threadNetworkManager
+  demandResponse
+  dynamicLightingEffect
+  sceneDescriptionProvider
+}
+
+type FeatureOperation {
+  name: String!
+  verificationsRequired: [Verification!]
+}
+
+input FeatureOperationInput {
+  name: String!
+}
+
+enum FeatureOperationName {
+  turnOn
+  turnOff
+  setVolume
+  adjustVolume
+  setBrightness
+  adjustBrightness
+  setPercentage
+  adjustPercentage
+  setPowerLevel
+  adjustPowerLevel
+  setColor
+  setColorTemperature
+  increaseColorTemperature
+  decreaseColorTemperature
+  setTargetSetpoint
+  setThermostatMode
+  adjustTargetSetpoint
+  lock
+  unlock
+  reportCommissioningInformation
+  setMode
+  adjustMode
+  setRangeValue
+  adjustRangeValue
+  listFabrics
+  removeFabric
+  performAction
+  makeAvailableCoffeeProgram
+  stopCoffeeMaker
+  fetchFavoriteCoffeePrograms
+  makeFavoriteCoffee
+  lockDoor
+  unlockDoor
+  getUser
+  setProperty
+  setUser
+  setupDevice
+  resetDeviceConfiguration
+  getComponentConfiguration
+  setComponentConfiguration
+  setTemperatureScale
+  setAllowedTemperatureRange
+  getWeeklySchedule
+  setWeeklySchedule
+  setAdaptiveRecovery
+  setScheduleState
+  getEnabledAutomationTypes
+  getPreferredTemperatures
+  setPreferredTemperatureForActivityType
+  setObjectDetectionClasses
+  updateAlexaAutomationStatus
+  searchAndPlay
+  searchAndDisplayResults
+  initiateSessionWithOffer
+  disconnectSession
+  launchTarget
+  reportMeasurements
+  reduceResolution
+  setEnablement
+  setDetectionRange
+  setDetectionSensitivity
+  startCredentialSharing
+  getActiveOperationalDataset
+  cancelDemandResponseSchedule
+  getDemandResponseSchedule
+  startEffect
+  stopEffect
+}
+
+enum FeaturePayloadType {
+  CommissioningInformationReport
+  FabricList
+  FabricRemoval
+  FavoriteCoffeePrograms
+  CustomYaleUserResponse
+  WeeklyScheduleResponse
+  GetEnabledAutomationTypesResponse
+  GetPreferredTemperaturesResponse
+  GetComponentConfigurationResponse
+  AnswerGeneratedForSessionResponse
+  SessionDisconnectedResponse
+  LaunchTargetResponse
+  MeasurementsReportEvent
+  GetDemandResponseScheduleResponse
+  GenericFeatureResponse
+  ThreadCredentialSharingReport
+  ThreadNetworkDetailsReport
+}
+
+interface FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+}
+
+enum FeaturePropertyName {
+  powerState
+  volume
+  reachability
+  brightness
+  percentage
+  powerLevel
+  color
+  colorTemperatureInKelvin
+  lowerSetpoint
+  upperSetpoint
+  targetSetpoint
+  thermostatMode
+  adaptiveRecoveryStatus
+  setupState
+  temperatureScale
+  allowedTemperatureRange
+  lockState
+  temperature
+  detectionState
+  detectionRange
+  detectionSensitivity
+  detectionTechnology
+  enablementState
+  mode
+  rangeValue
+  toggleState
+  actionState
+  auxiliaryHeaterStage
+  primaryHeaterStage
+  fanStage
+  coolerStage
+  lastActivityType
+  adaptiveRecoveryEnabled
+  scheduleEnabled
+  automationStatuses
+  launchTarget
+  level
+  naturalGasReading
+  electricityReading
+  eventStatus
+  effect
+}
+
+interface FeatureResponsePayload {
+  type: FeaturePayloadType
+}
+
+input Filter {
+  key: String!
+  operator: FilterOperatorOptions = EQ
+  value: String!
+}
+
+input FilterExpression {
+  filterKey: String!
+  filterValue: String!
+}
+
+enum FilterOperatorOptions {
+  EQ
+}
+
+input FilterStrategy {
+  automationCriteria: AutomationMetadataCriteria
+  triggerCriteria: TriggerCriteria
+}
+
+type FireAlarm implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  fireAlarmValue: AlarmValue
+}
+
+type FirstPartyDeviceMetadata {
+  privacyPolicyUrl: String
+  timeZoneSupported: Boolean
+  timeZone: DeviceMetadataTimeZone
+  hmcuFirmwareVersion: String
+  firmwareVersion: String
+  manufacturerHelpUrl: String
+}
+
+scalar FloorPlanImageUploadOperationType
+
+scalar FloorPlanImageUploadReferenceId
+
+scalar FloorPlanImageUploadUrl
+
+interface FloorPlanLayout {
+  id: FloorPlanLayoutId
+}
+
+scalar FloorPlanLayoutId
+
+type FloorPlanLayoutV1 implements FloorPlanLayout {
+  id: FloorPlanLayoutId
+  amazonFloorPlanLayoutV1: AmazonFloorPlanLayoutV1
+}
+
+interface FloorPlanLayoutVector {
+  referenceId: FloorPlanImageUploadReferenceId!
+}
+
+type FloorPlanLayoutVectorV1 implements FloorPlanLayoutVector {
+  referenceId: FloorPlanImageUploadReferenceId!
+  amazonFloorPlanLayoutVectorV1: AmazonFloorPlanLayoutVectorV1!
+}
+
+type FloorPlanLayouts {
+  layouts: [FloorPlanLayout]
+}
+
+input ForgetEndpointInput {
+  endpointId: EndpointId!
+}
+
+type ForgetEndpointResponse {
+  endpointId: EndpointId!
+}
+
+type FullyQualifiedWorkflowStateIdentifier {
+  workflow: SetupWorkflowIdentifier!
+  name: String!
+}
+
+type GCFlow {
+  type: GCFlowType!
+  sequenceNo: Int!
+}
+
+enum GCFlowType {
+  SH_ANNOUNCEMENTS_SETUP
+  ADD_TO_GROUP
+  ADD_TO_GROUP_RENAME
+  RETYPE
+  LIGHT_SETUP
+}
+
+type GenericConfiguration {
+  genericValue: JSON
+}
+
+type GenericFeatureControlError {
+  endpointId: EndpointId!
+  featureName: String!
+  instance: String
+  featureOperationName: String!
+  payload: JSON
+  code: String!
+  message: String
+}
+
+input GenericFeatureControlRequest {
+  endpointId: EndpointId!
+  featureName: String!
+  instance: String
+  featureOperationName: String!
+  payload: JSON
+}
+
+type GenericFeatureControlResponse {
+  endpointId: EndpointId!
+  featureName: String!
+  instance: String
+  featureOperationName: String!
+  payload: JSON
+  code: String!
+  responsePayload: FeatureResponsePayload
+}
+
+type GenericFeatureProperty implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  genericValue: JSON
+}
+
+type GenericFeatureResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  genericResponse: JSON
+}
+
+type GenericSemantics {
+  genericValue: JSON
+}
+
+type Geolocation implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  geolocationValue: GeolocationValue
+}
+
+type GeolocationAltitude {
+  altitudeInMeters: Float!
+  accuracyInMeters: Float
+}
+
+type GeolocationCoordinate {
+  latitudeInDegrees: Float!
+  longitudeInDegrees: Float!
+  accuracyInMeters: Float
+}
+
+type GeolocationHeading {
+  directionInDegrees: Float!
+  accuracyInDegrees: Float
+}
+
+enum GeolocationSource {
+  SELF_REPORTED
+  CUSTOMER_SET
+  UNKNOWN
+}
+
+type GeolocationSpeed {
+  speedInMetersPerSecond: Float!
+  accuracyInMetersPerSecond: Float
+}
+
+type GeolocationValue {
+  coordinate: GeolocationCoordinate!
+  altitude: GeolocationAltitude
+  heading: GeolocationHeading
+  speed: GeolocationSpeed
+  source: GeolocationSource
+}
+
+type GetAutomaticLightingResponse {
+  automationId: String!
+  settings: AutomaticLightingSettings!
+}
+
+input GetAwayLightingConfigInput {
+  homeId: String
+}
+
+type GetCircadianLightingResponse {
+  automationId: String
+  automationState: CircadianLightingAutomationState
+  settings: CircadianLightingSettings
+}
+
+type GetComponentConfigurationResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  componentConfiguration: ThermostatComponentConfiguration!
+}
+
+type GetDemandResponseScheduleResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  schedule: DemandResponseSchedulePayload
+}
+
+type GetEnabledAutomationTypesResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  enabledAutomations: [ThermostatAutomationTypeEnum!]!
+}
+
+input GetFloorPlanImageUploadUrlInput {
+  operationType: FloorPlanImageUploadOperationType!
+}
+
+type GetFloorPlanImageUploadUrlOutput {
+  referenceId: FloorPlanImageUploadReferenceId!
+  url: FloorPlanImageUploadUrl!
+}
+
+input GetFloorPlanLayoutVectorInput {
+  referenceId: FloorPlanImageUploadReferenceId!
+}
+
+type GetFloorPlanLayoutVectorOutput {
+  floorPlanLayoutVector: FloorPlanLayoutVector!
+}
+
+input GetLayoutInput {
+  id: FloorPlanLayoutId!
+  outputFormat: String!
+  crsId: CrsId
+}
+
+input GetNotificationsInput {
+  locales: [String!]!
+  deliveryChannels: [String!]
+  states: [NotificationState!]
+}
+
+type GetNotificationsOutput {
+  notifications: [Notification!]!
+}
+
+input GetPartnerLocationsInput {
+  skillId: SkillId!
+}
+
+type GetPartnerLocationsResponse {
+  locations: [DirectiveDeviceLocation!]
+}
+
+input GetPartnerSharingConsentStatusInput {
+  skillId: String!
+}
+
+type GetPartnerSharingConsentStatusResponse {
+  consentStatus: PartnerSharingConsentStatus
+  skillId: String!
+  error: PartnerSharingConsentError
+}
+
+type GetPreferredTemperaturesResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  preferredTemperatures: [PreferredTemperature!]!
+}
+
+input GetSmartHomeContentsInput {
+  apiVersion: SmartHomeContentsApiVersion!
+  surface: String!
+  contentTags: [String!]
+  timezone: String
+  personIdV2: String
+  appVersion: String
+}
+
+type GetSmartHomeContentsResponse {
+  apiVersion: SmartHomeContentsApiVersion!
+  content: [SmartHomeContentCard!]!
+  metadata: SmartHomeContentsMetadata
+}
+
+input GetTemplateRequest {
+  templateId: String!
+  viewportProfile: ViewportProfile!
+  templateVersion: String
+  renderingProperties: RenderingFramework!
+  theme: Theme = LIGHT
+  locale: String = "en-US"
+}
+
+type GetTemplateResponse {
+  content: JSON
+  dataSources: JSON
+  status: ErrorResponse
+}
+
+type GifCameraTilePreview implements CameraTilePreview {
+  type: CameraTilePreviewType!
+  gif: CameraTileUrlResource!
+}
+
+input GrantPartnerSharingConsentInput {
+  skillId: String!
+  partnerLocationId: String
+  deviceType: String
+  serialNumber: String
+}
+
+type GrantPartnerSharingConsentResponse {
+  consentStatus: PartnerSharingConsentStatus
+  error: PartnerSharingConsentError
+}
+
+interface Group {
+  id: GroupId!
+  name: NameValueObject!
+  type: GroupType!
+}
+
+interface GroupEndpointSpeaker {
+  type: GroupEndpointSpeakerType!
+  endpointId: String!
+}
+
+input GroupEndpointSpeakerInput {
+  type: GroupEndpointSpeakerType!
+  endpointId: String!
+}
+
+enum GroupEndpointSpeakerType {
+  ALEXA_DEVICE
+  BONDED_CLUSTER
+  MULTI_ROOM_MUSIC_CLUSTER
+  THIRD_PARTY
+  UNKNOWN
+}
+
+scalar GroupId
+
+enum GroupPlayMusicTargetingType {
+  ALWAYS
+  ONLY_WHEN_GROUP_NAME_IS_SPOKEN
+  UNKNOWN
+}
+
+enum GroupPlayMusicTargetingTypeInput {
+  ALWAYS
+  ONLY_WHEN_GROUP_NAME_IS_SPOKEN
+}
+
+type GroupPowerState {
+  overallPowerState: GroupPowerStateEnum
+  devicesOnCount: Int
+  devicesOffCount: Int
+  devicesUnknownCount: Int
+}
+
+enum GroupPowerStateEnum {
+  ON
+  OFF
+  PARTIALLY_ON
+  UNSUPPORTED
+}
+
+type GroupRecommendation {
+  groupId: GroupId!
+  friendlyName: NameValueObject
+  recommendationType: RecommendationType!
+  confidence: Float
+}
+
+enum GroupType {
+  HOME
+}
+
+type HabitTrackingStatusOutput {
+  habitTrackingEnabled: Boolean
+}
+
+type HistoryEvent {
+  eventId: String!
+  timestamp: String!
+  operation: HistoryEventOperation!
+  duration: String
+  tags: [String!]
+}
+
+enum HistoryEventOperation {
+  TurnOn
+  TurnOff
+  Pause
+}
+
+type Home implements Group {
+  id: GroupId!
+  name: NameValueObject!
+  type: GroupType!
+  allMembers(limit: Int, nextToken: String): PaginatedHomeMembers
+  addressId: AddressId
+  creationTime: DateTime
+  externalLocationList: [ExternalLocation!]
+}
+
+input HomeCreateInput {
+  friendlyName: String!
+  addressId: AddressId!
+}
+
+type HomeCreateResponse {
+  home: Home
+  error: HomeManagementError
+}
+
+input HomeDeleteInput {
+  id: HomeId!
+  destinationHomeId: HomeId
+}
+
+type HomeDeleteResponse {
+  error: HomeManagementError
+}
+
+scalar HomeId
+
+type HomeInfo {
+  homeId: GroupId
+  homeName: NameValueObject
+}
+
+type HomeManagementError implements Error {
+  type: String
+  message: String
+  violations: [HomeManagementViolation!]
+}
+
+type HomeManagementViolation {
+  code: String
+  message: String
+  violatingEntities: [String!]
+}
+
+type HomeMode {
+  type: HomeModeType!
+  name: String!
+  automationId: String
+  automationRecommendationId: String
+  displayType: HomeModeDisplayType!
+  entitlements: [Entitlement!]
+}
+
+type HomeModeDetails {
+  groupId: String
+  groupName: String
+  modeList: [HomeMode!]
+  currentModeState: HomeModeType
+  modeSettings: HomeModeSettings
+  modeSchedules: [HomeModeSchedule]
+}
+
+input HomeModeDetailsInput {
+  locale: String!
+  homeId: String
+}
+
+type HomeModeDetailsResponse {
+  modeDetails: HomeModeDetails!
+}
+
+enum HomeModeDisplayType {
+  USER_ENABLED
+  USER_DISABLED
+  SUGGESTED
+}
+
+type HomeModeSchedule {
+  automationId: AutomationId!
+  schedulePayload: HomeModeSchedulePayload!
+  mode: HomeModeType!
+  enabled: Boolean!
+}
+
+type HomeModeScheduleDayConflictError implements Error {
+  message: String
+  conflictingDaysOfWeek: [DayOfWeek!]
+}
+
+type HomeModeScheduleError implements Error {
+  message: String
+}
+
+interface HomeModeSchedulePayload {
+  timeZone: TimeZone!
+  recurrencePattern: String!
+}
+
+type HomeModeSettings {
+  enabled: Boolean!
+  scheduleEnabled: Boolean
+  scheduleNotificationsEnabled: Boolean
+}
+
+input HomeModeSettingsInput {
+  enabled: Boolean!
+  scheduleEnabled: Boolean
+  scheduleNotificationsEnabled: Boolean
+}
+
+input HomeModeStateInput {
+  type: HomeModeType!
+}
+
+enum HomeModeType {
+  HOME
+  AWAY
+  NIGHT
+  VACATION
+}
+
+input HomeMoveEntitiesInput {
+  destinationHomeId: HomeId!
+  endpointIds: [EndpointId!]
+  groupIds: [DeviceGroupId!]
+}
+
+type HomeMoveEntitiesResponse {
+  error: HomeManagementError
+}
+
+input HomeUpdateAddressInput {
+  id: HomeId!
+  addressId: AddressId
+  syncAddressToDevicesAndProfiles: Boolean
+}
+
+input HomeUpdateNameInput {
+  id: HomeId!
+  friendlyName: String!
+}
+
+type HomeUpdateResponse {
+  home: Home
+  error: HomeManagementError
+}
+
+input HomesInput {
+  ids: [GroupId!]!
+  limit: Int
+  nextToken: String
+}
+
+type HomesResponse {
+  items: [Home!]!
+  nextToken: String
+}
+
+input HunchConfigurationStatus {
+  hunchId: HunchId!
+  status: ConfigurationStatus!
+}
+
+scalar HunchId
+
+type HvacAuxiliaryHeaterStage implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  auxiliaryHeaterStageValue: AuxiliaryHeaterStageValue
+}
+
+type HvacConfiguration {
+  numberOfPrimaryHeaterStage: Int!
+  numberOfFanStage: Int!
+  numberOfCoolerStage: Int!
+}
+
+type HvacCoolerStage implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  coolerStageValue: OperatingStageValue
+}
+
+type HvacFanStage implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  fanStageValue: OperatingStageValue
+}
+
+type HvacPrimaryHeaterStage implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  primaryHeaterStageValue: OperatingStageValue
+}
+
+type IdentityImages {
+  id: ID!
+  partnerSkillId: String!
+  images: [EnrollmentImage!]!
+  error: NodeError
+}
+
+type Illuminance implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  illuminanceValue: IlluminanceStateValue
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+}
+
+type IlluminanceStateValue {
+  value: Float
+}
+
+type ImageAsset {
+  resolution: DisplayResolution!
+  url: String!
+}
+
+type ImageCameraTileDecoration implements CameraTileDecoration {
+  type: CameraTileDecorationType!
+  timestamp: DateTime
+  image: CameraTileUrlResource!
+  durationOfPlayInMs: Long
+}
+
+enum ImageNetClassEnum {
+  PERSON
+  PACKAGE
+  VEHICLE
+  ANIMAL
+  CUSTOM
+  UNKNOWN
+}
+
+input ImageSelectionInput {
+  count: Int
+  all: Boolean
+}
+
+type ImageUrlCameraTilePlayer implements CameraTilePlayer {
+  type: CameraTilePlayerType!
+  relatedEndpointIds: [EndpointId!]!
+  thumbnail: CameraTileUrlResource
+  decorations: [CameraTileDecoration!]!
+  imageSource: CameraTileUrlResource!
+  durationOfPlayInMs: Long!
+  explanation: String
+  familiarObjectsExplanation: String
+}
+
+input InitializationTarget {
+  workflow: WorkflowInitializationTarget
+  experience: ExperienceInitializationTarget
+}
+
+input InitializationTargetV3 {
+  workflow: WorkflowInitializationTargetV3
+  experience: ExperienceInitializationTarget
+}
+
+input InitializeSetupWorkflowSessionStateInput {
+  subjectTag: String
+  workflowName: SetupWorkflowName!
+  devices: [InputSetupWorkflowDevice!]!
+  contextualRequest: ContextualRequest!
+}
+
+input InitializeSetupWorkflowSessionStateV2Input {
+  target: InitializationTarget
+  contextualRequest: ContextualRequest!
+}
+
+input InitializeSetupWorkflowSessionStateV3Input {
+  target: InitializationTargetV3
+  contextualRequest: ContextualRequest!
+}
+
+input InputSetupWorkflowDevice {
+  deviceDmsIdentifier: PlainDmsIdentifier
+  endpointId: EndpointId
+  ddmUuid: DdmUuid
+  asin: Asin
+}
+
+input InputSetupWorkflowTarget {
+  deviceDmsIdentifier: PlainDmsIdentifier
+  endpoint: EndpointTarget
+  setupDeviceModel: SetupDeviceModelTarget
+  protocols: [ProtocolTarget!]
+  prospectiveEndpoint: ProspectiveEndpoint
+}
+
+input InputSetupWorkflowTargetV3 {
+  identifier: TargetIdentifierV3!
+  protocols: [SetupWorkflowProtocol!]
+}
+
+enum InteractionType {
+  SHOWN
+  INTERACTED
+  DISMISSED
+}
+
+type InterfaceErrorResponse {
+  type: String!
+  message: String
+}
+
+type InterfaceReference {
+  name: String
+}
+
+type InventoryConfiguration {
+  measurement: InventoryMeasurement
+  replenishment: InventoryReplenishmentConfig
+  inferredEvents: InventoryInferredEventsConfig
+}
+
+type InventoryDurationMeasurementConfig {
+  type: InventoryDurationTypeEnum!
+  unit: InventoryDurationUnitEnum!
+}
+
+enum InventoryDurationTypeEnum {
+  Duration
+}
+
+enum InventoryDurationUnitEnum {
+  SECONDS
+  MINUTES
+  HOURS
+  DAYS
+  WEEKS
+  MONTHS
+  UNKNOWN
+}
+
+type InventoryInferredEventsConfig {
+  enabled: Boolean
+}
+
+type InventoryLevel implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  inventoryLevelValue: InventoryLevelValue
+}
+
+type InventoryLevelValue {
+  type: InventoryMeasurementTypeEnum!
+  value: Float!
+  unit: String
+}
+
+type InventoryMeasurement {
+  level: InventoryMeasurementConfig
+  usage: InventoryMeasurementConfig
+  duration: InventoryDurationMeasurementConfig
+}
+
+type InventoryMeasurementConfig {
+  type: InventoryMeasurementTypeEnum!
+  unit: String
+}
+
+enum InventoryMeasurementTypeEnum {
+  Count
+  Percentage
+  Volume
+  Weight
+  UNKNOWN
+}
+
+type InventoryReplenishmentConfig {
+  type: InventoryReplenishmentTypeEnum!
+  value: String!
+}
+
+enum InventoryReplenishmentTypeEnum {
+  DashReplenishmentId
+}
+
+input InvokeSharpieAppApiInput {
+  automationId: String!
+  apiName: String!
+  parameters: JSON
+  sourceEndpoint: DeviceInfo
+}
+
+type InvokeSharpieAppApiResponse {
+  result: JSON
+}
+
+scalar JSON
+
+enum LatencyToleranceValue {
+  HIGH
+  LOW
+}
+
+type LaunchEventTarget {
+  token: String!
+}
+
+enum LaunchOutcomeEnum {
+  TARGET_LAUNCHED
+  TARGET_NOT_LAUNCHED
+}
+
+type LaunchTargetResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  outcome: LaunchOutcomeEnum!
+  target: LaunchEventTarget!
+  reasons: [String!]
+}
+
+type LauncherCatalog {
+  sourceId: String!
+  launchPayloadTypes: [LauncherPayloadTypeEnum!]!
+}
+
+type LauncherConfiguration {
+  catalogs: [LauncherCatalog!]
+  targets: [LauncherTargetConfig!]
+}
+
+type LauncherExperience {
+  mode: LauncherExperienceModeEnum!
+}
+
+enum LauncherExperienceModeEnum {
+  DEFAULT
+  VOICE_OPTIMIZED
+  UNKNOWN
+}
+
+type LauncherLaunchConfig {
+  splashScreen: LauncherSplashScreen
+}
+
+type LauncherLaunchPayload {
+  type: LauncherPayloadTypeEnum!
+  value: String
+  configurations: [LauncherPayloadConfiguration!]
+}
+
+type LauncherPayloadConfiguration {
+  type: LauncherPayloadConfigurationTypeEnum!
+  scopeValue: LauncherPayloadConfigurationScopeValue
+  advertisingValue: LauncherPayloadConfigurationAdvertisingValue
+}
+
+type LauncherPayloadConfigurationAdvertisingValue {
+  limitAdTracking: Boolean!
+  advertisingId: String!
+  vendorScopedAdvertisingId: String
+}
+
+type LauncherPayloadConfigurationScopeValue {
+  type: String!
+  value: String!
+}
+
+enum LauncherPayloadConfigurationTypeEnum {
+  SCOPE
+  ADVERTISING
+  UNKNOWN
+}
+
+enum LauncherPayloadTypeEnum {
+  URI_HTTP_SCHEME
+  URI_CUSTOM_SCHEME
+  URI_APP_IDENTIFIER_SCHEME
+  URI_ANDROID_INTENT_SCHEME
+  URI_HTTP_SCHEME_WITH_CONFIG
+  UNKNOWN
+}
+
+enum LauncherSourceTypeEnum {
+  DEFAULT
+  UNKNOWN
+}
+
+type LauncherSplashScreen {
+  type: LauncherSplashScreenTypeEnum!
+  value: String!
+}
+
+enum LauncherSplashScreenTypeEnum {
+  URI_HTTP_SCHEME
+  UNKNOWN
+}
+
+type LauncherTarget implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  launcherTargetValue: LauncherTargetValue
+}
+
+type LauncherTargetConfig {
+  sourceType: LauncherSourceTypeEnum!
+  sourceId: String!
+  token: String!
+  name: String
+  identifier: String
+}
+
+type LauncherTargetValue {
+  value: LauncherTargetValueObject!
+}
+
+type LauncherTargetValueObject {
+  sourceType: LauncherSourceTypeEnum!
+  sourceId: String!
+  token: String!
+  name: String
+  identifier: String
+  launchPayload: LauncherLaunchPayload
+  launchConfig: LauncherLaunchConfig
+  experience: LauncherExperience
+}
+
+type LegacyAppliance {
+  applianceId: String!
+  applianceTypes: [String!]
+  endpointTypeId: String
+  friendlyName: String!
+  friendlyDescription: String!
+  manufacturerName: String
+  connectedVia: String
+  modelName: String
+  entityId: String!
+  actions: [String!]
+  mergedApplianceIds: [String!]
+  capabilities: [JSON!]
+  applianceNetworkState: JSON
+  version: String
+  isEnabled: Boolean!
+  customerDefinedDeviceType: String
+  customerPreference: JSON
+  alexaDeviceIdentifierList: [JSON!]
+  aliases: [JSON!]
+  driverIdentity: JSON
+  additionalApplianceDetails: JSON
+  isConsentRequired: Boolean
+  applianceKey: String
+  appliancePairs: [String!]
+  deduplicatedPairs: [JSON!]
+  entityPairs: [String!]
+  deduplicatedAliasesByEntityId: JSON
+  relations: [JSON!]
+}
+
+type LegacyIdentifiers {
+  chrsIdentifier: ChrsIdentifier
+  dmsIdentifier: DmsIdentifier
+}
+
+type LightingRampPreferences {
+  workflowType: WorkflowType!
+  startBrightness: Int
+  endBrightness: Int
+  duration: String!
+  defaultEnablement: DefaultEnablementStatus!
+  endpoints: [Endpoint]
+}
+
+input LightingRampPreferencesInput {
+  endpointId: EndpointId!
+  workflowType: WorkflowType!
+  homeId: String
+}
+
+type LightingRampPreferencesOutput {
+  arePreferencesConfigured: Boolean!
+  preferences: LightingRampPreferences!
+}
+
+input LightingRampPreferencesUpdateInput {
+  workflowType: WorkflowType!
+  startBrightness: Int
+  endBrightness: Int
+  duration: String
+  defaultEnablement: DefaultEnablementStatus
+  endpoints: [EndpointId]
+}
+
+type LightingRampPreferencesUpdateOutput {
+  workflowType: WorkflowType!
+  startBrightness: Int
+  endBrightness: Int
+  duration: String
+  defaultEnablement: DefaultEnablementStatus
+  endpoints: [EndpointId]
+}
+
+input ListAllSetupWorkflowSessionsV3Input {
+  maxResults: Int
+  nextToken: String
+  contextualRequest: ContextualRequest!
+}
+
+type ListAllSetupWorkflowSessionsV3Output {
+  operation: SetupWorkflowOperation!
+  sessions: [SetupWorkflowSession!]!
+  nextToken: String
+}
+
+input ListCustomizedContentInput {
+  contentType: String!
+}
+
+type ListCustomizedContentResponse {
+  contentType: String!
+  resources: [CustomizedContentResource]
+}
+
+input ListDeviceGroupsInput {
+  associatedUnit: String
+  deviceGroupIds: [String!]
+  groupsPaginationParams: PaginationParams
+  devicesPaginationParams: PaginationParams
+  featureLatencyTolerance: LatencyToleranceValue = LOW
+}
+
+type ListDeviceGroupsResponse {
+  deviceGroups: [DeviceGroup]!
+  paginationInfo: PaginationInfo
+  completeResult: Boolean!
+}
+
+input ListEndpointsFilter {
+  type: ListEndpointsFilterType!
+  featureName: FeatureName
+  featurePropertyName: FeaturePropertyName
+  value: String!
+}
+
+enum ListEndpointsFilterType {
+  Feature
+}
+
+input ListEndpointsInput {
+  maxAgeInMillis: Long
+  latencyTolerance: LatencyToleranceValue
+  displayCategory: String
+  allDisplayCategories: String
+  enablement: Enablement
+  filters: [ListEndpointsFilter]
+  filterExpressions: [FilterExpression!]
+  queryExpression: JSON
+  maxPagesToFetch: Int
+  endpointIds: [String]
+  paginationParams: PaginationParams
+  includeHouseholdDevices: Boolean = false
+}
+
+type ListEndpointsResponse {
+  endpoints: [Endpoint!]!
+  paginationInfo: PaginationInfo
+  completeResult: Boolean!
+}
+
+input ListFavoritesInput {
+  expand: Boolean
+  maxResults: Int
+  nextToken: String
+  type: String
+  locale: String
+  requestedTypes: [String!]
+  version: String
+}
+
+type ListFavoritesResponse {
+  favorites: [Favorite!]!
+  paginationContext: PaginationContext
+}
+
+input ListGeneratedLayoutsInput {
+  premisesUnitId: UnitId
+}
+
+input ListLayoutsInput {
+  premisesUnitId: UnitId
+  paginationParams: PaginationParams
+}
+
+input ListPossibleFavoritesInput {
+  expand: Boolean
+  maxResults: Int
+  nextToken: String
+  type: String
+  locale: String
+  requestedTypes: [String!]
+  version: String
+}
+
+type ListPossibleFavoritesResponse {
+  favorites: [Favorite!]!
+  paginationContext: PaginationContext
+}
+
+input ListPremisesInput {
+  nextToken: String
+  maxResults: Int
+}
+
+type ListPremisesResponse {
+  results: [Premises]!
+  paginationContext: PremisesPaginationInfo
+}
+
+type ListRecommendedAutomationsResponse {
+  automations: [Automation!]!
+}
+
+input ListRecommendedGroupsInput {
+  endpointId: String
+  dmsIdDeviceType: String
+  dmsIdDeviceSerialNumber: String
+  groupType: RecommendableGroupType
+  maxRecommendations: Int
+}
+
+type ListRecommendedGroupsResponse {
+  endpointId: String
+  recommendations: [GroupRecommendation!]!
+}
+
+scalar LocalTime
+
+scalar Locale
+
+type Lock implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  lockState: LockStateValue
+}
+
+enum LockStateValue {
+  LOCKED
+  UNLOCKED
+  JAMMED
+}
+
+scalar Long
+
+scalar MarketplaceId
+
+enum MatchType {
+  EXACT
+  CASE_INSENSITIVE
+  NORMALIZED
+  TOKEN_PREFIX
+}
+
+input MatchingDmsIdentifierSetupExperienceFilter {
+  dmsIdentifier: PlainDmsIdentifier!
+}
+
+input MatchingSetupExperienceIdSetupExperienceFilter {
+  setupExperienceId: SetupExperienceId!
+}
+
+type MatterCommissioningInformation implements CommissioningInformation {
+  localProtocol: String
+  protocolData: MatterProtocolData!
+}
+
+type MatterProtocolData {
+  manualPairingCode: String!
+  commissioningWindowExpirationTimestamp: String!
+}
+
+type MatterSetupMetadata {
+  vendorId: Int!
+  productId: Int!
+  deviceTypeId: Int!
+  productName: String!
+  productLabel: String!
+  partNumber: String
+  commissioningCustomFlow: Int
+  commissioningCustomFlowUrl: String
+  commissioningModeInitialStepsHint: Int
+  commissioningModeInitialStepsInstruction: String
+  commissioningModeSecondaryStepsHint: Int
+  commissioningModeSecondaryStepsInstruction: String
+  userManualUrl: String
+  supportUrl: String
+  productUrl: String
+  lsfUrl: String
+  lsfRevision: Int
+  creator: String
+}
+
+type MeasurementsReportEventResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  electricityReadings: [DeviceUsagePropertyReading]
+  electricityIntervals: [DeviceUsageMeasurementInterval]
+  naturalGasReadings: [DeviceUsagePropertyReading]
+  naturalGasIntervals: [DeviceUsageMeasurementInterval]
+}
+
+enum MeasuringMethodEnum {
+  MEASURED
+  ESTIMATED
+  UNKNOWN
+}
+
+type Mode implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  modeValue: ModeValue
+}
+
+type ModeConfiguration {
+  friendlyName: NameValueObject
+  order: OrderValue!
+  modeOptions: [ModeOption!]!
+}
+
+type ModeOption {
+  value: String!
+  modeResources: ModeResources
+}
+
+input ModeOptionInput {
+  value: String!
+  modeResources: ModeResourcesInput!
+}
+
+type ModeResources {
+  friendlyName: NameValueObject
+}
+
+input ModeResourcesInput {
+  friendlyName: String!
+}
+
+type ModeValue {
+  value: String!
+}
+
+type MomentsEvent {
+  id: String!
+  endpoint: Endpoint!
+  eventType: MomentsEventType!
+  detectionTime: DateTime!
+  snapshot: MomentsEventSnapshot
+  recordingDetail: MomentsEventRecordingDetail
+  sceneDescriptions: [MomentsEventSceneDescription!]!
+  familiarObjects: [MomentsEventFamiliarObject!]
+}
+
+type MomentsEventDescriptionPayload {
+  locale: String
+  shortDescription: String
+  longDescription: String
+  familiarObjectsDescription: MomentsEventFamiliarObjectsDescription
+}
+
+input MomentsEventDescriptor {
+  eventId: String!
+  eventType: MomentsEventType!
+  endpointId: EndpointId!
+  detectionTime: DateTime!
+}
+
+type MomentsEventFamiliarObject {
+  id: String!
+  imageNetClass: String
+  name: String
+  metadata: MomentsEventFamiliarObjectMetadata
+}
+
+type MomentsEventFamiliarObjectMetadata {
+  category: String
+}
+
+type MomentsEventFamiliarObjectReference {
+  referenceId: String
+  identity: MomentsEventFamiliarObject
+}
+
+type MomentsEventFamiliarObjectsDescription {
+  shortDescription: String
+  longDescription: String
+}
+
+type MomentsEventList {
+  eventType: MomentsEventType!
+  items: [MomentsEvent!]!
+}
+
+type MomentsEventRecording {
+  id: String!
+  startTime: DateTime!
+  endTime: DateTime!
+}
+
+type MomentsEventRecordingDetail {
+  recording: MomentsEventRecording
+  playbackStartTime: DateTime!
+}
+
+type MomentsEventSceneDescription {
+  source: String
+  descriptionPayloads: [MomentsEventDescriptionPayload!]!
+  familiarObjectsIdentities: [MomentsEventFamiliarObjectReference!]
+}
+
+input MomentsEventSearchQuery {
+  eventTypeSearch: MomentsEventTypeSearchQuery
+  videoSearch: MomentsEventVideoSearchQuery
+}
+
+type MomentsEventSnapshot {
+  uri: String!
+  authenticationType: MomentsEventSnapshotAuthenticationType!
+}
+
+enum MomentsEventSnapshotAuthenticationType {
+  ACCESS_TOKEN
+  NONE
+  UNKNOWN
+}
+
+enum MomentsEventSortOrderType {
+  TIME
+  CONFIDENCE
+  SIMILARITY
+}
+
+enum MomentsEventType {
+  DOORBELL
+  MOTION
+  ON_DEMAND
+  PACKAGE
+  PERSON
+  RECORDING_CREATED
+  VEHICLE
+  ANIMAL
+  OTHER
+}
+
+input MomentsEventTypeSearchQuery {
+  eventTypes: [MomentsEventType!]!
+  startTime: DateTime!
+  endTime: DateTime!
+  maxResults: Int
+  nextToken: String
+  familiarObjectIds: [String!]
+}
+
+input MomentsEventVideoSearchQuery {
+  searchText: String!
+  startTime: DateTime
+  endTime: DateTime
+  maxResults: Int
+  sortOrder: MomentsEventSortOrderType
+  nextToken: String
+}
+
+input MomentsEventsByIdInput {
+  events: [MomentsEventDescriptor!]!
+}
+
+type MomentsEventsByIdResponse {
+  events: [MomentsEventList!]!
+  items: [MomentsEvent!]!
+}
+
+input MomentsEventsInput {
+  requester: EndpointId
+  selectedEndpoints: [EndpointId!]!
+  numberOfSnapshotsToInclude: Int
+  searchQuery: MomentsEventSearchQuery!
+}
+
+union MomentsEventsMetadata = MomentsEventList | MomentsVideoSearchEventList
+
+type MomentsEventsResponse {
+  eventMetadata: [MomentsEventsMetadata!]!
+  items: [MomentsEvent!]!
+  nextToken: String
+}
+
+type MomentsVideoSearchEventList {
+  items: [MomentsEvent!]!
+}
+
+type MutateAutomaticLightingResponse {
+  automationId: String!
+  settings: AutomaticLightingSettings!
+}
+
+type MutateCircadianLightingResponse {
+  automationId: String!
+  automationState: CircadianLightingAutomationState!
+  settings: CircadianLightingSettings!
+}
+
+type Mutation {
+  pushToDatastore(pushToDatastoreInput: PushToDatastoreInput!): PushToDatastoreResponse!
+  subscribeData(subscribeDataInput: SubscribeDataInput!): SubscribeDataResponse!
+  subscribe(subscribeConfiguration: SubscribeConfiguration!): SubscribeResponse!
+  unsubscribeData(unsubscribeDataInput: UnsubscribeDataInput!): UnsubscribeDataResponse!
+  unsubscribe: UnsubscribeResponse!
+  activateAutomation(input: ActivateAutomationInput!): ActivateAutomationResponse
+  deactivateAutomation(input: DeactivateAutomationInput!): DeactivateAutomationResponse
+  enableAutomation(input: EnableAutomationInput!): EnableAutomationResponse
+  disableAutomation(input: DisableAutomationInput!): DisableAutomationResponse
+  pauseAutomation(input: PauseAutomationInput!): PauseAutomationResponse
+  resumeAutomation(input: ResumeAutomationInput!): ResumeAutomationResponse
+  updateAutomation(input: UpdateAutomationInput!): UpdateAutomationResponse
+  deleteAutomation(input: DeleteAutomationInput!): DeleteAutomationResponse
+  batchCreateAutomations(input: BatchCreateAutomationsInput!): BatchCreateAutomationsResponse
+  batchUpdateAutomations(input: BatchUpdateAutomationsInput!): BatchUpdateAutomationsResponse
+  createAutomaticLighting(input: CreateAutomaticLightingInput!): MutateAutomaticLightingResponse
+  updateAutomaticLighting(input: UpdateAutomaticLightingInput!): MutateAutomaticLightingResponse
+  createCircadianLighting(input: CreateCircadianLightingInput!): MutateCircadianLightingResponse
+  updateCircadianLighting(input: UpdateCircadianLightingInput!): MutateCircadianLightingResponse
+  createOrUpdateAutomaticLighting(createOrUpdateAutomaticLightingInput: CreateOrUpdateAutomaticLightingInput!): CreateOrUpdateAutomaticLightingResponse
+  createAwayLightingConfig(createAwayLightingConfigInput: CreateAwayLightingConfigInput): AwayLightingConfigResponse
+  updateAwayLightingEndpoints(updateAwayLightingEndpointsInput: UpdateAwayLightingEndpointsInput!): AwayLightingConfigResponse
+  updateAwayLightingConfigPreferences(updateAwayLightingPreferencesInput: UpdateAwayLightingPreferencesInput!): AwayLightingConfigResponse
+  deleteAwayLightingConfig(deleteAwayLightingConfigInput: DeleteAwayLightingConfigInput): DeleteAwayLightingConfigResponse
+  deregisterEndpoint(deregisterEndpointInput: DeregisterEndpointInput!): DeregisterEndpointResponse
+  deleteDeviceGroup(deleteDeviceGroupInput: DeleteDeviceGroupInput!): DeleteDeviceGroupResponse
+  createDeviceGroup(createDeviceGroupInput: CreateDeviceGroupInput!): CreateDeviceGroupResponse
+  updateDeviceGroup(updateDeviceGroupInput: UpdateDeviceGroupInput): UpdateDeviceGroupsResponse
+  updateDeviceGroupSpeakerConfiguration(input: UpdateDeviceGroupSpeakerConfigurationInput!): UpdateDeviceGroupSpeakerConfigurationResponse
+  updateEndpointCustomerPreference(input: UpdateEndpointCustomerPreferenceInput!): UpdateEndpointCustomerPreferenceResponse
+  updateEndpointSettingToggle(input: EndpointSettingToggleInput!): EndpointSettingToggleResponse
+  updateEndpointSettingString(input: EndpointSettingStringInput!): EndpointSettingStringResponse
+  updateEndpointSettingJson(input: EndpointSettingJsonInput!): EndpointSettingJsonResponse
+  setEndpointFeatures(setEndpointFeaturesInput: SetEndpointFeaturesInput!): SetEndpointFeaturesResponse
+  unlockWithPin(input: UnlockWithPinInput!): UnlockWithPinResponse
+  disarmWithPin(input: DisarmWithPinInput!): DisarmWithPinResponse
+  armSecurityPanel(input: ArmSecurityPanelInput!): ArmSecurityPanelResponse
+  disarmSecurityPanel(input: DisarmSecurityPanelInput!): DisarmSecurityPanelResponse
+  setEndpointFeaturesV2(input: SetGenericEndpointFeaturesInput!): SetGenericEndpointFeaturesResponse
+  forgetEndpoint(forgetEndpointInput: ForgetEndpointInput!): ForgetEndpointResponse
+  grantPartnerSharingConsent(input: GrantPartnerSharingConsentInput!): GrantPartnerSharingConsentResponse
+  updateProgramMembership(updateProgramMembershipInput: UpdateProgramMembershipInput!): ProgramMembership
+  setPseConsent(input: SetPseConsentInput!): SetPseConsentResponse
+  requestEndpointQualityOfService(qualityOfServiceInput: EndpointQualityOfServiceInput!): EndpointQualityOfServiceResponse!
+  resetPhilipsHue(input: ResetPhilipsHueInput!): ResetPhilipsHueResponse
+  setEndpointPrimaryDisplayCategory(input: SetEndpointPrimaryDisplayCategoryInput!): SetEndpointPrimaryDisplayCategoryResponse
+  setEndpointsPrimaryDisplayCategories(input: SetEndpointsPrimaryDisplayCategoriesInput!): SetEndpointsPrimaryDisplayCategoriesResponse
+  setEndpointEnablement(input: SetEndpointEnablementInput!): SetEndpointEnablementResponse
+  setEndpointFriendlyName(input: SetEndpointFriendlyNameInput!): SetEndpointFriendlyNameResponse
+  recordInteraction(input: RecordInteractionInput!): RecordInteractionResponse
+  updateFamiliarObjectIdentity(input: UpdateFamiliarObjectIdentityInput!): UpdateFamiliarObjectIdentityResponse
+  startGroupDiscovery(startGroupDiscoveryInput: StartGroupDiscoveryInput!): StartGroupDiscoveryResponse
+  setupHomeModes(setupHomeModesInput: SetupHomeModesInput): SetupHomeModesResponse
+  updateHomeModeSettings(updateHomeModeSettingsInput: UpdateHomeModeSettingsInput!): UpdateHomeModeSettingsResponse
+  deleteAllHomeModes(deleteAllHomeModes: DeleteAllHomeModesInput): DeleteAllHomeModesResponse
+  setHomeModeState(setHomeModeStateInput: SetHomeModeStateInput!): SetHomeModeStateResponse
+  setSecureHomeModeState(input: SetSecureHomeModeStateInput!): SetSecureHomeModeStateResponse
+  createAbsoluteHomeModeSchedule(createAbsoluteHomeModeScheduleInput: CreateAbsoluteHomeModeScheduleInput!): CreateAbsoluteHomeModeScheduleResponse
+  updateAsAbsoluteHomeModeSchedule(updateAsAbsoluteHomeModeScheduleInput: UpdateAsAbsoluteHomeModeScheduleInput!): UpdateAsAbsoluteHomeModeScheduleResponse
+  deleteHomeModeSchedule(deleteHomeModeScheduleInput: DeleteHomeModeScheduleInput!): DeleteHomeModeScheduleResponse
+  setLightingRampPreferences(setLightingRampPreferencesInput: SetLightingRampPreferencesInput!): LightingRampPreferencesUpdateOutput
+  updateHabitTrackingStatus(input: UpdateHabitTrackingStatusInput!): HabitTrackingStatusOutput
+  dismissMissedHabitTile(input: DismissMissedHabitTileInput!): DismissMissedHabitTileOutput
+  cameraShareMedia(input: CameraShareMediaInput!): CameraShareMediaResponse
+  associateExternalLocationWithHome(input: AssociateExternalLocationWithHomeInput!): AssociateExternalLocationWithHomeResponse
+  createHome(input: HomeCreateInput!): HomeCreateResponse
+  deleteHome(input: HomeDeleteInput!): HomeDeleteResponse
+  disassociateExternalLocationFromHome(input: DisassociateExternalLocationFromHomeInput!): DisassociateExternalLocationFromHomeResponse
+  moveEntitiesToHome(input: HomeMoveEntitiesInput!): HomeMoveEntitiesResponse
+  updateHomeName(input: HomeUpdateNameInput!): HomeUpdateResponse
+  updateHomeAddress(input: HomeUpdateAddressInput!): HomeUpdateResponse
+  addCustomizedContent(addCustomizedContentInput: AddCustomizedContentInput!): AddCustomizedContentResponse
+  addFavorite(addFavoriteInput: AddFavoriteInput!): AddFavoriteResponse!
+  putCustomizedContent(putCustomizedContentInput: PutCustomizedContentInput!): PutCustomizedContentResponse
+  rearrangeCustomizedContent(rearrangeCustomizedContentInput: RearrangeCustomizedContentInput!): RearrangeCustomizedContentResponse
+  rearrangeFavorites(rearrangeFavoritesInput: RearrangeFavoritesInput): RearrangeFavoritesResponse
+  removeCustomizedContent(removeCustomizedContentInput: RemoveCustomizedContentInput!): RemoveCustomizedContentResponse
+  removeFavorite(removeFavoriteInput: RemoveFavoriteInput!): RemoveFavoriteResponse
+  updatePremises(updatePremisesInput: UpdatePremisesInput!): UpdatePremisesResponse
+  deletePremises(deletePremisesInput: DeletePremisesInput!): DeletePremisesResponse
+  createPremises(createPremisesInput: CreatePremisesInput!): CreatePremisesResponse
+  updateSetupConfigurationStatus(updateSetupConfigurationStatusInput: UpdateSetupConfigurationStatusInput!): UpdateSetupConfigurationStatusOutput
+  initializeSetupWorkflowSessionState(initializeSetupWorkflowSessionStateInput: InitializeSetupWorkflowSessionStateInput!): SetupWorkflowSession
+  transitionSetupWorkflowSessionState(transitionSetupWorkflowSessionStateInput: TransitionSetupWorkflowSessionStateInput!): SetupWorkflowSession
+  deleteSetupWorkflowSessionStateV2(input: DeleteSetupWorkflowSessionStateV2Input!): DeleteSetupWorkflowSessionResult
+  initializeSetupWorkflowSessionStateV2(input: InitializeSetupWorkflowSessionStateV2Input!): SetupWorkflowResult
+  transitionSetupWorkflowSessionStateV2(input: TransitionSetupWorkflowSessionStateV2Input!): SetupWorkflowResult
+  deleteSetupWorkflowSessionStateV3(input: DeleteSetupWorkflowSessionStateV3Input!): SetupWorkflowDeletionResult
+  deleteAllSetupWorkflowSessionsV3(input: DeleteAllSetupWorkflowSessionsV3Input!): SetupWorkflowDeletionResult
+  initializeSetupWorkflowSessionStateV3(input: InitializeSetupWorkflowSessionStateV3Input!): SetupWorkflowResult
+  invokeSharpieAppApi(input: InvokeSharpieAppApiInput!): InvokeSharpieAppApiResponse
+}
+
+type NameMatch {
+  identity: FamiliarObject!
+  matchType: MatchType!
+}
+
+type NameValueObject {
+  type: NameValueObjectType!
+  value: ValueObject!
+}
+
+enum NameValueObjectType {
+  PLAIN
+  SEALED
+}
+
+enum NetworkQuality {
+  GOOD
+  FAIR
+  POOR
+  UNKNOWN
+}
+
+type NetworkThroughput implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  networkThroughputValue: NetworkThroughputValue
+}
+
+type NetworkThroughputValue {
+  quality: NetworkQuality!
+  bitsPerSecond: Int
+}
+
+type NodeError {
+  code: String!
+  message: String!
+}
+
+type NotReady implements Error {
+  message: String
+}
+
+type Notification {
+  notificationId: String!
+  experienceKey: String!
+  deliveryChannel: String!
+  state: NotificationState!
+  content: JSON!
+  target: NotificationTarget
+}
+
+enum NotificationState {
+  CREATED
+  SENT
+  AVAILABLE
+  SHOWN
+  INTERACTED
+  DISMISSED
+  REMOVED
+  EXPIRED
+}
+
+type NotificationTarget {
+  ids: [String!]!
+  sessionDirective: SessionDirective
+}
+
+type ObjectDetectionClass {
+  imageNetClass: ImageNetClassEnum!
+  isAvailable: Boolean
+  unavailabilityReason: UnavailabilityReasonEnum
+  zone: Zone
+  states: [State!]
+  familiarObjectDetection: FamiliarObjectDetection
+}
+
+type ObjectDetectionConfiguration {
+  objectDetectionConfiguration: [ObjectDetectionClass!]!
+}
+
+enum OperatingStageEnum {
+  STAGE_1
+  STAGE_2
+  STAGE_3
+  OFF
+  UNKNOWN
+}
+
+type OperatingStageValue {
+  value: OperatingStageEnum!
+}
+
+type OperationalState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  operationalStateValue: OperationalStateValue
+}
+
+type OperationalStateValue {
+  value: CoffeeMakerOperationalStateEnum!
+}
+
+union OpportunityPayload = SetupOpportunityList | ConfigurationOpportunityList
+
+enum OrderValue {
+  ORDERED
+  UNORDERED
+}
+
+type OutputEndpointConfigurationStatus {
+  endpointId: EndpointId!
+  status: ConfigurationStatus!
+}
+
+type OutputHunchConfigurationStatus {
+  hunchId: HunchId!
+  status: ConfigurationStatus!
+}
+
+type OutputSetupConfigurationStatus {
+  configurationKey: String!
+  endpointConfigurationStatuses: [OutputEndpointConfigurationStatus!]
+  hunchConfigurationStatuses: [OutputHunchConfigurationStatus!]
+}
+
+type PackagedAutomation implements Automation {
+  id: String!
+  name: String
+  type: AutomationType!
+  createdAt: DateTime
+  lastActivatedAt: DateTime
+}
+
+type PaginatedEndpoints {
+  items: [Endpoint]
+  paginationInfo: PaginationInfo
+}
+
+type PaginatedFloorPlanLayouts {
+  floorPlanLayouts: [FloorPlanLayout]
+  paginationInfo: PaginationInfo
+}
+
+type PaginatedHomeMembers {
+  endpoints: [Endpoint!]!
+  groupIds: [GroupId!]!
+  nextToken: String
+}
+
+type PaginationContext {
+  nextToken: String!
+}
+
+type PaginationInfo {
+  totalCount: Int
+  nextToken: String
+}
+
+input PaginationParams {
+  disablePagination: Boolean = true
+  pageSize: Int
+  nextToken: String
+}
+
+input PartnerFilterInput {
+  partnerSkillId: String!
+  identityIds: [String!]
+}
+
+union PartnerSharingConsentError = DependencyError | ValidationError
+
+enum PartnerSharingConsentStatus {
+  GRANTED
+  REVOKED
+  NOT_FOUND
+}
+
+input PauseAutomationInput {
+  automationId: String!
+  automationType: AutomationType!
+  pauseContext: PauseContextInput
+}
+
+type PauseAutomationResponse {
+  automation: Automation
+}
+
+input PauseContextInput {
+  resumeAtTime: LocalTime
+}
+
+input PauseMetadataInput {
+  resumeDateTime: String!
+  timezoneId: String!
+}
+
+type PauseMetadataOutput {
+  resumeDateTime: String!
+  timezoneId: String!
+}
+
+type Percentage implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  percentageValue: Int
+}
+
+scalar PhilipsHueSerialNumber
+
+input PlainDmsIdentifier {
+  deviceType: String!
+  deviceSerialNumber: String!
+}
+
+type PlayListItem {
+  assetId: String
+  loopCount: Int
+  loopPauseInMilliseconds: Int
+}
+
+type Playlist {
+  id: String
+  playOrder: [PlayListItem!]!
+}
+
+type PlaylistCameraTile implements CameraTile {
+  id: String!
+  type: CameraTileType!
+  category: CameraTileCategory!
+  relevance: CameraTileRelevance!
+  createdAt: DateTime!
+  lastUpdatedAt: DateTime!
+  expiresAt: DateTime!
+  thumbnail: CameraTileUrlResource
+  tileStatus: CameraTileStatusType!
+  decorations: [CameraTileDecoration!]!
+  playlists: [CameraTilePlaylistCollection!]!
+  previews: [CameraTilePreview!]!
+}
+
+type Power implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  powerStateValue: PowerStateValue
+}
+
+type PowerDirective {
+  name: String!
+  path: String
+}
+
+type PowerInterface implements ApplicationFacingInterface {
+  name: String!
+  instance: String
+  powerProperties: PowerProperties
+  powerDirectives: [PowerDirective]
+}
+
+type PowerLevel implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  powerLevelValue: Int
+}
+
+type PowerPowerState {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: PowerPowerStateValue
+}
+
+enum PowerPowerStateEnum {
+  ON
+  OFF
+}
+
+type PowerPowerStateValue {
+  value: PowerPowerStateEnum!
+}
+
+type PowerProperties {
+  powerState: PowerPowerState
+}
+
+enum PowerStateValue {
+  ON
+  OFF
+}
+
+input PreferredCamerasInput {
+  groupId: String
+  maxResults: Int!
+  selectionCriteria: PreferredCamerasSelectionCriteria
+  cameraEndpointIds: [EndpointId!]
+}
+
+type PreferredCamerasResponse {
+  cameraEndpointIds: [EndpointId!]!
+  additionalCameraAvailable: Boolean!
+  cameraDetailsMap: CameraDetailsMap
+}
+
+enum PreferredCamerasSelectionCriteria {
+  RECENTLY_ACTIVE
+  UNKNOWN
+}
+
+type PreferredTemperature {
+  activityType: ThermostatAutomationActivityTypeEnum!
+  lowerSetpoint: Temperature
+  upperSetpoint: Temperature
+}
+
+type Premises {
+  id: String!
+  friendlyName: NameValueObject
+  tags: [PremisesTagEnum]
+  isUnremovableAndEntityFallbackPremises: Boolean
+}
+
+type PremisesPaginationInfo {
+  nextToken: String
+}
+
+enum PremisesTagEnum {
+  HOME
+  ON_THE_GO
+}
+
+enum PresenceQueryField {
+  ENTITIES
+}
+
+input PresenceStateInput {
+  fields: [PresenceQueryField!]
+}
+
+type PresenceStateResponse {
+  entities: [DetectedEntityPresenceState!]
+}
+
+type Preset {
+  rangeValue: Float!
+  presetResources: PresetResources!
+}
+
+type PresetCategory {
+  type: String!
+  name: String!
+}
+
+input PresetCategoryInput {
+  type: String!
+  name: String!
+}
+
+type PresetEffect {
+  type: EffectType!
+  speedMultiplier: Float!
+  additionalParameters: JSON
+}
+
+input PresetEffectInput {
+  type: EffectType!
+  speedMultiplier: Float!
+  additionalParameters: JSON
+}
+
+input PresetInput {
+  rangeValue: Float!
+  presetResources: PresetResourcesInput!
+}
+
+union PresetProperty = ColorProperty | BrightnessProperty | ColorTemperatureProperty
+
+type PresetResources {
+  friendlyName: NameValueObject!
+}
+
+input PresetResourcesInput {
+  friendlyName: String!
+}
+
+type PresetTarget {
+  type: String!
+  targetId: String!
+}
+
+type PresetTargetMapping {
+  presetId: String!
+  targets: [PresetTarget!]!
+  preset: ScenePreset
+}
+
+enum PresetType {
+  STATIC
+  DYNAMIC
+}
+
+input PrimitiveInstanceInput {
+  primitiveId: String!
+  primitiveKind: PrimitiveKind
+  version: String
+  serializedPayload: String!
+}
+
+enum PrimitiveKind {
+  TRIGGER
+  CONDITION
+  OPERATION
+}
+
+input PrimitiveValidationContextInput {
+  locale: String
+  timezoneId: String
+  marketplaceId: String
+}
+
+enum PrimitiveValidationOutcome {
+  VALID
+  INVALID
+}
+
+type PrimitiveValidationResult {
+  primitiveId: String!
+  primitiveKind: PrimitiveKind
+  outcome: PrimitiveValidationOutcome!
+  violations: [PrimitiveViolation!]!
+}
+
+type PrimitiveViolation {
+  type: String!
+  message: String!
+}
+
+type ProactiveNotificationAsset {
+  type: String!
+  value: ProactiveNotificationAssetValue!
+}
+
+type ProactiveNotificationAssetValue {
+  assetId: String!
+}
+
+enum ProactiveNotificationComparatorTypeEnum {
+  StringEquals
+  StringIn
+  StateEquals
+  StateIn
+  UNKNOWN
+}
+
+type ProactiveNotificationCondition {
+  conditionType: String!
+  property: ProactiveNotificationProperty!
+  valueChangeCondition: ProactiveNotificationValueChangeCondition!
+}
+
+type ProactiveNotificationProperty {
+  interfaceName: String!
+  instance: String
+  name: String!
+}
+
+type ProactiveNotificationResources {
+  label: ProactiveNotificationAsset
+}
+
+type ProactiveNotificationSourceConfiguration {
+  notificationConditions: [ProactiveNotificationCondition!]!
+  supportedNotificationEvents: [ProactiveNotificationSupportedEvent!]
+}
+
+type ProactiveNotificationSupportedEvent {
+  eventName: String!
+  notificationResources: ProactiveNotificationResources
+}
+
+type ProactiveNotificationValueChangeCondition {
+  comparator: ProactiveNotificationComparatorTypeEnum!
+  value: [String!]!
+}
+
+type ProductImageUrlEntry {
+  scalingFactor: String
+  uri: String
+}
+
+type ProgramMembership {
+  programId: String!
+  status: ProgramMembershipStatus!
+}
+
+enum ProgramMembershipOperation {
+  JOIN
+  LEAVE
+}
+
+enum ProgramMembershipStatus {
+  NOT_INVITED
+  INVITED
+  ENROLLED
+  OPTED_OUT
+}
+
+input ProgramMembershipsInput {
+  endpointId: EndpointId
+  programId: String
+}
+
+type ProgramMembershipsResponse {
+  memberships: [ProgramMembership!]!
+}
+
+enum PropertyType {
+  RETRIEVABLE
+  NOT_RETRIEVABLE
+  ERROR
+}
+
+input ProspectiveEndpoint {
+  dmsIdentifiers: PlainDmsIdentifier
+  setupDeviceModel: SetupDeviceModelTarget
+}
+
+enum ProtocolTarget {
+  SKILL
+  FFS
+  MATTER
+}
+
+type PseConsentAction {
+  type: PseConsentActionType!
+  collectionLabel: String!
+  statusLabel: String!
+  isDefault: Boolean!
+}
+
+enum PseConsentActionType {
+  ACCEPT
+  REJECT
+}
+
+union PseConsentError = DependencyError | ValidationError
+
+type PseConsentErrorResponse implements PseConsentResponse {
+  granted: Boolean!
+  error: PseConsentError!
+}
+
+type PseConsentGrantedResponse implements PseConsentResponse {
+  granted: Boolean!
+}
+
+input PseConsentInput {
+  deviceSerialNumber: String!
+  deviceType: String!
+  locale: String
+}
+
+type PseConsentNotYetGrantedResponse implements PseConsentResponse {
+  granted: Boolean!
+  documentId: String!
+  termsOfService: PseTermsOfService
+}
+
+enum PseConsentOption {
+  ACCEPT
+  REJECT
+}
+
+interface PseConsentResponse {
+  granted: Boolean!
+}
+
+type PseTermsOfService {
+  consentTitle: String!
+  consentLongDescription: String!
+  consentShortDescription: String!
+  consentToolTip: String
+  locale: String!
+  consentActions: [PseConsentAction!]!
+}
+
+input PushData {
+  endpoints: [AirbusEndpointInput!]
+  endpointFeatures: [AirbusEndpointFeaturesInput!]
+  endpointSpaces: [AirbusEndpointSpaceInput]
+  isAccessPolicyRefreshNeeded: Boolean
+  appendEtagWithTimestamp: Boolean
+}
+
+input PushToDatastoreInput {
+  deviceAccountIds: [String!]!
+  data: PushData
+}
+
+type PushToDatastoreResponse {
+  datastorePushes: [DatastorePushResponse!]!
+  failedDatastorePushes: [DatastorePushFailure!]!
+}
+
+type PushedDataInfo {
+  endpoints: DatastoreInfo!
+}
+
+input PutCustomizedContentInput {
+  contentType: String!
+  resources: [PutCustomizedContentProps]
+}
+
+input PutCustomizedContentProps {
+  resourceId: String!
+  resourceRank: Int!
+  resourceType: String
+}
+
+type PutCustomizedContentResponse {
+  contentType: String!
+  resources: [CustomizedContentResource]
+}
+
+input QualityOfServiceConfiguration {
+  typeOfExperience: QualityOfServiceExperience!
+  durationInSeconds: Int
+}
+
+enum QualityOfServiceExperience {
+  BACKGROUND_EPHEMERAL
+  BACKGROUND_PERSISTENT
+  FOREGROUND_PERSISTENT
+  ONE_TIME_POLL
+}
+
+type Query {
+  airQualityHistory(airQualityHistoryInput: AirQualityHistoryInput!): AirQualityHistoryResponse
+  automations(input: AutomationsInput!): AutomationsResponse
+  recommendedAutomations(endpointId: EndpointId): ListRecommendedAutomationsResponse
+  validatePrimitives(input: ValidatePrimitivesInput!): ValidatePrimitivesResponse
+  automaticLighting(automationId: String): GetAutomaticLightingResponse
+  circadianLighting(automationId: String): GetCircadianLightingResponse
+  scenePresets(input: ScenePresetsInput!): ScenePresetsResponse
+  automaticLightingEvents(automaticLightingEventsRequest: AutomaticLightingEventsRequest!): AutomaticLightingEventsResponse
+  automaticLightingStatuses(automaticLightingStatusRequest: AutomaticLightingStatusRequest!): AutomaticLightingStatusResponse
+  awayLightingConfig(getAwayLightingConfigInput: GetAwayLightingConfigInput): AwayLightingConfigResponse
+  awayLightingTargetEndpoints(getAwayLightingTargetEndpointsInput: AwayLightingTargetEndpointsInput!): AwayLightingEndpointList
+  searchDevices(input: SearchDevicesInput!): SearchDevicesResponse
+  listDeviceGroups(listDeviceGroupsInput: ListDeviceGroupsInput): ListDeviceGroupsResponse
+  deviceTypeGroup(input: DeviceTypeGroupInput!): DeviceTypeGroup
+  endpointCustomerPreferences(input: EndpointCustomerPreferencesInput!): EndpointCustomerPreferencesResponse
+  endpointSetting(input: EndpointSettingInput!): EndpointSettingResponse
+  endpointSettings(input: EndpointSettingsInput!): EndpointSettingsResponse
+  listEndpoints(listEndpointsInput: ListEndpointsInput!): ListEndpointsResponse!
+  endpoint(id: String!): Endpoint
+  endpoints(endpointsQueryParams: EndpointsQueryParams): EndpointsResponse
+  spectatorMode: SpectatorModeResponse
+  getPartnerSharingConsentStatus(input: GetPartnerSharingConsentStatusInput!): GetPartnerSharingConsentStatusResponse
+  programMemberships(programMembershipsInput: ProgramMembershipsInput!): ProgramMembershipsResponse
+  pseConsent(input: PseConsentInput!): PseConsentResponse
+  template(templateRequestParams: GetTemplateRequest!): GetTemplateResponse
+  yaleGetAllUsers(input: YaleGetAllUsersInput!): YaleGetAllUsersResponse
+  getNotifications(input: GetNotificationsInput!): GetNotificationsOutput
+  familiarObjects(filter: FamiliarObjectsFilterInput, maxResults: Int, nextToken: String): FamiliarObjectsResponse
+  familiarObjectsImages(filter: FamiliarObjectsFilterInput, imageSelection: ImageSelectionInput, maxResults: Int, nextToken: String): FamiliarObjectsImagesResponse
+  resolveFamiliarObjectsByName(name: String!, locale: String, filter: FamiliarObjectsFilterInput, maxResults: Int): ResolveFamiliarObjectsByNameResponse
+  floorPlanLayout(getLayoutInput: GetLayoutInput!): FloorPlanLayout
+  floorPlanLayouts(listLayoutsInput: ListLayoutsInput): PaginatedFloorPlanLayouts
+  generatedFloorPlanLayouts(listGeneratedLayoutsInput: ListGeneratedLayoutsInput): FloorPlanLayouts
+  floorPlanImageUploadUrl(getFloorPlanImageUploadUrlInput: GetFloorPlanImageUploadUrlInput!): GetFloorPlanImageUploadUrlOutput
+  floorPlanLayoutVector(getFloorPlanLayoutVectorInput: GetFloorPlanLayoutVectorInput!): GetFloorPlanLayoutVectorOutput
+  listRecommendedGroups(input: ListRecommendedGroupsInput!): ListRecommendedGroupsResponse
+  getSmartHomeContents(input: GetSmartHomeContentsInput!): GetSmartHomeContentsResponse
+  homeModeDetails(homeModeDetailsInput: HomeModeDetailsInput!): HomeModeDetailsResponse!
+  lightingRampPreferences(lightingRampPreferencesInput: LightingRampPreferencesInput!): LightingRampPreferencesOutput
+  habitTrackingStatus: HabitTrackingStatusOutput
+  momentsEvents(input: MomentsEventsInput!): MomentsEventsResponse
+  momentsEventsById(input: MomentsEventsByIdInput!): MomentsEventsByIdResponse
+  cameraTiles(input: CameraTilesInput!): CameraTilesResponse
+  preferredCameras(input: PreferredCamerasInput!): PreferredCamerasResponse
+  presenceState(input: PresenceStateInput!): PresenceStateResponse!
+  detectedEntitiesMetadata(input: DetectedEntitiesMetadataInput!): DetectedEntitiesMetadataResponse!
+  customerDeviceLocationsByDirective(input: CustomerDeviceLocationsByDirectiveInput!): CustomerDeviceLocationsByDirectiveResponse
+  home(id: GroupId!): Home
+  homes(input: HomesInput!): HomesResponse
+  customizedContent(listCustomizedContentInput: ListCustomizedContentInput!): ListCustomizedContentResponse
+  favorites(listFavoritesInput: ListFavoritesInput!): ListFavoritesResponse!
+  possibleFavorites(listPossibleFavoritesInput: ListPossibleFavoritesInput!): ListPossibleFavoritesResponse!
+  getPartnerLocations(input: GetPartnerLocationsInput!): GetPartnerLocationsResponse
+  premises(premisesInput: ListPremisesInput): ListPremisesResponse
+  setupConfigurationRecommendation(setupConfigurationRecommendationInput: SetupConfigurationRecommendationInput!): SetupConfigurationRecommendationOutput
+  setupConfigurationRecommendationV2(setupConfigurationRecommendationV2Input: SetupConfigurationRecommendationV2Input!): SetupConfigurationRecommendationV2Output
+  availableSetupExperiences(queryAvailableSetupExperiencesInput: AvailableSetupExperiencesInput): AvailableSetupExperiencesOutput
+  eligibleExperiences(input: EligibleExperiencesInput!): EligibleExperiencesList
+  setupWorkflowSessions(querySetupWorkflowSessionsInput: QuerySetupWorkflowSessionsInput!): QuerySetupWorkflowSessionsOutput
+  setupWorkflowSessionState(querySetupWorkflowSessionStateInput: QuerySetupWorkflowSessionStateInput!): SetupWorkflowSession
+  querySetupWorkflowSessionStateV2(input: QuerySetupWorkflowSessionStateV2Input!): SetupWorkflowResult
+  listAllSetupWorkflowSessionsV3(input: ListAllSetupWorkflowSessionsV3Input!): ListAllSetupWorkflowSessionsV3Output
+}
+
+input QuerySetupWorkflowSessionStateInput {
+  sessionOperation: SessionOperation!
+  contextualRequest: ContextualRequest!
+}
+
+input QuerySetupWorkflowSessionStateV2Input {
+  session: SessionIdentifier!
+  contextualRequest: ContextualRequest!
+}
+
+input QuerySetupWorkflowSessionsInput {
+  workflowName: SetupWorkflowName
+  subjectTag: String
+  contextualRequest: ContextualRequest!
+}
+
+type QuerySetupWorkflowSessionsOutput {
+  workflowSessions: [SetupWorkflowSession!]!
+}
+
+type RadioDiagnostics implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  radioDiagnosticsValue: RadioDiagnosticsValues
+}
+
+type RadioDiagnosticsValue {
+  radioType: RadioType!
+  signalStrength: SignalStrength!
+  signalToNoiseRatio: SignalToNoiseRatio
+}
+
+type RadioDiagnosticsValues {
+  values: [RadioDiagnosticsValue!]!
+}
+
+enum RadioType {
+  WIFI
+  BLUETOOTH
+  ZIGBEE
+  ZWAVE
+  BLE
+  BLE_MESH
+  UNKNOWN
+}
+
+type RangeConfiguration {
+  friendlyName: NameValueObject
+  supportedRange: SupportedRange!
+  unitOfMeasure: NameValueObject
+  presets: [Preset]
+}
+
+type RangeValue implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  rangeValue: RangeValueNumber
+}
+
+type RangeValueNumber {
+  value: Float!
+}
+
+type Reachability implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  reachabilityStatusValue: ReachabilityStatusValue
+}
+
+enum ReachabilityStatusValue {
+  OK
+  UNREACHABLE
+}
+
+input RearrangeCustomizedContentInput {
+  contentType: String!
+  resources: [RearrangeCustomizedContentProps]
+}
+
+input RearrangeCustomizedContentProps {
+  resourceId: String!
+  resourceRank: Int!
+  resourceType: String
+}
+
+type RearrangeCustomizedContentResponse {
+  contentType: String!
+  resources: [CustomizedContentResource]
+}
+
+input RearrangeFavoriteProps {
+  resourceId: String!
+  rank: Int!
+}
+
+input RearrangeFavoritesInput {
+  favorites: [RearrangeFavoriteProps!]!
+  requestedTypes: [String!]
+}
+
+type RearrangeFavoritesResponse {
+  favorites: [Favorite!]!
+}
+
+enum RecommendableGroupType {
+  DEVICE
+}
+
+type Recommendation {
+  configurationKey: String!
+  eligibleEndpointIds: [EndpointId!]!
+}
+
+input RecommendationCriteria {
+  configurationClasses: [ConfigurationClass!]!
+}
+
+enum RecommendationExpandType {
+  TOP
+  ALL
+}
+
+enum RecommendationType {
+  ADD_TO_GROUP
+}
+
+union RecordInteractionError = ValidationError | ResourceNotFound | DependencyError
+
+input RecordInteractionInput {
+  notificationId: String!
+  interactionType: InteractionType!
+}
+
+type RecordInteractionResponse {
+  error: RecordInteractionError
+}
+
+interface RecordingFeature {
+  name: String!
+}
+
+type RecordingProviderConfiguration {
+  isAvailable: Boolean!
+  unavailabilityReason: RecordingProviderUnavailabilityReason
+  recordingFeatures: [RecordingFeature!]
+  supportedProtocols: [RecordingProviderSupportedProtocols!]!
+  retentionPeriodInHours: Int
+}
+
+enum RecordingProviderSupportedProtocols {
+  WEB_RTC
+  HLS
+  UNKNOWN
+}
+
+enum RecordingProviderUnavailabilityReason {
+  SUBSCRIPTION_REQUIRED
+  DISABLED
+  OTHER
+  UNKNOWN
+}
+
+scalar RecurrencePattern
+
+type RelativeHumidity implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  relativeHumidityValue: RelativeHumidityStateValue
+}
+
+type RelativeHumidityStateValue {
+  value: Float
+}
+
+type ReminderCameraTile implements CameraTile {
+  id: String!
+  type: CameraTileType!
+  category: CameraTileCategory!
+  relevance: CameraTileRelevance!
+  createdAt: DateTime!
+  lastUpdatedAt: DateTime!
+  expiresAt: DateTime!
+  thumbnail: CameraTileUrlResource
+  tileStatus: CameraTileStatusType!
+  decorations: [CameraTileDecoration!]!
+  announcements: [CameraTileAnnouncement!]!
+  recentHabitDetectedAt: DateTime!
+  previews: [CameraTilePreview!]!
+  playlists: [CameraTilePlaylistCollection!]!
+}
+
+type RemoteVideoPlayerCatalog {
+  type: RemoteVideoPlayerCatalogTypeEnum!
+  sourceId: String!
+}
+
+enum RemoteVideoPlayerCatalogTypeEnum {
+  VIDEO_INGESTION_IDENTIFIER
+  VIDEO_PUBLIC_CATALOG_IDENTIFIER
+  UNKNOWN
+}
+
+type RemoteVideoPlayerConfiguration {
+  entityTypes: [RemoteVideoPlayerEntityTypeEnum!]
+  supportedFeatures: [RemoteVideoPlayerFeatureEnum!]
+  catalogs: [RemoteVideoPlayerCatalog!]!
+}
+
+enum RemoteVideoPlayerEntityTypeEnum {
+  Actor
+  Channel
+  Character
+  Episode
+  Event
+  Franchise
+  Genre
+  League
+  MediaType
+  Season
+  Sport
+  SportsTeam
+  Video
+  Director
+  ProductionCompany
+  App
+  Popularity
+  Recency
+  VideoResolution
+  PurchaseOption
+  UNKNOWN
+}
+
+enum RemoteVideoPlayerFeatureEnum {
+  START_PLAYBACK_FROM_TIME
+  START_AND_END_PLAYBACK_AT_TIME
+  UNKNOWN
+}
+
+input RemoveCustomizedContentInput {
+  resourceId: String!
+  contentType: String
+}
+
+type RemoveCustomizedContentResponse {
+  resourceId: String!
+  contentType: String
+}
+
+type RemoveFabricDetail {
+  fabricIndex: Int!
+  fabricId: String!
+  vendorId: Int!
+}
+
+input RemoveFavoriteInput {
+  resourceId: String!
+}
+
+type RemoveFavoriteResponse {
+  resourceId: String!
+}
+
+enum RenderType {
+  APL
+  RN
+}
+
+input RenderingFramework {
+  type: RenderType!
+  version: String!
+}
+
+type Reporter {
+  id: String
+  namespace: ReporterNamespace
+  skillStage: SkillStage
+}
+
+enum ReporterNamespace {
+  AAA
+  SKILL
+  ALEXABRIDGE
+  LOCAL
+  UNKNOWN
+}
+
+input ResetPhilipsHueInput {
+  serialNumbers: [PhilipsHueSerialNumber!]!
+}
+
+type ResetPhilipsHueResponse {
+  success: Boolean!
+}
+
+type ResolveFamiliarObjectsByNameResponse {
+  matches: [NameMatch!]!
+  unavailablePartners: [UnavailablePartner!]!
+}
+
+type Resource {
+  id: String!
+  compoundDeviceParentId: String
+}
+
+type ResourceNotFound implements Error {
+  message: String
+}
+
+input ResumeAutomationInput {
+  automationId: String!
+  automationType: AutomationType!
+}
+
+type ResumeAutomationResponse {
+  automation: Automation
+}
+
+scalar RetailASIN
+
+enum Retrievability {
+  RETRIEVABLE
+  NOT_RETRIEVABLE
+  ERROR
+}
+
+type Routine implements Automation {
+  id: String!
+  name: String
+  type: AutomationType!
+  createdAt: DateTime
+  lastActivatedAt: DateTime
+  tags: [String!]
+}
+
+input SWOSetupClientContext {
+  supportedSetupConfigurationKeys: [String!]!
+  userAgent: UserAgent!
+  dmsIdentifiers: PlainDmsIdentifier!
+}
+
+type SceneDescriptionProviderCapabilityConfig {
+  capabilityName: String!
+}
+
+type SceneDescriptionProviderConfiguration {
+  isAvailable: Boolean!
+  unavailabilityReason: SceneDescriptionProviderUnavailabilityReasonEnum
+  supportedLocales: [String!]
+  supportedCapabilitiesConfig: [SceneDescriptionProviderCapabilityConfig!]
+  supportedRetrievalQueryTypes: [SceneDescriptionProviderRetrievalQueryTypeEnum!]
+}
+
+enum SceneDescriptionProviderRetrievalQueryTypeEnum {
+  QUERY_BY_CORRELATION_INFO
+  QUERY_BY_TIMESTAMP_RANGE
+  QUERY_ALL
+  UNKNOWN
+}
+
+enum SceneDescriptionProviderUnavailabilityReasonEnum {
+  SUBSCRIPTION_REQUIRED
+  DISABLED
+  UNSUPPORTED_LOCATION
+  OTHER
+  UNKNOWN
+}
+
+type ScenePreset {
+  id: String!
+  name: String!
+  type: PresetType!
+  category: PresetCategory!
+  properties: [PresetProperty]!
+  effect: PresetEffect
+  createdAt: DateTime!
+}
+
+input ScenePresetsInput {
+  limit: Int
+  nextToken: String
+  locale: String
+}
+
+type ScenePresetsResponse {
+  items: [ScenePreset!]!
+  nextToken: String
+}
+
+type ScheduleEntry {
+  startTimeInMinutes: Int!
+  setpoints: SetPointsObject!
+  fanSetting: FanSettingObject
+  activityType: ActivityTypeScheduleObject
+}
+
+input ScheduleInput {
+  startTime: String!
+  endTime: String!
+  timezoneId: String!
+}
+
+type ScheduleOutput {
+  startTime: String!
+  endTime: String!
+  timezoneId: String!
+}
+
+type ScriptedAutomation implements Automation {
+  id: String!
+  name: String
+  description: String
+  type: AutomationType!
+  createdAt: DateTime
+  lastActivatedAt: DateTime
+  settings: JSON!
+  automationState: AutomationState!
+  sourceCode: String
+  scriptVersion: String
+  checksum: String
+}
+
+type ScriptedAutomationBatchOperationResult {
+  automation: Automation!
+  error: ErrorResponse
+}
+
+input ScriptedAutomationInput {
+  id: String!
+  name: String
+  description: String
+  type: AutomationType!
+  createdAt: DateTime
+  lastActivatedAt: DateTime
+  settings: JSON!
+  automationState: AutomationStateInput
+}
+
+input SealedWorkflowTransitionResource {
+  value: String
+}
+
+input SearchDevicesInput {
+  searchQuery: String!
+  deviceMarketplaceAndLocale: DeviceMarketplaceAndLocaleInput!
+  pagination: DeviceSetupPaginationInput
+}
+
+type SearchDevicesResponse {
+  deviceModels: [SetupDeviceModel!]!
+  nextToken: String
+}
+
+input SecurityAction {
+  action: SecurityActionType!
+  endpoints: [SecurityActionEndpoint]
+  actionStatus: String
+}
+
+input SecurityActionEndpoint {
+  id: EndpointId!
+  type: SecurityDeviceType
+}
+
+enum SecurityActionType {
+  SKIP_ARM
+  SKIP_DISARM
+  SKIP_ALL_LOWERING_ACTIONS
+}
+
+enum SecurityDeviceType {
+  SECURITY_PANEL
+  LOCK
+  GARAGE_DOOR
+}
+
+union SecurityOperationWithPinError = DeviceCodeSetupRequired | Unauthorized | TooManyFailedAttempts | DependencyError | ValidationError | ResourceNotFound | EndpointUnreachable
+
+interface SecurityOperationWithPinResponse {
+  isSuccess: Boolean!
+  error: SecurityOperationWithPinError
+}
+
+type SecurityPanelAlertConfiguration {
+  alerts: [Alert!]!
+  assets: [Asset!]!
+  playlists: [Playlist!]!
+}
+
+type SecurityPanelConfiguration {
+  supportedAuthorizationTypes: [SupportedAuthorizationType!]!
+  supportedArmStates: [SupportedArmState!]!
+}
+
+union Semantics = StatusCodeSemantics | GenericSemantics
+
+enum SessionDirective {
+  START_OR_ATTACH
+  NONE
+}
+
+type SessionDisconnectedResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  sessionId: String!
+  sessionDomain: String!
+}
+
+input SessionIdentifier {
+  id: SetupWorkflowSessionId!
+}
+
+input SessionOperation {
+  sessionId: SetupWorkflowSessionId!
+}
+
+enum SessionStatus {
+  RUNNING
+  COMPLETE
+  DID_NOT_RUN
+  FAULT
+}
+
+union SetEndpointEnablementError = DependencyError | ValidationError | ResourceNotFound | ErrorResponse
+
+input SetEndpointEnablementInput {
+  endpointId: EndpointId!
+  enablement: EndpointEnablement!
+}
+
+type SetEndpointEnablementResponse {
+  endpoint: Endpoint
+  error: SetEndpointEnablementError
+}
+
+input SetEndpointFeaturesInput {
+  featureControlRequests: [FeatureControlRequest!]!
+}
+
+type SetEndpointFeaturesResponse {
+  featureControlResponses: [FeatureControlResponse!]!
+  errors: [FeatureControlError!]!
+}
+
+input SetEndpointFriendlyNameInput {
+  endpointId: EndpointId!
+  friendlyName: String!
+}
+
+type SetEndpointFriendlyNameResponse {
+  endpoint: Endpoint!
+}
+
+union SetEndpointPrimaryDisplayCategoryError = EndpointErrorResponse
+
+input SetEndpointPrimaryDisplayCategoryInput {
+  endpointId: EndpointId!
+  primaryDisplayCategory: AssignableDisplayCategory!
+}
+
+type SetEndpointPrimaryDisplayCategoryResponse {
+  endpoint: Endpoint!
+}
+
+input SetEndpointsPrimaryDisplayCategoriesInput {
+  requests: [SetEndpointPrimaryDisplayCategoryInput!]!
+}
+
+type SetEndpointsPrimaryDisplayCategoriesResponse {
+  endpoints: [Endpoint!]!
+  errors: [SetEndpointPrimaryDisplayCategoryError!]!
+}
+
+input SetGenericEndpointFeaturesInput {
+  featureControlRequests: [GenericFeatureControlRequest!]!
+}
+
+type SetGenericEndpointFeaturesResponse {
+  featureControlResponses: [GenericFeatureControlResponse!]!
+  errors: [GenericFeatureControlError!]!
+}
+
+input SetHomeModeStateInput {
+  newModeState: HomeModeStateInput!
+  securityActions: [SecurityAction]
+  homeId: String
+}
+
+type SetHomeModeStateResponse {
+  success: Boolean!
+}
+
+input SetLightingRampPreferencesInput {
+  endpointId: EndpointId!
+  preferences: LightingRampPreferencesUpdateInput!
+  homeId: String
+}
+
+type SetModeCompletedWithError implements Error {
+  message: String
+  error: Error
+}
+
+type SetModeFailedWithError implements Error {
+  message: String
+  error: Error
+}
+
+type SetPointsObject {
+  lowerSetpoint: Float!
+  upperSetpoint: Float!
+}
+
+input SetPseConsentInput {
+  deviceSerialNumber: String!
+  deviceType: String!
+  chosenOption: PseConsentOption!
+  documentId: String!
+}
+
+type SetPseConsentResponse {
+  success: Boolean!
+  error: PseConsentError
+}
+
+union SetSecureHomeModeStateError = DependencyError | ValidationError | ResourceNotFound | DeviceCodeSetupRequired | Unauthorized | TooManyFailedAttempts | BypassNeeded | SetModeCompletedWithError | SetModeFailedWithError
+
+input SetSecureHomeModeStateInput {
+  newModeState: HomeModeStateInput!
+  pin: String
+  bypassSensors: Boolean
+  forceSetMode: Boolean = false
+  homeId: String
+}
+
+type SetSecureHomeModeStateResponse {
+  success: Boolean!
+  error: SetSecureHomeModeStateError
+}
+
+type Setpoint implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  deviceNativeScaleValue: TemperatureScale
+  value: Temperature
+}
+
+input SetupClientContext {
+  supportedSetupConfigurationKeys: [String!]!
+  userAgent: UserAgent
+}
+
+enum SetupConfigurationErrorCode {
+  INTERNAL_ERROR
+  INVALID_CONFIGURATION_KEY
+  UNKNOWN
+}
+
+type SetupConfigurationErrorDetail implements Error {
+  code: SetupConfigurationErrorCode!
+  message: String
+}
+
+type SetupConfigurationErrorResult {
+  configurationKey: String!
+  endpointIds: [EndpointId!]!
+  error: SetupConfigurationErrorDetail!
+}
+
+input SetupConfigurationRecommendationInput {
+  endpointIds: [EndpointId!]!
+  setupConfigurationClientContext: SetupClientContext!
+  recommendationExpandType: RecommendationExpandType = TOP
+  recommendationCriteria: RecommendationCriteria
+}
+
+type SetupConfigurationRecommendationOutput {
+  recommendations: [Recommendation!]!
+}
+
+input SetupConfigurationRecommendationV2Input {
+  endpointIds: [EndpointId!]!
+  setupConfigurationClientContext: SetupClientContext!
+  recommendationCriteria: RecommendationCriteria
+}
+
+type SetupConfigurationRecommendationV2Output {
+  endpoints: [EndpointEntry!]!
+}
+
+input SetupConfigurationStatus {
+  configurationKey: String!
+  endpointConfigurationStatuses: [EndpointConfigurationStatus!]
+  hunchConfigurationStatuses: [HunchConfigurationStatus!]
+}
+
+type SetupDeviceBrand {
+  id: BrandId
+  name: String
+  legalEntityName: String
+  companyPreferenceName: String
+  vendorLandingPageUrl: String
+  icon: [ImageAsset!]
+}
+
+type SetupDeviceCategory {
+  id: CategoryId
+  name: String
+  type: CHRSDeviceType!
+  icon: [ImageAsset!]
+  gcFlows: [GCFlow!]
+  utterances: [String!]
+}
+
+type SetupDeviceModel {
+  id: DeviceModelId!
+  deviceMarketplaceAndLocale: DeviceMarketplaceAndLocaleInfo
+  brand: SetupDeviceBrand!
+  category: SetupDeviceCategory!
+  modelName: String!
+  displayName: String
+  images: [ImageAsset!]
+  alexaCompatibility: Boolean
+  isWWACertified: Boolean
+  isGenericDevice: Boolean
+  setupProtocols: [SetupProtocol!]!
+  ffsSetupMetadata: FFSSetupMetadata
+  matterSetupMetadata: MatterSetupMetadata
+  skillSetupMetadata: SkillSetupMetadata
+  bleSetupMetadata: BleSetupMetadata
+  zigbeeSetupMetadata: ZigbeeSetupMetadata
+  customSetupMetadata: CustomSetupMetadata
+  retailASINs: [RetailASIN!]
+  gcFlows: [GCFlow!]
+  utterances: [String!]
+}
+
+scalar SetupDeviceModelId
+
+input SetupDeviceModelTarget {
+  id: SetupDeviceModelId!
+}
+
+type SetupExperience {
+  id: SetupExperienceId!
+  workflowName: SetupWorkflowName!
+  devices: [SetupWorkflowDevice!]!
+}
+
+input SetupExperienceFilter {
+  composite: BooleanSetupExperienceFilter
+  matchingDmsIdentifier: MatchingDmsIdentifierSetupExperienceFilter
+  matchingSetupExperienceId: MatchingSetupExperienceIdSetupExperienceFilter
+  simply: SimpleSetupExperienceFilter
+}
+
+scalar SetupExperienceId
+
+input SetupFilter {
+  include: Boolean!
+}
+
+input SetupHomeModesInput {
+  homeId: String
+}
+
+type SetupHomeModesResponse {
+  success: Boolean!
+}
+
+type SetupOpportunity {
+  type: SetupOpportunityType!
+  payload: JSON!
+}
+
+type SetupOpportunityList {
+  setupOpportunities: [SetupOpportunity!]
+}
+
+enum SetupOpportunityType {
+  LTS_BEACON
+  MATTER_BEACON
+  RETAIL_ORDER
+  SETUP_INTENT
+  NETWORK_DISCOVERY
+}
+
+enum SetupProtocol {
+  SKILL
+  BLE
+  MATTER
+  ZIGBEE
+  FFS
+  CUSTOM
+}
+
+type SetupWorkflow {
+  subjectTag: String
+  identifier: SetupWorkflowIdentifier!
+  state: SetupWorkflowSessionState!
+}
+
+type SetupWorkflowDeletionResult {
+  operation: SetupWorkflowOperation!
+}
+
+type SetupWorkflowDevice {
+  deviceDmsIdentifier: DmsIdentifier
+  endpointId: EndpointId
+  ddmUuid: DdmUuid
+  asin: Asin
+}
+
+type SetupWorkflowIdentifier {
+  namespace: SetupWorkflowNamespace!
+  name: SetupWorkflowName!
+}
+
+scalar SetupWorkflowName
+
+scalar SetupWorkflowNamespace
+
+type SetupWorkflowOperation {
+  requestId: String
+  errors: [SetupWorkflowOperationError!]!
+}
+
+type SetupWorkflowOperationError {
+  state: FullyQualifiedWorkflowStateIdentifier!
+  payload: String!
+}
+
+enum SetupWorkflowProtocol {
+  SKILL
+  FFS
+  BLE
+  ZIGBEE
+  MATTER
+}
+
+type SetupWorkflowResult {
+  operation: SetupWorkflowOperation!
+  session: SetupWorkflowSession!
+}
+
+type SetupWorkflowSession {
+  sessionId: SetupWorkflowSessionId!
+  status: SessionStatus!
+  subjectTag: String
+  workflowName: SetupWorkflowName!
+  state: SetupWorkflowSessionState!
+  id: SetupWorkflowSessionId!
+  workflow: SetupWorkflow
+}
+
+scalar SetupWorkflowSessionId
+
+type SetupWorkflowSessionState {
+  name: String!
+  payload: String!
+  timestamp: DateTime!
+  resources: [WorkflowStateResourcePair!]!
+}
+
+enum SignalQuality {
+  GOOD
+  FAIR
+  POOR
+  UNKNOWN
+}
+
+type SignalStrength {
+  quality: SignalQuality
+  rssiInDBM: Int
+}
+
+type SignalToNoiseRatio {
+  quality: SignalQuality
+  snrInDB: Int
+}
+
+type SignalingMessage {
+  value: String!
+  format: String!
+}
+
+type SimpleEventSourceConfiguration {
+  supportedEvents: [SimpleEventSourceSupportedEvent!]!
+}
+
+type SimpleEventSourceSupportedEvent {
+  id: String!
+  friendlyNames: [NameValueObject!]!
+}
+
+enum SimpleSetupExperienceFilter {
+  MATCHING_CLIENT_DEVICE
+}
+
+type SirenState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  sirenStateValue: SirenStateValue
+}
+
+type SirenStateValue {
+  state: SupportedSirenState
+  playlistId: String
+  playOrder: [PlayListItem!]!
+}
+
+scalar SkillASIN
+
+enum SkillDegradationStatus {
+  DEGRADATION_ACTIVE
+  NO_ACTIVE_DEGRADATION
+  UNKNOWN
+  NOT_APPLICABLE
+}
+
+scalar SkillId
+
+type SkillInfo {
+  skillName: String
+  skillId: SkillId
+  skillASIN: SkillASIN
+}
+
+type SkillSetupMetadata {
+  skillInfo: SkillInfo
+  thirdPartyAppInfo: ThirdPartyAppInfo
+}
+
+enum SkillStage {
+  DEVELOPMENT
+  LIVE
+  CERTIFICATION
+  CERTIFIED
+  UNKNOWN
+}
+
+type SkillStatus {
+  status: SkillDegradationStatus!
+  skillName: String
+}
+
+type SmartHomeAdditionalProperties {
+  entries: [SmartHomeAdditionalProperty!]
+}
+
+type SmartHomeAdditionalProperty {
+  key: String!
+  value: String!
+}
+
+type SmartHomeCardAction {
+  type: String!
+  id: String
+  text: String
+}
+
+type SmartHomeContentCard {
+  contentId: ID!
+  contentProvider: String!
+  contentType: String
+  templateType: String
+  customTemplateRoute: String
+  refreshId: String
+  contentActions: [SmartHomeCardAction!]
+  contentMetadata: SmartHomeContentMetadata
+  p13nMetadata: SmartHomeP13NMetadata
+  antiTargeting: Boolean
+  clickToDismiss: Boolean
+  customData: SmartHomeCustomData
+}
+
+type SmartHomeContentMetadata {
+  contentTags: [String!]
+  messageBundle: String
+}
+
+enum SmartHomeContentsApiVersion {
+  V1
+}
+
+type SmartHomeContentsMetadata {
+  requestId: String
+  processingTimeMs: Long
+}
+
+type SmartHomeCustomData {
+  recommendationBinding: SmartHomeRecommendation
+}
+
+type SmartHomeEligibleExperience {
+  id: ExperienceId!
+  type: EligibleExperienceType!
+  devices: [ExperienceDevice!]!
+}
+
+type SmartHomeFilterEntry {
+  key: String!
+  values: [String!]!
+}
+
+type SmartHomeFilterMetadata {
+  entries: [SmartHomeFilterEntry!]
+}
+
+type SmartHomeP13NMetadata {
+  section: String
+  realTime: Boolean
+}
+
+type SmartHomePresentation {
+  iconKey: String
+  images: [SmartHomePresentationImage!]
+}
+
+type SmartHomePresentationImage {
+  type: String
+  accessibilityLabel: String
+  url: String
+  imageSize: String
+}
+
+type SmartHomeRecommendation {
+  id: String
+  title: String!
+  description: String!
+  presentation: SmartHomePresentation
+  action: SmartHomeRecommendationAction
+  closeAction: SmartHomeRecommendationAction
+  error: SmartHomeRecommendation
+  ttl: Long
+  cacheTtl: Long
+  dismissalTtl: Long
+  etag: String
+  score: Long
+  priority: String
+  benefits: [String!]
+  filterMetadata: SmartHomeFilterMetadata
+  additionalProperties: SmartHomeAdditionalProperties
+}
+
+type SmartHomeRecommendationAction {
+  type: String!
+  text: String
+  next: SmartHomeRecommendation
+  target: String
+  targetContext: JSON
+  requestMethod: String
+}
+
+type Snapshot implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  snapshotValue: SnapshotValue
+}
+
+type SnapshotValue {
+  uri: String!
+  uriExpirationTime: DateTime!
+  authenticationType: AuthenticationType!
+}
+
+type SnapshotsCameraTilePreview implements CameraTilePreview {
+  type: CameraTilePreviewType!
+  snapshots: [CameraTileUrlResource!]!
+}
+
+type SourceEndpointRelationship {
+  type: EndpointRelationshipType!
+  destinationEndpointId: EndpointId!
+}
+
+enum SpaceType {
+  LIGHTS
+  PLUGS
+  SWITCHES
+  CAMERAS
+  THERMOSTATS
+  LOCKS
+  FAVORITES
+  GROUPS
+  SENSORS
+  TEMPERATURE_SENSORS
+  BLINDS
+  VACUUMS
+  SECURITY_PANELS
+  OTHERS
+  ENDPOINTS_GROUP
+}
+
+type SpectatorModeResponse {
+  spectator: String
+}
+
+type StandardGroupEndpointSpeaker implements GroupEndpointSpeaker {
+  type: GroupEndpointSpeakerType!
+  endpointId: String!
+}
+
+input StartGroupDiscoveryInput {
+  skillId: String!
+  skillStage: String!
+  requestId: String
+  pamsPartnerId: String
+}
+
+type StartGroupDiscoveryResponse {
+  createdGroups: [CreatedGroupDiscoveryDelta]
+  updatedGroups: [UpdatedGroupDiscoveryDelta]
+}
+
+type State {
+  id: String!
+  friendlyName: String!
+}
+
+type StatusCode implements FeatureProperty {
+  name: String
+  type: PropertyType
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: ErrorResponse
+  statusCodeValue: StatusCodeValues
+}
+
+type StatusCodeConfiguration {
+  supportedCodes: [SupportedCode!]!
+}
+
+type StatusCodeSemantics {
+  codeToStatusesMappings: [CodeToStatusesMapping!]
+}
+
+type StatusCodeValue {
+  code: String
+  timeOfDetection: DateTime
+}
+
+type StatusCodeValues {
+  value: [StatusCodeValue!]!
+}
+
+input SubjectDeletionTarget {
+  tag: String!
+}
+
+input SubscribeConfiguration {
+  format: SubscriptionEventFormat!
+  entities: [SubscriptionFilter!]
+  reset: Boolean
+  version: String
+  durationInMinutes: Int
+}
+
+input SubscribeDataInput {
+  directDelivery: DirectDelivery
+  datastoreDelivery: DatastoreDelivery
+  endpointsSubscription: EndpointsSubscription
+  favoritesSubscription: FavoritesSubscription
+}
+
+type SubscribeDataResponse {
+  endpointsResult: EndpointsSubscribeResult
+  favoritesResult: FavoritesSubscribeResult
+}
+
+type SubscribeEndpointsResponseFailureResult {
+  endpointId: String!
+  namespace: String
+  name: String
+  status: Int!
+  errorCode: String!
+  errorDescription: String!
+}
+
+type SubscribeEndpointsResponseSuccessResult {
+  endpointId: String!
+  namespace: String!
+  name: String!
+}
+
+type SubscribeResponse {
+  entities: [String!]
+  errors: [ErrorResponse!]
+  durationInMinutes: Int
+}
+
+enum SubscriptionEventFormat {
+  Default
+  GraphQL
+}
+
+input SubscriptionFilter {
+  entityType: String!
+  ids: [String!]
+}
+
+type SupportedArmState {
+  value: ArmStateValue
+}
+
+type SupportedAuthorizationType {
+  type: AuthorizationType
+}
+
+type SupportedCode {
+  code: String
+  descriptions: [SupportedCodeLocalization!]
+}
+
+type SupportedCodeLocalization {
+  primary: NameValueObject!
+}
+
+enum SupportedDelayState {
+  ENTRY_DELAY
+  EXIT_DELAY
+  NONE
+  UNKNOWN
+}
+
+union SupportedEventCategory = CameraCapabilitySupportedEventCategory | CameraEventSupportedEventCategory
+
+enum SupportedEventCategoryType {
+  CAMERA_CAPABILITY
+  CAMERA_EVENT
+  UNKNOWN
+}
+
+type SupportedRange {
+  minimumValue: Float!
+  maximumValue: Float!
+  precision: Float!
+}
+
+input SupportedRangeInput {
+  minimumValue: Float!
+  maximumValue: Float!
+  precision: Float!
+}
+
+enum SupportedSirenState {
+  ON
+  OFF
+  UNKNOWN
+}
+
+type TargetConfig {
+  categoryLabel: ActionCategoryLabel!
+  supportedTargets: [ActionSupportedTarget]
+}
+
+input TargetContextInput {
+  targetId: String!
+}
+
+input TargetIdentifierV3 {
+  endpoint: EndpointTarget
+  prospectiveEndpoint: ProspectiveEndpoint
+}
+
+type Temperature {
+  value: Float!
+  scale: TemperatureScale!
+}
+
+enum TemperatureScale {
+  FAHRENHEIT
+  CELSIUS
+  KELVIN
+}
+
+type TemperatureSensor implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  value: Temperature
+}
+
+enum Theme {
+  LIGHT
+  DARK
+}
+
+type ThermostatAdaptiveRecoverStatusObject {
+  value: ThermostatAdaptiveRecoveryStatusValue!
+}
+
+type ThermostatAdaptiveRecoveryStatus {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: ThermostatAdaptiveRecoverStatusObject
+}
+
+enum ThermostatAdaptiveRecoveryStatusValue {
+  PREHEATING
+  PRECOOLING
+  INACTIVE
+  UNKNOWN
+}
+
+enum ThermostatAutomationActivityTypeEnum {
+  HOME
+  AWAY
+  ASLEEP
+  Unknown
+}
+
+type ThermostatAutomationLastActivityType implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  thermostatAutomationLastActivityTypeValue: ThermostatAutomationLastActivityTypeValue
+}
+
+type ThermostatAutomationLastActivityTypeValue {
+  value: ThermostatAutomationActivityTypeEnum!
+}
+
+enum ThermostatAutomationTypeEnum {
+  HUNCHES
+  SCHEDULES
+  UNKNOWN
+}
+
+type ThermostatAuxiliaryHeatingSystem {
+  type: ThermostatSystemTypeEnum!
+}
+
+type ThermostatComponentConfiguration {
+  systemInformation: ThermostatSystemInformation!
+  terminalInformation: ThermostatTerminalInformation
+}
+
+type ThermostatComponentConfigurationConstraints {
+  supportedTerminals: [ThermostatTerminalDescription!]
+  maximumStages: ThermostatMaximumStages
+  supportedSwitchOverTypes: [ThermostatSwitchOverTypeEnum!]
+  lockoutTemperature: ThermostatLockoutTemperatureConstraints
+}
+
+type ThermostatConfiguration {
+  supportedModes: [ThermostatModeValue!]
+}
+
+type ThermostatConfigurationAllowedTemperatureRange implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  thermostatAllowedTemperatureRangeValue: ThermostatTemperatureBounds
+}
+
+type ThermostatConfigurationConfiguration {
+  supportedResetStates: [ThermostatSetupStateValue!]
+  componentConfigurationConstraints: ThermostatComponentConfigurationConstraints
+  requiredSetupInformation: [String!]
+  supportedTemperatureScales: [TemperatureScale!]
+  safetyTemperatures: ThermostatTemperatureBounds
+  minimumSetpointDifferential: Temperature
+}
+
+type ThermostatConfigurationSetupState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  thermostatSetupStateValue: ThermostatSetupStateValue
+}
+
+type ThermostatConfigurationTemperatureScale implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  thermostatTemperatureScaleValue: ThermostatTemperatureScaleValue
+}
+
+type ThermostatCoolingSystem {
+  stages: [ThermostatSystemStage!]!
+}
+
+type ThermostatDirective {
+  name: String!
+  path: String
+}
+
+type ThermostatHeatPumpConfiguration {
+  reversingValve: ThermostatReversingValveEnum!
+}
+
+type ThermostatHeatingSystem {
+  stages: [ThermostatSystemStage!]!
+  auxiliaryHeatingSystem: ThermostatAuxiliaryHeatingSystem
+}
+
+type ThermostatInterface implements ApplicationFacingInterface {
+  name: String!
+  instance: String
+  thermostatProperties: ThermostatProperties
+  thermostatDirectives: [ThermostatDirective]
+  thermostatConfiguration: ThermostatInterfaceConfiguration
+}
+
+type ThermostatInterfaceConfiguration {
+  supportedModes: [ThermostatThermostatModeValue]!
+  supportsScheduling: Boolean!
+}
+
+type ThermostatLockoutTemperatureConstraints {
+  heating: ThermostatTemperatureRange
+  cooling: ThermostatTemperatureRange
+  increment: Temperature
+}
+
+type ThermostatLockoutTemperatures {
+  heating: Temperature
+  cooling: Temperature
+}
+
+type ThermostatLowerSetpoint {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: ThermostatTemperature
+}
+
+type ThermostatMaximumStages {
+  heating: Int!
+  cooling: Int!
+  combined: Int
+}
+
+type ThermostatMode implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  accuracy: Accuracy
+  type: PropertyType
+  thermostatModeValue: ThermostatModeValue
+}
+
+enum ThermostatModeValue {
+  COOL
+  HEAT
+  OFF
+  AUTO
+  ECO
+  EM_HEAT
+}
+
+type ThermostatMultimodeConfiguration {
+  switchOverType: ThermostatSwitchOverTypeEnum!
+}
+
+type ThermostatProperties {
+  targetSetpoint: ThermostatTargetSetpoint
+  lowerSetpoint: ThermostatLowerSetpoint
+  upperSetpoint: ThermostatUpperSetpoint
+  thermostatMode: ThermostatThermostatMode
+  adaptiveRecoveryStatus: ThermostatAdaptiveRecoveryStatus
+}
+
+enum ThermostatReversingValveEnum {
+  ON_HEAT
+  ON_COOL
+  UNKNOWN
+}
+
+type ThermostatScheduleAdaptiveRecoveryEnabled implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  thermostatScheduleAdaptiveRecoveryEnabledValue: ThermostatScheduleAdaptiveRecoveryEnabledValue
+}
+
+type ThermostatScheduleAdaptiveRecoveryEnabledValue {
+  value: Boolean!
+}
+
+type ThermostatScheduleConfiguration {
+  supportedFanModes: [FanModeEnum!]!
+  supportsAdaptiveRecovery: Boolean!
+  maxEntryPerDay: Int
+}
+
+type ThermostatScheduleLastActivityType implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  thermostatScheduleLastActivityTypeValue: ThermostatScheduleLastActivityTypeValue
+}
+
+type ThermostatScheduleLastActivityTypeValue {
+  value: ActivityTypeEnum!
+}
+
+type ThermostatScheduleScheduleEnabled implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  type: PropertyType
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  thermostatScheduleScheduleEnabledValue: ThermostatScheduleScheduleEnabledValue
+}
+
+type ThermostatScheduleScheduleEnabledValue {
+  value: Boolean!
+}
+
+enum ThermostatSetupStateEnum {
+  FACTORY_DEFAULT
+  DEVICE_CONTROL_ONLY
+  REMOTE_CONTROL
+  UNKNOWN
+}
+
+type ThermostatSetupStateValue {
+  value: ThermostatSetupStateEnum!
+}
+
+enum ThermostatSwitchOverTypeEnum {
+  AUTOMATIC
+  MANUAL
+  UNKNOWN
+}
+
+type ThermostatSystemConfiguration {
+  type: ThermostatSystemTypeEnum!
+  configuration: ThermostatHeatPumpConfiguration
+}
+
+type ThermostatSystemInformation {
+  systemConfigurations: [ThermostatSystemConfiguration!]
+  coolingSystem: ThermostatCoolingSystem
+  heatingSystem: ThermostatHeatingSystem
+  multimodeConfiguration: ThermostatMultimodeConfiguration
+  lockoutTemperatures: ThermostatLockoutTemperatures
+}
+
+type ThermostatSystemStage {
+  type: ThermostatSystemTypeEnum!
+}
+
+enum ThermostatSystemTypeEnum {
+  CONVENTIONAL_STANDARD_GAS
+  CONVENTIONAL_HIGH_EFFICIENCY_GAS
+  CONVENTIONAL_OIL
+  CONVENTIONAL_ELECTRIC
+  CONVENTIONAL_HOT_WATER_FAN_COIL
+  AIR_TO_AIR_HEATPUMP
+  GEO_THERMAL_HEATPUMP
+  RADIANT_HOT_WATER
+  RADIANT_FAN_COIL
+  RADIANT_STEAM
+  CENTRAL_AIR_CONDITIONING
+  UNKNOWN
+}
+
+type ThermostatTargetSetpoint {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: ThermostatTemperature
+}
+
+type ThermostatTemperature {
+  value: Float
+  scale: TemperatureScale!
+}
+
+type ThermostatTemperatureBounds {
+  heating: ThermostatTemperatureRange
+  cooling: ThermostatTemperatureRange
+}
+
+type ThermostatTemperatureRange {
+  minimum: Temperature!
+  maximum: Temperature!
+}
+
+type ThermostatTemperatureScaleValue {
+  value: TemperatureScale!
+}
+
+type ThermostatTerminalConnection {
+  name: String!
+  state: ThermostatTerminalConnectionStateEnum!
+  connectionType: ThermostatTerminalConnectionTypeEnum
+}
+
+enum ThermostatTerminalConnectionStateEnum {
+  NOT_CONNECTED
+  CONNECTED
+  UNKNOWN
+}
+
+enum ThermostatTerminalConnectionTypeEnum {
+  EXTERNAL
+  INTERNAL
+  UNKNOWN
+}
+
+type ThermostatTerminalDescription {
+  name: String!
+  purpose: ThermostatTerminalPurposeEnum
+}
+
+type ThermostatTerminalInformation {
+  connections: [ThermostatTerminalConnection!]!
+}
+
+enum ThermostatTerminalPurposeEnum {
+  POWER
+  COMMON
+  HEATING
+  COOLING
+  AUXILIARY
+  VALVE_CHANGE_OVER
+  DEHUMIDIFIER
+  HUMIDIFIER
+  FAN
+  SENSOR
+  STATUS
+  OTHER
+  UNKNOWN
+}
+
+type ThermostatThermostatMode {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: ThermostatThermostatModeObject
+}
+
+type ThermostatThermostatModeObject {
+  value: ThermostatThermostatModeValue!
+}
+
+enum ThermostatThermostatModeValue {
+  AUTO
+  COOL
+  HEAT
+  ECO
+  EM_HEAT
+  OFF
+}
+
+type ThermostatUpperSetpoint {
+  name: String!
+  type: PropertyType!
+  accuracy: Accuracy
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  error: InterfaceErrorResponse
+  value: ThermostatTemperature
+}
+
+type ThirdPartyAppInfo {
+  appName: String
+  iOSAppUrl: String
+  androidAppUrl: String
+}
+
+type ThirdPartyScene implements Automation {
+  id: String!
+  name: String!
+  type: AutomationType!
+  createdAt: DateTime
+  lastActivatedAt: DateTime
+}
+
+type ThreadCredentialSharingResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  oneTimePasscode: String
+  expirationTimestamp: Long
+}
+
+type ThreadNetworkDetailsResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  activeOperationalDataset: String
+  networkName: String
+  channel: Int
+  channelMask: String
+  panId: String
+  extPanId: String
+  networkKey: String
+  pskc: String
+  securityPolicy: String
+  activeTimestamp: String
+  meshLocalPrefix: String
+}
+
+type TimeInterval {
+  start: DateTime
+  end: DateTime
+  duration: DateTime
+}
+
+scalar TimeZone
+
+type ToggleConfiguration {
+  friendlyName: NameValueObject
+}
+
+type ToggleState implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  toggleStateValue: ToggleStateValue
+}
+
+enum ToggleStateValue {
+  ON
+  OFF
+}
+
+type TooManyFailedAttempts implements Error {
+  message: String
+  attemptCount: Int!
+  maxAttempts: Int!
+}
+
+input Transition {
+  id: String!
+  payload: String
+  resources: [WorkflowTransitionResourceEntry!]
+}
+
+input TransitionSetupWorkflowSessionStateInput {
+  sessionOperation: SessionOperation!
+  transition: Transition!
+  contextualRequest: ContextualRequest!
+}
+
+input TransitionSetupWorkflowSessionStateV2Input {
+  session: SessionIdentifier!
+  transition: Transition!
+  contextualRequest: ContextualRequest!
+}
+
+type TransportProtocol {
+  type: TransportProtocolType!
+  maxVersion: String!
+  minVersion: String
+  name: String
+}
+
+enum TransportProtocolType {
+  IEEE_802_15_4_700MHZ
+  IEEE_802_15_4_800MHZ
+  IEEE_802_15_4_900MHZ
+  IEEE_802_15_4_2_4GHZ
+  ZIGBEE_700MHZ
+  ZIGBEE_800MHZ
+  ZIGBEE_900MHZ
+  ZIGBEE_2_4GHZ
+  BLE
+  BLE_MESH
+  WI_FI
+  ETHERNET
+  USB
+  THREAD
+  LORA
+  OTHER
+}
+
+input TriggerCriteria {
+  eventType: String!
+  context: String!
+}
+
+type Unauthorized implements Error {
+  message: String
+  attemptCount: Int!
+  maxAttempts: Int!
+}
+
+enum UnavailabilityReason {
+  SUBSCRIPTION_REQUIRED
+  DISABLED_BY_USER
+  OTHER
+}
+
+enum UnavailabilityReasonEnum {
+  SUBSCRIPTION_REQUIRED
+  DISABLED_BY_USER
+  OTHER
+  UNKNOWN
+}
+
+type UnavailablePartner {
+  partnerSkillId: String!
+  reason: UnavailabilityReason!
+}
+
+type UnclearedAlarm implements Error {
+  message: String
+}
+
+type UnclearedTrouble implements Error {
+  message: String
+}
+
+type Unit {
+  id: String!
+}
+
+scalar UnitId
+
+type UnknownError implements Error {
+  message: String
+}
+
+type UnknownFeatureProperty implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  data: String
+  accuracy: Accuracy
+  type: PropertyType
+}
+
+input UnlockWithPinInput {
+  endpointId: EndpointId!
+  pin: String!
+}
+
+type UnlockWithPinResponse implements SecurityOperationWithPinResponse {
+  isSuccess: Boolean!
+  error: SecurityOperationWithPinError
+}
+
+input UnsealedWorkflowTransitionResource {
+  dataType: String
+  value: String
+}
+
+input UnsubscribeDataInput {
+  directDelivery: DirectDelivery
+  datastoreDelivery: DatastoreDelivery
+  configIdentifiers: [String!]!
+}
+
+type UnsubscribeDataResponse {
+  message: String
+}
+
+type UnsubscribeResponse {
+  errors: [ErrorResponse!]
+}
+
+union UpdateAsAbsoluteHomeModeScheduleError = HomeModeScheduleDayConflictError | HomeModeScheduleError
+
+input UpdateAsAbsoluteHomeModeScheduleInput {
+  automationId: AutomationId!
+  mode: HomeModeType!
+  schedule: UpdateAsAbsoluteHomeModeSchedulePayloadInput!
+  homeId: String
+}
+
+input UpdateAsAbsoluteHomeModeSchedulePayloadInput {
+  triggerTime: LocalTime!
+  timeZone: TimeZone!
+  recurrencePattern: String!
+}
+
+type UpdateAsAbsoluteHomeModeScheduleResponse {
+  homeModeSchedule: HomeModeSchedule
+  error: UpdateAsAbsoluteHomeModeScheduleError
+}
+
+input UpdateAutomaticLightingInput {
+  automationId: String!
+  settings: AutomaticLightingSettingsInput!
+}
+
+input UpdateAutomationInput {
+  automationId: String!
+  settings: JSON!
+  name: String!
+  description: String!
+  automationType: AutomationType!
+}
+
+type UpdateAutomationResponse {
+  automation: Automation
+}
+
+input UpdateAwayLightingEndpointsInput {
+  endpoints: [EndpointsToUpdate!]!
+  homeId: String
+}
+
+input UpdateAwayLightingPreferencesInput {
+  enabled: Boolean
+  activeTime: String
+  addressId: String
+  personId: String
+  autoAddNewLights: Boolean
+  homeId: String
+}
+
+input UpdateCircadianLightingInput {
+  automationId: String!
+  settings: CircadianLightingSettingsInput!
+}
+
+input UpdateDeviceGroupInput {
+  memberDeviceIdsUpdateOperation: CollectionOperationOptions
+  childDeviceGroupIdsUpdateOperation: CollectionOperationOptions
+  deviceGroupId: String!
+  friendlyName: String
+  memberDeviceIds: [String!]
+  childDeviceGroupIds: [String!]
+  devicesPaginationParams: PaginationParams
+}
+
+input UpdateDeviceGroupSpeakerConfigurationInput {
+  deviceGroupId: String!
+  selectedSpeakers: [GroupEndpointSpeakerInput!]!
+  playMusicTargetingType: GroupPlayMusicTargetingTypeInput!
+}
+
+type UpdateDeviceGroupSpeakerConfigurationResponse {
+  selectedSpeakers: [UpdatedEndpointSpeaker!]!
+  playMusicTargetingType: GroupPlayMusicTargetingType!
+}
+
+type UpdateDeviceGroupsResponse {
+  deviceGroup: DeviceGroup
+}
+
+input UpdateEndpointCustomerPreferenceInput {
+  id: EndpointId!
+  preference: UpdateEndpointPreferenceInput!
+}
+
+type UpdateEndpointCustomerPreferenceResponse {
+  preference: EndpointCustomerPreference!
+}
+
+input UpdateEndpointPreferenceInput {
+  securitySensitiveFeatureEnabledGUI: Boolean
+  securitySensitiveFeatureEnabledVUI: Boolean
+  securitySensitiveFeatureEnabledVoiceCode: Boolean
+  securitySensitiveFeatureVoiceCode: String
+  securitySensitiveFeatureEnabledAuthorization: EndpointPreferenceAuthorizationsInput
+  doorbellCustomChimeFileName: String
+  doorbellCustomChimeDisplayName: String
+  managedNetworkAccessDevice: EndpointPreferenceManagedNetworkAccessDeviceType
+}
+
+input UpdateFamiliarObjectIdentityInput {
+  identityId: ID!
+  name: String
+  notificationsEnabled: Boolean
+}
+
+type UpdateFamiliarObjectIdentityResponse {
+  success: Boolean!
+}
+
+input UpdateHabitTrackingStatusInput {
+  enableHabitTracking: Boolean!
+}
+
+input UpdateHomeModeSettingsInput {
+  newModeSettings: HomeModeSettingsInput!
+  homeId: String
+}
+
+type UpdateHomeModeSettingsResponse {
+  success: Boolean!
+}
+
+input UpdatePremisesInput {
+  id: String!
+  friendlyName: String
+}
+
+type UpdatePremisesResponse {
+  id: String
+}
+
+input UpdateProgramMembershipInput {
+  programId: String!
+  operation: ProgramMembershipOperation!
+}
+
+input UpdateSetupConfigurationStatusInput {
+  setupConfigurationStatuses: [SetupConfigurationStatus!]!
+  configurationStatusTimeStamp: DateTime!
+}
+
+type UpdateSetupConfigurationStatusOutput {
+  successfulResults: [OutputSetupConfigurationStatus!]!
+  errors: [SetupConfigurationErrorResult!]!
+}
+
+type UpdatedEndpointSpeaker {
+  type: GroupEndpointSpeakerType!
+  endpointId: String!
+}
+
+type UpdatedGroupDiscoveryDelta {
+  id: String!
+  friendlyName: NameValueObject!
+  addedMemberDevices: [String!]
+  removedMemberDevices: [String!]
+  addedMemberGroups: [String!]
+  removedMemberGroups: [String!]
+}
+
+input UserAgent {
+  platform: String!
+  version: String!
+}
+
+input ValidatePrimitivesInput {
+  primitiveInstances: [PrimitiveInstanceInput!]!
+  validationContext: PrimitiveValidationContextInput
+}
+
+type ValidatePrimitivesResponse {
+  results: [PrimitiveValidationResult!]!
+}
+
+type ValidationError implements Error {
+  message: String
+  invalidFields: [String!]
+}
+
+type ValueObject {
+  text: String!
+  locale: String
+}
+
+input ValueObjectInput {
+  text: String!
+  locale: String
+}
+
+type Verification {
+  type: VerificationType!
+}
+
+input VerificationInput {
+  type: VerificationType!
+}
+
+enum VerificationType {
+  CONFIRMATION
+}
+
+type VideoSearchConfiguration {
+  isAvailable: Boolean!
+  unavailabilityReason: VideoSearchUnavailabilityReason
+}
+
+enum VideoSearchUnavailabilityReason {
+  SUBSCRIPTION_REQUIRED
+  DISABLED
+  UNSUPPORTED_LOCATION
+  OTHER
+}
+
+type VideoUrlCameraTilePlayer implements CameraTilePlayer {
+  type: CameraTilePlayerType!
+  relatedEndpointIds: [EndpointId!]!
+  thumbnail: CameraTileUrlResource
+  decorations: [CameraTileDecoration!]!
+  videoSource: CameraTileUrlResource!
+  totalDurationInMs: Long!
+  startOffsetInMs: Long!
+  durationOfPlayInMs: Long!
+  explanation: String
+  familiarObjectsExplanation: String
+}
+
+enum ViewportMode {
+  TV
+  HUB
+  MOBILE
+}
+
+input ViewportProfile {
+  type: ViewportType = STANDARD
+  shape: ViewportShape = RECTANGLE
+  pixelWidth: Int!
+  pixelHeight: Int!
+  dpi: Int!
+  mode: ViewportMode!
+}
+
+enum ViewportShape {
+  ROUND
+  RECTANGLE
+}
+
+enum ViewportType {
+  STANDARD
+  OVERLAY
+}
+
+type Volume implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  value: VolumeValue
+}
+
+type VolumeValue {
+  value: Int!
+}
+
+type WaterAlarm implements FeatureProperty {
+  name: String
+  error: ErrorResponse
+  accuracy: Accuracy
+  timestamp: Long
+  timeOfSample: DateTime
+  timeOfLastChange: DateTime
+  type: PropertyType
+  waterAlarmValue: AlarmValue
+}
+
+type WebRtcRecordingCameraTilePlayer implements CameraTilePlayer {
+  type: CameraTilePlayerType!
+  relatedEndpointIds: [EndpointId!]!
+  thumbnail: CameraTileUrlResource!
+  endpoint: EndpointId!
+  decorations: [CameraTileDecoration!]!
+  recording: MomentsEventRecording!
+  playbackStartTime: DateTime!
+  playbackEndTime: DateTime!
+  explanation: String
+  familiarObjectsExplanation: String
+}
+
+type WeeklySchedule {
+  temperatureScale: TemperatureScale!
+  Monday: [ScheduleEntry!]!
+  Tuesday: [ScheduleEntry!]!
+  Wednesday: [ScheduleEntry!]!
+  Thursday: [ScheduleEntry!]!
+  Friday: [ScheduleEntry!]!
+  Saturday: [ScheduleEntry!]!
+  Sunday: [ScheduleEntry!]!
+}
+
+type WeeklyScheduleResponse implements FeatureResponsePayload {
+  type: FeaturePayloadType
+  weeklySchedule: WeeklySchedule
+}
+
+input WorkflowIdentifier {
+  namespace: SetupWorkflowNamespace!
+  name: SetupWorkflowName!
+}
+
+input WorkflowInitializationTarget {
+  subjectTag: String
+  namespace: SetupWorkflowNamespace!
+  name: SetupWorkflowName!
+  targets: [InputSetupWorkflowTarget!]!
+  identifier: WorkflowIdentifier
+}
+
+input WorkflowInitializationTargetV3 {
+  subjectTag: String!
+  namespace: SetupWorkflowNamespace!
+  name: SetupWorkflowName!
+  structuredTargets: AllOfWorkflowTargets!
+}
+
+type WorkflowStateResource {
+  source: WorkflowStateResourceSource!
+  value: NameValueObject!
+}
+
+type WorkflowStateResourcePair {
+  key: String!
+  value: WorkflowStateResource!
+}
+
+type WorkflowStateResourceSource {
+  type: WorkflowStateResourceSourceType!
+  id: String!
+  field: String!
+}
+
+enum WorkflowStateResourceSourceType {
+  ENDPOINT
+  GROUP
+}
+
+input WorkflowTransitionResource {
+  sealedResource: SealedWorkflowTransitionResource
+  unsealedResource: UnsealedWorkflowTransitionResource
+}
+
+input WorkflowTransitionResourceEntry {
+  key: String
+  resource: WorkflowTransitionResource
+}
+
+enum WorkflowType {
+  WAKE_UP_ALARM
+  SLEEP_TIMER
+}
+
+union YaleGetAllUsersError = DependencyError | ValidationError | ResourceNotFound | EndpointUnreachable
+
+input YaleGetAllUsersInput {
+  endpointId: EndpointId!
+}
+
+type YaleGetAllUsersResponse {
+  users: [CustomYaleUserResponse!]!
+  error: YaleGetAllUsersError
+}
+
+type ZigbeeSetupMetadata {
+  supportedHubBrands: [SetupDeviceBrand!]
+  iosZigbeeCompatibleHubUrl: String
+  androidZigbeeCompatibleHubUrl: String
+}
+
+type Zone {
+  id: String!
+  friendlyName: String!
+}

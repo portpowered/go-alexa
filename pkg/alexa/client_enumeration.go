@@ -338,6 +338,8 @@ func (c *Session) mergeEndpointWithStates(
 		unified.DeviceFamily = deviceV2.DeviceFamily
 
 		unified.DeviceAccountId = deviceV2.DeviceAccountId
+
+		unified.DeviceOwnerCustomerID = deviceV2.DeviceOwnerCustomerId
 		if deviceV2.Language != nil {
 			unified.Locale = *deviceV2.Language
 		}
@@ -437,6 +439,8 @@ func (c *Session) mergeEndpointWithoutStates(
 		unified.DeviceFamily = deviceV2.DeviceFamily
 
 		unified.DeviceAccountId = deviceV2.DeviceAccountId
+
+		unified.DeviceOwnerCustomerID = deviceV2.DeviceOwnerCustomerId
 		if deviceV2.Language != nil {
 			unified.Locale = *deviceV2.Language
 		}
@@ -764,7 +768,11 @@ func (c *Session) extractStateValue(
 func extractCoreStateValue(prop gqlStatePropertyFeatureProperty) (interface{}, bool) {
 	switch propertyValue := prop.(type) {
 	case *gqlStatePropertyVolume:
-		return nil, true
+		if propertyValue.VolumeValue == nil || propertyValue.VolumeValue.Value == nil {
+			return nil, true
+		}
+
+		return propertyValue.VolumeValue.Value, true
 	case *gqlStatePropertyPower:
 		return propertyValue.PowerStateValue, true
 	case *gqlStatePropertyBrightness:

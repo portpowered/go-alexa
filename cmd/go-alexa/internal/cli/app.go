@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +31,7 @@ const (
 
 var (
 	errInvalidOptions            = errors.New("invalid command options")
-	errCredentialsRequired       = errors.New("provide credentials with --credentials-file, --credentials-stdin, or ALEXA_ACCESS_TOKEN")
+	errCredentialsRequired       = errors.New("run alexa auth login, or provide --credentials-file, --credentials-stdin, or ALEXA_ACCESS_TOKEN")
 	errAccessTokenRequired       = errors.New("credentials do not contain an access token; run auth refresh explicitly")
 	errRefreshTokenRequired      = errors.New("credentials do not contain a refresh token")
 	errCommandFailed             = errors.New("go-alexa command failed")
@@ -55,7 +56,6 @@ var (
 )
 
 var (
-	errCredentialFileRequired = errors.New("--credentials-file is required; auth logout removes a local credential file only")
 	errEnvironmentCredentials = errors.New(
 		"environment credentials cannot be removed by auth logout; " +
 			"unset ALEXA_ACCESS_TOKEN and ALEXA_REFRESH_TOKEN in your shell",
@@ -71,6 +71,7 @@ type App struct {
 	lookupEnv     func(string) (string, bool)
 	clientOptions []alexa.Option
 	secrets       []string
+	recorder      *wireRecorder
 }
 
 // New creates a CLI application. clientOptions are public SDK options and are
@@ -83,6 +84,7 @@ func New(input io.Reader, output, errorOutput io.Writer, clientOptions ...alexa.
 		lookupEnv:     os.LookupEnv,
 		clientOptions: clientOptions,
 		secrets:       nil,
+		recorder:      nil,
 	}
 }
 
@@ -90,6 +92,7 @@ func New(input io.Reader, output, errorOutput io.Writer, clientOptions ...alexa.
 // the main program can report them without printing credentials.
 func (a *App) Run(ctx context.Context, args []string) (runErr error) {
 	a.secrets = nil
+	a.recorder = nil
 
 	defer func() {
 		if errors.Is(runErr, flag.ErrHelp) {
@@ -136,6 +139,9 @@ func (a *App) writeRootHelp() error {
 
 Usage:
   go-alexa auth link --credentials-out FILE
+  alexa auth login [--region US|EU|JP]
+  alexa auth login --record-dir DIR
+  alexa auth refresh
   go-alexa auth refresh --credentials-file FILE --credentials-out FILE
   go-alexa auth export --credentials-stdin --credentials-out FILE
   go-alexa auth logout --credentials-file FILE
@@ -147,11 +153,13 @@ Usage:
 Credential flags for authenticated commands:
   --credentials-file FILE   Read access and refresh tokens from a file.
   --credentials-stdin       Read a JSON credential object from stdin.
-  Otherwise use ALEXA_ACCESS_TOKEN and ALEXA_REFRESH_TOKEN.
+  Otherwise use ALEXA_ACCESS_TOKEN and ALEXA_REFRESH_TOKEN, then saved login credentials.
 
 Secrets are never accepted as command arguments or printed in normal output.
-Credential files are created with owner-only permissions and are never overwritten.
-Logout removes only the named local file; unset environment credentials in your shell.
+Login saves credentials in the OS user configuration directory under go-alexa/credentials.json.
+GO_ALEXA_CREDENTIALS overrides that path. Login and refresh replace saved credentials atomically.
+Auth login/link/refresh accept --record-dir DIR (or GO_ALEXA_RECORD_DIR) for private wire capture pairs.
+Explicit exports create new owner-only files. Logout defaults to the saved login file.
 `)
 	if err != nil {
 		return fmt.Errorf("write help: %w", err)
@@ -162,7 +170,7 @@ Logout removes only the named local file; unset environment credentials in your 
 
 func (a *App) writeGroupHelp(command string) error {
 	help := map[string]string{
-		"auth": "Usage: go-alexa auth link|refresh|export|logout\n" +
+		"auth": "Usage: alexa auth login|link|refresh|export|logout\n" +
 			"Link accounts, explicitly refresh access tokens, export credentials, or remove a local credential file.\n",
 		"endpoints": "Usage: go-alexa endpoints list [flags]\n" +
 			"List account endpoints and optionally include current feature states.\n",
@@ -230,7 +238,13 @@ func (a *App) newClient(regionName string) (*alexa.Client, error) {
 
 	options := make([]alexa.Option, 0, len(a.clientOptions)+clientOptionCapacity)
 	options = append(options, alexa.WithRegion(region), alexa.WithTimeout(defaultRequestTimeout))
+
 	options = append(options, a.clientOptions...)
+
+	if a.recorder != nil {
+		client := &http.Client{Transport: a.recorder, Timeout: defaultRequestTimeout, CheckRedirect: nil, Jar: nil}
+		options = append(options, alexa.WithRESTHTTPClient(client), alexa.WithGraphQLHTTPClient(client))
+	}
 
 	client, err := alexa.NewClient(options...)
 	if err != nil {
@@ -275,6 +289,20 @@ type credentialFile struct {
 func (a *App) readCredentials(source *credentialFlags) (credentialFile, error) {
 	if source.file != "" && source.stdin {
 		return credentialFile{}, errCredentialSource
+	}
+
+	if source.file == "" && !source.stdin && !a.hasEnvironmentCredentials() {
+		path, err := a.defaultCredentialPath()
+		if err != nil {
+			return credentialFile{}, err
+		}
+
+		_, err = os.Stat(path)
+		if errors.Is(err, os.ErrNotExist) {
+			return credentialFile{}, errCredentialsRequired
+		}
+
+		source.file = path
 	}
 
 	var (
@@ -384,6 +412,10 @@ func saveCredentials(path string, credentials credentialFile) error {
 		return errCredentialOutput
 	}
 
+	return savePrivateJSON(path, credentials)
+}
+
+func savePrivateJSON(path string, value any) error {
 	directory := filepath.Dir(path)
 	if directory != "." {
 		err := os.MkdirAll(directory, credentialDirectoryMode)
@@ -407,7 +439,8 @@ func saveCredentials(path string, credentials credentialFile) error {
 
 	encoder := json.NewEncoder(file)
 	encoder.SetEscapeHTML(false)
-	writeErr := encoder.Encode(credentials)
+	encoder.SetIndent("", "  ")
+	writeErr := encoder.Encode(value)
 	closeErr := file.Close()
 
 	if writeErr != nil {

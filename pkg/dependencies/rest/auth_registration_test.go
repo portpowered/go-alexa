@@ -149,8 +149,11 @@ func TestEmailRegistrationMapsChallengeAndCodePairErrors(t *testing.T) {
 	)
 
 	_, codePairErr := client.RegisterWithCodePair(context.Background(), "public", "private", config)
-	if !alexaapimodels.IsNetworkError(codePairErr) {
-		t.Fatalf("expected code-pair failure to return NetworkError, got %T: %v", codePairErr, codePairErr)
+
+	var rejection *alexaapimodels.CodePairRegistrationError
+
+	if !errors.As(codePairErr, &rejection) || rejection.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected typed code-pair rejection, got %T: %v", codePairErr, codePairErr)
 	}
 
 	client = NewClient(
