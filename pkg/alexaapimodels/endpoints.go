@@ -18,7 +18,7 @@ type EndpointInterface interface {
 //
 //modelinventory:semantic Endpoint: unified device identity and capability data returned by endpoint enumeration.
 type Endpoint struct {
-	// Primary key from GraphQL (always present)
+	// Primary key from GraphQL, or a stable SDK identity for legacy-only WHA groups.
 	ID string
 
 	// Primary data from GraphQL
@@ -39,6 +39,8 @@ type Endpoint struct {
 	DeviceAccountId       string
 	DeviceOwnerCustomerID string
 	Locale                string
+	// Member serials reported by the legacy API for whole-home audio groups.
+	ClusterMembers []string `json:"clusterMembers,omitempty"`
 
 	// Features lists the features this endpoint supports
 	// This is computed by merging GraphQL features, REST capabilities, and device family information

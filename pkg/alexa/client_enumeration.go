@@ -155,6 +155,7 @@ func (c *Session) ListEndpoints(
 		mergeData,
 	)
 	unifiedEndpoints = mergeDistinctEndpoints(unifiedEndpoints, airQualityMonitorEndpoints)
+	unifiedEndpoints = mergeWholeHomeGroups(unifiedEndpoints, devicesV2Resp.Devices)
 	unifiedEndpoints = filterEndpointsByIDs(unifiedEndpoints, query.EndpointIDs)
 
 	return &alexaapimodels.UnifiedEndpointListResponse{

@@ -38,3 +38,12 @@ and owner context. Unavailable properties remain distinct from measured zero.
 - REST metadata: [list first-party devices](../../openapi/first-party-devices/listFirstPartyDevices/).
 
 The reference describes implementation-derived schemas. Synthetic fixtures cover conversions, not live Amazon behavior.
+
+## Whole-home audio targets
+
+Legacy `WHA` devices can be absent from GraphQL discovery. `ListEndpoints`
+retains them using their provider device-account ID as the discovery identity;
+this ID is not a GraphQL endpoint ID. `DeviceFamily` identifies the group and
+`clusterMembers` contains its member serials. The group serial and device type
+remain the behavior/legacy media target. Discovery never infers a group from its
+friendly name. Only reported audio-player and volume capabilities are exposed.

@@ -1636,6 +1636,7 @@ var allowedNetworkImports = map[string]map[string]bool{
 	"pkg/dependencies/graphql/queries.go":         {"net/http": true},
 	"pkg/dependencies/rest/auth.go":               {"net/http": true},
 	"pkg/dependencies/rest/code_pair_errors.go":   {"net/http": true},
+	"pkg/dependencies/rest/request_error.go":      {"net/http": true},
 	"pkg/dependencies/rest/client.go":             {"net/http": true, "net/http/cookiejar": true},
 }
 

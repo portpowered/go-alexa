@@ -3,7 +3,6 @@ package graphql
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/portpowered/go-alexa/pkg/internal/apiroutes"
 
@@ -13,7 +12,7 @@ import (
 // The GraphQL route is fixed. Never include its host, query or variables in diagnostics.
 func graphQLRequestFailure(status int, stage string, cause error) error {
 	return &alexaapimodels.RequestError{
-		Method: http.MethodPost, Path: apiroutes.PathExecuteNexusGraphQL,
+		Method: apiroutes.MethodExecuteNexusGraphQL, Path: apiroutes.PathExecuteNexusGraphQL,
 		StatusCode: status, ProviderReason: "", Stage: stage, Cause: cause,
 	}
 }

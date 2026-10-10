@@ -366,6 +366,8 @@ const (
 )
 
 // doRequest performs an HTTP request with retry logic.
+//
+//nolint:dupl // The route inventory requires request construction and injected send in the same function.
 func (c *Client) doRequest(ctx context.Context, method, path string, body interface{}) (*http.Response, error) {
 	var bodyReader io.Reader
 
@@ -398,7 +400,43 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 	req.Header.Set(apiroutes.HeaderContentType, "application/json")
 	req.Header.Set(apiroutes.HeaderAccept, "application/json")
 
-	return c.doRequestWithRetries(ctx, req)
+	const maxAttempts = 3
+	for attempt := range maxAttempts {
+		response, err := c.httpClient.Do(req)
+		if err == nil && response.StatusCode < http.StatusInternalServerError {
+			return response, nil
+		}
+
+		if attempt == maxAttempts-1 {
+			if err != nil {
+				return nil, requestFailure(method, url, 0, "", "transport", networkFailureCause(ctx, err, "request failed after retries"))
+			}
+
+			return response, nil
+		}
+
+		if response != nil && response.Body != nil {
+			_ = response.Body.Close()
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, requestFailure(method, url, 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
+		case <-time.After(time.Duration(attempt+1) * time.Second):
+		}
+
+		if req.GetBody != nil {
+			body, bodyErr := req.GetBody()
+			if bodyErr != nil {
+				return nil, requestFailure(method, url, 0, "", "request_encode",
+					&alexaapimodels.BadRequestError{Message: "failed to recreate request body"})
+			}
+
+			req.Body = body
+		}
+	}
+
+	return nil, requestFailure(method, url, 0, "", "transport", &alexaapimodels.NetworkError{Message: "provider returned no response"})
 }
 
 // doJSONRequest performs a request and unmarshals the JSON response.
@@ -593,6 +631,8 @@ func (c *Client) doJSONRequestWithFullURL(
 
 // doUnauthenticatedRequest performs an HTTP request without authentication headers
 // This is used for authentication endpoints that don't require a bearer token.
+//
+//nolint:dupl // The route inventory requires request construction and injected send in the same function.
 func (c *Client) doUnauthenticatedRequest(ctx context.Context, method, url string, body interface{}) (*http.Response, error) {
 	var bodyReader io.Reader
 
@@ -619,7 +659,43 @@ func (c *Client) doUnauthenticatedRequest(ctx context.Context, method, url strin
 	req.Header.Set(apiroutes.HeaderContentType, "application/json")
 	req.Header.Set(apiroutes.HeaderAccept, "application/json")
 
-	return c.doRequestWithRetries(ctx, req)
+	const maxAttempts = 3
+	for attempt := range maxAttempts {
+		response, err := c.httpClient.Do(req)
+		if err == nil && response.StatusCode < http.StatusInternalServerError {
+			return response, nil
+		}
+
+		if attempt == maxAttempts-1 {
+			if err != nil {
+				return nil, requestFailure(method, url, 0, "", "transport", networkFailureCause(ctx, err, "request failed after retries"))
+			}
+
+			return response, nil
+		}
+
+		if response != nil && response.Body != nil {
+			_ = response.Body.Close()
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, requestFailure(method, url, 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
+		case <-time.After(time.Duration(attempt+1) * time.Second):
+		}
+
+		if req.GetBody != nil {
+			body, bodyErr := req.GetBody()
+			if bodyErr != nil {
+				return nil, requestFailure(method, url, 0, "", "request_encode",
+					&alexaapimodels.BadRequestError{Message: "failed to recreate request body"})
+			}
+
+			req.Body = body
+		}
+	}
+
+	return nil, requestFailure(method, url, 0, "", "transport", &alexaapimodels.NetworkError{Message: "provider returned no response"})
 }
 
 // doUnauthenticatedJSONRequest performs an unauthenticated request and unmarshals the JSON response.
@@ -678,45 +754,4 @@ type UnauthenticatedRequestError struct {
 
 func (e *UnauthenticatedRequestError) Error() string {
 	return fmt.Sprintf("request failed with status %d", e.StatusCode)
-}
-
-// doRequestWithRetries owns intermediate responses and recreates POST bodies.
-func (c *Client) doRequestWithRetries(ctx context.Context, request *http.Request) (*http.Response, error) {
-	const maxAttempts = 3
-	for attempt := range maxAttempts {
-		response, err := c.httpClient.Do(request)
-		if err == nil && response.StatusCode < http.StatusInternalServerError {
-			return response, nil
-		}
-
-		if attempt == maxAttempts-1 {
-			if err != nil {
-				return nil, requestFailure(request.Method, request.URL.String(), 0, "", "transport", networkFailureCause(ctx, err, "request failed after retries"))
-			}
-
-			return response, nil
-		}
-
-		if response != nil && response.Body != nil {
-			_ = response.Body.Close()
-		}
-
-		select {
-		case <-ctx.Done():
-			return nil, requestFailure(request.Method, request.URL.String(), 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
-		case <-time.After(time.Duration(attempt+1) * time.Second):
-		}
-
-		if request.GetBody != nil {
-			body, bodyErr := request.GetBody()
-			if bodyErr != nil {
-				return nil, requestFailure(request.Method, request.URL.String(), 0, "", "request_encode",
-					&alexaapimodels.BadRequestError{Message: "failed to recreate request body"})
-			}
-
-			request.Body = body
-		}
-	}
-
-	return nil, requestFailure(request.Method, request.URL.String(), 0, "", "transport", &alexaapimodels.NetworkError{Message: "provider returned no response"})
 }
