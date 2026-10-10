@@ -1,0 +1,310 @@
+[
+  {
+    "source": "synthetic",
+    "operation": "pending",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"error\":\"authorization_pending\",\"error_description\":\"synthetic-private-description\"}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "expired",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"error\":\"expired_token\",\"error_description\":\"synthetic-private-description\"}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "invalid-pair",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"error\":\"invalid_code_pair\",\"error_description\":\"synthetic-private-description\"}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "denied",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 403,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"error\":\"access_denied\",\"error_description\":\"synthetic-private-description\"}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "invalid-device",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"response\":{\"error\":{\"code\":\"InvalidDevice\",\"index\":\"synthetic-private-index\",\"message\":\"synthetic-private-message\"}}}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "invalid-name",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"response\":{\"error\":{\"code\":\"InvalidDevice\",\"index\":\"synthetic-private-index\",\"message\":\"synthetic-private-message\"}}}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "prefixed-serial",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"go-alexa-0123456789abcdef0123456789abcdef\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"response\":{\"error\":{\"code\":\"InvalidDevice\",\"index\":\"synthetic-private-index\",\"message\":\"synthetic-private-message\"}}}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "unknown",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 401,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"error\":\"unknown_private_details\",\"error_description\":\"synthetic-private-description\"}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "malformed",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "not JSON: synthetic-private-details"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "generation-invalid-device",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/create/codepair",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"code_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\",\"secondary_registration\":\"False\"},\"scopes\":[]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"response\":{\"error\":{\"code\":\"InvalidDevice\",\"index\":\"synthetic-private-index\",\"message\":\"synthetic-private-message\"}}}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "generation-rejected",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/create/codepair",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"code_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\",\"secondary_registration\":\"False\"},\"scopes\":[]}"
+    },
+    "response": {
+      "status": 401,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"error\":\"unknown\",\"error_description\":\"synthetic-private-description\"}"
+    }
+  }
+]

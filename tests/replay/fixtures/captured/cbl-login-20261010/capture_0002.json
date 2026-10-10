@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.amazon.com/auth/register",
+    "headers": {
+      "Accept": [
+        "application/json"
+      ],
+      "Content-Type": [
+        "application/json"
+      ]
+    },
+    "body": "eyJhdXRoX2RhdGEiOnsiY29kZV9wYWlyIjp7InByaXZhdGVfY29kZSI6InN5bnRoZXRpYy1wcml2YXRlIiwicHVibGljX2NvZGUiOiJQVUJMSUMifX0sInJlZ2lzdHJhdGlvbl9kYXRhIjp7ImFwcF9uYW1lIjoiQ2xpZW50IFNESyIsImFwcF92ZXJzaW9uIjoiMS4wIiwiZGV2aWNlX21vZGVsIjoiQ2xpZW50IFNESyIsImRldmljZV9uYW1lIjoiZ28tYWxleGEgQ0xJIiwiZGV2aWNlX3NlcmlhbCI6IkFCQ0RFRjEyMzQ1NjciLCJkZXZpY2VfdHlwZSI6IkEySVZMVjVWTTJXODEiLCJkb21haW4iOiJEZXZpY2UiLCJvc192ZXJzaW9uIjoiMCJ9LCJyZXF1ZXN0ZWRfdG9rZW5fdHlwZSI6WyJiZWFyZXIiXX0="
+  },
+  "response": {
+    "status_code": 200,
+    "status": "200 OK",
+    "headers": {
+      "Content-Type": [
+        "application/json"
+      ]
+    },
+    "body": "eyJyZXNwb25zZSI6eyJzdWNjZXNzIjp7InRva2VucyI6eyJiZWFyZXIiOnsiYWNjZXNzX3Rva2VuIjoic3ludGhldGljLWFjY2VzcyIsInJlZnJlc2hfdG9rZW4iOiJzeW50aGV0aWMtcmVmcmVzaCIsImV4cGlyZXNfaW4iOiIzNjAwIn19LCJjdXN0b21lcl9pZCI6InN5bnRoZXRpYy1jdXN0b21lciJ9fSwicmVxdWVzdF9pZCI6InN5bnRoZXRpYy1yZXF1ZXN0In0="
+  }
+}

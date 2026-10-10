@@ -9,11 +9,11 @@ info:
 
     and response models used by the current go-alexa source. It is not an
 
-    Amazon-issued API contract. There are no sanitized live HTTP captures in
+    Amazon-issued API contract. A sanitized CBL login capture from 2026-10-10
 
-    this repository, so these shapes have not been verified against current
+    verifies one NA account and device profile. Other operations remain
 
-    service behavior. Synthetic test data is not evidence of provider behavior.
+    implementation-derived. Synthetic tests are not evidence of provider behavior.
 
     See the Alexa AsyncAPI document for the directive stream parsed by the
 
@@ -107,7 +107,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/WireCodePairResponse'
         default:
-          $ref: '#/components/responses/UnhandledResponse'
+          description: Code-pair generation rejection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WireCodePairErrorResponse'
   /auth/register:
     post:
       tags:
@@ -522,6 +526,27 @@ components:
         source_token_type: refresh_token
         source_token: synthetic-refresh
       x-example-evidence: synthetic
+    WireCodePairErrorResponse:
+      type: object
+      description: Known CBL error codes; diagnostic indices and messages are not retained by the public error types.
+      properties:
+        error:
+          type: string
+        response:
+          $ref: '#/components/schemas/WireCodePairErrorEnvelope'
+      example:
+        error: authorization_pending
+      x-example-evidence: synthetic
+    WireCodePairErrorEnvelope:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/WireCodePairErrorDetail'
+    WireCodePairErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
     WireCodePairResponse:
       type: object
       properties:

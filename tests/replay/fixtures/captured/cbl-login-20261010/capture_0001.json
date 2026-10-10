@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.amazon.com/auth/create/codepair",
+    "headers": {
+      "Accept": [
+        "application/json"
+      ],
+      "Content-Type": [
+        "application/json"
+      ]
+    },
+    "body": "eyJjb2RlX2RhdGEiOnsiYXBwX25hbWUiOiJDbGllbnQgU0RLIiwiYXBwX3ZlcnNpb24iOiIxLjAiLCJkZXZpY2VfbW9kZWwiOiJDbGllbnQgU0RLIiwiZGV2aWNlX25hbWUiOiJnby1hbGV4YSBDTEkiLCJkZXZpY2Vfc2VyaWFsIjoiQUJDREVGMTIzNDU2NyIsImRldmljZV90eXBlIjoiQTJJVkxWNVZNMlc4MSIsImRvbWFpbiI6IkRldmljZSIsIm9zX3ZlcnNpb24iOiIwIiwic2Vjb25kYXJ5X3JlZ2lzdHJhdGlvbiI6IkZhbHNlIn0sInNjb3BlcyI6W119"
+  },
+  "response": {
+    "status_code": 200,
+    "status": "200 OK",
+    "headers": {
+      "Content-Type": [
+        "application/json"
+      ]
+    },
+    "body": "eyJwb2xsaW5nX2ludGVydmFsX2luX3NlY29uZHMiOjMsInNlY3VyZVNlc3Npb25Ub2tlbiI6InN5bnRoZXRpYy1zZXNzaW9uIiwicHVibGljX2NvZGUiOiJQVUJMSUMiLCJwcml2YXRlX2NvZGUiOiJzeW50aGV0aWMtcHJpdmF0ZSIsImV4cGlyZXNfaW4iOjYwMH0="
+  }
+}

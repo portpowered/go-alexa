@@ -10,3 +10,12 @@ These files are hand-authored test scenarios frozen from explicit synthetic inpu
 Each pair records method, origin, escaped path, the complete query multimap (including repeated values), full request headers and body, response status, headers, and body. The replay transport compares the request before returning its paired response and asserts complete consumption. All IDs, timestamps, and credential strings in these examples are fixed, visibly synthetic values; exact matching is their rule. No volatile field is skipped. If future fixtures require variable fields, add an explicit format or decoded-meaning matcher for that field, test a malformed value, and record the rule in this note before using the fixture. Never add real token or cookie values.
 
 The OpenAPI `openAuthorizationPage` operation is a caller-facing URL for browser navigation. The library does not dispatch it, so it has no outbound HTTP pair. Existing `pkg/alexa/testdata` JSON files remain response-only model examples and do not count toward this replay inventory.
+
+## CBL failure cases
+
+`alexa-cbl-errors.json` contains hand-authored responses for pending, expired,
+denied, invalid-device, malformed, and unknown CBL failures. Invalid name and
+prefixed serial cases are synthetic examples of metadata rejection, not live
+evidence that Amazon rejects precisely those inputs. Their requests match exact
+fixed identities and profile fields. They verify public error types and ensure
+provider diagnostic fields do not reach error messages.

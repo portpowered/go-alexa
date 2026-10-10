@@ -13,6 +13,87 @@ The CLI uses the public `pkg/alexa` SDK. It prints JSON for results and exits wi
 
 ## Link an account
 
+For a saved login, build the CLI from this checkout and put it on your PATH:
+
+```sh
+cd cmd/go-alexa
+go build -o alexa .
+alexa auth login
+alexa endpoints list
+alexa auth refresh
+alexa auth logout
+```
+
+When developing the CLI against this checkout's SDK, use a Go workspace containing
+both the repository root and `cmd/go-alexa`. The CLI is a separate Go module.
+
+`auth login` uses Amazon code-based linking (CBL). Open `https://www.amazon.com/code`,
+enter the printed public code, approve it, then press Enter in the terminal.
+The CLI registers the device and exchanges its refresh token for an access token.
+It saves the access token, refresh token, and matching device registration data
+under the OS user configuration directory in `go-alexa/credentials.json`:
+`%AppData%\go-alexa\credentials.json` on Windows, `~/.config/go-alexa/credentials.json`
+on Linux (or `$XDG_CONFIG_HOME`), and `~/Library/Application Support/go-alexa/credentials.json`
+on macOS. Set `GO_ALEXA_CREDENTIALS` to use a different saved credential path.
+
+Subsequent commands load this file automatically. Explicit credential flags take
+precedence, followed by environment tokens, then the saved login. `auth refresh`
+updates the saved file using its original device registration values. Refresh is
+explicit; run it when the access token expires. `auth login` and in-place refresh
+write a private temporary file before replacing the saved credentials. Failed
+provider calls leave the existing file intact. `auth logout` removes the saved
+file by default; it does not revoke Amazon credentials.
+
+The existing `go-alexa` executable supports these same commands. The published
+`v0.4.0` CLI does not include the saved-login commands yet.
+
+### Record failed login exchanges
+
+Enable wire capture explicitly when diagnosing authentication:
+
+```powershell
+.\go-alexa.exe auth login --record-dir "$env:LOCALAPPDATA\go-alexa\wire-captures"
+```
+
+`auth link` and `auth refresh` accept the same flag. Alternatively, set
+`GO_ALEXA_RECORD_DIR` for your shell session. Each command creates a separate UTC
+timestamped directory and reports its path on stderr. `capture_0001.json`,
+`capture_0002.json`, and subsequent files contain the request method, URL,
+headers and body paired with the response status, headers and body. An Amazon
+HTTP rejection is captured before the SDK reports its error. A capture write
+failure fails the command instead of silently dropping the trace.
+
+The files use the existing `pkg/testing.CapturePair` format, with byte bodies
+encoded as base64 by JSON. Files have the same owner-only permissions as saved
+credentials. They contain raw private codes, tokens, cookies, and account data;
+keep recordings local. `provenance.json` marks the run as captured and unsanitized
+and includes its UTC capture date. No trace is written unless recording is enabled.
+
+To inspect a pair locally:
+
+```powershell
+$pair = Get-Content "$runDirectory\capture_0002.json" -Raw | ConvertFrom-Json
+$pair.response.status_code
+[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($pair.request.body))
+[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($pair.response.body))
+```
+
+Replay uses `testing.NewReplayCaptureRoundTripper(runDirectory)` as the HTTP
+transport supplied to `alexa.WithHTTPClient`. The test must use the captured
+device registration configuration and returned codes and call `AssertConsumed`.
+Replay compares request URL, method, headers, and body exactly; generating a new
+device serial will fail the match. The CLI regression test
+`TestRecordFailedCBLLoginAndReplayThroughSDK` records a synthetic HTTP 400
+`InvalidDevice` exchange and reproduces it through the SDK with the server stopped.
+
+Before promoting a real recording to a standard fixture, sanitize credentials
+and identifiers consistently in requests and responses, retain the registration
+field formats under investigation, and document the operations, UTC date, source,
+redactions, and expected failure in a neighboring provenance note. Put approved
+fixtures under `tests/replay/fixtures/captured/`, separately from synthetic cases.
+Transport failures have response status zero and are diagnostic snapshots rather
+than valid HTTP-response replay fixtures. HTTP/2 event stream bodies are not recorded.
+
 Run code-based linking when you choose to connect your Alexa account:
 
 ```sh
@@ -29,7 +110,7 @@ go-alexa auth logout --credentials-file "$HOME/.config/go-alexa/credentials.json
 
 Logout removes only the named file, succeeds if it is already absent, and does not contact Alexa or revoke tokens. Its JSON result reports whether environment credentials remain configured. When credentials come only from `ALEXA_ACCESS_TOKEN` or `ALEXA_REFRESH_TOKEN`, unset them in the shell or secret manager that supplies them; the CLI cannot change its parent shell's environment.
 
-Refresh explicitly into a second file so an existing credential file is never overwritten:
+To keep the old credentials, refresh explicitly into a second file:
 
 ```sh
 go-alexa auth refresh \

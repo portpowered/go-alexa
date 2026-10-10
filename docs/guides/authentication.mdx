@@ -49,6 +49,24 @@ Call `Session.ExchangeRefreshTokenForCookies` explicitly, store the result, and 
 
 `WithRegion` accepts US, EU, or JP. Methods return typed errors from `alexaapimodels`; use `errors.As` to inspect wrapped errors.
 
+CBL registration distinguishes `CodePairPendingError`, `CodePairExpiredError`
+(including `invalid_code_pair`), `CodePairDeniedError`, and
+`CodePairInvalidDeviceError`. Pending means the browser approval is incomplete;
+expired requires a new code pair; denied requires the user to authorize again.
+Invalid device means Amazon rejected device metadata; the error does not identify
+which field was invalid. `CodePairRegistrationError` and
+`CodePairGenerationError` expose `StatusCode` for other HTTP failures.
+Transport failures remain `NetworkError`; context cancellation and deadlines
+remain detectable through `errors.Is`. Provider diagnostic bodies are omitted
+from CBL error messages; opt-in private wire captures retain the full exchange.
+
+```go
+var invalidDevice *alexaapimodels.CodePairInvalidDeviceError
+if errors.As(err, &invalidDevice) {
+    // Review the configured device profile before starting a new login.
+}
+```
+
 ## API reference
 
 - [Create a code pair](../../openapi/account-linking/createCodePair/), [register a device](../../openapi/account-linking/registerDevice/), and [refresh a token](../../openapi/account-linking/refreshAccessToken/).

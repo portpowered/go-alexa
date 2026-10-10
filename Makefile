@@ -8,7 +8,11 @@ export GOWORK := off
 .DEFAULT_GOAL := check
 .PHONY: check format-check vet build test lint fmt cli-check cli-vet cli-build cli-test cli-lint cli-fmt module cli-module generate generate-graphql generate-api model-inventory openapi-bundle openapi-bundle-check schema-examples
 
-check: format-check lint vet build test model-inventory openapi-bundle-check schema-examples module cli-module
+check: format-check lint vet build test model-inventory openapi-bundle-check schema-examples live-schema-check module cli-module
+
+.PHONY: live-schema-check
+live-schema-check:
+	$(GO) run ./tools/graphqlschemacheck
 
 ifeq ($(OS),Windows_NT)
 format-check:

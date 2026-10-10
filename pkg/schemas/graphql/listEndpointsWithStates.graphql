@@ -464,6 +464,8 @@ query ListEndpointsWithStates(
 						}
 					}
 					... on Volume {
+						# @genqlient(pointer: true)
+						volumeValue: value { value }
 						name
 						accuracy
 						timestamp

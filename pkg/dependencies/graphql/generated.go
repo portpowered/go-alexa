@@ -1065,6 +1065,9 @@ query ListEndpointsWithStates ($input: ListEndpointsInput!) {
 						}
 					}
 					... on Volume {
+						volumeValue: value {
+							value
+						}
 						name
 						accuracy
 						timestamp

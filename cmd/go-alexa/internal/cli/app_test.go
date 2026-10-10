@@ -104,7 +104,7 @@ func TestAuthLinkUsesPairedRequestsAndWritesPrivateCredentials(t *testing.T) {
 		t.Fatal("auth link printed a private code or token")
 	}
 
-	if !strings.Contains(stdout.String(), "synthetic-public-code") || !strings.Contains(stdout.String(), alexaapimodels.AuthorizationUriNa) {
+	if !strings.Contains(stdout.String(), "synthetic-public-code") || !strings.Contains(stdout.String(), "https://www.amazon.com/code") {
 		t.Fatalf("auth link did not print the user approval code and URL: %s", stdout.String())
 	}
 
@@ -616,13 +616,13 @@ func exchangeByOperation(t *testing.T, exchanges []replay.SyntheticExchange, ope
 		}
 	}
 
+	var request replay.SyntheticRequest
+
 	t.Fatalf("paired fixture does not contain operation %q", operation)
 
 	return replay.SyntheticExchange{
 		Source: "", Operation: "",
-		Request: replay.SyntheticRequest{
-			Method: "", Origin: "", Host: "", EscapedPath: "", Query: nil, Headers: nil, Body: "",
-		},
+		Request:  request,
 		Response: replay.SyntheticResponse{Status: 0, Headers: nil, Body: ""},
 	}
 }
