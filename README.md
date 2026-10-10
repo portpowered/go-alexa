@@ -97,6 +97,12 @@ Create a reusable client with `WithRegion`, `WithTimeout`, endpoint overrides, a
 
 Errors use typed values such as `AuthenticationError`, `NetworkError`, `TokenError`, `BadRequestError`, and `HTTPError` in `alexaapimodels`; many wrapped errors preserve their cause with `Unwrap`. `ControlResponse`, `SubscribeResponse`, and `QualityOfServiceResponse` can also contain operation-level errors even when the HTTP request succeeded.
 
+CBL registrations must use a device name unique within the Amazon account, such
+as an application name followed by the generated device serial. Amazon's
+`DuplicateDeviceName` rejection becomes `CodePairDuplicateDeviceNameError`;
+clients can detect it with `errors.As` and start a fresh code-link flow using a
+new name. The error retains the HTTP status and omits provider diagnostics.
+
 ## Examples
 
 Runnable examples are in `cmd/examples/`:

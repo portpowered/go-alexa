@@ -37,6 +37,8 @@ func mapCodePairRegistrationError(err error) error {
 		return &alexaapimodels.CodePairDeniedError{}
 	case "InvalidDevice":
 		return &alexaapimodels.CodePairInvalidDeviceError{StatusCode: requestErr.StatusCode}
+	case "DuplicateDeviceName":
+		return &alexaapimodels.CodePairDuplicateDeviceNameError{StatusCode: requestErr.StatusCode}
 	default:
 		return &alexaapimodels.CodePairRegistrationError{StatusCode: requestErr.StatusCode}
 	}

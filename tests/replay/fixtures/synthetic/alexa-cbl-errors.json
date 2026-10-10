@@ -141,6 +141,34 @@
   },
   {
     "source": "synthetic",
+    "operation": "duplicate-name",
+    "request": {
+      "method": "POST",
+      "origin": "https://api.amazon.com",
+      "escaped_path": "/auth/register",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"auth_data\":{\"code_pair\":{\"private_code\":\"synthetic-private\",\"public_code\":\"PUBLIC\"}},\"registration_data\":{\"app_name\":\"Client SDK\",\"app_version\":\"1.0\",\"device_model\":\"Client SDK\",\"device_name\":\"go-alexa CLI\",\"device_serial\":\"ABCDEF1234567\",\"device_type\":\"A2IVLV5VM2W81\",\"domain\":\"Device\",\"os_version\":\"0\"},\"requested_token_type\":[\"bearer\"]}"
+    },
+    "response": {
+      "status": 400,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"response\":{\"error\":{\"code\":\"DuplicateDeviceName\",\"message\":\"synthetic-private-name\",\"index\":\"synthetic-private-index\"}},\"request_id\":\"synthetic-private-request\"}"
+    }
+  },
+  {
+    "source": "synthetic",
     "operation": "invalid-name",
     "request": {
       "method": "POST",

@@ -2,6 +2,18 @@ package alexaapimodels
 
 import "fmt"
 
+// CodePairDuplicateDeviceNameError indicates an existing registration uses the
+// requested device name. Retry a new code-link flow with a unique device name.
+//
+//modelinventory:semantic Public code-link failure classification with no provider payload.
+type CodePairDuplicateDeviceNameError struct {
+	StatusCode int
+}
+
+func (e *CodePairDuplicateDeviceNameError) Error() string {
+	return fmt.Sprintf("code-based linking device name already exists (status %d)", e.StatusCode)
+}
+
 // CodePairInvalidDeviceError indicates that Amazon rejected device metadata.
 // It does not attribute the rejection to an individual metadata field.
 //
