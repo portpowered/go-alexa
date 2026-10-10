@@ -10,12 +10,15 @@ func TestWholeHomeGroupsSurviveGraphQLLeftJoin(t *testing.T) {
 	t.Parallel()
 
 	var device alexamodels.DeviceV2
+
 	device.DeviceFamily = string(alexamodels.WholeHomeDeviceFamily)
 	device.DeviceType, device.DeviceAccountId, device.SerialNumber = "synthetic-group-type", "synthetic-group-account", "synthetic-group"
 	device.AccountName = "Synthetic audio group"
 	device.ClusterMembers = []string{"synthetic-speaker"}
 	device.Capabilities = []string{alexamodels.AudioPlayerCapability, alexamodels.VolumeSettingCapability}
+
 	var other alexamodels.DeviceV2
+
 	other.DeviceFamily, other.DeviceType, other.SerialNumber = "ECHO", "echo", "missing-echo"
 
 	endpoints := mergeWholeHomeGroups(nil, []alexamodels.DeviceV2{device, other})
