@@ -49,3 +49,18 @@ func TestCodePairServerErrorsCannotMasqueradeAsDeviceFailures(t *testing.T) {
 		t.Fatal("server failure lost generation status")
 	}
 }
+
+func TestCodePairDuplicateNameServerResponseRetainsServerClassification(t *testing.T) {
+	t.Parallel()
+
+	err := mapCodePairRegistrationError(&UnauthenticatedRequestError{
+		StatusCode: http.StatusServiceUnavailable,
+		Body:       `{"response":{"error":{"code":"DuplicateDeviceName"}}}`,
+	})
+
+	var failure *alexaapimodels.CodePairRegistrationError
+
+	if !errors.As(err, &failure) || failure.StatusCode != http.StatusServiceUnavailable {
+		t.Fatal("server failure misclassified as duplicate device name")
+	}
+}

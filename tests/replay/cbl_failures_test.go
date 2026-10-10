@@ -35,6 +35,7 @@ func TestSyntheticCBLTypedFailures(t *testing.T) {
 		{"invalid-pair", new(*alexaapimodels.CodePairExpiredError)},
 		{"denied", new(*alexaapimodels.CodePairDeniedError)},
 		{"invalid-device", new(*alexaapimodels.CodePairInvalidDeviceError)},
+		{"duplicate-name", new(*alexaapimodels.CodePairDuplicateDeviceNameError)},
 		{"invalid-name", new(*alexaapimodels.CodePairInvalidDeviceError)},
 		{"prefixed-serial", new(*alexaapimodels.CodePairInvalidDeviceError)},
 		{"unknown", new(*alexaapimodels.CodePairRegistrationError)},
@@ -81,6 +82,10 @@ func assertCBLFailureStatus(t *testing.T, target any) {
 	t.Helper()
 
 	switch typed := target.(type) {
+	case **alexaapimodels.CodePairDuplicateDeviceNameError:
+		if (*typed).StatusCode != http.StatusBadRequest {
+			t.Fatal("duplicate device name lost HTTP status")
+		}
 	case **alexaapimodels.CodePairInvalidDeviceError:
 		if (*typed).StatusCode != http.StatusBadRequest {
 			t.Fatal("invalid device lost HTTP status")

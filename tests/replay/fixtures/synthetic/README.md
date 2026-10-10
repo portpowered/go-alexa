@@ -14,7 +14,10 @@ The OpenAPI `openAuthorizationPage` operation is a caller-facing URL for browser
 ## CBL failure cases
 
 `alexa-cbl-errors.json` contains hand-authored responses for pending, expired,
-denied, invalid-device, malformed, and unknown CBL failures. Invalid name and
+denied, invalid-device, duplicate-device-name, malformed, and unknown CBL failures.
+The duplicate-name case models the HTTP 400 `DuplicateDeviceName` classification
+observed during an authorized Port OS login on 2026-10-10. Its payload and
+identities are synthetic; it is not a captured wire trace. Invalid name and
 prefixed serial cases are synthetic examples of metadata rejection, not live
 evidence that Amazon rejects precisely those inputs. Their requests match exact
 fixed identities and profile fields. They verify public error types and ensure
