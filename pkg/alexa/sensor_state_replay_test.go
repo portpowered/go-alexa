@@ -16,6 +16,7 @@ func TestListEndpoints_SensorStatesPairedSyntheticReplay(t *testing.T) {
 	t.Parallel()
 
 	fixture := filepath.Join("..", "..", "tests", "replay", "fixtures", "synthetic", "alexa-sensor-states.json")
+
 	player, err := replay.LoadSyntheticReplay(fixture)
 	if err != nil {
 		t.Fatal(err)
@@ -33,7 +34,8 @@ func TestListEndpoints_SensorStatesPairedSyntheticReplay(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		if closeErr := session.Close(); closeErr != nil {
+		closeErr := session.Close()
+		if closeErr != nil {
 			t.Error(closeErr)
 		}
 	})
@@ -50,34 +52,34 @@ func TestListEndpoints_SensorStatesPairedSyntheticReplay(t *testing.T) {
 		{"unavailable detection", "motionSensor", `null`, "ENDPOINT_UNREACHABLE"},
 		{"value-only illuminance", "lightSensor", `{"value":235.5}`, ""},
 	} {
-		// The shared fixture orders exchanges; subtests deliberately run serially.
-		t.Run(test.name, func(t *testing.T) {
-			response, readErr := session.ListEndpoints(context.Background(), alexaapimodels.EndpointQuery{
-				EndpointIDs: []string{"synthetic-sensor"},
-				IncludeFields: &alexaapimodels.EndpointIncludeFields{
-					Properties: true,
-					Features:   true,
-				},
-			})
-			if readErr != nil {
-				t.Fatal(readErr)
-			}
-
-			property := replaySensorProperty(t, response, test.feature)
-			value, marshalErr := json.Marshal(property.StateValue)
-			if marshalErr != nil {
-				t.Fatal(marshalErr)
-			}
-
-			if string(value) != test.value {
-				t.Errorf("state value = %s, want %s", value, test.value)
-			}
-
-			assertReplaySensorMetadata(t, property, test.errorType)
+		// The shared fixture orders exchanges; each read finishes before the next.
+		response, readErr := session.ListEndpoints(context.Background(), alexaapimodels.EndpointQuery{
+			EndpointIDs: []string{"synthetic-sensor"},
+			IncludeFields: &alexaapimodels.EndpointIncludeFields{
+				Properties: true,
+				Features:   true,
+			},
 		})
+		if readErr != nil {
+			t.Fatalf("%s: %v", test.name, readErr)
+		}
+
+		property := replaySensorProperty(t, response, test.feature)
+
+		value, marshalErr := json.Marshal(property.StateValue)
+		if marshalErr != nil {
+			t.Fatalf("%s: %v", test.name, marshalErr)
+		}
+
+		if string(value) != test.value {
+			t.Errorf("%s: state value = %s, want %s", test.name, value, test.value)
+		}
+
+		assertReplaySensorMetadata(t, property, test.errorType)
 	}
 
-	if err := player.AssertConsumed(); err != nil {
+	err = player.AssertConsumed()
+	if err != nil {
 		t.Fatal(err)
 	}
 }

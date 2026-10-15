@@ -15,6 +15,7 @@ func TestListEndpoints_AirQualityFallbackPreservesRangeConfiguration(t *testing.
 	t.Parallel()
 
 	fixture := filepath.Join("..", "..", "tests", "replay", "fixtures", "synthetic", "alexa-aqm-discovery.json")
+
 	player, err := replay.LoadSyntheticReplay(fixture)
 	if err != nil {
 		t.Fatal(err)
@@ -33,7 +34,8 @@ func TestListEndpoints_AirQualityFallbackPreservesRangeConfiguration(t *testing.
 	}
 
 	t.Cleanup(func() {
-		if closeErr := session.Close(); closeErr != nil {
+		closeErr := session.Close()
+		if closeErr != nil {
 			t.Error(closeErr)
 		}
 	})
@@ -43,7 +45,8 @@ func TestListEndpoints_AirQualityFallbackPreservesRangeConfiguration(t *testing.
 		t.Fatal(err)
 	}
 
-	if err := player.AssertConsumed(); err != nil {
+	err = player.AssertConsumed()
+	if err != nil {
 		t.Fatal(err)
 	}
 

@@ -813,12 +813,6 @@ func extractCoreStateValue(prop gqlStatePropertyFeatureProperty) (interface{}, b
 		return propertyValue.PowerLevelValue, true
 	case *gqlStatePropertyLock:
 		return propertyValue.LockState, true
-	case *gqlStatePropertyDetectionState:
-		if propertyValue.DetectionStateValue == nil {
-			return nil, true
-		}
-
-		return *propertyValue.DetectionStateValue, true
 	case *gqlStatePropertyMode:
 		return propertyValue.ModeValue, true
 	case *gqlStatePropertyRangeValue:
@@ -841,6 +835,12 @@ func extractCoreStateValue(prop gqlStatePropertyFeatureProperty) (interface{}, b
 
 func extractExtendedStateValue(prop gqlStatePropertyFeatureProperty) (interface{}, bool) {
 	switch propertyValue := prop.(type) {
+	case *gqlStatePropertyDetectionState:
+		if propertyValue.DetectionStateValue == nil {
+			return nil, true
+		}
+
+		return *propertyValue.DetectionStateValue, true
 	case *gqlStatePropertyArmState:
 		return propertyValue.ArmStateValue, true
 	case *gqlStatePropertyActionState:
