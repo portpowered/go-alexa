@@ -23,6 +23,23 @@ The user-recorded successful CBL exchange from 2026-10-10 is sanitized under `te
 
 Other maintainer-reported account tests have no recorded operation list, dates, results, or captures here. Keep future captures in an explicitly named `captured` directory with a neighboring provenance note, and remove tokens, cookies, personal data, customer IDs, and device IDs before adding them. Do not use a capture as evidence if its source or collection date is unknown.
 
+`TestListEndpoints_SensorStatesPairedSyntheticReplay` uses the public session
+API and exact paired HTTP requests to verify motion/contact detection decoding,
+including timestamps, missing values and property errors. The `DetectionState`
+selection is supported by the 2026-10-10 introspection snapshot, which declares
+`detectionStateValue` and `DETECTED`, `NOT_DETECTED`, and `UNKNOWN`. Its replay
+responses, including a future enum value, are synthetic. This proves SDK
+selection and projection, not an observed sensor read. The same replay preserves
+the schema's value-only `IlluminanceStateValue`; the snapshot supplies neither a
+`scale` field nor a documented unit, so the SDK does not invent one.
+
+`TestListEndpoints_AirQualityFallbackPreservesRangeConfiguration` replays the
+public discovery path with no generic endpoints, one dedicated air-quality
+monitor and empty REST metadata. It checks that the `ListEndpoints` operation
+selects range configuration and that its fallback conversion retains the
+returned label, unit, bounds, precision and presets. The query is checked
+against the dated schema snapshot; the request/response pairs are synthetic.
+
 The live integration tests in `test/integration` run only when `ALEXA_REFRESH_TOKEN` is set; otherwise they skip. They are not part of credential-free CI. Use a disposable account for live testing and do not commit its credentials or output.
 
 ## Documentation and schema

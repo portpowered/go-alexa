@@ -1,0 +1,92 @@
+[
+  {
+    "source": "synthetic",
+    "operation": "Endpoints",
+    "request": {
+      "method": "POST",
+      "origin": "https://graphql.synthetic.test",
+      "escaped_path": "/nexus/v1/graphql",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-graphql-token"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"operationName\":\"Endpoints\",\"query\":\"\\nquery Endpoints ($input: EndpointsQueryParams!) {\\n\\tendpoints(endpointsQueryParams: $input) {\\n\\t\\titems {\\n\\t\\t\\tid\\n\\t\\t\\tendpointId\\n\\t\\t\\tfriendlyName\\n\\t\\t\\tcreationTime\\n\\t\\t\\tisEnabled\\n\\t\\t\\tenablement\\n\\t\\t\\tdmsIdentifier {\\n\\t\\t\\t\\tdeviceType\\n\\t\\t\\t\\tdsn\\n\\t\\t\\t}\\n\\t\\t\\tdescription {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tmanufacturer {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tfriendlyNameObject {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t}\\n\\t\\t\\tmodel {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tserialNumber {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tassociatedUnits {\\n\\t\\t\\t\\tid\\n\\t\\t\\t}\\n\\t\\t\\tdisplayCategories {\\n\\t\\t\\t\\tall {\\n\\t\\t\\t\\t\\tisCustomerSpecified\\n\\t\\t\\t\\t\\tisDiscovered\\n\\t\\t\\t\\t\\tsources\\n\\t\\t\\t\\t\\tvalue\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\tprimary {\\n\\t\\t\\t\\t\\tisCustomerSpecified\\n\\t\\t\\t\\t\\tisDiscovered\\n\\t\\t\\t\\t\\tsources\\n\\t\\t\\t\\t\\tvalue\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tfeatures {\\n\\t\\t\\t\\tname\\n\\t\\t\\t\\tinstance\\n\\t\\t\\t\\tconfiguration {\\n\\t\\t\\t\\t\\t__typename\\n\\t\\t\\t\\t\\t... on ThermostatConfiguration {\\n\\t\\t\\t\\t\\t\\tsupportedModes\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t... on ModeConfiguration {\\n\\t\\t\\t\\t\\t\\torder\\n\\t\\t\\t\\t\\t\\tfriendlyName {\\n\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tmodeOptions {\\n\\t\\t\\t\\t\\t\\t\\tvalue\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t... on ToggleConfiguration {\\n\\t\\t\\t\\t\\t\\tfriendlyName {\\n\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t... on RangeConfiguration {\\n\\t\\t\\t\\t\\t\\tfriendlyName {\\n\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tsupportedRange {\\n\\t\\t\\t\\t\\t\\t\\tminimumValue\\n\\t\\t\\t\\t\\t\\t\\tmaximumValue\\n\\t\\t\\t\\t\\t\\t\\tprecision\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tunitOfMeasure {\\n\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tpresets {\\n\\t\\t\\t\\t\\t\\t\\trangeValue\\n\\t\\t\\t\\t\\t\\t\\tpresetResources {\\n\\t\\t\\t\\t\\t\\t\\t\\tfriendlyName {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t... on SecurityPanelConfiguration {\\n\\t\\t\\t\\t\\t\\tsupportedArmStates {\\n\\t\\t\\t\\t\\t\\t\\tvalue\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tsupportedAuthorizationTypes {\\n\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t... on StatusCodeConfiguration {\\n\\t\\t\\t\\t\\t\\tsupportedCodes {\\n\\t\\t\\t\\t\\t\\t\\tcode\\n\\t\\t\\t\\t\\t\\t\\tdescriptions {\\n\\t\\t\\t\\t\\t\\t\\t\\tprimary {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t... on ActionConfiguration {\\n\\t\\t\\t\\t\\t\\taction {\\n\\t\\t\\t\\t\\t\\t\\tsupportedStates\\n\\t\\t\\t\\t\\t\\t\\tcategoryLabel {\\n\\t\\t\\t\\t\\t\\t\\t\\tfriendlyNames {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\tsupportedActions {\\n\\t\\t\\t\\t\\t\\t\\t\\tid\\n\\t\\t\\t\\t\\t\\t\\t\\tfriendlyNames {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\ttarget {\\n\\t\\t\\t\\t\\t\\t\\tcategoryLabel {\\n\\t\\t\\t\\t\\t\\t\\t\\tfriendlyNames {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\tsupportedTargets {\\n\\t\\t\\t\\t\\t\\t\\t\\tid\\n\\t\\t\\t\\t\\t\\t\\t\\tfriendlyNames {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t... on SecurityPanelAlertConfiguration {\\n\\t\\t\\t\\t\\t\\talerts {\\n\\t\\t\\t\\t\\t\\t\\tdefaultPlaylistId\\n\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tassets {\\n\\t\\t\\t\\t\\t\\t\\tid\\n\\t\\t\\t\\t\\t\\t\\turl\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tplaylists {\\n\\t\\t\\t\\t\\t\\t\\tid\\n\\t\\t\\t\\t\\t\\t\\tplayOrder {\\n\\t\\t\\t\\t\\t\\t\\t\\tassetId\\n\\t\\t\\t\\t\\t\\t\\t\\tloopCount\\n\\t\\t\\t\\t\\t\\t\\t\\tloopPauseInMilliseconds\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\tsemantics {\\n\\t\\t\\t\\t\\t__typename\\n\\t\\t\\t\\t\\t... on StatusCodeSemantics {\\n\\t\\t\\t\\t\\t\\tcodeToStatusesMappings {\\n\\t\\t\\t\\t\\t\\t\\tcode\\n\\t\\t\\t\\t\\t\\t\\tstatuses\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\tfeatureOperations {\\n\\t\\t\\t\\t\\tname\\n\\t\\t\\t\\t\\tverificationsRequired {\\n\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\toperations {\\n\\t\\t\\t\\t\\tname\\n\\t\\t\\t\\t\\tverificationsRequired {\\n\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\toperations {\\n\\t\\t\\t\\tname\\n\\t\\t\\t}\\n\\t\\t\\tlegacyAppliance {\\n\\t\\t\\t\\tapplianceId\\n\\t\\t\\t\\tapplianceTypes\\n\\t\\t\\t\\tendpointTypeId\\n\\t\\t\\t\\tfriendlyName\\n\\t\\t\\t\\tfriendlyDescription\\n\\t\\t\\t\\tmanufacturerName\\n\\t\\t\\t\\tconnectedVia\\n\\t\\t\\t\\tmodelName\\n\\t\\t\\t\\tentityId\\n\\t\\t\\t\\tactions\\n\\t\\t\\t\\tmergedApplianceIds\\n\\t\\t\\t\\tcapabilities\\n\\t\\t\\t\\tapplianceNetworkState\\n\\t\\t\\t\\tversion\\n\\t\\t\\t\\tisEnabled\\n\\t\\t\\t\\tcustomerDefinedDeviceType\\n\\t\\t\\t\\tcustomerPreference\\n\\t\\t\\t\\talexaDeviceIdentifierList\\n\\t\\t\\t\\taliases\\n\\t\\t\\t\\tdriverIdentity\\n\\t\\t\\t\\tadditionalApplianceDetails\\n\\t\\t\\t\\tisConsentRequired\\n\\t\\t\\t\\tapplianceKey\\n\\t\\t\\t\\tappliancePairs\\n\\t\\t\\t\\tdeduplicatedPairs\\n\\t\\t\\t\\tentityPairs\\n\\t\\t\\t\\tdeduplicatedAliasesByEntityId\\n\\t\\t\\t\\trelations\\n\\t\\t\\t}\\n\\t\\t}\\n\\t}\\n}\\n\",\"variables\":{\"input\":{\"featureLatencyTolerance\":\"LOW\",\"filters\":null,\"includeHouseholdDevices\":false,\"paginationParams\":{\"disablePagination\":true,\"nextToken\":\"\",\"pageSize\":50}}}}"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"data\":{\"endpoints\":{\"items\":[]}}}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "ListEndpoints",
+    "request": {
+      "method": "POST",
+      "origin": "https://graphql.synthetic.test",
+      "escaped_path": "/nexus/v1/graphql",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-graphql-token"
+        ],
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"operationName\":\"ListEndpoints\",\"query\":\"\\nquery ListEndpoints ($input: ListEndpointsInput!) {\\n\\tlistEndpoints(listEndpointsInput: $input) {\\n\\t\\tendpoints {\\n\\t\\t\\tid\\n\\t\\t\\tendpointId\\n\\t\\t\\tparentComponent {\\n\\t\\t\\t\\tid\\n\\t\\t\\t\\tfriendlyNameObject {\\n\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tchildComponents {\\n\\t\\t\\t\\tid\\n\\t\\t\\t\\tfriendlyNameObject {\\n\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tdmsIdentifier {\\n\\t\\t\\t\\tdeviceType\\n\\t\\t\\t\\tdsn\\n\\t\\t\\t}\\n\\t\\t\\tdescription {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tmanufacturer {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tfriendlyName\\n\\t\\t\\tfriendlyNameObject {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tmodel {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tserialNumber {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tsoftwareVersion {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tcreationTime\\n\\t\\t\\tassociatedUnits {\\n\\t\\t\\t\\tid\\n\\t\\t\\t}\\n\\t\\t\\talexaEnabledMetadata {\\n\\t\\t\\t\\tcategory\\n\\t\\t\\t\\ticonId\\n\\t\\t\\t\\tisVisible\\n\\t\\t\\t\\tcapabilities\\n\\t\\t\\t}\\n\\t\\t\\tdisplayCategories {\\n\\t\\t\\t\\tall {\\n\\t\\t\\t\\t\\tvalue\\n\\t\\t\\t\\t\\tsources\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\tprimary {\\n\\t\\t\\t\\t\\tvalue\\n\\t\\t\\t\\t\\tsources\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\tenablement\\n\\t\\t\\tconnections {\\n\\t\\t\\t\\ttype\\n\\t\\t\\t\\tmacAddress\\n\\t\\t\\t\\tbleMeshDeviceUuid\\n\\t\\t\\t}\\n\\t\\t\\tfeatures {\\n\\t\\t\\t\\tname\\n\\t\\t\\t\\tinstance\\n\\t\\t\\t\\tconfiguration {\\n\\t\\t\\t\\t\\t__typename\\n\\t\\t\\t\\t\\t... on RangeConfiguration {\\n\\t\\t\\t\\t\\t\\tfriendlyName {\\n\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tsupportedRange {\\n\\t\\t\\t\\t\\t\\t\\tminimumValue\\n\\t\\t\\t\\t\\t\\t\\tmaximumValue\\n\\t\\t\\t\\t\\t\\t\\tprecision\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tunitOfMeasure {\\n\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\tpresets {\\n\\t\\t\\t\\t\\t\\t\\trangeValue\\n\\t\\t\\t\\t\\t\\t\\tpresetResources {\\n\\t\\t\\t\\t\\t\\t\\t\\tfriendlyName {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t\\t\\t\\t\\tvalue {\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\ttext\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\tlocale\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t\\toperations {\\n\\t\\t\\t\\t\\tname\\n\\t\\t\\t\\t\\tverificationsRequired {\\n\\t\\t\\t\\t\\t\\ttype\\n\\t\\t\\t\\t\\t}\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t\\toperations {\\n\\t\\t\\t\\tname\\n\\t\\t\\t}\\n\\t\\t\\tendpointReports {\\n\\t\\t\\t\\treporter {\\n\\t\\t\\t\\t\\tid\\n\\t\\t\\t\\t\\tnamespace\\n\\t\\t\\t\\t\\tskillStage\\n\\t\\t\\t\\t}\\n\\t\\t\\t}\\n\\t\\t}\\n\\t\\tpaginationInfo {\\n\\t\\t\\ttotalCount\\n\\t\\t\\tnextToken\\n\\t\\t}\\n\\t\\tcompleteResult\\n\\t}\\n}\\n\",\"variables\":{\"input\":{\"displayCategory\":\"AIR_QUALITY_MONITOR\",\"filterExpressions\":null,\"paginationParams\":{\"disablePagination\":true,\"nextToken\":\"\",\"pageSize\":50}}}}"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"data\":{\"listEndpoints\":{\"endpoints\":[{\"id\":\"synthetic-aqm\",\"endpointId\":\"synthetic-aqm\",\"displayCategories\":{\"primary\":{\"value\":\"AIR_QUALITY_MONITOR\"}},\"features\":[{\"name\":\"range\",\"instance\":\"Air Quality.pm25\",\"configuration\":{\"__typename\":\"RangeConfiguration\",\"friendlyName\":{\"type\":\"PLAIN\",\"value\":{\"text\":\"PM2.5\",\"locale\":\"en-US\"}},\"unitOfMeasure\":{\"type\":\"PLAIN\",\"value\":{\"text\":\"ug/m3\",\"locale\":\"en-US\"}},\"supportedRange\":{\"minimumValue\":0,\"maximumValue\":1000,\"precision\":0.1},\"presets\":[{\"rangeValue\":5,\"presetResources\":{\"friendlyName\":{\"type\":\"PLAIN\",\"value\":{\"text\":\"Low\",\"locale\":\"en-US\"}}}}]},\"operations\":[]}]}],\"completeResult\":true,\"paginationInfo\":{\"totalCount\":1,\"nextToken\":\"\"}}}}"
+    }
+  },
+  {
+    "source": "synthetic",
+    "operation": "listFirstPartyDevices",
+    "request": {
+      "method": "GET",
+      "origin": "https://web.synthetic.test",
+      "escaped_path": "/api/devices-v2/device",
+      "query": {},
+      "headers": {
+        "Accept": [
+          "application/json"
+        ],
+        "Authorization": [
+          "Bearer synthetic-graphql-token"
+        ]
+      },
+      "body": ""
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"devices\":[]}"
+    }
+  }
+]

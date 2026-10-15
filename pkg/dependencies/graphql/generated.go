@@ -554,6 +554,42 @@ query ListEndpoints ($input: ListEndpointsInput!) {
 			features {
 				name
 				instance
+				configuration {
+					__typename
+					... on RangeConfiguration {
+						friendlyName {
+							type
+							value {
+								text
+								locale
+							}
+						}
+						supportedRange {
+							minimumValue
+							maximumValue
+							precision
+						}
+						unitOfMeasure {
+							type
+							value {
+								text
+								locale
+							}
+						}
+						presets {
+							rangeValue
+							presetResources {
+								friendlyName {
+									type
+									value {
+										text
+										locale
+									}
+								}
+							}
+						}
+					}
+				}
 				operations {
 					name
 					verificationsRequired {
@@ -963,6 +999,19 @@ query ListEndpointsWithStates ($input: ListEndpointsInput!) {
 						accuracy
 						type
 						lockState
+						error {
+							type
+							message
+						}
+					}
+					... on DetectionState {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						detectionStateValue
 						error {
 							type
 							message
