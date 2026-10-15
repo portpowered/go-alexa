@@ -11,7 +11,7 @@ make check
 make generate
 ```
 
-`make check` runs `go vet`, builds the packages and examples, and runs tests with the race detector. CI regenerates the GraphQL client and the OpenAPI/AsyncAPI wire models, then fails if generated output or module metadata is stale. These checks do not require Amazon credentials.
+`make check` runs `go vet`, builds the packages and examples, and runs tests with the race detector. SDK and CLI test gates use `-count=1` so the CLI always replays shared fixtures stored outside its module, even when its Go source has not changed. CI regenerates the GraphQL client and the OpenAPI/AsyncAPI wire models, then fails if generated output or module metadata is stale. These checks do not require Amazon credentials.
 
 ## Fixture provenance
 
