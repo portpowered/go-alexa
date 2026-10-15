@@ -19,6 +19,13 @@ These files are hand-authored test scenarios frozen from explicit synthetic inpu
   exercise preservation of range names, units, bounds, precision and presets.
   The selection validates against the dated live schema; the example metadata
   and fallback result are synthetic, not captured device discovery.
+- `alexa-property-errors.json`: two public selected-state reads cover all 31
+  explicitly selected property variants, first with null errors and then with
+  distinct provider errors. Color, color temperature, setpoint and humidity
+  retain returned values alongside their errors. This schema-shaped union
+  matrix uses one synthetic feature to exercise projection; it is not an
+  observed device profile. All selected error fields exist in the dated live
+  schema snapshot. The requests match the complete frozen operation document.
 - `alexa-events.json`: ordered stream-open response with a directive frame, then the initial keepalive ping and response.
 - `alexa-events-http2.json`: the same stream and ping through the pinned HTTP/2 codec over `net.Pipe`, including its default user-agent header. This tests connection injection and application framing without network access.
 

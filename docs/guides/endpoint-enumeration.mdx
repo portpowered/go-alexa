@@ -32,6 +32,11 @@ provider identities, and supplement missing air-quality sensor properties only
 for the selected identities. Discovery remains responsible for physical device
 and owner context. Unavailable properties remain distinct from measured zero.
 
+Inspect each property's `Error` before using its `StateValue`. A provider can
+return an error alongside a value. The SDK retains existing per-type value
+behavior, including suppressing range values on error. A nonempty provider
+error type is exposed through `FeatureProperty.Error`.
+
 ## API reference
 
 - GraphQL: [list endpoint data](../../graphql/operations/query/listendpoints/) and [query endpoint collections](../../graphql/operations/query/endpoints/).
