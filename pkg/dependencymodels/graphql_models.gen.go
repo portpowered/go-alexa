@@ -6032,14 +6032,15 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 
 // ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarm includes the requested fields of the GraphQL type CarbonMonoxideAlarm.
 type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarm struct {
-	Typename                 string       `json:"__typename"`
-	Name                     string       `json:"name"`
-	Accuracy                 Accuracy     `json:"accuracy"`
-	Type                     PropertyType `json:"type"`
-	Timestamp                int64        `json:"timestamp"`
-	TimeOfSample             string       `json:"timeOfSample"`
-	TimeOfLastChange         string       `json:"timeOfLastChange"`
-	CarbonMonoxideAlarmValue AlarmValue   `json:"carbonMonoxideAlarmValue"`
+	Typename                 string                                                                                                                                   `json:"__typename"`
+	Name                     string                                                                                                                                   `json:"name"`
+	Accuracy                 Accuracy                                                                                                                                 `json:"accuracy"`
+	Type                     PropertyType                                                                                                                             `json:"type"`
+	Timestamp                int64                                                                                                                                    `json:"timestamp"`
+	TimeOfSample             string                                                                                                                                   `json:"timeOfSample"`
+	TimeOfLastChange         string                                                                                                                                   `json:"timeOfLastChange"`
+	CarbonMonoxideAlarmValue AlarmValue                                                                                                                               `json:"carbonMonoxideAlarmValue"`
+	Error                    ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarmErrorErrorResponse `json:"error"`
 }
 
 // GetTypename returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarm.Typename, and is useful for accessing the field via an interface.
@@ -6082,6 +6083,27 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 	return v.CarbonMonoxideAlarmValue
 }
 
+// GetError returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarm.Error, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarm) GetError() ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarmErrorErrorResponse {
+	return v.Error
+}
+
+// ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarmErrorErrorResponse includes the requested fields of the GraphQL type ErrorResponse.
+type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarmErrorErrorResponse struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+}
+
+// GetType returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarmErrorErrorResponse.Type, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarmErrorErrorResponse) GetType() string {
+	return v.Type
+}
+
+// GetMessage returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarmErrorErrorResponse.Message, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarmErrorErrorResponse) GetMessage() string {
+	return v.Message
+}
+
 // ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColor includes the requested fields of the GraphQL type Color.
 type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColor struct {
 	Typename         string                                                                                                                            `json:"__typename"`
@@ -6092,6 +6114,7 @@ type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointF
 	TimeOfSample     string                                                                                                                            `json:"timeOfSample"`
 	TimeOfLastChange string                                                                                                                            `json:"timeOfLastChange"`
 	ColorStateValue  ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorColorStateValueColorValue `json:"colorStateValue"`
+	Error            ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorErrorErrorResponse        `json:"error"`
 }
 
 // GetTypename returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColor.Typename, and is useful for accessing the field via an interface.
@@ -6134,6 +6157,11 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 	return v.ColorStateValue
 }
 
+// GetError returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColor.Error, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColor) GetError() ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorErrorErrorResponse {
+	return v.Error
+}
+
 // ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorColorStateValueColorValue includes the requested fields of the GraphQL type ColorValue.
 type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorColorStateValueColorValue struct {
 	Hue        float64 `json:"hue"`
@@ -6156,16 +6184,33 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 	return v.Brightness
 }
 
+// ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorErrorErrorResponse includes the requested fields of the GraphQL type ErrorResponse.
+type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorErrorErrorResponse struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+}
+
+// GetType returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorErrorErrorResponse.Type, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorErrorErrorResponse) GetType() string {
+	return v.Type
+}
+
+// GetMessage returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorErrorErrorResponse.Message, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorErrorErrorResponse) GetMessage() string {
+	return v.Message
+}
+
 // ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperature includes the requested fields of the GraphQL type ColorTemperature.
 type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperature struct {
-	Typename                           string       `json:"__typename"`
-	Name                               string       `json:"name"`
-	Accuracy                           Accuracy     `json:"accuracy"`
-	Type                               PropertyType `json:"type"`
-	Timestamp                          int64        `json:"timestamp"`
-	TimeOfSample                       string       `json:"timeOfSample"`
-	TimeOfLastChange                   string       `json:"timeOfLastChange"`
-	ColorTemperatureInKelvinStateValue int          `json:"colorTemperatureInKelvinStateValue"`
+	Typename                           string                                                                                                                                `json:"__typename"`
+	Name                               string                                                                                                                                `json:"name"`
+	Accuracy                           Accuracy                                                                                                                              `json:"accuracy"`
+	Type                               PropertyType                                                                                                                          `json:"type"`
+	Timestamp                          int64                                                                                                                                 `json:"timestamp"`
+	TimeOfSample                       string                                                                                                                                `json:"timeOfSample"`
+	TimeOfLastChange                   string                                                                                                                                `json:"timeOfLastChange"`
+	ColorTemperatureInKelvinStateValue int                                                                                                                                   `json:"colorTemperatureInKelvinStateValue"`
+	Error                              ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperatureErrorErrorResponse `json:"error"`
 }
 
 // GetTypename returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperature.Typename, and is useful for accessing the field via an interface.
@@ -6206,6 +6251,27 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 // GetColorTemperatureInKelvinStateValue returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperature.ColorTemperatureInKelvinStateValue, and is useful for accessing the field via an interface.
 func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperature) GetColorTemperatureInKelvinStateValue() int {
 	return v.ColorTemperatureInKelvinStateValue
+}
+
+// GetError returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperature.Error, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperature) GetError() ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperatureErrorErrorResponse {
+	return v.Error
+}
+
+// ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperatureErrorErrorResponse includes the requested fields of the GraphQL type ErrorResponse.
+type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperatureErrorErrorResponse struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+}
+
+// GetType returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperatureErrorErrorResponse.Type, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperatureErrorErrorResponse) GetType() string {
+	return v.Type
+}
+
+// GetMessage returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperatureErrorErrorResponse.Message, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperatureErrorErrorResponse) GetMessage() string {
+	return v.Message
 }
 
 // ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDelayState includes the requested fields of the GraphQL type DelayState.

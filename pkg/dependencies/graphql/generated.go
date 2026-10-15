@@ -873,6 +873,10 @@ query ListEndpointsWithStates ($input: ListEndpointsInput!) {
 						timeOfLastChange
 						type
 						carbonMonoxideAlarmValue
+						error {
+							type
+							message
+						}
 					}
 					... on Color {
 						name
@@ -886,6 +890,10 @@ query ListEndpointsWithStates ($input: ListEndpointsInput!) {
 							saturation
 							brightness
 						}
+						error {
+							type
+							message
+						}
 					}
 					... on ColorTemperature {
 						name
@@ -895,6 +903,10 @@ query ListEndpointsWithStates ($input: ListEndpointsInput!) {
 						accuracy
 						type
 						colorTemperatureInKelvinStateValue
+						error {
+							type
+							message
+						}
 					}
 					... on Reachability {
 						name

@@ -236,6 +236,10 @@ query ListEndpointsWithStates(
 						timeOfLastChange
 						type
 						carbonMonoxideAlarmValue
+						error {
+							type
+							message
+						}
 					}
 					... on Color {
 						name
@@ -249,6 +253,10 @@ query ListEndpointsWithStates(
 							saturation
 							brightness
 						}
+						error {
+							type
+							message
+						}
 					}
 					... on ColorTemperature {
 						name
@@ -258,6 +266,10 @@ query ListEndpointsWithStates(
 						accuracy
 						type
 						colorTemperatureInKelvinStateValue
+						error {
+							type
+							message
+						}
 					}
 					... on Reachability {
 						name

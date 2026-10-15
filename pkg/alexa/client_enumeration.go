@@ -896,44 +896,84 @@ func extractRangeStateValue(
 func (c *Session) extractError(
 	prop gqlStatePropertyFeatureProperty,
 ) *alexaapimodels.PropertyError {
+	propertyError, supported := extractCorePropertyError(prop)
+	if supported {
+		return propertyError
+	}
+
+	return extractExtendedPropertyError(prop)
+}
+
+func extractCorePropertyError(prop gqlStatePropertyFeatureProperty) (*alexaapimodels.PropertyError, bool) {
 	switch propertyValue := prop.(type) {
 	case *gqlStatePropertyVolume:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyPower:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyBrightness:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
+	case *gqlStatePropertyColor:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
+	case *gqlStatePropertyColorTemperature:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyReachability:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyPercentage:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyPowerLevel:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyLock:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
-	case *gqlStatePropertyDetectionState:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyMode:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyRangeValue:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyToggleState:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyThermostatMode:
-		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
 	case *gqlStatePropertyTemperatureSensor:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message), true
+	default:
+		return nil, false
+	}
+}
+
+func extractExtendedPropertyError(prop gqlStatePropertyFeatureProperty) *alexaapimodels.PropertyError {
+	switch propertyValue := prop.(type) {
+	case *gqlStatePropertyDetectionState:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
 	case *gqlStatePropertyActionState:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertyArmState:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertyBattery:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
 	case *gqlStatePropertyBurglaryAlarm:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertyCarbonMonoxideAlarm:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
 	case *gqlStatePropertyFireAlarm:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertyGeolocation:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertyIlluminance:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
 	case *gqlStatePropertyNetworkThroughput:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertyRadioDiagnostics:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertyRelativeHumidity:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertySetpoint:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertySirenState:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
 	case *gqlStatePropertySnapshot:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
 	case *gqlStatePropertyStatusCode:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertyWaterAlarm:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
 	}
 

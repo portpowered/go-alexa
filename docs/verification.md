@@ -40,6 +40,19 @@ selects range configuration and that its fallback conversion retains the
 returned label, unit, bounds, precision and presets. The query is checked
 against the dated schema snapshot; the request/response pairs are synthetic.
 
+`TestListEndpoints_PreservesErrorsAcrossSelectedStateProperties` replays all
+31 explicitly selected property variants through the public session API. Each
+variant is checked with a null error and with a distinct nonempty provider
+error. The captured schema declares `error: ErrorResponse` on every selected
+type, including color, color temperature and carbon-monoxide alarm. The union
+matrix and values are synthetic. Error projection retains existing per-type
+value behavior: color, color temperature, setpoint and humidity retain returned
+values alongside errors, while range suppresses its value on error. Callers
+must inspect `FeatureProperty.Error` before using a value as a reading.
+Network throughput has no selected value and safely projects a nil state value
+with either a null error or a provider error. No units or error fields are
+inferred for unknown property types.
+
 The live integration tests in `test/integration` run only when `ALEXA_REFRESH_TOKEN` is set; otherwise they skip. They are not part of credential-free CI. Use a disposable account for live testing and do not commit its credentials or output.
 
 ## Documentation and schema
