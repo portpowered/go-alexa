@@ -4,6 +4,21 @@ These files are hand-authored test scenarios frozen from explicit synthetic inpu
 
 - `alexa-rest.json`: 18 dispatched REST routes, including both registration modes and all eight media command variants (26 ordered pairs).
 - `alexa-graphql.json`: all seven generated GraphQL documents sent through the GraphQL HTTP route.
+- `alexa-sensor-states.json`: public `Session.ListEndpoints` selected state reads
+  for motion/contact detection, unknown and future values, null/missing values,
+  a property error, and the value-only illuminance shape. Expected requests are
+  frozen copies of the reviewed query with explicit selected-read variables.
+  Detection fields and the known enum values follow the dated
+  [live schema snapshot](../../../../pkg/schemas/graphql/snapshots/README.md).
+  The future enum value and response variations are synthetic robustness cases,
+  not observed provider responses. Illuminance has no `scale` field in that
+  snapshot; its fixture deliberately adds no unit.
+- `alexa-aqm-discovery.json`: public `Session.ListEndpoints` discovery with an
+  empty generic endpoint result, a dedicated air-quality monitor response, then
+  empty REST metadata. The exact GraphQL selection and synthetic response
+  exercise preservation of range names, units, bounds, precision and presets.
+  The selection validates against the dated live schema; the example metadata
+  and fallback result are synthetic, not captured device discovery.
 - `alexa-events.json`: ordered stream-open response with a directive frame, then the initial keepalive ping and response.
 - `alexa-events-http2.json`: the same stream and ping through the pinned HTTP/2 codec over `net.Pipe`, including its default user-agent header. This tests connection injection and application framing without network access.
 

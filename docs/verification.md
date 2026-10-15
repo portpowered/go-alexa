@@ -11,7 +11,7 @@ make check
 make generate
 ```
 
-`make check` runs `go vet`, builds the packages and examples, and runs tests with the race detector. CI regenerates the GraphQL client and the OpenAPI/AsyncAPI wire models, then fails if generated output or module metadata is stale. These checks do not require Amazon credentials.
+`make check` runs `go vet`, builds the packages and examples, and runs tests with the race detector. SDK and CLI test gates use `-count=1` so the CLI always replays shared fixtures stored outside its module, even when its Go source has not changed. CI regenerates the GraphQL client and the OpenAPI/AsyncAPI wire models, then fails if generated output or module metadata is stale. These checks do not require Amazon credentials.
 
 ## Fixture provenance
 
@@ -22,6 +22,23 @@ Files under `pkg/alexa/testdata/` are synthetic inputs for offline conversion te
 The user-recorded successful CBL exchange from 2026-10-10 is sanitized under `tests/replay/fixtures/captured/cbl-login-20261010/`. Its provenance note records the source, operations, redactions, and observed profile. Replay checks code creation, registration, and refresh with a fixed 13-character replacement serial and exact names and profile fields. Negative controls reject altered serials, names, device types, and extra fields without consuming the expected response. This is evidence for one successful account/profile at that time, not the provider's complete device-validation rules. Separately labeled synthetic CBL failure pairs verify typed errors and diagnostic privacy.
 
 Other maintainer-reported account tests have no recorded operation list, dates, results, or captures here. Keep future captures in an explicitly named `captured` directory with a neighboring provenance note, and remove tokens, cookies, personal data, customer IDs, and device IDs before adding them. Do not use a capture as evidence if its source or collection date is unknown.
+
+`TestListEndpoints_SensorStatesPairedSyntheticReplay` uses the public session
+API and exact paired HTTP requests to verify motion/contact detection decoding,
+including timestamps, missing values and property errors. The `DetectionState`
+selection is supported by the 2026-10-10 introspection snapshot, which declares
+`detectionStateValue` and `DETECTED`, `NOT_DETECTED`, and `UNKNOWN`. Its replay
+responses, including a future enum value, are synthetic. This proves SDK
+selection and projection, not an observed sensor read. The same replay preserves
+the schema's value-only `IlluminanceStateValue`; the snapshot supplies neither a
+`scale` field nor a documented unit, so the SDK does not invent one.
+
+`TestListEndpoints_AirQualityFallbackPreservesRangeConfiguration` replays the
+public discovery path with no generic endpoints, one dedicated air-quality
+monitor and empty REST metadata. It checks that the `ListEndpoints` operation
+selects range configuration and that its fallback conversion retains the
+returned label, unit, bounds, precision and presets. The query is checked
+against the dated schema snapshot; the request/response pairs are synthetic.
 
 The live integration tests in `test/integration` run only when `ALEXA_REFRESH_TOKEN` is set; otherwise they skip. They are not part of credential-free CI. Use a disposable account for live testing and do not commit its credentials or output.
 

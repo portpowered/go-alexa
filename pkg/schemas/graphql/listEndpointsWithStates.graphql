@@ -367,6 +367,20 @@ query ListEndpointsWithStates(
 							message
 						}
 					}
+					... on DetectionState {
+						name
+						accuracy
+						timestamp
+						timeOfSample
+						timeOfLastChange
+						type
+						# @genqlient(pointer: true)
+						detectionStateValue
+						error {
+							type
+							message
+						}
+					}
 					... on Illuminance {
 						name
 						accuracy

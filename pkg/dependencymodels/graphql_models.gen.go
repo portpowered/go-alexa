@@ -207,6 +207,20 @@ var AllConnectionType = []ConnectionType{
 	ConnectionTypeUnknown,
 }
 
+type DetectionStateValue string
+
+const (
+	DetectionStateValueDetected    DetectionStateValue = "DETECTED"
+	DetectionStateValueNotDetected DetectionStateValue = "NOT_DETECTED"
+	DetectionStateValueUnknown     DetectionStateValue = "UNKNOWN"
+)
+
+var AllDetectionStateValue = []DetectionStateValue{
+	DetectionStateValueDetected,
+	DetectionStateValueNotDetected,
+	DetectionStateValueUnknown,
+}
+
 type DisplayCategorySource string
 
 const (
@@ -3419,9 +3433,10 @@ func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointEndpoin
 
 // ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature includes the requested fields of the GraphQL type Feature.
 type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature struct {
-	Name       string                                                                                                      `json:"name"`
-	Instance   string                                                                                                      `json:"instance"`
-	Operations []ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureOperationsFeatureOperation `json:"operations"`
+	Name          string                                                                                                      `json:"name"`
+	Instance      string                                                                                                      `json:"instance"`
+	Configuration ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration                `json:"-"`
+	Operations    []ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureOperationsFeatureOperation `json:"operations"`
 }
 
 // GetName returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature.Name, and is useful for accessing the field via an interface.
@@ -3434,9 +3449,573 @@ func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeature
 	return v.Instance
 }
 
+// GetConfiguration returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature.Configuration, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature) GetConfiguration() ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration {
+	return v.Configuration
+}
+
 // GetOperations returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature.Operations, and is useful for accessing the field via an interface.
 func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature) GetOperations() []ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureOperationsFeatureOperation {
 	return v.Operations
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature
+		Configuration json.RawMessage `json:"configuration"`
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	{
+		dst := &v.Configuration
+		src := firstPass.Configuration
+		if len(src) != 0 && string(src) != "null" {
+			err = __unmarshalListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration(
+				src, dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature.Configuration: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+type GraphQLpremarshalListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature struct {
+	Name string `json:"name"`
+
+	Instance string `json:"instance"`
+
+	Configuration json.RawMessage `json:"configuration"`
+
+	Operations []ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureOperationsFeatureOperation `json:"operations"`
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature) __premarshalJSON() (*GraphQLpremarshalListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature, error) {
+	var retval GraphQLpremarshalListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature
+
+	retval.Name = v.Name
+	retval.Instance = v.Instance
+	{
+
+		dst := &retval.Configuration
+		src := v.Configuration
+		var err error
+		*dst, err = __marshalListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration(
+			&src)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"unable to marshal ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature.Configuration: %w", err)
+		}
+	}
+	retval.Operations = v.Operations
+	return &retval, nil
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration includes the requested fields of the GraphQL interface Configuration.
+//
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration is implemented by the following types:
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationActionConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationDetectionEventsConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationModeConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRecordingProviderConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelAlertConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationStatusCodeConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationThermostatConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationToggleConfiguration
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationVideoSearchConfiguration
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration interface {
+	implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() string
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationActionConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationDetectionEventsConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationModeConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRecordingProviderConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelAlertConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationStatusCodeConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationThermostatConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationToggleConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationVideoSearchConfiguration) implementsGraphQLInterfaceListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration() {
+}
+
+func __unmarshalListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration(b []byte, v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "ActionConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationActionConfiguration)
+		return json.Unmarshal(b, *v)
+	case "DetectionEventsConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationDetectionEventsConfiguration)
+		return json.Unmarshal(b, *v)
+	case "ModeConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationModeConfiguration)
+		return json.Unmarshal(b, *v)
+	case "RangeConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration)
+		return json.Unmarshal(b, *v)
+	case "RecordingProviderConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRecordingProviderConfiguration)
+		return json.Unmarshal(b, *v)
+	case "SecurityPanelAlertConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelAlertConfiguration)
+		return json.Unmarshal(b, *v)
+	case "SecurityPanelConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelConfiguration)
+		return json.Unmarshal(b, *v)
+	case "StatusCodeConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationStatusCodeConfiguration)
+		return json.Unmarshal(b, *v)
+	case "ThermostatConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationThermostatConfiguration)
+		return json.Unmarshal(b, *v)
+	case "ToggleConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationToggleConfiguration)
+		return json.Unmarshal(b, *v)
+	case "VideoSearchConfiguration":
+		*v = new(ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationVideoSearchConfiguration)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing Configuration.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration(v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationActionConfiguration:
+		typename = "ActionConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationActionConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationDetectionEventsConfiguration:
+		typename = "DetectionEventsConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationDetectionEventsConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationModeConfiguration:
+		typename = "ModeConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationModeConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration:
+		typename = "RangeConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRecordingProviderConfiguration:
+		typename = "RecordingProviderConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRecordingProviderConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelAlertConfiguration:
+		typename = "SecurityPanelAlertConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelAlertConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelConfiguration:
+		typename = "SecurityPanelConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationStatusCodeConfiguration:
+		typename = "StatusCodeConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationStatusCodeConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationThermostatConfiguration:
+		typename = "ThermostatConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationThermostatConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationToggleConfiguration:
+		typename = "ToggleConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationToggleConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationVideoSearchConfiguration:
+		typename = "VideoSearchConfiguration"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationVideoSearchConfiguration
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration: "%T"`, v)
+	}
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationActionConfiguration includes the requested fields of the GraphQL type ActionConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationActionConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationActionConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationActionConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationDetectionEventsConfiguration includes the requested fields of the GraphQL type DetectionEventsConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationDetectionEventsConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationDetectionEventsConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationDetectionEventsConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationModeConfiguration includes the requested fields of the GraphQL type ModeConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationModeConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationModeConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationModeConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration includes the requested fields of the GraphQL type RangeConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration struct {
+	Typename       string                                                                                                                                     `json:"__typename"`
+	FriendlyName   ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObject  `json:"friendlyName"`
+	SupportedRange ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange               `json:"supportedRange"`
+	UnitOfMeasure  ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObject `json:"unitOfMeasure"`
+	Presets        []ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset              `json:"presets"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// GetFriendlyName returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration.FriendlyName, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration) GetFriendlyName() ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObject {
+	return v.FriendlyName
+}
+
+// GetSupportedRange returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration.SupportedRange, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration) GetSupportedRange() ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange {
+	return v.SupportedRange
+}
+
+// GetUnitOfMeasure returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration.UnitOfMeasure, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration) GetUnitOfMeasure() ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObject {
+	return v.UnitOfMeasure
+}
+
+// GetPresets returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration.Presets, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration) GetPresets() []ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset {
+	return v.Presets
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObject includes the requested fields of the GraphQL type NameValueObject.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObject struct {
+	Type  NameValueObjectType                                                                                                                                       `json:"type"`
+	Value ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObjectValueValueObject `json:"value"`
+}
+
+// GetType returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObject.Type, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObject) GetType() NameValueObjectType {
+	return v.Type
+}
+
+// GetValue returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObject.Value, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObject) GetValue() ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObjectValueValueObject {
+	return v.Value
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObjectValueValueObject includes the requested fields of the GraphQL type ValueObject.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObjectValueValueObject struct {
+	Text   string `json:"text"`
+	Locale string `json:"locale"`
+}
+
+// GetText returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObjectValueValueObject.Text, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObjectValueValueObject) GetText() string {
+	return v.Text
+}
+
+// GetLocale returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObjectValueValueObject.Locale, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationFriendlyNameNameValueObjectValueValueObject) GetLocale() string {
+	return v.Locale
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset includes the requested fields of the GraphQL type Preset.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset struct {
+	RangeValue      float64                                                                                                                                    `json:"rangeValue"`
+	PresetResources ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResources `json:"presetResources"`
+}
+
+// GetRangeValue returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset.RangeValue, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset) GetRangeValue() float64 {
+	return v.RangeValue
+}
+
+// GetPresetResources returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset.PresetResources, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset) GetPresetResources() ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResources {
+	return v.PresetResources
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResources includes the requested fields of the GraphQL type PresetResources.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResources struct {
+	FriendlyName ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObject `json:"friendlyName"`
+}
+
+// GetFriendlyName returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResources.FriendlyName, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResources) GetFriendlyName() ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObject {
+	return v.FriendlyName
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObject includes the requested fields of the GraphQL type NameValueObject.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObject struct {
+	Type  NameValueObjectType                                                                                                                                                                   `json:"type"`
+	Value ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObjectValueValueObject `json:"value"`
+}
+
+// GetType returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObject.Type, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObject) GetType() NameValueObjectType {
+	return v.Type
+}
+
+// GetValue returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObject.Value, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObject) GetValue() ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObjectValueValueObject {
+	return v.Value
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObjectValueValueObject includes the requested fields of the GraphQL type ValueObject.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObjectValueValueObject struct {
+	Text   string `json:"text"`
+	Locale string `json:"locale"`
+}
+
+// GetText returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObjectValueValueObject.Text, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObjectValueValueObject) GetText() string {
+	return v.Text
+}
+
+// GetLocale returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObjectValueValueObject.Locale, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPresetPresetResourcesFriendlyNameNameValueObjectValueValueObject) GetLocale() string {
+	return v.Locale
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange includes the requested fields of the GraphQL type SupportedRange.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange struct {
+	MinimumValue float64 `json:"minimumValue"`
+	MaximumValue float64 `json:"maximumValue"`
+	Precision    float64 `json:"precision"`
+}
+
+// GetMinimumValue returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange.MinimumValue, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange) GetMinimumValue() float64 {
+	return v.MinimumValue
+}
+
+// GetMaximumValue returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange.MaximumValue, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange) GetMaximumValue() float64 {
+	return v.MaximumValue
+}
+
+// GetPrecision returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange.Precision, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationSupportedRange) GetPrecision() float64 {
+	return v.Precision
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObject includes the requested fields of the GraphQL type NameValueObject.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObject struct {
+	Type  NameValueObjectType                                                                                                                                        `json:"type"`
+	Value ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObjectValueValueObject `json:"value"`
+}
+
+// GetType returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObject.Type, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObject) GetType() NameValueObjectType {
+	return v.Type
+}
+
+// GetValue returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObject.Value, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObject) GetValue() ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObjectValueValueObject {
+	return v.Value
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObjectValueValueObject includes the requested fields of the GraphQL type ValueObject.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObjectValueValueObject struct {
+	Text   string `json:"text"`
+	Locale string `json:"locale"`
+}
+
+// GetText returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObjectValueValueObject.Text, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObjectValueValueObject) GetText() string {
+	return v.Text
+}
+
+// GetLocale returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObjectValueValueObject.Locale, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationUnitOfMeasureNameValueObjectValueValueObject) GetLocale() string {
+	return v.Locale
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRecordingProviderConfiguration includes the requested fields of the GraphQL type RecordingProviderConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRecordingProviderConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRecordingProviderConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRecordingProviderConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelAlertConfiguration includes the requested fields of the GraphQL type SecurityPanelAlertConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelAlertConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelAlertConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelAlertConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelConfiguration includes the requested fields of the GraphQL type SecurityPanelConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationSecurityPanelConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationStatusCodeConfiguration includes the requested fields of the GraphQL type StatusCodeConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationStatusCodeConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationStatusCodeConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationStatusCodeConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationThermostatConfiguration includes the requested fields of the GraphQL type ThermostatConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationThermostatConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationThermostatConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationThermostatConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationToggleConfiguration includes the requested fields of the GraphQL type ToggleConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationToggleConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationToggleConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationToggleConfiguration) GetTypename() string {
+	return v.Typename
+}
+
+// ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationVideoSearchConfiguration includes the requested fields of the GraphQL type VideoSearchConfiguration.
+type ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationVideoSearchConfiguration struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationVideoSearchConfiguration.Typename, and is useful for accessing the field via an interface.
+func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationVideoSearchConfiguration) GetTypename() string {
+	return v.Typename
 }
 
 // ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureOperationsFeatureOperation includes the requested fields of the GraphQL type FeatureOperation.
@@ -5659,10 +6238,15 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 
 // ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState includes the requested fields of the GraphQL type DetectionState.
 type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState struct {
-	Typename string       `json:"__typename"`
-	Name     string       `json:"name"`
-	Accuracy Accuracy     `json:"accuracy"`
-	Type     PropertyType `json:"type"`
+	Typename            string                                                                                                                              `json:"__typename"`
+	Name                string                                                                                                                              `json:"name"`
+	Accuracy            Accuracy                                                                                                                            `json:"accuracy"`
+	Type                PropertyType                                                                                                                        `json:"type"`
+	Timestamp           int64                                                                                                                               `json:"timestamp"`
+	TimeOfSample        string                                                                                                                              `json:"timeOfSample"`
+	TimeOfLastChange    string                                                                                                                              `json:"timeOfLastChange"`
+	DetectionStateValue *DetectionStateValue                                                                                                                `json:"detectionStateValue"`
+	Error               ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionStateErrorErrorResponse `json:"error"`
 }
 
 // GetTypename returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState.Typename, and is useful for accessing the field via an interface.
@@ -5683,6 +6267,47 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 // GetType returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState.Type, and is useful for accessing the field via an interface.
 func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState) GetType() PropertyType {
 	return v.Type
+}
+
+// GetTimestamp returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState.Timestamp, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState) GetTimestamp() int64 {
+	return v.Timestamp
+}
+
+// GetTimeOfSample returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState.TimeOfSample, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState) GetTimeOfSample() string {
+	return v.TimeOfSample
+}
+
+// GetTimeOfLastChange returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState.TimeOfLastChange, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState) GetTimeOfLastChange() string {
+	return v.TimeOfLastChange
+}
+
+// GetDetectionStateValue returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState.DetectionStateValue, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState) GetDetectionStateValue() *DetectionStateValue {
+	return v.DetectionStateValue
+}
+
+// GetError returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState.Error, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState) GetError() ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionStateErrorErrorResponse {
+	return v.Error
+}
+
+// ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionStateErrorErrorResponse includes the requested fields of the GraphQL type ErrorResponse.
+type ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionStateErrorErrorResponse struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+}
+
+// GetType returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionStateErrorErrorResponse.Type, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionStateErrorErrorResponse) GetType() string {
+	return v.Type
+}
+
+// GetMessage returns ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionStateErrorErrorResponse.Message, and is useful for accessing the field via an interface.
+func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionStateErrorErrorResponse) GetMessage() string {
+	return v.Message
 }
 
 // ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty includes the requested fields of the GraphQL interface FeatureProperty.

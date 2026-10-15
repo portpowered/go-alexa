@@ -111,6 +111,32 @@ query ListEndpoints(
 			features {
 				name
 				instance
+				configuration {
+					... on RangeConfiguration {
+						friendlyName {
+							type
+							value { text locale }
+						}
+						supportedRange {
+							minimumValue
+							maximumValue
+							precision
+						}
+						unitOfMeasure {
+							type
+							value { text locale }
+						}
+						presets {
+							rangeValue
+							presetResources {
+								friendlyName {
+									type
+									value { text locale }
+								}
+							}
+						}
+					}
+				}
 				operations {
 					name
 					verificationsRequired {

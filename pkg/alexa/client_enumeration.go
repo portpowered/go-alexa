@@ -18,6 +18,8 @@ type (
 	gqlEndpointFeaturesFeatureConfigurationRangeConfiguration              = graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureConfigurationRangeConfiguration
 	gqlEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset = graphql.EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset
 	gqlListEndpointDisplayCategories                                       = graphql.ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointDisplayCategories
+	gqlListFeatureConfiguration                                            = graphql.ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration
+	gqlListRangeConfiguration                                              = graphql.ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration
 	gqlStateFeatureConfiguration                                           = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration
 	gqlStateRangeConfiguration                                             = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfiguration
 	gqlStateRangePreset                                                    = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfigurationRangeConfigurationPresetsPreset
@@ -29,6 +31,7 @@ type (
 	gqlStatePropertyCarbonMonoxideAlarm                                    = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesCarbonMonoxideAlarm
 	gqlStatePropertyColor                                                  = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColor
 	gqlStatePropertyColorTemperature                                       = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesColorTemperature
+	gqlStatePropertyDetectionState                                         = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesDetectionState
 	gqlStatePropertyFeatureProperty                                        = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty
 	gqlStatePropertyFireAlarm                                              = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFireAlarm
 	gqlStatePropertyGeolocation                                            = graphql.ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesGeolocation
@@ -511,6 +514,7 @@ func (c *Session) convertListEndpoint(
 		feature := alexaapimodels.Feature{
 			Name:     alexaapimodels.FeatureName(gqlFeature.Name),
 			Instance: gqlFeature.Instance,
+			Config:   convertListFeatureConfig(gqlFeature.Configuration),
 		}
 		for _, op := range gqlFeature.Operations {
 			feature.Operations = append(feature.Operations, alexaapimodels.FeatureOperation{
@@ -662,6 +666,37 @@ func convertRangePresetsWithoutStates(
 	return presets
 }
 
+func convertListFeatureConfig(input gqlListFeatureConfiguration) *alexaapimodels.FeatureConfig {
+	rangeConfig, ok := input.(*gqlListRangeConfiguration)
+	if !ok {
+		return nil
+	}
+
+	presets := make([]alexaapimodels.RangePreset, 0, len(rangeConfig.Presets))
+	for _, preset := range rangeConfig.Presets {
+		presets = append(presets, alexaapimodels.RangePreset{
+			RangeValue: preset.RangeValue,
+			FriendlyName: convertNameValueObject(
+				preset.PresetResources.FriendlyName.Type,
+				preset.PresetResources.FriendlyName.Value.Text,
+			),
+		})
+	}
+
+	return &alexaapimodels.FeatureConfig{
+		Range: &alexaapimodels.RangeConfig{
+			FriendlyName:  convertNameValueObject(rangeConfig.FriendlyName.Type, rangeConfig.FriendlyName.Value.Text),
+			UnitOfMeasure: convertNameValueObject(rangeConfig.UnitOfMeasure.Type, rangeConfig.UnitOfMeasure.Value.Text),
+			SupportedRange: &alexaapimodels.SupportedRange{
+				MinimumValue: rangeConfig.SupportedRange.MinimumValue,
+				MaximumValue: rangeConfig.SupportedRange.MaximumValue,
+				Precision:    rangeConfig.SupportedRange.Precision,
+			},
+			Presets: presets,
+		},
+	}
+}
+
 func convertListEndpointDisplayCategories(
 	inputs gqlListEndpointDisplayCategories,
 ) alexaapimodels.DisplayCategories {
@@ -800,6 +835,12 @@ func extractCoreStateValue(prop gqlStatePropertyFeatureProperty) (interface{}, b
 
 func extractExtendedStateValue(prop gqlStatePropertyFeatureProperty) (interface{}, bool) {
 	switch propertyValue := prop.(type) {
+	case *gqlStatePropertyDetectionState:
+		if propertyValue.DetectionStateValue == nil {
+			return nil, true
+		}
+
+		return *propertyValue.DetectionStateValue, true
 	case *gqlStatePropertyArmState:
 		return propertyValue.ArmStateValue, true
 	case *gqlStatePropertyActionState:
@@ -869,6 +910,8 @@ func (c *Session) extractError(
 	case *gqlStatePropertyPowerLevel:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
 	case *gqlStatePropertyLock:
+		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
+	case *gqlStatePropertyDetectionState:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
 	case *gqlStatePropertyMode:
 		return propertyErrorFromValues(propertyValue.Error.Type, propertyValue.Error.Message)
