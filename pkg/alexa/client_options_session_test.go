@@ -402,6 +402,7 @@ func TestNewClientRejectsInvalidAndConflictingOptions(t *testing.T) {
 		},
 		{name: "nil shared client", options: []Option{WithHTTPClient(nil)}},
 		{name: "nil REST client", options: []Option{WithRESTHTTPClient(nil)}},
+		{name: "nil retry delay", options: []Option{WithRetryDelay(nil)}},
 		{name: "nil GraphQL client", options: []Option{WithGraphQLHTTPClient(nil)}},
 		{name: "nil event client", options: []Option{WithEventHTTPClient(nil)}},
 		{name: "nil event transport", options: []Option{WithEventTransport(nil)}},
