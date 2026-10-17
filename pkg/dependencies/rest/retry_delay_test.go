@@ -58,3 +58,33 @@ func TestDefaultRetryDelayWaitsOneThenTwoSeconds(t *testing.T) {
 		t.Fatalf("default retry delays changed: %v %v", defaultRetryDelay(0), defaultRetryDelay(1))
 	}
 }
+
+func TestCanceledRequestIsNotRetriedEvenWithoutDelay(t *testing.T) {
+	t.Parallel()
+
+	for range 50 {
+		ctx, cancel := context.WithCancel(context.Background())
+		attempts := 0
+
+		client := NewClient(WithBearerToken("synthetic-token"),
+			WithRetryDelay(func(int) time.Duration { return 0 }),
+			WithHTTPClient(&http.Client{
+				Transport: syntheticRoundTripper(func(*http.Request) (*http.Response, error) {
+					attempts++
+
+					cancel()
+
+					return nil, syntheticFailureError("synthetic transport failure")
+				}),
+			}))
+
+		response, err := client.doRequest(ctx, apiroutes.MethodGetUserInfo, apiroutes.PathGetUserInfo, nil)
+		if response != nil {
+			_ = response.Body.Close()
+		}
+
+		if err == nil || attempts != 1 {
+			t.Fatalf("canceled request: attempts=%d err=%v, want one attempt and an error", attempts, err)
+		}
+	}
+}
