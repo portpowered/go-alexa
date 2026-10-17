@@ -46,6 +46,7 @@ type Client struct {
 	graphqlHTTPClient *http.Client
 	eventHTTPClient   *http.Client
 	eventTransport    http.RoundTripper
+	retryDelay        func(attempt int) time.Duration
 }
 
 // Session contains account credentials and owns event connections created from it.
@@ -75,6 +76,7 @@ type clientConfig struct {
 	commonHTTPClient, restHTTPClient, graphqlHTTPClient, eventHTTPClient  *http.Client
 	eventTransport                                                        http.RoundTripper
 	timeout                                                               time.Duration
+	retryDelay                                                            func(attempt int) time.Duration
 	set                                                                   map[string]string
 }
 
@@ -100,6 +102,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		eventHTTPClient:   nil,
 		eventTransport:    nil,
 		timeout:           defaultClientTimeout,
+		retryDelay:        nil,
 		set:               make(map[string]string),
 	}
 
@@ -181,7 +184,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	return &Client{region: cfg.region, apiBaseURL: cfg.apiBaseURL, amazonBaseURL: cfg.amazonBaseURL,
 		webBaseURL: cfg.webBaseURL, graphqlBaseURL: cfg.graphqlBaseURL, eventAuthority: cfg.eventAuthority,
 		restHTTPClient: restClient, graphqlHTTPClient: graphqlClient, eventHTTPClient: eventClient,
-		eventTransport: cfg.eventTransport}, nil
+		eventTransport: cfg.eventTransport, retryDelay: cfg.retryDelay}, nil
 }
 
 func validateHTTPClientCookieJars(restClient, graphqlClient, eventClient *http.Client) error {
@@ -597,6 +600,21 @@ func WithRESTHTTPClient(client *http.Client) Option {
 	}
 }
 
+// WithRetryDelay sets the wait before the REST client retries a request that failed
+// with a transport error or a 5xx response; attempt is the 0-based index of the
+// failed attempt. Without it the client waits one second, then two.
+func WithRetryDelay(delay func(attempt int) time.Duration) Option {
+	return func(cfg *clientConfig) error {
+		if delay == nil {
+			return errRetryDelayNil
+		}
+
+		cfg.retryDelay = delay
+
+		return nil
+	}
+}
+
 // WithGraphQLHTTPClient injects the GraphQL network edge independently. The
 // effective client must have a nil CookieJar so mutable cookie state cannot be
 // shared between account sessions.
@@ -853,9 +871,14 @@ func (c *Client) RefreshAccessToken(
 }
 
 func (c *Client) newRESTClient() *rest.Client {
-	return rest.NewClient(rest.WithRegion(c.region), rest.WithAmazonalexaAPIBaseURI(c.apiBaseURL),
+	options := []rest.ClientOption{rest.WithRegion(c.region), rest.WithAmazonalexaAPIBaseURI(c.apiBaseURL),
 		rest.WithAmazonapiBaseURI(c.amazonBaseURL), rest.WithAlexaAmazonBaseURI(c.webBaseURL),
-		rest.WithHTTPClient(c.restHTTPClient))
+		rest.WithHTTPClient(c.restHTTPClient)}
+	if c.retryDelay != nil {
+		options = append(options, rest.WithRetryDelay(c.retryDelay))
+	}
+
+	return rest.NewClient(options...)
 }
 
 // GetUserInfo retrieves user information from the /api/users/me endpoint.

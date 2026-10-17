@@ -20,6 +20,7 @@ const (
 	errAbsoluteHTTPURLRequired staticError = "expected an absolute HTTP(S) URL without credentials, query, or fragment"
 	errHTTPClientNil           staticError = "HTTP client must not be nil"
 	errRESTHTTPClientNil       staticError = "REST HTTP client must not be nil"
+	errRetryDelayNil           staticError = "retry delay must not be nil"
 	errGraphQLHTTPClientNil    staticError = "GraphQL HTTP client must not be nil"
 	errEventHTTPClientNil      staticError = "event HTTP client must not be nil"
 	errEventTransportNil       staticError = "event transport must not be nil"

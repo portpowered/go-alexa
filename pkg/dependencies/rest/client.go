@@ -20,6 +20,9 @@ import (
 
 const defaultClientTimeout = 30 * time.Second
 
+// defaultRetryDelay waits one second after the first failed attempt and two after the second.
+func defaultRetryDelay(attempt int) time.Duration { return time.Duration(attempt+1) * time.Second }
+
 // Client is a REST API client for Alexa services.
 type Client struct {
 	httpClient            *http.Client
@@ -36,6 +39,8 @@ type Client struct {
 	useCookieAuth   bool
 	// customer ID (certain requests necessitate a customer ID to be set)
 	customerID string
+	// retryDelay is the wait before retrying a request whose attempt (0-based) failed
+	retryDelay func(attempt int) time.Duration
 }
 
 func convertWireModel[T any](source any) (*T, error) {
@@ -68,6 +73,14 @@ type ClientOption func(*Client)
 func WithHTTPClient(httpClient *http.Client) ClientOption {
 	return func(c *Client) {
 		c.httpClient = httpClient
+	}
+}
+
+// WithRetryDelay sets the wait before retrying a request that failed with a transport
+// error or a 5xx response; attempt is the 0-based index of the failed attempt.
+func WithRetryDelay(delay func(attempt int) time.Duration) ClientOption {
+	return func(c *Client) {
+		c.retryDelay = delay
 	}
 }
 
@@ -180,6 +193,7 @@ func NewClient(opts ...ClientOption) *Client {
 		refreshToken:          "",
 		useCookieAuth:         false,
 		customerID:            "",
+		retryDelay:            defaultRetryDelay,
 		httpClient: &http.Client{
 			Timeout: defaultClientTimeout,
 			Jar:     jar,
@@ -422,7 +436,7 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 		select {
 		case <-ctx.Done():
 			return nil, requestFailure(method, url, 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
-		case <-time.After(time.Duration(attempt+1) * time.Second):
+		case <-time.After(c.retryDelay(attempt)):
 		}
 
 		if req.GetBody != nil {
@@ -681,7 +695,7 @@ func (c *Client) doUnauthenticatedRequest(ctx context.Context, method, url strin
 		select {
 		case <-ctx.Done():
 			return nil, requestFailure(method, url, 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
-		case <-time.After(time.Duration(attempt+1) * time.Second):
+		case <-time.After(c.retryDelay(attempt)):
 		}
 
 		if req.GetBody != nil {
