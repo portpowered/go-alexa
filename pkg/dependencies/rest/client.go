@@ -433,6 +433,12 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body interf
 			_ = response.Body.Close()
 		}
 
+		// A canceled request never retries: select picks among ready cases at random, so a
+		// short delay alone could still send the request again after cancellation.
+		if ctx.Err() != nil {
+			return nil, requestFailure(method, url, 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
+		}
+
 		select {
 		case <-ctx.Done():
 			return nil, requestFailure(method, url, 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
@@ -690,6 +696,12 @@ func (c *Client) doUnauthenticatedRequest(ctx context.Context, method, url strin
 
 		if response != nil && response.Body != nil {
 			_ = response.Body.Close()
+		}
+
+		// A canceled request never retries: select picks among ready cases at random, so a
+		// short delay alone could still send the request again after cancellation.
+		if ctx.Err() != nil {
+			return nil, requestFailure(method, url, 0, "", "transport", networkFailureCause(ctx, ctx.Err(), "request retry canceled"))
 		}
 
 		select {
