@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// AuthCookieDomain Known domains recognized by the compatibility cookie-jar lookup. Other caller cookies remain open.
+// AuthCookieDomain Per-region Alexa web domains recognized by the compatibility cookie-jar lookup. The unsuffixed names are the North America (US) domains. A client matches only the domains of its own region. Other caller cookies remain open.
 type AuthCookieDomain = string
 
 // AuthData defines model for AuthData.
@@ -15,6 +15,9 @@ type AuthData struct {
 	CodePairAuth      *CodePairAuth      `json:"code_pair,omitempty"`
 	EmailPasswordAuth *EmailPasswordAuth `json:"email_password,omitempty"`
 }
+
+// AuthWebPage Alexa web page path sent as the Referer on cookie-authenticated requests, relative to the regional Alexa web origin.
+type AuthWebPage = string
 
 // BearerTokens defines model for BearerTokens.
 type BearerTokens struct {

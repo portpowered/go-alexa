@@ -29,6 +29,8 @@ if err != nil {
 }
 ```
 
+`WithRegion` accepts `RegionUS`, `RegionEU`, or `RegionJP`. The region selects the REST, GraphQL, and event hosts and the Alexa web site (`alexa.amazon.com`, `alexa.amazon.co.uk`, or `alexa.amazon.co.jp`). Cookie-authenticated requests send that site as `Origin` and `Referer` and recognize CSRF cookies for its domain. Each client keeps its own region, so clients for different regions can run concurrently. Base URL overrides such as `WithAlexaWebBaseURL` change where requests go, not the web origin.
+
 Create an [account session](../authentication/) from this client before calling operations. Use a context deadline for individual requests. Event streams are long-lived; close the connection or session when finished.
 
 Use `WithEventHTTPClient` instead of `WithEventTransport` when supplying a complete event client. Setting both is an error. A custom event transport must support streaming HTTP/2 responses.

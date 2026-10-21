@@ -41,6 +41,9 @@ type Client struct {
 	customerID string
 	// retryDelay is the wait before retrying a request whose attempt (0-based) failed
 	retryDelay func(attempt int) time.Duration
+	// webOrigin is the selected region's Alexa web site, sent as Origin and Referer and
+	// used to recognize CSRF cookies; base URI overrides do not change it.
+	webOrigin regionalWebOrigin
 }
 
 func convertWireModel[T any](source any) (*T, error) {
@@ -64,6 +67,51 @@ func assignOptional[T any](destination *T, value *T) {
 	if value != nil {
 		*destination = *value
 	}
+}
+
+// regionalWebOrigin is the Alexa web site a browser session for one region runs on.
+type regionalWebOrigin struct {
+	origin          string
+	cookieDomain    string
+	cookieSubdomain string
+}
+
+// regionWebOrigin returns the Alexa web site of a supported region. Any other value gets
+// North America, the client's default.
+func regionWebOrigin(region alexaapimodels.Region) regionalWebOrigin {
+	switch region {
+	case alexaapimodels.RegionEU:
+		return regionalWebOrigin{
+			origin:          alexaapimodels.AlexaAmazonBaseUriEu,
+			cookieDomain:    alexamodels.AuthCSRFCookieDomainEu,
+			cookieSubdomain: alexamodels.AuthCSRFCookieSubdomainEu,
+		}
+	case alexaapimodels.RegionJP:
+		return regionalWebOrigin{
+			origin:          alexaapimodels.AlexaAmazonBaseUriJp,
+			cookieDomain:    alexamodels.AuthCSRFCookieDomainJp,
+			cookieSubdomain: alexamodels.AuthCSRFCookieSubdomainJp,
+		}
+	case alexaapimodels.RegionUS:
+		return regionalWebOrigin{
+			origin:          alexaapimodels.AlexaAmazonBaseUriNa,
+			cookieDomain:    alexamodels.AuthCSRFCookieDomain,
+			cookieSubdomain: alexamodels.AuthCSRFCookieSubdomain,
+		}
+	}
+
+	return regionWebOrigin(alexaapimodels.RegionUS)
+}
+
+// referer is the browser Referer of this web site.
+func (origin regionalWebOrigin) referer() string {
+	return origin.origin + alexamodels.AuthWebRefererPath
+}
+
+// isCSRFCookieKey reports whether a cookie map key names this web site's CSRF cookie.
+func (origin regionalWebOrigin) isCSRFCookieKey(key string) bool {
+	return key == origin.cookieDomain+":"+alexamodels.AuthCSRFCookieName ||
+		key == origin.cookieSubdomain+":"+alexamodels.AuthCSRFCookieName
 }
 
 // ClientOption is a function that configures a Client.
@@ -92,14 +140,17 @@ func WithRegion(region alexaapimodels.Region) ClientOption {
 			client.amazonalexaapiBaseURI = alexaapimodels.ApiServiceUriNa
 			client.amazonapiBaseURI = alexaapimodels.AmazonApiServiceUriNa
 			client.alexaAmazonBaseURI = alexaapimodels.AlexaAmazonBaseUriNa
+			client.webOrigin = regionWebOrigin(region)
 		case alexaapimodels.RegionEU:
 			client.amazonalexaapiBaseURI = alexaapimodels.ApiServiceUriEu
 			client.amazonapiBaseURI = alexaapimodels.AmazonApiServiceUriEu
 			client.alexaAmazonBaseURI = alexaapimodels.AlexaAmazonBaseUriEu
+			client.webOrigin = regionWebOrigin(region)
 		case alexaapimodels.RegionJP:
 			client.amazonalexaapiBaseURI = alexaapimodels.ApiServiceUriJp
 			client.amazonapiBaseURI = alexaapimodels.AmazonApiServiceUriJp
 			client.alexaAmazonBaseURI = alexaapimodels.AlexaAmazonBaseUriJp
+			client.webOrigin = regionWebOrigin(region)
 		}
 	}
 }
@@ -186,6 +237,7 @@ func NewClient(opts ...ClientOption) *Client {
 		amazonalexaapiBaseURI: alexaapimodels.ApiServiceUriNa,
 		amazonapiBaseURI:      alexaapimodels.AmazonApiServiceUriNa,
 		alexaAmazonBaseURI:    alexaapimodels.AlexaAmazonBaseUriNa,
+		webOrigin:             regionWebOrigin(alexaapimodels.RegionUS),
 		tokenGetter:           nil,
 		cookies:               make(map[string]*http.Cookie),
 		csrfToken:             "",
@@ -234,8 +286,7 @@ func (c *Client) GetCSRFToken(ctx context.Context) (string, error) {
 				return cookie.Value, nil
 			}
 			// Also check key format
-			if key == alexamodels.AuthCSRFCookieDomain+":"+alexamodels.AuthCSRFCookieName ||
-				key == alexamodels.AuthCSRFCookieSubdomain+":"+alexamodels.AuthCSRFCookieName {
+			if c.webOrigin.isCSRFCookieKey(key) {
 				c.csrfToken = cookie.Value
 
 				return cookie.Value, nil
@@ -323,9 +374,7 @@ func (c *Client) cachedCSRFToken() (string, error) {
 			continue
 		}
 
-		if cookie.Name == alexamodels.AuthCSRFCookieName ||
-			key == alexamodels.AuthCSRFCookieDomain+":"+alexamodels.AuthCSRFCookieName ||
-			key == alexamodels.AuthCSRFCookieSubdomain+":"+alexamodels.AuthCSRFCookieName {
+		if cookie.Name == alexamodels.AuthCSRFCookieName || c.webOrigin.isCSRFCookieKey(key) {
 			return cookie.Value, nil
 		}
 	}
@@ -352,8 +401,8 @@ func (c *Client) fetchCSRFTokenFromAPI(ctx context.Context) (string, error) {
 
 	req.Header.Set(apiroutes.HeaderUserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0")
 	req.Header.Set(apiroutes.HeaderDNT, "1")
-	req.Header.Set(apiroutes.HeaderReferer, "https://alexa.amazon.com/spa/index.html")
-	req.Header.Set(apiroutes.HeaderOrigin, "https://alexa.amazon.com")
+	req.Header.Set(apiroutes.HeaderReferer, c.webOrigin.referer())
+	req.Header.Set(apiroutes.HeaderOrigin, c.webOrigin.origin)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -599,8 +648,8 @@ func (c *Client) setFullURLAuthentication(ctx context.Context, headers http.Head
 
 	headers.Set(apiroutes.HeaderUserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0")
 	headers.Set(apiroutes.HeaderDNT, "1")
-	headers.Set(apiroutes.HeaderReferer, "https://alexa.amazon.com/spa/index.html")
-	headers.Set(apiroutes.HeaderOrigin, "https://alexa.amazon.com")
+	headers.Set(apiroutes.HeaderReferer, c.webOrigin.referer())
+	headers.Set(apiroutes.HeaderOrigin, c.webOrigin.origin)
 
 	return nil
 }
