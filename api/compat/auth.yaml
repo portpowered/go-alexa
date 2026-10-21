@@ -219,7 +219,21 @@ components:
     AuthCookieDomain:
       type: string
       x-go-type: string
-      description: Known domains recognized by the compatibility cookie-jar lookup. Other caller cookies remain open.
+      description: >-
+        Per-region Alexa web domains recognized by the compatibility cookie-jar lookup. The unsuffixed
+        names are the North America (US) domains. A client matches only the domains of its own region.
+        Other caller cookies remain open.
       x-go-compat-constant-values:
         AuthCSRFCookieDomain: alexa.amazon.com
         AuthCSRFCookieSubdomain: .alexa.amazon.com
+        AuthCSRFCookieDomainEu: alexa.amazon.co.uk
+        AuthCSRFCookieSubdomainEu: .alexa.amazon.co.uk
+        AuthCSRFCookieDomainJp: alexa.amazon.co.jp
+        AuthCSRFCookieSubdomainJp: .alexa.amazon.co.jp
+
+    AuthWebPage:
+      type: string
+      x-go-type: string
+      description: Alexa web page path sent as the Referer on cookie-authenticated requests, relative to the regional Alexa web origin.
+      x-go-compat-constant-values:
+        AuthWebRefererPath: /spa/index.html
