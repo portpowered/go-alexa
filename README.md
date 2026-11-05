@@ -10,6 +10,8 @@
 [![License](https://img.shields.io/github/license/portpowered/go-alexa)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://portpowered.github.io/go-alexa/)
 
+To use Alexa devices from ChatGPT, Claude or another AI assistant without writing code, see [Alexa MCP](https://github.com/portpowered/port-os-smart-home-cloud-mcp/blob/main/providers/alexa-mcp.md) in Port OS Smart Home Cloud MCP.
+
 ## Install
 
 ```sh
