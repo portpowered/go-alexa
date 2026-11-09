@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -104,12 +103,14 @@ func readCurrentAPIDocuments(t *testing.T, root string) (openAPIDocument, asyncA
 func repositoryRoot(t *testing.T) string {
 	t.Helper()
 
-	_, testFile, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("could not locate HTTP/2 inventory test source")
+	// go test runs in the package directory. runtime.Caller would return a module
+	// path instead of a file path when the build uses -trimpath.
+	packageDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("could not locate HTTP/2 inventory test package: %v", err)
 	}
 
-	return filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", ".."))
+	return filepath.Clean(filepath.Join(packageDir, "..", ".."))
 }
 
 func moduleVersion(t *testing.T, goMod string) string {
