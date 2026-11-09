@@ -91,3 +91,12 @@ func List(ctx context.Context, client graphql.Client) (*QueryResponse, error) {
 		t.Errorf("alias output is not valid Go: %v", err)
 	}
 }
+
+func TestMakeFeatureUnionsTolerantRejectsUnrecognisedGenqlientShape(t *testing.T) {
+	t.Parallel()
+
+	_, err := makeFeatureUnionsTolerant([]byte("package x"))
+	if err == nil {
+		t.Fatal("expected an error when the genqlient decoder shape is not found")
+	}
+}

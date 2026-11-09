@@ -30,7 +30,10 @@ const (
 	generatedFileMode      fs.FileMode = 0o600
 )
 
-var errNoModelTypeDeclarations = errors.New("genqlient output contains no model type declarations")
+var (
+	errNoModelTypeDeclarations = errors.New("genqlient output contains no model type declarations")
+	errTolerantPatternMissing  = errors.New("genqlient output no longer matches the tolerant union rewrite")
+)
 
 type importSpec struct {
 	name string
@@ -116,6 +119,13 @@ func split(source []byte) (splitResult, error) {
 	modelOutput, err := formatFile(fset, "alexamodels", modelImports, modelDecls)
 	if err != nil {
 		return splitResult{}, fmt.Errorf("format moved GraphQL models: %w", err)
+	}
+
+	if strings.Contains(string(modelOutput), "FeaturesFeaturePropertiesFeatureProperty") {
+		modelOutput, err = makeFeatureUnionsTolerant(modelOutput)
+		if err != nil {
+			return splitResult{}, err
+		}
 	}
 
 	operationOutput, err := formatFile(fset, "graphql", operationImports, operationDecls)

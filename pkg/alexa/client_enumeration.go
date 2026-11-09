@@ -339,8 +339,11 @@ func (c *Session) mergeEndpointWithStates(
 
 	// Extract supported features from feature names
 	graphqlFeatures := make([]string, 0, len(gqlEndpoint.Features))
+
 	for _, feat := range gqlEndpoint.Features {
-		graphqlFeatures = append(graphqlFeatures, feat.Name)
+		if feat.Name != "" { // a null feature entry decodes to a zero value
+			graphqlFeatures = append(graphqlFeatures, feat.Name)
+		}
 	}
 
 	supportedFeatures := c.determineSupportedFeatures(graphqlFeatures, []string{}, unified.DeviceFamily)
@@ -349,6 +352,10 @@ func (c *Session) mergeEndpointWithStates(
 	graphqlFeaturesMap := make(map[string]alexaapimodels.Feature)
 
 	for _, gqlFeature := range gqlEndpoint.Features {
+		if gqlFeature.Name == "" {
+			continue // a null feature entry decodes to a zero value
+		}
+
 		feature := alexaapimodels.Feature{
 			Name:     alexaapimodels.FeatureName(gqlFeature.Name),
 			Instance: gqlFeature.Instance,
@@ -369,6 +376,10 @@ func (c *Session) mergeEndpointWithStates(
 		properties := make([]alexaapimodels.FeatureProperty, 0)
 
 		for _, gqlProp := range gqlFeature.Properties {
+			if gqlProp == nil {
+				continue // a null property entry must not panic the merge
+			}
+
 			prop := alexaapimodels.FeatureProperty{
 				Name:             gqlProp.GetName(),
 				Type:             string(gqlProp.GetType()),
@@ -440,8 +451,11 @@ func (c *Session) mergeEndpointWithoutStates(
 
 	// Extract supported features from feature names
 	graphqlFeatures := make([]string, 0, len(gqlEndpoint.Features))
+
 	for _, feat := range gqlEndpoint.Features {
-		graphqlFeatures = append(graphqlFeatures, feat.Name)
+		if feat.Name != "" { // a null feature entry decodes to a zero value
+			graphqlFeatures = append(graphqlFeatures, feat.Name)
+		}
 	}
 
 	// Compute supported features (without state information)
@@ -452,6 +466,10 @@ func (c *Session) mergeEndpointWithoutStates(
 	graphqlFeaturesMap := make(map[string]alexaapimodels.Feature)
 
 	for _, gqlFeature := range gqlEndpoint.Features {
+		if gqlFeature.Name == "" {
+			continue // a null feature entry decodes to a zero value
+		}
+
 		feature := alexaapimodels.Feature{
 			Name:     alexaapimodels.FeatureName(gqlFeature.Name),
 			Instance: gqlFeature.Instance,
@@ -509,6 +527,10 @@ func (c *Session) convertListEndpoint(
 	graphqlFeaturesMap := make(map[string]alexaapimodels.Feature)
 
 	for _, gqlFeature := range gqlEndpoint.Features {
+		if gqlFeature.Name == "" {
+			continue // a null feature entry decodes to a zero value
+		}
+
 		graphqlFeatures = append(graphqlFeatures, gqlFeature.Name)
 
 		feature := alexaapimodels.Feature{
