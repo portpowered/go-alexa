@@ -240,7 +240,7 @@ func (a *genqlientClientAdapter) MakeRequest(ctx context.Context, req *genqlient
 	{
 		err := json.Unmarshal(bodyBytes, resp)
 		if err != nil {
-			return graphQLRequestFailure(httpResp.StatusCode, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to adapt response"})
+			return graphQLRequestFailure(httpResp.StatusCode, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to adapt response", Err: err})
 		}
 	}
 

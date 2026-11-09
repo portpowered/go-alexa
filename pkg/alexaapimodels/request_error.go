@@ -1,6 +1,9 @@
 package alexaapimodels
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // RequestError gives safe operational context for an Alexa API failure.
 // Path contains route literals and {id} placeholders, never customer identifiers.
@@ -27,6 +30,16 @@ func (e *RequestError) Error() string {
 
 	if e.Stage != "" {
 		message += " (" + e.Stage + ")"
+	}
+
+	// A decode failure keeps its schema-level cause (for example the GraphQL
+	// type name that was not recognised). Those messages name schema types and
+	// Go fields, never payload values.
+	if e.Stage == "response_decode" {
+		var bad *BadRequestError
+		if errors.As(e.Cause, &bad) && bad.Err != nil {
+			message += ": " + bad.Err.Error()
+		}
 	}
 
 	return message

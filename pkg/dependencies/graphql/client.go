@@ -211,7 +211,7 @@ func decodeExecutionResponse(body []byte, result interface{}, status int) error 
 
 	err = json.Unmarshal(data, result)
 	if err != nil {
-		return graphQLRequestFailure(status, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to unmarshal result"})
+		return graphQLRequestFailure(status, "response_decode", &alexaapimodels.BadRequestError{Message: "failed to unmarshal result", Err: err})
 	}
 
 	return nil

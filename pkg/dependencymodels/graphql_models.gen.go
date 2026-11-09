@@ -563,11 +563,9 @@ func (v *EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature) Unmars
 		dst := &v.Configuration
 		src := firstPass.Configuration
 		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalEndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureConfiguration(
-				src, dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature.Configuration: %w", err)
+			if unmarshalErr := __unmarshalEndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureConfiguration(src, dst); unmarshalErr != nil {
+				// Unknown or malformed kind: leave the union unset rather than failing the response.
+				*dst = nil
 			}
 		}
 	}
@@ -576,11 +574,9 @@ func (v *EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature) Unmars
 		dst := &v.Semantics
 		src := firstPass.Semantics
 		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalEndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureSemantics(
-				src, dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal EndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeature.Semantics: %w", err)
+			if unmarshalErr := __unmarshalEndpointsEndpointsEndpointsResponseItemsEndpointFeaturesFeatureSemantics(src, dst); unmarshalErr != nil {
+				// Unknown or malformed kind: leave the union unset rather than failing the response.
+				*dst = nil
 			}
 		}
 	}
@@ -3481,11 +3477,9 @@ func (v *ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeature
 		dst := &v.Configuration
 		src := firstPass.Configuration
 		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration(
-				src, dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal ListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature.Configuration: %w", err)
+			if unmarshalErr := __unmarshalListEndpointsListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration(src, dst); unmarshalErr != nil {
+				// Unknown or malformed kind: leave the union unset rather than failing the response.
+				*dst = nil
 			}
 		}
 	}
@@ -4582,11 +4576,9 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 		dst := &v.Configuration
 		src := firstPass.Configuration
 		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration(
-				src, dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature.Configuration: %w", err)
+			if unmarshalErr := __unmarshalListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureConfiguration(src, dst); unmarshalErr != nil {
+				// Unknown or malformed kind: leave the union unset rather than failing the response.
+				*dst = nil
 			}
 		}
 	}
@@ -4595,11 +4587,9 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 		dst := &v.Semantics
 		src := firstPass.Semantics
 		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureSemantics(
-				src, dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature.Semantics: %w", err)
+			if unmarshalErr := __unmarshalListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeatureSemantics(src, dst); unmarshalErr != nil {
+				// Unknown or malformed kind: leave the union unset rather than failing the response.
+				*dst = nil
 			}
 		}
 	}
@@ -4607,19 +4597,19 @@ func (v *ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpo
 	{
 		dst := &v.Properties
 		src := firstPass.Properties
-		*dst = make(
-			[]ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty,
-			len(src))
-		for i, src := range src {
-			dst := &(*dst)[i]
-			if len(src) != 0 && string(src) != "null" {
-				err = __unmarshalListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty(
-					src, dst)
-				if err != nil {
-					return fmt.Errorf(
-						"unable to unmarshal ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeature.Properties: %w", err)
-				}
+		*dst = make([]ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty, 0, len(src))
+		for _, src := range src {
+			if len(src) == 0 || string(src) == "null" {
+				continue
 			}
+
+			var property ListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty
+			if unmarshalErr := __unmarshalListEndpointsWithStatesListEndpointsListEndpointsResponseEndpointsEndpointFeaturesFeaturePropertiesFeatureProperty(src, &property); unmarshalErr != nil || property == nil {
+				// Unknown, missing or malformed property kind: skip only this property.
+				continue
+			}
+
+			*dst = append(*dst, property)
 		}
 	}
 	return nil
