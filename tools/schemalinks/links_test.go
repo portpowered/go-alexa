@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -291,12 +290,12 @@ func completeSharedDocsReview() map[string]reviewEntry {
 func TestEveryExternalDocsLinkHasReviewedOperationEvidence(t *testing.T) {
 	t.Parallel()
 
-	_, currentFile, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("resolve test source path")
-	}
+	// go test runs in the package directory. runtime.Caller would return a module
+	// path instead of a file path when the build uses -trimpath.
+	packageDir, err := os.Getwd()
+	requireNoError(t, err)
 
-	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(currentFile), "..", ".."))
+	repoRoot := filepath.Clean(filepath.Join(packageDir, "..", ".."))
 	schemaInputs := existingPublishedSchemaInputs(repoRoot)
 	links, err := collectSchemaLinks(repoRoot, schemaInputs)
 	requireNoError(t, err)
